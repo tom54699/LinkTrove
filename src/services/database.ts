@@ -1,74 +1,12 @@
 import Dexie, { Table } from 'dexie';
 
-// --- Data Model Interfaces from requirements.md ---
-
-export interface Item {
-  id: string;              // UUID
-  title: string;           // Required
-  url?: string;            // Unique constraint
-  coverUrl?: string;
-  description?: string;
-  categoryPath: string[];  // Multi-level category path
-  tags: string[];          // Tag array
-  customFields: Record<string, any>; // Custom field values
-  createdAt: Date;
-  updatedAt: Date;
-  isPrivate: boolean;      // Item privacy
-}
-
-export interface CustomField {
-  id: string;
-  name: string;
-  type: 'text' | 'number' | 'url' | 'date' | 'select' | 'boolean' | 'textarea' | 'rating';
-  isPrivate: boolean;
-  isRequired: boolean;
-  options?: string[];
-  defaultValue?: any;
-  validation?: {
-    min?: number;
-    max?: number;
-    pattern?: string;
-  };
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  parentId?: string;
-  description?: string;
-  icon?: string;
-  color?: string;
-  order: number;
-}
-
-// --- Placeholder interfaces for other tables ---
-
-export interface Tag {
-  id: string;
-  name: string;
-  color?: string;
-  usageCount: number;
-}
-
-export interface History {
-  id: string;
-  timestamp: Date;
-  type: string; // e.g., 'create', 'update', 'delete'
-  affectedItemIds: string[];
-}
-
-export interface SearchIndex {
-  id: string;
-  itemId: string;
-  content: string;
-}
-
-export interface ShareCollection {
-  id: string;
-  title: string;
-  createdAt: Date;
-  // Note: Full share collection details are omitted for this initial schema
-}
+import type { Item } from '../models/item.model';
+import type { Category } from '../models/category.model';
+import type { CustomField } from '../models/custom-field.model';
+import type { Tag } from '../models/tag.model';
+import type { History } from '../models/history.model';
+import type { SearchIndex } from '../models/search-index.model';
+import type { ShareCollection } from '../models/share-collection.model';
 
 
 // --- Dexie Database Class ---
