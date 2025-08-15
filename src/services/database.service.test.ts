@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { databaseService } from './database.service';
 import { db } from './database';
+import { Item } from '../models/item.model';
 
 // Mock the db instance
 vi.mock('./database', () => {
@@ -8,14 +9,25 @@ vi.mock('./database', () => {
     items: {
       add: vi.fn(),
       get: vi.fn(),
+      put: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
       bulkAdd: vi.fn(),
+      where: vi.fn(),
+      equals: vi.fn(),
+      toArray: vi.fn(),
     },
     transaction: vi.fn((mode, tables, txScope) => txScope()),
   };
+  // Chain mock for where().equals().toArray()
+  mockDb.items.where.mockReturnValue(mockDb.items as any);
+  mockDb.items.equals.mockReturnValue(mockDb.items as any);
+
   return { db: mockDb };
 });
+
+const mockItem: Item = { id: '123', title: 'Test Book', createdAt: new Date(), updatedAt: new Date(), categoryPath: [], tags: [], customFields: {}, isPrivate: false };
+const deletedMockItem: Item = { ...mockItem, deletedAt: new Date() };
 
 describe('DatabaseService', () => {
   beforeEach(() => {
@@ -36,13 +48,28 @@ describe('DatabaseService', () => {
   });
 
   describe('getItem', () => {
-    it('should retrieve an item by id', async () => {
-      const mockItem = { id: '123', title: 'Test Book', createdAt: new Date(), updatedAt: new Date(), categoryPath: [], tags: [], customFields: {}, isPrivate: false };
+    it('should retrieve a non-deleted item by id', async () => {
       (db.items.get as vi.Mock).mockResolvedValue(mockItem);
-
       const result = await databaseService.getItem('123');
       expect(db.items.get).toHaveBeenCalledWith('123');
       expect(result).toEqual(mockItem);
+    });
+
+    it('should return undefined for a soft-deleted item', async () => {
+      (db.items.get as vi.Mock).mockResolvedValue(deletedMockItem);
+      const result = await databaseService.getItem('123');
+      expect(db.items.get).toHaveBeenCalledWith('123');
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('getAllItems', () => {
+    it('should retrieve all non-deleted items', async () => {
+        (db.items.toArray as vi.Mock).mockResolvedValue([mockItem]);
+        const result = await databaseService.getAllItems();
+        expect(db.items.where).toHaveBeenCalledWith('deletedAt');
+        expect(db.items.equals).toHaveBeenCalledWith(undefined);
+        expect(result).toEqual([mockItem]);
     });
   });
 
@@ -59,10 +86,21 @@ describe('DatabaseService', () => {
     });
   });
 
-  describe('deleteItem', () => {
-    it('should delete an item by id', async () => {
-      await databaseService.deleteItem('123');
-      expect(db.items.delete).toHaveBeenCalledWith('123');
+  describe('softDeleteItem', () => {
+    it('should soft delete an item by setting deletedAt', async () => {
+      await databaseService.softDeleteItem('123');
+      expect(db.items.update).toHaveBeenCalledWith('123', { deletedAt: expect.any(Date) });
+    });
+  });
+
+  describe('recoverItem', () => {
+    it('should recover a soft-deleted item', async () => {
+        (db.items.get as vi.Mock).mockResolvedValue(deletedMockItem);
+        await databaseService.recoverItem('123');
+
+        const expectedItem = { ...deletedMockItem };
+        delete expectedItem.deletedAt;
+        expect(db.items.put).toHaveBeenCalledWith(expectedItem);
     });
   });
 

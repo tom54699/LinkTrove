@@ -31,6 +31,10 @@ export class AppDatabase extends Dexie {
       searchIndex: '++id, itemId',
       shareCollections: '++id, title, createdAt',
     });
+    // Add version 2 for the soft-delete feature
+    this.version(2).stores({
+      items: '++id, title, &url, *categoryPath, *tags, createdAt, updatedAt, deletedAt',
+    });
   }
 }
 

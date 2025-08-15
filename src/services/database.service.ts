@@ -15,7 +15,14 @@ class DatabaseService {
   }
 
   async getItem(id: string): Promise<Item | undefined> {
-    return await db.items.get(id);
+    const item = await db.items.get(id);
+    // Return item only if it's not soft-deleted
+    return item && !item.deletedAt ? item : undefined;
+  }
+
+  async getAllItems(): Promise<Item[]> {
+    // The index on `deletedAt` allows for efficient querying of non-deleted items.
+    return await db.items.where('deletedAt').equals(undefined as any).toArray();
   }
 
   async updateItem(id: string, updates: Partial<Omit<Item, 'id' | 'createdAt'>>): Promise<number> {
@@ -26,7 +33,21 @@ class DatabaseService {
     return await db.items.update(id, itemToUpdate);
   }
 
-  async deleteItem(id: string): Promise<void> {
+  async softDeleteItem(id: string): Promise<number> {
+    return await db.items.update(id, { deletedAt: new Date() });
+  }
+
+  async recoverItem(id: string): Promise<number> {
+    const item = await db.items.get(id);
+    if (item && item.deletedAt) {
+      delete item.deletedAt;
+      await db.items.put(item);
+      return 1; // Indicate success
+    }
+    return 0; // Indicate item not found or not deleted
+  }
+
+  async hardDeleteItem(id: string): Promise<void> {
     return await db.items.delete(id);
   }
 

@@ -10,4 +10,5 @@ export interface Item {
   createdAt: Date;
   updatedAt: Date;
   isPrivate: boolean;      // Item privacy
+  deletedAt?: Date;        // For soft deletion
 }
