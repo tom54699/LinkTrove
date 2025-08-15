@@ -68,8 +68,11 @@ describe('DatabaseService', () => {
 
   describe('batchCreateItems', () => {
     it('should create multiple items in a transaction', async () => {
-      const partialItems = [{ title: 'Book 1' }, { title: 'Book 2' }];
-      const result = await databaseService.batchCreateItems(partialItems as any);
+      const partialItems = [
+        { title: 'Book 1', categoryPath: [], tags: [], customFields: {}, isPrivate: false },
+        { title: 'Book 2', categoryPath: [], tags: [], customFields: {}, isPrivate: false },
+      ];
+      const result = await databaseService.batchCreateItems(partialItems);
 
       expect(result).toHaveLength(2);
       expect(result[0].id).toBeDefined();
