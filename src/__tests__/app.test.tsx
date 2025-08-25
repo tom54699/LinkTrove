@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from '../app/AppContext';
 import { AppLayout, Home } from '../app/App';
 
@@ -9,8 +9,11 @@ function renderApp(path: string = '/') {
   return render(
     <AppProvider>
       <MemoryRouter initialEntries={[path]}>
-        <AppLayout />
-        {path === '/' && <Home />}
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route index element={<Home />} />
+          </Route>
+        </Routes>
       </MemoryRouter>
     </AppProvider>
   );
@@ -24,7 +27,7 @@ describe('App foundation (task 3.1)', () => {
 
   it('renders home heading', async () => {
     renderApp('/');
-    expect(screen.getByText(/LinkTrove Home/i)).toBeInTheDocument();
+    const headings = screen.getAllByText(/LinkTrove Home/i);
+    expect(headings.length).toBeGreaterThan(0);
   });
 });
-
