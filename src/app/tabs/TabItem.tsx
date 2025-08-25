@@ -2,8 +2,30 @@ import React from 'react';
 import type { TabItemData } from './types';
 
 export const TabItem: React.FC<{ tab: TabItemData } & React.HTMLAttributes<HTMLDivElement>> = ({ tab, ...rest }) => {
+  const [dragging, setDragging] = React.useState(false);
+  const onDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    setDragging(true);
+    try {
+      e.dataTransfer.setData('application/x-linktrove-tab', JSON.stringify(tab));
+      e.dataTransfer.effectAllowed = 'move';
+    } catch (err) {
+      // ignore in non-supporting environments
+    }
+    rest.onDragStart?.(e);
+  };
+  const onDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    setDragging(false);
+    rest.onDragEnd?.(e);
+  };
   return (
-    <div className="flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-800" draggable {...rest}>
+    <div
+      className={`flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-800 ${dragging ? 'ring-2 ring-blue-500' : ''}`}
+      draggable
+      data-dragging={dragging || undefined}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      {...rest}
+    >
       {tab.favIconUrl ? (
         <img src={tab.favIconUrl} alt="" className="w-4 h-4" />
       ) : (
@@ -13,4 +35,3 @@ export const TabItem: React.FC<{ tab: TabItemData } & React.HTMLAttributes<HTMLD
     </div>
   );
 };
-
