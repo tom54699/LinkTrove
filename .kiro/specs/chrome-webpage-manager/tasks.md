@@ -8,7 +8,7 @@
   - _需求: 1.1, 1.2_
 
 - [ ] 2. 實作 Chrome Extension 核心服務
-  - [ ] 2.1 建立 Background Service Worker
+  - [x] 2.1 建立 Background Service Worker
     - 實作 background.ts 檔案處理 Chrome API 呼叫
     - 建立分頁管理服務，監聽分頁變化事件
     - 實作權限檢查和錯誤處理機制

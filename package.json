@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest",
+    "test": "vitest run",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "format": "prettier --write ."
   },
@@ -36,4 +36,3 @@
     "vitest": "^2.0.5"
   }
 }
-
