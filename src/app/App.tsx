@@ -2,6 +2,8 @@ import React from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import { useApp } from './AppContext';
 import { ThreeColumnLayout } from './layout/ThreeColumn';
+import { OpenTabsProvider } from './tabs/OpenTabsProvider';
+import { TabsPanel } from './tabs/TabsPanel';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
@@ -27,14 +29,16 @@ export const AppLayout: React.FC = () => {
 };
 
 export const Home: React.FC = () => (
-  <div>
-    <h1 className="text-xl font-semibold mb-4">LinkTrove Home</h1>
-    <ThreeColumnLayout
-      sidebar={<div>Sidebar</div>}
-      content={<div>Card Grid Placeholder</div>}
-      tabsPanel={<div>OPEN TABS</div>}
-    />
-  </div>
+  <OpenTabsProvider>
+    <div>
+      <h1 className="text-xl font-semibold mb-4">LinkTrove Home</h1>
+      <ThreeColumnLayout
+        sidebar={<div>Sidebar</div>}
+        content={<div>Card Grid Placeholder</div>}
+        tabsPanel={<TabsPanel />}
+      />
+    </div>
+  </OpenTabsProvider>
 );
 
 export const Settings: React.FC = () => (
