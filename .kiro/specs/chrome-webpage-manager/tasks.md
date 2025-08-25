@@ -1,6 +1,6 @@
 # 實作計劃
 
-- [ ] 1. 建立專案基礎架構和 Chrome Extension 配置
+- [x] 1. 建立專案基礎架構和 Chrome Extension 配置
   - 建立專案目錄結構和基本檔案
   - 配置 manifest.json 檔案，設定必要的權限和 API
   - 設定 TypeScript 和建置工具 (Vite)

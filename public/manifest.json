@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "LinkTrove",
+  "version": "0.1.0",
+  "description": "Toby-like visual tab manager: drag from Open Tabs to save as cards.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": ["tabs", "storage"],
+  "host_permissions": ["<all_urls>"]
+}
+
