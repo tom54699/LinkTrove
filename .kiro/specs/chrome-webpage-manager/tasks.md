@@ -22,11 +22,11 @@
     - _需求: 5.1, 5.2, 5.3, 5.4_
 
 - [ ] 3. 建立 React 應用程式基礎結構
-  - [ ] 3.1 設定 React + TypeScript 環境
-    - 建立 React 應用程式入口點和路由
-    - 配置 Tailwind CSS 深色主題
-    - 建立全域狀態管理 (Context API)
-    - 設定開發和生產建置流程
+  - [x] 3.1 設定 React + TypeScript 環境
+    - [x] 建立 React 應用程式入口點和路由
+    - [x] 配置 Tailwind CSS 深色主題
+    - [x] 建立全域狀態管理 (Context API)
+    - [x] 設定開發和生產建置流程
     - _需求: 1.1, 3.4, 3.5_
 
   - [ ] 3.2 實作三欄式佈局容器

@@ -1,18 +1,25 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import './index.css';
+import { AppProvider } from './app/AppContext';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { AppLayout, Home, Settings } from './app/App';
 
-function App() {
-  return (
-    <div style={{ color: '#e2e8f0', background: '#0f172a', minHeight: '100vh', padding: 24 }}>
-      <h1 style={{ margin: 0 }}>LinkTrove</h1>
-      <p>New Tab app shell. Start implementing tasks 3.x next.</p>
-    </div>
-  );
-}
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <AppLayout />,
+    children: [
+      { index: true, element: <Home /> },
+      { path: 'settings', element: <Settings /> },
+    ],
+  },
+]);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <AppProvider>
+      <RouterProvider router={router} />
+    </AppProvider>
   </React.StrictMode>
 );
-
