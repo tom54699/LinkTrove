@@ -4,6 +4,7 @@ import { useApp } from './AppContext';
 import { ThreeColumnLayout } from './layout/ThreeColumn';
 import { OpenTabsProvider } from './tabs/OpenTabsProvider';
 import { TabsPanel } from './tabs/TabsPanel';
+import { CardGrid } from './webpages/CardGrid';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
@@ -34,7 +35,7 @@ export const Home: React.FC = () => (
       <h1 className="text-xl font-semibold mb-4">LinkTrove Home</h1>
       <ThreeColumnLayout
         sidebar={<div>Sidebar</div>}
-        content={<div>Card Grid Placeholder</div>}
+        content={<CardGrid />}
         tabsPanel={<TabsPanel />}
       />
     </div>
