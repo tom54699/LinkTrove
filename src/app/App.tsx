@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import { useApp } from './AppContext';
+import { ThreeColumnLayout } from './layout/ThreeColumn';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
@@ -27,8 +28,12 @@ export const AppLayout: React.FC = () => {
 
 export const Home: React.FC = () => (
   <div>
-    <h1 className="text-xl font-semibold">LinkTrove Home</h1>
-    <p className="opacity-80">Task 3.1: routing and dark theme ready.</p>
+    <h1 className="text-xl font-semibold mb-4">LinkTrove Home</h1>
+    <ThreeColumnLayout
+      sidebar={<div>Sidebar</div>}
+      content={<div>Card Grid Placeholder</div>}
+      tabsPanel={<div>OPEN TABS</div>}
+    />
   </div>
 );
 
@@ -37,4 +42,3 @@ export const Settings: React.FC = () => (
     <h1 className="text-xl font-semibold">Settings</h1>
   </div>
 );
-
