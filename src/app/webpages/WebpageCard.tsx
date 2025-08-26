@@ -19,9 +19,7 @@ export const WebpageCard: React.FC<{
   const [isEditing, setIsEditing] = useState(false);
   const [noteValue, setNoteValue] = useState<string>(data.note ?? '');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(
-    null
-  );
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [confirming, setConfirming] = useState(false);
 
   const handleClick = () => {
