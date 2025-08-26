@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { ContextMenu } from '../ui/ContextMenu';
 
 export interface WebpageCardData {
   id: string;
@@ -13,10 +14,15 @@ export const WebpageCard: React.FC<{
   data: WebpageCardData;
   onOpen?: (url: string) => void;
   onEdit?: (id: string, note: string) => void;
-}> = ({ data, onOpen, onEdit }) => {
+  onDelete?: (id: string) => void;
+}> = ({ data, onOpen, onEdit, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [noteValue, setNoteValue] = useState<string>(data.note ?? '');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(
+    null
+  );
+  const [confirming, setConfirming] = useState(false);
 
   const handleClick = () => {
     if (isEditing) return;
@@ -34,6 +40,10 @@ export const WebpageCard: React.FC<{
       className="group cursor-pointer rounded border border-slate-700 p-3 hover:bg-slate-800 transition-colors"
       data-editing={isEditing ? 'true' : undefined}
       onClick={handleClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setMenuPos({ x: e.clientX, y: e.clientY });
+      }}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -85,6 +95,57 @@ export const WebpageCard: React.FC<{
             {data.note}
           </div>
         )
+      )}
+
+      {menuPos && (
+        <ContextMenu
+          x={menuPos.x}
+          y={menuPos.y}
+          onClose={() => setMenuPos(null)}
+          items={[
+            {
+              key: 'delete',
+              label: 'Delete',
+              onSelect: () => {
+                setMenuPos(null);
+                setConfirming(true);
+              },
+            },
+          ]}
+        />
+      )}
+
+      {confirming && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setConfirming(false)}
+        >
+          <div
+            className="rounded border border-slate-700 bg-[var(--bg)] p-4"
+            role="dialog"
+            aria-label="Confirm Delete"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 font-medium">Confirm Delete</div>
+            <div className="flex gap-2 justify-end">
+              <button
+                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                onClick={() => setConfirming(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-3 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30"
+                onClick={() => {
+                  setConfirming(false);
+                  onDelete?.(data.id);
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
