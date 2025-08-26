@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CardGrid } from '../CardGrid';
+import { FeedbackProvider } from '../../ui/feedback';
 
 function makeDT() {
   const data: Record<string, string> = {};
@@ -18,7 +19,11 @@ function makeDT() {
 
 describe('CardGrid drop zone (task 5.2)', () => {
   it('highlights on drag over and unhighlights on leave', () => {
-    render(<CardGrid />);
+    render(
+      <FeedbackProvider>
+        <CardGrid />
+      </FeedbackProvider>
+    );
     const zone = screen.getByTestId('drop-zone');
     fireEvent.dragOver(zone, { dataTransfer: makeDT() });
     expect(zone.className).toContain('ring-emerald-500');
@@ -28,7 +33,11 @@ describe('CardGrid drop zone (task 5.2)', () => {
 
   it('parses dropped tab payload and calls onDropTab', () => {
     const onDropTab = vi.fn();
-    render(<CardGrid onDropTab={onDropTab} />);
+    render(
+      <FeedbackProvider>
+        <CardGrid onDropTab={onDropTab} />
+      </FeedbackProvider>
+    );
     const zone = screen.getByTestId('drop-zone');
     const dt = makeDT();
     dt.setData(

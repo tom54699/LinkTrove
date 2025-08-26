@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CardGrid } from '../CardGrid';
+import { FeedbackProvider } from '../../ui/feedback';
 import type { WebpageCardData } from '../WebpageCard';
 
 const items: WebpageCardData[] = [
@@ -12,7 +13,11 @@ const items: WebpageCardData[] = [
 describe('Batch operations (task 8)', () => {
   it('supports selecting multiple cards and batch delete with confirmation', () => {
     const onDeleteMany = vi.fn();
-    render(<CardGrid items={items} onDeleteMany={onDeleteMany} />);
+    render(
+      <FeedbackProvider>
+        <CardGrid items={items} onDeleteMany={onDeleteMany} />
+      </FeedbackProvider>
+    );
 
     // Enter selection mode
     fireEvent.click(screen.getByRole('button', { name: /select/i }));

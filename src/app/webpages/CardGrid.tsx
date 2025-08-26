@@ -1,6 +1,7 @@
 import React from 'react';
 import { WebpageCard, type WebpageCardData } from './WebpageCard';
 import type { TabItemData } from '../tabs/types';
+import { useFeedback } from '../ui/feedback';
 
 export interface CardGridProps {
   items?: WebpageCardData[];
@@ -14,6 +15,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
   onDeleteMany,
 }) => {
   const [isOver, setIsOver] = React.useState(false);
+  const { showToast } = useFeedback();
   const [selectMode, setSelectMode] = React.useState(false);
   const [selected, setSelected] = React.useState<Record<string, boolean>>({});
 
@@ -39,7 +41,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
         onDropTab?.(tab);
       }
     } catch (err) {
-      // ignore malformed payloads
+      showToast('Failed to add tab', 'error');
     }
   };
 
