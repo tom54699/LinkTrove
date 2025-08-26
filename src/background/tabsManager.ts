@@ -12,19 +12,25 @@ export interface TabsManagerOptions {
 export function createTabsManager(opts: TabsManagerOptions) {
   const { onChange } = opts;
 
-  const created = (tab: any) => safe(() => onChange({ type: 'created', payload: tab }));
-  const removed = (tabId: number) => safe(() => onChange({ type: 'removed', payload: { tabId } }));
+  const created = (tab: any) =>
+    safe(() => onChange({ type: 'created', payload: tab }));
+  const removed = (tabId: number) =>
+    safe(() => onChange({ type: 'removed', payload: { tabId } }));
   const updated = (tabId: number, changeInfo: any) =>
     safe(() => onChange({ type: 'updated', payload: { tabId, changeInfo } }));
   const activated = (activeInfo: { tabId: number; windowId: number }) =>
     safe(() => onChange({ type: 'activated', payload: activeInfo }));
   const replaced = (addedTabId: number, removedTabId: number) =>
-    safe(() => onChange({ type: 'replaced', payload: { addedTabId, removedTabId } }));
+    safe(() =>
+      onChange({ type: 'replaced', payload: { addedTabId, removedTabId } })
+    );
 
   function addListeners() {
     chrome.tabs.onCreated.addListener(created);
     chrome.tabs.onRemoved.addListener((tabId: number) => removed(tabId));
-    chrome.tabs.onUpdated.addListener((tabId: number, changeInfo: any) => updated(tabId, changeInfo));
+    chrome.tabs.onUpdated.addListener((tabId: number, changeInfo: any) =>
+      updated(tabId, changeInfo)
+    );
     chrome.tabs.onActivated.addListener(activated);
     chrome.tabs.onReplaced.addListener(replaced);
   }
@@ -44,7 +50,10 @@ export function createTabsManager(opts: TabsManagerOptions) {
   async function hasRequiredPermissions(): Promise<boolean> {
     return new Promise((resolve) => {
       if (!chrome?.permissions?.contains) return resolve(true); // assume granted if unavailable
-      chrome.permissions.contains({ permissions: ['tabs'] }, (granted: boolean) => resolve(granted));
+      chrome.permissions.contains(
+        { permissions: ['tabs'] },
+        (granted: boolean) => resolve(granted)
+      );
     });
   }
 
@@ -55,7 +64,8 @@ export function createTabsManager(opts: TabsManagerOptions) {
     // Re-define to capture stable fns and use them in add/remove
     (removeListeners as any)._created = created;
     (removeListeners as any)._removed = (tabId: number) => removed(tabId);
-    (removeListeners as any)._updated = (tabId: number, ci: any) => updated(tabId, ci);
+    (removeListeners as any)._updated = (tabId: number, ci: any) =>
+      updated(tabId, ci);
     (removeListeners as any)._activated = activated;
     (removeListeners as any)._replaced = replaced;
 
@@ -86,4 +96,3 @@ function safe(fn: () => void) {
     console.error('tabsManager handler error', err);
   }
 }
-

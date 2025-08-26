@@ -7,7 +7,10 @@ export interface CardGridProps {
   onDropTab?: (tab: TabItemData) => void;
 }
 
-export const CardGrid: React.FC<CardGridProps> = ({ items = [], onDropTab }) => {
+export const CardGrid: React.FC<CardGridProps> = ({
+  items = [],
+  onDropTab,
+}) => {
   const [isOver, setIsOver] = React.useState(false);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -39,7 +42,9 @@ export const CardGrid: React.FC<CardGridProps> = ({ items = [], onDropTab }) => 
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`min-h-[200px] rounded border p-4 transition-all ${
-          isOver ? 'border-emerald-500 ring-2 ring-emerald-500 bg-emerald-950/20' : 'border-slate-700'
+          isOver
+            ? 'border-emerald-500 ring-2 ring-emerald-500 bg-emerald-950/20'
+            : 'border-slate-700'
         }`}
       >
         {items.length === 0 ? (
@@ -55,4 +60,3 @@ export const CardGrid: React.FC<CardGridProps> = ({ items = [], onDropTab }) => 
     </div>
   );
 };
-

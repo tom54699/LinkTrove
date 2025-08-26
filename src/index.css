@@ -6,9 +6,12 @@
 :root {
   color-scheme: dark;
 }
-html.dark, :root {
+html.dark,
+:root {
   --bg: #0f172a; /* slate-900 */
   --fg: #e2e8f0; /* slate-200 */
 }
-body { background: var(--bg); color: var(--fg); }
-
+body {
+  background: var(--bg);
+  color: var(--fg);
+}

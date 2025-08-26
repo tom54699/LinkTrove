@@ -8,4 +8,3 @@ describe('smoke', () => {
     expect(getByText('Hello')).toBeInTheDocument();
   });
 });
-

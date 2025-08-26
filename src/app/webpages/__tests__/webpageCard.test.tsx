@@ -22,7 +22,9 @@ describe('WebpageCard (task 5.1)', () => {
 
   it('invokes onOpen when clicked', () => {
     const onOpen = vi.fn();
-    const { getByTestId } = render(<WebpageCard data={sample} onOpen={onOpen} />);
+    const { getByTestId } = render(
+      <WebpageCard data={sample} onOpen={onOpen} />
+    );
     const card = getByTestId('webpage-card');
     fireEvent.click(card);
     expect(onOpen).toHaveBeenCalledWith('https://example.com');

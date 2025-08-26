@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 
-declare global { var chrome: any }
+declare global {
+  var chrome: any;
+}
 
 function mockStorageArea() {
   const store: Record<string, any> = {};
@@ -15,21 +17,34 @@ function mockStorageArea() {
       }
       cb && cb(result);
     },
-    set: (items: any, cb?: any) => { Object.assign(store, items); cb && cb(); },
-    clear: (cb?: any) => { Object.keys(store).forEach((k) => delete store[k]); cb && cb(); },
-    _dump: () => ({ ...store })
+    set: (items: any, cb?: any) => {
+      Object.assign(store, items);
+      cb && cb();
+    },
+    clear: (cb?: any) => {
+      Object.keys(store).forEach((k) => delete store[k]);
+      cb && cb();
+    },
+    _dump: () => ({ ...store }),
   };
 }
 
 beforeEach(async () => {
-  globalThis.chrome = { storage: { local: mockStorageArea(), sync: mockStorageArea() } };
+  globalThis.chrome = {
+    storage: { local: mockStorageArea(), sync: mockStorageArea() },
+  };
 });
 
 describe('WebpageService (task 6.1)', () => {
   it('adds webpage from tab and loads it', async () => {
     const { createWebpageService } = await import('../webpageService');
     const svc = createWebpageService();
-    const created = await svc.addWebpageFromTab({ id: 10, title: '  Example  ', url: 'https://ex.com', favIconUrl: '' });
+    const created = await svc.addWebpageFromTab({
+      id: 10,
+      title: '  Example  ',
+      url: 'https://ex.com',
+      favIconUrl: '',
+    });
     expect(created.title).toBe('Example');
     const list = await svc.loadWebpages();
     expect(list.length).toBe(1);
@@ -39,8 +54,16 @@ describe('WebpageService (task 6.1)', () => {
   it('prevents duplicate by url and returns existing', async () => {
     const { createWebpageService } = await import('../webpageService');
     const svc = createWebpageService();
-    const a = await svc.addWebpageFromTab({ url: 'https://dup.com', title: 'A', favIconUrl: '' });
-    const b = await svc.addWebpageFromTab({ url: 'https://dup.com', title: 'B', favIconUrl: '' });
+    const a = await svc.addWebpageFromTab({
+      url: 'https://dup.com',
+      title: 'A',
+      favIconUrl: '',
+    });
+    const b = await svc.addWebpageFromTab({
+      url: 'https://dup.com',
+      title: 'B',
+      favIconUrl: '',
+    });
     expect(a.id).toBe(b.id);
     const list = await svc.loadWebpages();
     expect(list.length).toBe(1);
@@ -49,19 +72,29 @@ describe('WebpageService (task 6.1)', () => {
   it('updates a webpage and bumps updatedAt', async () => {
     const { createWebpageService } = await import('../webpageService');
     const svc = createWebpageService();
-    const created = await svc.addWebpageFromTab({ url: 'https://upd.com', title: 'T', favIconUrl: '' });
+    const created = await svc.addWebpageFromTab({
+      url: 'https://upd.com',
+      title: 'T',
+      favIconUrl: '',
+    });
     const before = created.updatedAt;
     // ensure timestamp tick
     await new Promise((r) => setTimeout(r, 2));
     const updated = await svc.updateWebpage(created.id, { note: 'hello' });
     expect(updated.note).toBe('hello');
-    expect(new Date(updated.updatedAt).getTime()).toBeGreaterThan(new Date(before).getTime());
+    expect(new Date(updated.updatedAt).getTime()).toBeGreaterThan(
+      new Date(before).getTime()
+    );
   });
 
   it('deletes a webpage', async () => {
     const { createWebpageService } = await import('../webpageService');
     const svc = createWebpageService();
-    const created = await svc.addWebpageFromTab({ url: 'https://del.com', title: 'Del', favIconUrl: '' });
+    const created = await svc.addWebpageFromTab({
+      url: 'https://del.com',
+      title: 'Del',
+      favIconUrl: '',
+    });
     await svc.deleteWebpage(created.id);
     const list = await svc.loadWebpages();
     expect(list.length).toBe(0);
@@ -70,6 +103,8 @@ describe('WebpageService (task 6.1)', () => {
   it('rejects invalid urls', async () => {
     const { createWebpageService } = await import('../webpageService');
     const svc = createWebpageService();
-    await expect(svc.addWebpageFromTab({ url: 'javascript:alert(1)', title: 'bad' } as any)).rejects.toThrow();
+    await expect(
+      svc.addWebpageFromTab({ url: 'javascript:alert(1)', title: 'bad' } as any)
+    ).rejects.toThrow();
   });
 });

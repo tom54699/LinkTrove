@@ -11,15 +11,14 @@ export default defineConfig({
         popup: resolve(__dirname, 'public/popup.html'),
         newtab: resolve(__dirname, 'public/newtab.html'),
         // Background service worker entry (bundled to dist/background.js)
-        background: resolve(__dirname, 'src/background.ts')
+        background: resolve(__dirname, 'src/background.ts'),
       },
       output: {
         entryFileNames: (chunk) => {
           if (chunk.name === 'background') return 'background.js';
           return 'assets/[name]-[hash].js';
-        }
-      }
-    }
+        },
+      },
+    },
   },
 });
-

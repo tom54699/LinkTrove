@@ -1,4 +1,8 @@
-import { createStorageService, type StorageService, type WebpageData } from './storageService';
+import {
+  createStorageService,
+  type StorageService,
+  type WebpageData,
+} from './storageService';
 
 export interface TabLike {
   id?: number;
@@ -9,12 +13,17 @@ export interface TabLike {
 
 export interface WebpageService {
   addWebpageFromTab: (tab: TabLike) => Promise<WebpageData>;
-  updateWebpage: (id: string, updates: Partial<WebpageData>) => Promise<WebpageData>;
+  updateWebpage: (
+    id: string,
+    updates: Partial<WebpageData>
+  ) => Promise<WebpageData>;
   deleteWebpage: (id: string) => Promise<void>;
   loadWebpages: () => Promise<WebpageData[]>;
 }
 
-export function createWebpageService(deps?: { storage?: StorageService }): WebpageService {
+export function createWebpageService(deps?: {
+  storage?: StorageService;
+}): WebpageService {
   const storage = deps?.storage ?? createStorageService();
 
   function nowIso() {
@@ -24,8 +33,13 @@ export function createWebpageService(deps?: { storage?: StorageService }): Webpa
   function normalizeUrl(raw?: string): string {
     if (!raw) throw new Error('Missing URL');
     let url: URL;
-    try { url = new URL(raw); } catch { throw new Error('Invalid URL'); }
-    if (!/^https?:$/.test(url.protocol)) throw new Error('Unsupported URL protocol');
+    try {
+      url = new URL(raw);
+    } catch {
+      throw new Error('Invalid URL');
+    }
+    if (!/^https?:$/.test(url.protocol))
+      throw new Error('Unsupported URL protocol');
     return url.toString();
   }
 
@@ -33,13 +47,22 @@ export function createWebpageService(deps?: { storage?: StorageService }): Webpa
     const title = (t ?? '').trim();
     if (title) return title;
     if (fallback) {
-      try { return new URL(fallback).hostname; } catch { /* ignore */ }
+      try {
+        return new URL(fallback).hostname;
+      } catch {
+        /* ignore */
+      }
     }
     return 'Untitled';
   }
 
   function genId(url: string) {
-    return 'w_' + Math.random().toString(36).slice(2, 9) + '_' + Math.abs(hash(url)).toString(36);
+    return (
+      'w_' +
+      Math.random().toString(36).slice(2, 9) +
+      '_' +
+      Math.abs(hash(url)).toString(36)
+    );
   }
 
   function hash(s: string) {
@@ -79,7 +102,10 @@ export function createWebpageService(deps?: { storage?: StorageService }): Webpa
     return item;
   }
 
-  async function updateWebpage(id: string, updates: Partial<WebpageData>): Promise<WebpageData> {
+  async function updateWebpage(
+    id: string,
+    updates: Partial<WebpageData>
+  ): Promise<WebpageData> {
     const list = await loadWebpages();
     const idx = list.findIndex((w) => w.id === id);
     if (idx === -1) throw new Error('Not found');
@@ -87,7 +113,10 @@ export function createWebpageService(deps?: { storage?: StorageService }): Webpa
     const merged: WebpageData = {
       ...prev,
       ...updates,
-      title: updates.title !== undefined ? cleanTitle(updates.title, prev.url) : prev.title,
+      title:
+        updates.title !== undefined
+          ? cleanTitle(updates.title, prev.url)
+          : prev.title,
       updatedAt: nowIso(),
     };
     const next = [...list];
@@ -104,4 +133,3 @@ export function createWebpageService(deps?: { storage?: StorageService }): Webpa
 
   return { addWebpageFromTab, updateWebpage, deleteWebpage, loadWebpages };
 }
-

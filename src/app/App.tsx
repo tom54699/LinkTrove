@@ -12,8 +12,12 @@ export const AppLayout: React.FC = () => {
     <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       <header className="p-4 flex items-center justify-between border-b border-slate-700">
         <nav className="space-x-4">
-          <Link to="/" className="hover:underline">Home</Link>
-          <Link to="/settings" className="hover:underline">Settings</Link>
+          <Link to="/" className="hover:underline">
+            Home
+          </Link>
+          <Link to="/settings" className="hover:underline">
+            Settings
+          </Link>
         </nav>
         <button
           className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"

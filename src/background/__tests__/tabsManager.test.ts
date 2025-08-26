@@ -44,7 +44,9 @@ beforeEach(async () => {
 
 describe('tabsManager permissions', () => {
   it('returns false when tabs permission missing', async () => {
-    chrome.permissions.contains.mockImplementationOnce((q: any, cb: any) => cb(false));
+    chrome.permissions.contains.mockImplementationOnce((q: any, cb: any) =>
+      cb(false)
+    );
     const mgr = createTabsManager({ onChange: vi.fn() });
     const ok = await mgr.hasRequiredPermissions();
     expect(ok).toBe(false);
@@ -86,11 +88,25 @@ describe('tabsManager listeners', () => {
     chrome.tabs.onActivated._emit({ tabId: 4, windowId: 1 });
     chrome.tabs.onReplaced._emit(5, 6);
 
-    expect(onChange).toHaveBeenCalledWith({ type: 'created', payload: { id: 1, title: 'A' } });
-    expect(onChange).toHaveBeenCalledWith({ type: 'removed', payload: { tabId: 2 } });
-    expect(onChange).toHaveBeenCalledWith({ type: 'updated', payload: { tabId: 3, changeInfo: { status: 'complete' } } });
-    expect(onChange).toHaveBeenCalledWith({ type: 'activated', payload: { tabId: 4, windowId: 1 } });
-    expect(onChange).toHaveBeenCalledWith({ type: 'replaced', payload: { addedTabId: 5, removedTabId: 6 } });
+    expect(onChange).toHaveBeenCalledWith({
+      type: 'created',
+      payload: { id: 1, title: 'A' },
+    });
+    expect(onChange).toHaveBeenCalledWith({
+      type: 'removed',
+      payload: { tabId: 2 },
+    });
+    expect(onChange).toHaveBeenCalledWith({
+      type: 'updated',
+      payload: { tabId: 3, changeInfo: { status: 'complete' } },
+    });
+    expect(onChange).toHaveBeenCalledWith({
+      type: 'activated',
+      payload: { tabId: 4, windowId: 1 },
+    });
+    expect(onChange).toHaveBeenCalledWith({
+      type: 'replaced',
+      payload: { addedTabId: 5, removedTabId: 6 },
+    });
   });
 });
-

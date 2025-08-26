@@ -17,4 +17,3 @@ describe('ThreeColumnLayout (task 3.2)', () => {
     expect(screen.getByLabelText('Open Tabs')).toBeInTheDocument();
   });
 });
-

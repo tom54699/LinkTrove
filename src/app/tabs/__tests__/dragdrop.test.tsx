@@ -7,7 +7,9 @@ import { TabsPanel } from '../TabsPanel';
 function createDataTransfer() {
   const data: Record<string, string> = {};
   return {
-    setData: (type: string, val: string) => { data[type] = val; },
+    setData: (type: string, val: string) => {
+      data[type] = val;
+    },
     getData: (type: string) => data[type],
     dropEffect: 'move',
     effectAllowed: 'all',
@@ -20,7 +22,11 @@ function createDataTransfer() {
 describe('TabItem drag and drop (task 4.2)', () => {
   it('sets dataTransfer payload and toggles visual state', () => {
     render(
-      <OpenTabsProvider initialTabs={[{ id: 42, title: 'Drag Me', url: 'https://ex', favIconUrl: '' }]}>
+      <OpenTabsProvider
+        initialTabs={[
+          { id: 42, title: 'Drag Me', url: 'https://ex', favIconUrl: '' },
+        ]}
+      >
         <TabsPanel />
       </OpenTabsProvider>
     );
@@ -35,4 +41,3 @@ describe('TabItem drag and drop (task 4.2)', () => {
     expect(item).not.toHaveAttribute('data-dragging');
   });
 });
-

@@ -16,4 +16,3 @@ export const TabsPanel: React.FC = () => {
     </div>
   );
 };
-

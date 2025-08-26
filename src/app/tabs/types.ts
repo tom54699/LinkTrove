@@ -4,4 +4,3 @@ export interface TabItemData {
   favIconUrl?: string;
   url?: string;
 }
-

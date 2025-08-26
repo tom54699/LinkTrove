@@ -16,7 +16,12 @@ describe('TabsPanel (task 4.1)', () => {
     expect(screen.getByText(/No open tabs/i)).toBeInTheDocument();
     // Add a tab
     await act(async () => {
-      actions.addTab({ id: 1, title: 'Example', favIconUrl: '', url: 'https://example.com' });
+      actions.addTab({
+        id: 1,
+        title: 'Example',
+        favIconUrl: '',
+        url: 'https://example.com',
+      });
     });
     expect(screen.queryByText(/No open tabs/i)).not.toBeInTheDocument();
     expect(screen.getByText('Example')).toBeInTheDocument();
@@ -32,4 +37,3 @@ describe('TabsPanel (task 4.1)', () => {
     expect(screen.getByText(/No open tabs/i)).toBeInTheDocument();
   });
 });
-

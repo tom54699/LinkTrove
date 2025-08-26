@@ -52,6 +52,7 @@ Chrome Extension
 ### 1. 主要 UI 元件
 
 #### 1.1 三欄式佈局容器
+
 ```html
 <div class="app-container">
   <aside class="sidebar"><!-- 左側分類導航 --></aside>
@@ -61,6 +62,7 @@ Chrome Extension
 ```
 
 #### 1.2 左側邊欄 (Sidebar)
+
 - **功能**: 顯示收藏分類和導航
 - **元件**:
   - 分類清單
@@ -68,6 +70,7 @@ Chrome Extension
   - 設定選項
 
 #### 1.3 中間主要區域 (Content Area)
+
 - **功能**: 顯示儲存的網頁卡片網格
 - **元件**:
   - 卡片網格容器
@@ -75,6 +78,7 @@ Chrome Extension
   - 拖拉放置區域指示器
 
 #### 1.4 右側面板 (Tabs Panel)
+
 - **功能**: 顯示目前開啟的分頁
 - **元件**:
   - "OPEN TABS" 標題
@@ -84,6 +88,7 @@ Chrome Extension
 ### 2. 核心元件設計
 
 #### 2.1 WebpageCard 元件 (React)
+
 ```typescript
 interface WebpageCardProps {
   data: WebpageData;
@@ -92,12 +97,12 @@ interface WebpageCardProps {
   onClick: (url: string) => void;
 }
 
-const WebpageCard: React.FC<WebpageCardProps> = ({ 
-  data, onEdit, onDelete, onClick 
+const WebpageCard: React.FC<WebpageCardProps> = ({
+  data, onEdit, onDelete, onClick
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [note, setNote] = useState(data.note);
-  
+
   return (
     <div className="webpage-card" onClick={() => onClick(data.url)}>
       {/* 卡片內容 */}
@@ -107,6 +112,7 @@ const WebpageCard: React.FC<WebpageCardProps> = ({
 ```
 
 #### 2.2 TabItem 元件 (React)
+
 ```typescript
 interface TabItemProps {
   tab: chrome.tabs.Tab;
@@ -115,7 +121,7 @@ interface TabItemProps {
 
 const TabItem: React.FC<TabItemProps> = ({ tab, onDragStart }) => {
   return (
-    <div 
+    <div
       className="tab-item"
       draggable
       onDragStart={() => onDragStart(tab)}
@@ -128,14 +134,15 @@ const TabItem: React.FC<TabItemProps> = ({ tab, onDragStart }) => {
 ```
 
 #### 2.3 DragDropContext (React)
+
 ```typescript
 const App: React.FC = () => {
   const [draggedTab, setDraggedTab] = useState<chrome.tabs.Tab | null>(null);
-  
+
   const handleDragStart = (tab: chrome.tabs.Tab) => {
     setDraggedTab(tab);
   };
-  
+
   const handleDrop = async (event: React.DragEvent) => {
     event.preventDefault();
     if (draggedTab) {
@@ -143,7 +150,7 @@ const App: React.FC = () => {
       setDraggedTab(null);
     }
   };
-  
+
   return (
     <div className="app-container" onDrop={handleDrop}>
       {/* 應用程式內容 */}
@@ -155,6 +162,7 @@ const App: React.FC = () => {
 ## 資料模型
 
 ### 1. 網頁資料模型
+
 ```javascript
 interface WebpageData {
   id: string;           // 唯一識別碼
@@ -169,6 +177,7 @@ interface WebpageData {
 ```
 
 ### 2. 分類資料模型
+
 ```javascript
 interface CategoryData {
   id: string;           // 分類 ID
@@ -179,6 +188,7 @@ interface CategoryData {
 ```
 
 ### 3. 應用程式狀態模型
+
 ```typescript
 interface AppState {
   webpages: WebpageData[];
@@ -207,16 +217,19 @@ interface WebpageStore {
 ## 錯誤處理
 
 ### 1. Chrome API 錯誤處理
+
 - **權限錯誤**: 檢查 manifest.json 中的權限設定
 - **API 呼叫失敗**: 提供降級功能和錯誤訊息
 - **存儲空間不足**: 警告使用者並提供清理選項
 
 ### 2. 拖拉操作錯誤處理
+
 - **無效放置區域**: 視覺回饋並取消操作
 - **重複儲存**: 檢查 URL 是否已存在
 - **網路錯誤**: 處理 favicon 載入失敗
 
 ### 3. 資料完整性錯誤處理
+
 - **資料損壞**: 提供資料修復機制
 - **版本不相容**: 資料遷移策略
 - **存儲失敗**: 重試機制和本地備份
@@ -224,21 +237,25 @@ interface WebpageStore {
 ## 測試策略
 
 ### 1. 單元測試
+
 - **元件測試**: 測試各個 UI 元件的功能
 - **資料模型測試**: 驗證資料結構和操作
 - **工具函數測試**: 測試輔助函數的正確性
 
 ### 2. 整合測試
+
 - **Chrome API 整合**: 測試與 Chrome Extension API 的互動
 - **拖拉功能測試**: 驗證拖拉操作的完整流程
 - **資料持久化測試**: 測試資料儲存和載入
 
 ### 3. 使用者介面測試
+
 - **響應式設計測試**: 測試不同視窗大小的佈局
 - **互動測試**: 驗證滑鼠和鍵盤操作
 - **視覺回饋測試**: 確保適當的使用者回饋
 
 ### 4. 效能測試
+
 - **大量資料測試**: 測試處理大量網頁收藏的效能
 - **記憶體使用測試**: 監控記憶體洩漏
 - **載入時間測試**: 優化初始載入速度
@@ -246,16 +263,19 @@ interface WebpageStore {
 ## 安全性考量
 
 ### 1. 內容安全政策 (CSP)
+
 - 設定嚴格的 CSP 規則
 - 避免 inline scripts 和 eval()
 - 限制外部資源載入
 
 ### 2. 權限最小化
+
 - 只請求必要的 Chrome API 權限
 - 限制 host permissions 範圍
 - 定期審查權限需求
 
 ### 3. 資料驗證
+
 - 驗證使用者輸入
 - 清理和過濾 URL 和標題
 - 防止 XSS 攻擊
@@ -265,6 +285,7 @@ interface WebpageStore {
 ### 1. 第一版本 - Chrome 內建存儲
 
 #### 1.1 Chrome Storage API
+
 - **chrome.storage.local**: 本地存儲，無大小限制，不會同步
 - **chrome.storage.sync**: 雲端同步存儲，限制 100KB，自動跨裝置同步
 - **混合策略**: 基本資料用 sync，大量資料用 local
@@ -274,11 +295,11 @@ interface StorageService {
   // 本地存儲 (無限制)
   saveToLocal: (data: WebpageData[]) => Promise<void>;
   loadFromLocal: () => Promise<WebpageData[]>;
-  
+
   // 同步存儲 (跨裝置，但有大小限制)
   saveToSync: (data: CategoryData[]) => Promise<void>;
   loadFromSync: () => Promise<CategoryData[]>;
-  
+
   // 匯出/匯入功能
   exportData: () => Promise<string>; // JSON 格式
   importData: (jsonData: string) => Promise<void>;
@@ -286,6 +307,7 @@ interface StorageService {
 ```
 
 #### 1.2 資料分層存儲
+
 - **chrome.storage.sync**: 分類設定、使用者偏好 (< 100KB)
 - **chrome.storage.local**: 網頁收藏資料 (無限制)
 - **本地快取**: favicon 和縮圖
@@ -293,6 +315,7 @@ interface StorageService {
 ### 2. 未來版本擴展選項
 
 #### 2.1 Google Drive 整合 (v2.0)
+
 ```typescript
 interface GoogleDriveService {
   authenticate: () => Promise<void>;
@@ -303,18 +326,21 @@ interface GoogleDriveService {
 ```
 
 **優點**:
+
 - 使用者擁有完全控制權
 - 無需後端伺服器
 - 利用 Google 的基礎設施
 - 跨裝置同步
 
 **實作考量**:
+
 - 需要 Google Drive API 權限
 - OAuth 2.0 認證流程
 - 處理網路連線問題
 - 衝突解決機制
 
 #### 2.2 本地檔案系統 (v2.0)
+
 ```typescript
 interface LocalFileService {
   exportToFile: (data: AppState) => Promise<void>; // 下載 JSON 檔案
@@ -324,12 +350,14 @@ interface LocalFileService {
 ```
 
 **優點**:
+
 - 完全離線
 - 使用者完全控制
 - 無隱私疑慮
 - 可與其他工具整合
 
 #### 2.3 自建後端服務 (v3.0)
+
 ```typescript
 interface BackendService {
   register: (email: string, password: string) => Promise<User>;
@@ -341,12 +369,14 @@ interface BackendService {
 ```
 
 **優點**:
+
 - 進階功能 (分享、協作)
 - 更好的同步控制
 - 分析和統計功能
 - 跨平台支援
 
 **考量**:
+
 - 需要維護成本
 - 隱私和安全責任
 - 使用者帳號管理
@@ -354,6 +384,7 @@ interface BackendService {
 ### 3. 資料遷移策略
 
 #### 3.1 版本相容性
+
 ```typescript
 interface DataMigration {
   version: string;
@@ -363,16 +394,17 @@ interface DataMigration {
 const migrations: DataMigration[] = [
   {
     version: '1.0.0',
-    migrate: (data) => ({ ...data, version: '1.0.0' })
+    migrate: (data) => ({ ...data, version: '1.0.0' }),
   },
   {
-    version: '2.0.0', 
-    migrate: (data) => ({ ...data, googleDriveEnabled: false })
-  }
+    version: '2.0.0',
+    migrate: (data) => ({ ...data, googleDriveEnabled: false }),
+  },
 ];
 ```
 
 #### 3.2 資料備份和恢復
+
 - 自動本地備份
 - 匯出/匯入功能
 - 版本控制和回滾
@@ -381,17 +413,20 @@ const migrations: DataMigration[] = [
 ## 效能優化
 
 ### 1. 虛擬化渲染
+
 - 對大量卡片實施虛擬滾動
 - 延遲載入非可見元素
 - 優化 DOM 操作
 
 ### 2. 資料快取和壓縮
+
 - 快取 favicon 和網頁資訊
 - 實施智慧更新策略
 - 壓縮存儲資料 (gzip)
 - 增量同步機制
 
 ### 3. 事件處理優化
+
 - 使用事件委派
 - 節流和防抖動處理
 - 優化拖拉事件處理

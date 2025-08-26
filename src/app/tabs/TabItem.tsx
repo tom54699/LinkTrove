@@ -1,12 +1,17 @@
 import React from 'react';
 import type { TabItemData } from './types';
 
-export const TabItem: React.FC<{ tab: TabItemData } & React.HTMLAttributes<HTMLDivElement>> = ({ tab, ...rest }) => {
+export const TabItem: React.FC<
+  { tab: TabItemData } & React.HTMLAttributes<HTMLDivElement>
+> = ({ tab, ...rest }) => {
   const [dragging, setDragging] = React.useState(false);
   const onDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     setDragging(true);
     try {
-      e.dataTransfer.setData('application/x-linktrove-tab', JSON.stringify(tab));
+      e.dataTransfer.setData(
+        'application/x-linktrove-tab',
+        JSON.stringify(tab)
+      );
       e.dataTransfer.effectAllowed = 'move';
     } catch (err) {
       // ignore in non-supporting environments
@@ -31,7 +36,9 @@ export const TabItem: React.FC<{ tab: TabItemData } & React.HTMLAttributes<HTMLD
       ) : (
         <div className="w-4 h-4 bg-slate-600 rounded" />
       )}
-      <span className="truncate" title={tab.title || tab.url}>{tab.title || tab.url || 'Untitled'}</span>
+      <span className="truncate" title={tab.title || tab.url}>
+        {tab.title || tab.url || 'Untitled'}
+      </span>
     </div>
   );
 };

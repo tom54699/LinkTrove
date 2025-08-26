@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-declare global { var chrome: any }
+declare global {
+  var chrome: any;
+}
 
 function mockStorageArea() {
   const store: Record<string, any> = {};
@@ -16,9 +18,15 @@ function mockStorageArea() {
       }
       cb && cb(result);
     }),
-    set: vi.fn((items: any, cb?: any) => { Object.assign(store, items); cb && cb(); }),
-    clear: vi.fn((cb?: any) => { Object.keys(store).forEach((k) => delete store[k]); cb && cb(); }),
-    _dump: () => ({ ...store })
+    set: vi.fn((items: any, cb?: any) => {
+      Object.assign(store, items);
+      cb && cb();
+    }),
+    clear: vi.fn((cb?: any) => {
+      Object.keys(store).forEach((k) => delete store[k]);
+      cb && cb();
+    }),
+    _dump: () => ({ ...store }),
   };
 }
 
@@ -36,7 +44,16 @@ describe('storageService', () => {
     const { createStorageService } = await import('../storageService');
     const s = createStorageService();
     const pages = [
-      { id: '1', title: 'A', url: 'https://a', favicon: '', note: '', category: 'default', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      {
+        id: '1',
+        title: 'A',
+        url: 'https://a',
+        favicon: '',
+        note: '',
+        category: 'default',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
     ];
     await s.saveToLocal(pages);
     const loaded = await s.loadFromLocal();
@@ -47,9 +64,7 @@ describe('storageService', () => {
   it('saves and loads categories in sync', async () => {
     const { createStorageService } = await import('../storageService');
     const s = createStorageService();
-    const cats = [
-      { id: 'c1', name: 'Default', color: '#fff', order: 0 },
-    ];
+    const cats = [{ id: 'c1', name: 'Default', color: '#fff', order: 0 }];
     await s.saveToSync(cats);
     const loaded = await s.loadFromSync();
     expect(loaded).toEqual(cats);
@@ -59,9 +74,18 @@ describe('storageService', () => {
     const { createStorageService } = await import('../storageService');
     const s = createStorageService();
     const pages = [
-      { id: '1', title: 'A', url: 'https://a', favicon: '', note: '', category: 'default', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      {
+        id: '1',
+        title: 'A',
+        url: 'https://a',
+        favicon: '',
+        note: '',
+        category: 'default',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
     ];
-    const cats = [ { id: 'c1', name: 'Default', color: '#fff', order: 0 } ];
+    const cats = [{ id: 'c1', name: 'Default', color: '#fff', order: 0 }];
     await s.saveToLocal([]);
     await s.saveToSync([]);
     const json = JSON.stringify({ webpages: pages, categories: cats });
@@ -78,4 +102,3 @@ describe('storageService', () => {
     await expect(s.importData('{"webpages":[{"bad":true}]}')).rejects.toThrow();
   });
 });
-

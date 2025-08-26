@@ -9,7 +9,9 @@ interface AppState {
 
 const Ctx = createContext<AppState | null>(null);
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [theme, setTheme] = useState<Theme>('dark');
 
   // Apply theme class to <html>
@@ -28,4 +30,3 @@ export function useApp() {
   if (!v) throw new Error('AppProvider missing');
   return v;
 }
-

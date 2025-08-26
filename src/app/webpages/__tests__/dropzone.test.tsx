@@ -31,9 +31,15 @@ describe('CardGrid drop zone (task 5.2)', () => {
     render(<CardGrid onDropTab={onDropTab} />);
     const zone = screen.getByTestId('drop-zone');
     const dt = makeDT();
-    dt.setData('application/x-linktrove-tab', JSON.stringify({ id: 7, title: 'T', url: 'https://t' }));
+    dt.setData(
+      'application/x-linktrove-tab',
+      JSON.stringify({ id: 7, title: 'T', url: 'https://t' })
+    );
     fireEvent.drop(zone, { dataTransfer: dt });
-    expect(onDropTab).toHaveBeenCalledWith({ id: 7, title: 'T', url: 'https://t' });
+    expect(onDropTab).toHaveBeenCalledWith({
+      id: 7,
+      title: 'T',
+      url: 'https://t',
+    });
   });
 });
-

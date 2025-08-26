@@ -30,15 +30,26 @@ export function createStorageService(): StorageService {
   const sync = chrome.storage.sync;
 
   function isWebpageData(x: any): x is WebpageData {
-    return x && typeof x.id === 'string' && typeof x.title === 'string' && typeof x.url === 'string';
+    return (
+      x &&
+      typeof x.id === 'string' &&
+      typeof x.title === 'string' &&
+      typeof x.url === 'string'
+    );
   }
   function isCategoryData(x: any): x is CategoryData {
-    return x && typeof x.id === 'string' && typeof x.name === 'string' && typeof x.order === 'number';
+    return (
+      x &&
+      typeof x.id === 'string' &&
+      typeof x.name === 'string' &&
+      typeof x.order === 'number'
+    );
   }
 
   const saveToLocal = (data: WebpageData[]) =>
     new Promise<void>((resolve, reject) => {
-      if (!Array.isArray(data) || !data.every(isWebpageData)) return reject(new Error('Invalid webpages'));
+      if (!Array.isArray(data) || !data.every(isWebpageData))
+        return reject(new Error('Invalid webpages'));
       local.set({ webpages: data }, () => resolve());
     });
 
@@ -51,7 +62,8 @@ export function createStorageService(): StorageService {
 
   const saveToSync = (data: CategoryData[]) =>
     new Promise<void>((resolve, reject) => {
-      if (!Array.isArray(data) || !data.every(isCategoryData)) return reject(new Error('Invalid categories'));
+      if (!Array.isArray(data) || !data.every(isCategoryData))
+        return reject(new Error('Invalid categories'));
       sync.set({ categories: data }, () => resolve());
     });
 
@@ -63,7 +75,10 @@ export function createStorageService(): StorageService {
     });
 
   const exportData = async () => {
-    const [webpages, categories] = await Promise.all([loadFromLocal(), loadFromSync()]);
+    const [webpages, categories] = await Promise.all([
+      loadFromLocal(),
+      loadFromSync(),
+    ]);
     return JSON.stringify({ webpages, categories });
   };
 
@@ -76,11 +91,19 @@ export function createStorageService(): StorageService {
     }
     const pages = parsed?.webpages ?? [];
     const cats = parsed?.categories ?? [];
-    if (!Array.isArray(pages) || !pages.every(isWebpageData)) throw new Error('Invalid webpages payload');
-    if (!Array.isArray(cats) || !cats.every(isCategoryData)) throw new Error('Invalid categories payload');
+    if (!Array.isArray(pages) || !pages.every(isWebpageData))
+      throw new Error('Invalid webpages payload');
+    if (!Array.isArray(cats) || !cats.every(isCategoryData))
+      throw new Error('Invalid categories payload');
     await Promise.all([saveToLocal(pages), saveToSync(cats)]);
   };
 
-  return { saveToLocal, loadFromLocal, saveToSync, loadFromSync, exportData, importData };
+  return {
+    saveToLocal,
+    loadFromLocal,
+    saveToSync,
+    loadFromSync,
+    exportData,
+    importData,
+  };
 }
-
