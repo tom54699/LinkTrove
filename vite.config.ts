@@ -6,6 +6,9 @@ import { resolve } from 'node:path';
 export default defineConfig({
   plugins: [react()],
   build: {
+    target: 'es2019',
+    sourcemap: false,
+    cssCodeSplit: true,
     rollupOptions: {
       input: {
         popup: resolve(__dirname, 'public/popup.html'),
@@ -17,6 +20,9 @@ export default defineConfig({
         entryFileNames: (chunk) => {
           if (chunk.name === 'background') return 'background.js';
           return 'assets/[name]-[hash].js';
+        },
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
         },
       },
     },
