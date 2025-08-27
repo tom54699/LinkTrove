@@ -1,8 +1,10 @@
 import React from 'react';
 import { useCategories } from './categories';
+import { useWebpages } from '../webpages/WebpagesProvider';
 
 export const Sidebar: React.FC = () => {
   const { categories, selectedId, setCurrentCategory } = useCategories();
+  const { actions } = useWebpages();
 
   return (
     <div className="text-[13px]">
@@ -19,6 +21,14 @@ export const Sidebar: React.FC = () => {
             `}
             data-active={active ? 'true' : undefined}
             onClick={() => setCurrentCategory(c.id)}
+            onDragOver={(e) => { e.preventDefault(); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              try {
+                const id = e.dataTransfer.getData('application/x-linktrove-webpage');
+                if (id) actions.updateCategory(id, c.id);
+              } catch {}
+            }}
           >
             <span className="inline-block w-2 h-2 mr-2 rounded bg-slate-400" />
             {c.name}

@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { ContextMenu } from '../ui/ContextMenu';
+import { useCategories } from '../sidebar/categories';
 
 export interface WebpageCardData {
   id: string;
@@ -27,7 +29,8 @@ export const WebpageCard: React.FC<{
   const [titleValue, setTitleValue] = useState<string>(data.title);
   const [urlValue, setUrlValue] = useState<string>(data.url);
   const [urlError, setUrlError] = useState<string>('');
-  const [categoryValue, setCategoryValue] = useState<string>(data.category || 'default');
+  const [categoryValue] = useState<string>(data.category || 'default');
+  const [moveMenuPos, setMoveMenuPos] = useState<{ x: number; y: number } | null>(null);
 
   const handleClick = () => {
     if (isEditing) return;
@@ -117,6 +120,9 @@ export const WebpageCard: React.FC<{
         <button aria-label="Edit" title="Edit note" onClick={() => setShowModal(true)} className="toby-icon">
           <img src="/icons/toby/OrgGroupModal6.svg" alt="" width={12} height={12} />
         </button>
+        <button aria-label="Move" title="Move to collection" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setMoveMenuPos({ x: r.left, y: r.bottom + 4 }); }} className="toby-icon">
+          <img src="/icons/toby/ListSectionSort1.svg" alt="" width={12} height={12} />
+        </button>
         <button aria-label="Remove" title="Delete" onClick={() => setConfirming(true)} className="toby-icon delete">
           <img src="/icons/toby/OrgGroupModal5.svg" alt="" width={12} height={12} />
         </button>
@@ -162,10 +168,7 @@ export const WebpageCard: React.FC<{
                 <label className="block text-sm mb-1">Title</label>
                 <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={titleValue} onChange={(e)=>setTitleValue(e.target.value)} />
               </div>
-              <div>
-                <label className="block text-sm mb-1">Category</label>
-                <CategorySelect value={categoryValue} onChange={setCategoryValue} />
-              </div>
+              {/* Category selection removed; use Move action or drag to sidebar to change category */}
               <div>
                 <label className="block text-sm mb-1">URL</label>
                 <input
@@ -208,9 +211,7 @@ export const WebpageCard: React.FC<{
                   if (normalized.value && normalized.value !== data.url) {
                     onUpdateUrl?.(data.id, normalized.value);
                   }
-                  if (categoryValue && categoryValue !== (data.category || 'default')) {
-                    onUpdateCategory?.(data.id, categoryValue);
-                  }
+                  // Category change is handled via Move action or dragging to sidebar
                   onUpdateTitle?.(data.id, titleValue.trim());
                   onEdit?.(data.id, noteValue);
                   setShowModal(false);
@@ -223,7 +224,21 @@ export const WebpageCard: React.FC<{
         </div>
       )}
 
-      
+      {moveMenuPos && (
+        <ContextMenu
+          x={moveMenuPos.x}
+          y={moveMenuPos.y}
+          onClose={() => setMoveMenuPos(null)}
+          items={useCategories().categories.map((c) => ({
+            key: c.id,
+            label: c.name,
+            onSelect: () => {
+              setMoveMenuPos(null);
+              if (c.id !== (data as any).category) onUpdateCategory?.(data.id, c.id);
+            },
+          }))}
+        />
+      )}
 
       {confirming && (
         <div
