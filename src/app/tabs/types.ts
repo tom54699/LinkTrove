@@ -3,4 +3,6 @@ export interface TabItemData {
   title?: string;
   favIconUrl?: string;
   url?: string;
+  index?: number;
+  windowId?: number;
 }

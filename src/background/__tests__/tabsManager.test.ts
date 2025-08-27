@@ -34,6 +34,9 @@ beforeEach(async () => {
       onUpdated: createEvent<[number, any, any]>(),
       onActivated: createEvent<[any]>(),
       onReplaced: createEvent<[number, number]>(),
+      onMoved: createEvent<[number, { windowId: number; fromIndex: number; toIndex: number }]>(),
+      onAttached: createEvent<[number, { newWindowId: number; newPosition: number }]>(),
+      onDetached: createEvent<[number, { oldWindowId: number; oldPosition: number }]>(),
     },
   };
 
@@ -68,6 +71,9 @@ describe('tabsManager listeners', () => {
     expect(chrome.tabs.onUpdated._count()).toBe(1);
     expect(chrome.tabs.onActivated._count()).toBe(1);
     expect(chrome.tabs.onReplaced._count()).toBe(1);
+    expect(chrome.tabs.onMoved._count()).toBe(1);
+    expect(chrome.tabs.onAttached._count()).toBe(1);
+    expect(chrome.tabs.onDetached._count()).toBe(1);
 
     mgr.stop();
     expect(chrome.tabs.onCreated._count()).toBe(0);
@@ -75,6 +81,9 @@ describe('tabsManager listeners', () => {
     expect(chrome.tabs.onUpdated._count()).toBe(0);
     expect(chrome.tabs.onActivated._count()).toBe(0);
     expect(chrome.tabs.onReplaced._count()).toBe(0);
+    expect(chrome.tabs.onMoved._count()).toBe(0);
+    expect(chrome.tabs.onAttached._count()).toBe(0);
+    expect(chrome.tabs.onDetached._count()).toBe(0);
   });
 
   it('emits onChange for tab events', async () => {
@@ -87,6 +96,9 @@ describe('tabsManager listeners', () => {
     chrome.tabs.onUpdated._emit(3, { status: 'complete' }, { id: 3 });
     chrome.tabs.onActivated._emit({ tabId: 4, windowId: 1 });
     chrome.tabs.onReplaced._emit(5, 6);
+    chrome.tabs.onMoved._emit(7, { windowId: 1, fromIndex: 1, toIndex: 3 });
+    chrome.tabs.onAttached._emit(8, { newWindowId: 2, newPosition: 0 });
+    chrome.tabs.onDetached._emit(9, { oldWindowId: 1, oldPosition: 2 });
 
     expect(onChange).toHaveBeenCalledWith({
       type: 'created',
@@ -107,6 +119,18 @@ describe('tabsManager listeners', () => {
     expect(onChange).toHaveBeenCalledWith({
       type: 'replaced',
       payload: { addedTabId: 5, removedTabId: 6 },
+    });
+    expect(onChange).toHaveBeenCalledWith({
+      type: 'moved',
+      payload: { tabId: 7, windowId: 1, fromIndex: 1, toIndex: 3 },
+    });
+    expect(onChange).toHaveBeenCalledWith({
+      type: 'attached',
+      payload: { tabId: 8, newWindowId: 2, newPosition: 0 },
+    });
+    expect(onChange).toHaveBeenCalledWith({
+      type: 'detached',
+      payload: { tabId: 9, oldWindowId: 1, oldPosition: 2 },
     });
   });
 });

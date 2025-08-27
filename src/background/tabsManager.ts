@@ -3,7 +3,10 @@ type TabEvent =
   | { type: 'removed'; payload: { tabId: number } }
   | { type: 'updated'; payload: { tabId: number; changeInfo: any } }
   | { type: 'activated'; payload: { tabId: number; windowId: number } }
-  | { type: 'replaced'; payload: { addedTabId: number; removedTabId: number } };
+  | { type: 'replaced'; payload: { addedTabId: number; removedTabId: number } }
+  | { type: 'moved'; payload: { tabId: number; fromIndex: number; toIndex: number; windowId: number } }
+  | { type: 'attached'; payload: { tabId: number; newWindowId: number; newPosition: number } }
+  | { type: 'detached'; payload: { tabId: number; oldWindowId: number; oldPosition: number } };
 
 export interface TabsManagerOptions {
   onChange: (event: TabEvent) => void;
@@ -24,6 +27,12 @@ export function createTabsManager(opts: TabsManagerOptions) {
     safe(() =>
       onChange({ type: 'replaced', payload: { addedTabId, removedTabId } })
     );
+  const moved = (tabId: number, moveInfo: { windowId: number; fromIndex: number; toIndex: number }) =>
+    safe(() => onChange({ type: 'moved', payload: { tabId, ...moveInfo } }));
+  const attached = (tabId: number, attachInfo: { newWindowId: number; newPosition: number }) =>
+    safe(() => onChange({ type: 'attached', payload: { tabId, ...attachInfo } }));
+  const detached = (tabId: number, detachInfo: { oldWindowId: number; oldPosition: number }) =>
+    safe(() => onChange({ type: 'detached', payload: { tabId, ...detachInfo } }));
 
   function addListeners() {
     chrome.tabs.onCreated.addListener(created);
@@ -33,6 +42,9 @@ export function createTabsManager(opts: TabsManagerOptions) {
     );
     chrome.tabs.onActivated.addListener(activated);
     chrome.tabs.onReplaced.addListener(replaced);
+    chrome.tabs.onMoved.addListener(moved as any);
+    chrome.tabs.onAttached.addListener(attached as any);
+    chrome.tabs.onDetached.addListener(detached as any);
   }
 
   function removeListeners() {
@@ -68,12 +80,18 @@ export function createTabsManager(opts: TabsManagerOptions) {
       updated(tabId, ci);
     (removeListeners as any)._activated = activated;
     (removeListeners as any)._replaced = replaced;
+    (removeListeners as any)._moved = (tabId: number, mi: any) => moved(tabId, mi);
+    (removeListeners as any)._attached = (tabId: number, ai: any) => attached(tabId, ai);
+    (removeListeners as any)._detached = (tabId: number, di: any) => detached(tabId, di);
 
     chrome.tabs.onCreated.addListener((removeListeners as any)._created);
     chrome.tabs.onRemoved.addListener((removeListeners as any)._removed);
     chrome.tabs.onUpdated.addListener((removeListeners as any)._updated);
     chrome.tabs.onActivated.addListener((removeListeners as any)._activated);
     chrome.tabs.onReplaced.addListener((removeListeners as any)._replaced);
+    chrome.tabs.onMoved.addListener((removeListeners as any)._moved);
+    chrome.tabs.onAttached.addListener((removeListeners as any)._attached);
+    chrome.tabs.onDetached.addListener((removeListeners as any)._detached);
   }
 
   function stop() {
@@ -83,6 +101,9 @@ export function createTabsManager(opts: TabsManagerOptions) {
     if (rl._updated) chrome.tabs.onUpdated.removeListener(rl._updated);
     if (rl._activated) chrome.tabs.onActivated.removeListener(rl._activated);
     if (rl._replaced) chrome.tabs.onReplaced.removeListener(rl._replaced);
+    if (rl._moved) chrome.tabs.onMoved.removeListener(rl._moved);
+    if (rl._attached) chrome.tabs.onAttached.removeListener(rl._attached);
+    if (rl._detached) chrome.tabs.onDetached.removeListener(rl._detached);
   }
 
   return { start, stop, hasRequiredPermissions };
