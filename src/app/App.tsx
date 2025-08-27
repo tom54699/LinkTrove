@@ -3,6 +3,7 @@ import { Link, Outlet } from 'react-router-dom';
 import { useApp } from './AppContext';
 import { ThreeColumnLayout } from './layout/ThreeColumn';
 import { OpenTabsProvider } from './tabs/OpenTabsProvider';
+import { TemplatesProvider } from './templates/TemplatesProvider';
 import { TabsPanel } from './tabs/TabsPanel';
 import { CardGrid } from './webpages/CardGrid';
 import { CategoriesProvider, useCategories } from './sidebar/categories';
@@ -16,6 +17,7 @@ import {
 import { createStorageService } from '../background/storageService';
 import { useFeedback } from './ui/feedback';
 import { WebpagesProvider, useWebpages } from './webpages/WebpagesProvider';
+import { TemplatesManager } from './templates/TemplatesManager';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
@@ -51,9 +53,11 @@ export const AppLayout: React.FC = () => {
 export const Home: React.FC = () => (
   <OpenTabsProvider>
     <CategoriesProvider>
-      <WebpagesProvider>
-        <HomeInner />
-      </WebpagesProvider>
+      <TemplatesProvider>
+        <WebpagesProvider>
+          <HomeInner />
+        </WebpagesProvider>
+      </TemplatesProvider>
     </CategoriesProvider>
   </OpenTabsProvider>
 );
@@ -184,7 +188,7 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
   return (
     <div>
       <h1 className="text-xl font-semibold mb-4">Settings</h1>
-      <div className="space-y-4">
+      <div className="space-y-8">
         <div>
           <button
             className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
@@ -240,6 +244,7 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
             </button>
           </div>
         </div>
+        <TemplatesManager />
       </div>
     </div>
   );

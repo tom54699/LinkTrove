@@ -6,6 +6,7 @@ export interface Category {
   name: string;
   color: string;
   order: number;
+  defaultTemplateId?: string;
 }
 
 interface CategoriesState {
@@ -16,6 +17,7 @@ interface CategoriesState {
     addCategory: (name: string, color?: string) => Promise<Category>;
     renameCategory: (id: string, name: string) => Promise<void>;
     deleteCategory: (id: string) => Promise<void>;
+    setDefaultTemplate: (id: string, templateId?: string) => Promise<void>;
   };
 }
 
@@ -71,6 +73,11 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setCategories(next);
         try { await svc?.saveToSync(next as any); } catch {}
         if (selectedId === id) setSelectedId(next[0].id);
+      },
+      async setDefaultTemplate(id: string, templateId?: string) {
+        const list = categories.map((c) => c.id === id ? { ...c, defaultTemplateId: templateId } : c);
+        setCategories(list);
+        try { await svc?.saveToSync(list as any); } catch {}
       },
     }),
     [categories, svc, selectedId]

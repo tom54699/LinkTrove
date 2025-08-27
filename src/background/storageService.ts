@@ -5,6 +5,7 @@ export interface WebpageData {
   favicon: string;
   note: string;
   category: string;
+  meta?: Record<string, string>;
   createdAt: string; // ISO string for storage
   updatedAt: string;
 }
@@ -14,6 +15,21 @@ export interface CategoryData {
   name: string;
   color: string;
   order: number;
+  defaultTemplateId?: string;
+}
+
+export interface TemplateField {
+  key: string; // e.g. author
+  label: string; // 顯示名稱
+  type: 'text'; // 簡化：目前只支援文字
+  required?: boolean;
+  defaultValue?: string;
+}
+
+export interface TemplateData {
+  id: string;
+  name: string;
+  fields: TemplateField[];
 }
 
 export interface StorageService {
@@ -21,6 +37,8 @@ export interface StorageService {
   loadFromLocal: () => Promise<WebpageData[]>;
   saveToSync: (data: CategoryData[]) => Promise<void>;
   loadFromSync: () => Promise<CategoryData[]>;
+  saveTemplates: (data: TemplateData[]) => Promise<void>;
+  loadTemplates: () => Promise<TemplateData[]>;
   exportData: () => Promise<string>;
   importData: (jsonData: string) => Promise<void>;
 }
@@ -44,6 +62,12 @@ export function createStorageService(): StorageService {
       typeof x.name === 'string' &&
       typeof x.order === 'number'
     );
+  }
+  function isTemplateField(x: any): x is TemplateField {
+    return x && typeof x.key === 'string' && typeof x.label === 'string';
+  }
+  function isTemplateData(x: any): x is TemplateData {
+    return x && typeof x.id === 'string' && typeof x.name === 'string' && Array.isArray(x.fields) && x.fields.every(isTemplateField);
   }
 
   const saveToLocal = (data: WebpageData[]) =>
@@ -74,12 +98,27 @@ export function createStorageService(): StorageService {
       });
     });
 
+  const saveTemplates = (data: TemplateData[]) =>
+    new Promise<void>((resolve, reject) => {
+      if (!Array.isArray(data) || !data.every(isTemplateData))
+        return reject(new Error('Invalid templates'));
+      sync.set({ templates: data }, () => resolve());
+    });
+
+  const loadTemplates = () =>
+    new Promise<TemplateData[]>((resolve) => {
+      sync.get({ templates: [] }, ({ templates }: any) => {
+        resolve(Array.isArray(templates) ? templates : []);
+      });
+    });
+
   const exportData = async () => {
-    const [webpages, categories] = await Promise.all([
+    const [webpages, categories, templates] = await Promise.all([
       loadFromLocal(),
       loadFromSync(),
+      loadTemplates(),
     ]);
-    return JSON.stringify({ webpages, categories });
+    return JSON.stringify({ webpages, categories, templates });
   };
 
   const importData = async (jsonData: string) => {
@@ -91,11 +130,14 @@ export function createStorageService(): StorageService {
     }
     const pages = parsed?.webpages ?? [];
     const cats = parsed?.categories ?? [];
+    const tmpls = parsed?.templates ?? [];
     if (!Array.isArray(pages) || !pages.every(isWebpageData))
       throw new Error('Invalid webpages payload');
     if (!Array.isArray(cats) || !cats.every(isCategoryData))
       throw new Error('Invalid categories payload');
-    await Promise.all([saveToLocal(pages), saveToSync(cats)]);
+    if (!Array.isArray(tmpls) || !tmpls.every(isTemplateData))
+      throw new Error('Invalid templates payload');
+    await Promise.all([saveToLocal(pages), saveToSync(cats), saveTemplates(tmpls)]);
   };
 
   return {
@@ -103,6 +145,8 @@ export function createStorageService(): StorageService {
     loadFromLocal,
     saveToSync,
     loadFromSync,
+    saveTemplates,
+    loadTemplates,
     exportData,
     importData,
   };

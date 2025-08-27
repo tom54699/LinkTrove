@@ -15,6 +15,7 @@ export interface CardGridProps {
   onUpdateTitle?: (id: string, title: string) => void;
   onUpdateUrl?: (id: string, url: string) => void;
   onUpdateCategory?: (id: string, category: string) => void;
+  onUpdateMeta?: (id: string, meta: Record<string, string>) => void;
 }
 
 export const CardGrid: React.FC<CardGridProps> = ({
@@ -29,6 +30,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
   onUpdateTitle,
   onUpdateUrl,
   onUpdateCategory,
+  onUpdateMeta,
 }) => {
   const [isOver, setIsOver] = React.useState(false);
   const { showToast } = useFeedback();
@@ -160,6 +162,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
                   onUpdateTitle={onUpdateTitle}
                   onUpdateUrl={onUpdateUrl}
                   onUpdateCategory={onUpdateCategory}
+                  onUpdateMeta={onUpdateMeta}
                 />
               </div>
             ))}

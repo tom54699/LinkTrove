@@ -17,6 +17,7 @@ interface CtxValue {
     updateTitle: (id: string, title: string) => Promise<void>;
     updateUrl: (id: string, url: string) => Promise<void>;
     updateCategory: (id: string, category: string) => Promise<void>;
+    updateMeta: (id: string, meta: Record<string, string>) => Promise<void>;
     reorder: (fromId: string, toId: string) => void;
   };
 }
@@ -31,6 +32,7 @@ function toCard(d: any): WebpageCardData {
     favicon: d.favicon,
     note: d.note,
     category: d.category,
+    meta: d.meta,
   };
 }
 
@@ -147,7 +149,31 @@ export const WebpagesProvider: React.FC<{
 
   const updateCategory = React.useCallback(
     async (id: string, category: string) => {
-      const updated = await service.updateWebpage(id, { category });
+      let updates: any = { category };
+      try {
+        const { createStorageService } = await import('../../background/storageService');
+        const s = createStorageService();
+        const [cats, tmpls] = await Promise.all([s.loadFromSync(), (s as any).loadTemplates()]);
+        const cat = (cats as any[]).find((c) => c.id === category);
+        const tpl = cat?.defaultTemplateId ? (tmpls as any[]).find((t) => t.id === cat.defaultTemplateId) : null;
+        if (tpl) {
+          const current = items.find((i) => i.id === id)?.meta || {};
+          const nextMeta: Record<string, string> = { ...current };
+          for (const f of (tpl.fields || []) as any[]) {
+            if (nextMeta[f.key] == null && f.defaultValue != null) nextMeta[f.key] = f.defaultValue as string;
+          }
+          updates.meta = nextMeta;
+        }
+      } catch {}
+      const updated = await service.updateWebpage(id, updates);
+      setItems((prev) => prev.map((p) => (p.id === id ? toCard(updated) : p)));
+    },
+    [service]
+  );
+
+  const updateMeta = React.useCallback(
+    async (id: string, meta: Record<string, string>) => {
+      const updated = await service.updateWebpage(id, { meta });
       setItems((prev) => prev.map((p) => (p.id === id ? toCard(updated) : p)));
     },
     [service]
@@ -169,9 +195,9 @@ export const WebpagesProvider: React.FC<{
   const value = React.useMemo<CtxValue>(
     () => ({
       items,
-      actions: { load, addFromTab, deleteMany, deleteOne, updateNote, updateTitle, updateUrl, updateCategory, reorder },
+      actions: { load, addFromTab, deleteMany, deleteOne, updateNote, updateTitle, updateUrl, updateCategory, updateMeta, reorder },
     }),
-    [items, load, addFromTab, deleteMany, deleteOne, updateNote, updateTitle, updateUrl, updateCategory, reorder]
+    [items, load, addFromTab, deleteMany, deleteOne, updateNote, updateTitle, updateUrl, updateCategory, updateMeta, reorder]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

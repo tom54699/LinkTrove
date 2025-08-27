@@ -10,6 +10,7 @@ export interface WebpageCardData {
   note?: string;
   favicon?: string;
   category?: string;
+  meta?: Record<string, string>;
 }
 
 export const WebpageCard: React.FC<{
@@ -20,7 +21,8 @@ export const WebpageCard: React.FC<{
   onUpdateTitle?: (id: string, title: string) => void;
   onUpdateUrl?: (id: string, url: string) => void;
   onUpdateCategory?: (id: string, category: string) => void;
-}> = ({ data, onOpen, onEdit, onDelete, onUpdateTitle, onUpdateUrl, onUpdateCategory }) => {
+  onUpdateMeta?: (id: string, meta: Record<string, string>) => void;
+}> = ({ data, onOpen, onEdit, onDelete, onUpdateTitle, onUpdateUrl, onUpdateCategory, onUpdateMeta }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [noteValue, setNoteValue] = useState<string>(data.note ?? '');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -30,6 +32,7 @@ export const WebpageCard: React.FC<{
   const [urlValue, setUrlValue] = useState<string>(data.url);
   const [urlError, setUrlError] = useState<string>('');
   const [categoryValue] = useState<string>(data.category || 'default');
+  const [metaValue, setMetaValue] = useState<Record<string, string>>({ ...(data.meta || {}) });
   const [moveMenuPos, setMoveMenuPos] = useState<{ x: number; y: number } | null>(null);
 
   const handleClick = () => {
@@ -169,6 +172,7 @@ export const WebpageCard: React.FC<{
                 <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={titleValue} onChange={(e)=>setTitleValue(e.target.value)} />
               </div>
               {/* Category selection removed; use Move action or drag to sidebar to change category */}
+              <TemplateFields categoryId={categoryValue} meta={metaValue} onChange={setMetaValue} />
               <div>
                 <label className="block text-sm mb-1">URL</label>
                 <input
@@ -214,6 +218,7 @@ export const WebpageCard: React.FC<{
                   // Category change is handled via Move action or dragging to sidebar
                   onUpdateTitle?.(data.id, titleValue.trim());
                   onEdit?.(data.id, noteValue);
+                  onUpdateMeta?.(data.id, metaValue);
                   setShowModal(false);
                 }}
               >
