@@ -7,12 +7,28 @@ export interface CardGridProps {
   items?: WebpageCardData[];
   onDropTab?: (tab: TabItemData) => void;
   onDeleteMany?: (ids: string[]) => void;
+  onDeleteOne?: (id: string) => void;
+  onEditNote?: (id: string, note: string) => void;
+  density?: 'compact' | 'cozy' | 'roomy';
+  collapsed?: boolean;
+  onReorder?: (fromId: string, toId: string) => void;
+  onUpdateTitle?: (id: string, title: string) => void;
+  onUpdateUrl?: (id: string, url: string) => void;
+  onUpdateCategory?: (id: string, category: string) => void;
 }
 
 export const CardGrid: React.FC<CardGridProps> = ({
   items = [],
   onDropTab,
   onDeleteMany,
+  onDeleteOne,
+  onEditNote,
+  density = 'cozy',
+  collapsed = false,
+  onReorder,
+  onUpdateTitle,
+  onUpdateUrl,
+  onUpdateCategory,
 }) => {
   const [isOver, setIsOver] = React.useState(false);
   const { showToast } = useFeedback();
@@ -25,6 +41,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
   const clearSelection = () => setSelected({});
 
   const [confirming, setConfirming] = React.useState(false);
+  const [overId, setOverId] = React.useState<string | null>(null);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -88,9 +105,43 @@ export const CardGrid: React.FC<CardGridProps> = ({
         {items.length === 0 ? (
           <div className="opacity-70">Drag tabs here to save</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div
+            className={`toby-cards-flex ${density === 'compact' ? 'density-compact' : density === 'roomy' ? 'density-roomy' : ''} ${collapsed ? 'cards-collapsed' : ''}`}
+          >
             {items.map((it) => (
-              <div key={it.id} className="relative">
+              <div
+                key={it.id}
+                className="toby-card-flex relative"
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('application/x-linktrove-webpage', it.id);
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  if (overId !== it.id) setOverId(it.id);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (overId !== it.id) setOverId(it.id);
+                }}
+                onDragLeave={(e) => {
+                  // Clear when leaving this card entirely
+                  if (overId === it.id) setOverId(null);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const fromId = e.dataTransfer.getData('application/x-linktrove-webpage');
+                  setOverId(null);
+                  if (fromId && fromId !== it.id) onReorder?.(fromId, it.id);
+                }}
+              >
+                {overId === it.id && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute left-0 right-0 top-0 h-0.5 bg-emerald-500 shadow-[0_0_0_2px_rgba(16,185,129,0.4)]"
+                  />
+                )}
                 {selectMode && (
                   <input
                     type="checkbox"
@@ -102,7 +153,14 @@ export const CardGrid: React.FC<CardGridProps> = ({
                     onClick={(e) => e.stopPropagation()}
                   />
                 )}
-                <WebpageCard data={it} />
+                <WebpageCard
+                  data={it}
+                  onDelete={onDeleteOne}
+                  onEdit={onEditNote}
+                  onUpdateTitle={onUpdateTitle}
+                  onUpdateUrl={onUpdateUrl}
+                  onUpdateCategory={onUpdateCategory}
+                />
               </div>
             ))}
           </div>

@@ -19,6 +19,7 @@ export interface WebpageService {
   ) => Promise<WebpageData>;
   deleteWebpage: (id: string) => Promise<void>;
   loadWebpages: () => Promise<WebpageData[]>;
+  reorderWebpages: (fromId: string, toId: string) => Promise<WebpageData[]>;
 }
 
 export function createWebpageService(deps?: {
@@ -85,8 +86,6 @@ export function createWebpageService(deps?: {
     const favicon = tab.favIconUrl ?? '';
     const now = nowIso();
     const list = await loadWebpages();
-    const existing = list.find((w) => w.url === url);
-    if (existing) return existing;
     const item: WebpageData = {
       id: genId(url),
       title,
@@ -110,9 +109,15 @@ export function createWebpageService(deps?: {
     const idx = list.findIndex((w) => w.id === id);
     if (idx === -1) throw new Error('Not found');
     const prev = list[idx];
+    // Normalize URL if provided
+    let nextUrl = prev.url;
+    if (updates.url !== undefined) {
+      nextUrl = normalizeUrl(updates.url);
+    }
     const merged: WebpageData = {
       ...prev,
       ...updates,
+      url: nextUrl,
       title:
         updates.title !== undefined
           ? cleanTitle(updates.title, prev.url)
@@ -131,5 +136,17 @@ export function createWebpageService(deps?: {
     await saveWebpages(next);
   }
 
-  return { addWebpageFromTab, updateWebpage, deleteWebpage, loadWebpages };
+  async function reorderWebpages(fromId: string, toId: string) {
+    const list = await loadWebpages();
+    const fromIdx = list.findIndex((w) => w.id === fromId);
+    const toIdx = list.findIndex((w) => w.id === toId);
+    if (fromIdx === -1 || toIdx === -1) return list;
+    const next = [...list];
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, moved);
+    await saveWebpages(next);
+    return next;
+  }
+
+  return { addWebpageFromTab, updateWebpage, deleteWebpage, loadWebpages, reorderWebpages };
 }

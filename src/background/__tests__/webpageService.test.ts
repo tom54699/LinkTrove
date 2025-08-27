@@ -51,7 +51,7 @@ describe('WebpageService (task 6.1)', () => {
     expect(list[0].url).toBe('https://ex.com/');
   });
 
-  it('prevents duplicate by url and returns existing', async () => {
+  it('allows duplicate by url and creates unique ids', async () => {
     const { createWebpageService } = await import('../webpageService');
     const svc = createWebpageService();
     const a = await svc.addWebpageFromTab({
@@ -64,9 +64,9 @@ describe('WebpageService (task 6.1)', () => {
       title: 'B',
       favIconUrl: '',
     });
-    expect(a.id).toBe(b.id);
+    expect(a.id).not.toBe(b.id);
     const list = await svc.loadWebpages();
-    expect(list.length).toBe(1);
+    expect(list.length).toBe(2);
   });
 
   it('updates a webpage and bumps updatedAt', async () => {
