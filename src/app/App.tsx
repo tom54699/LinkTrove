@@ -5,22 +5,24 @@ import { ThreeColumnLayout } from './layout/ThreeColumn';
 import { OpenTabsProvider } from './tabs/OpenTabsProvider';
 import { TabsPanel } from './tabs/TabsPanel';
 import { CardGrid } from './webpages/CardGrid';
-import { CategoriesProvider } from './sidebar/categories';
+import { CategoriesProvider, useCategories } from './sidebar/categories';
 import { Sidebar } from './sidebar/sidebar';
 import { FeedbackProvider, ErrorBoundary } from './ui/feedback';
+import { SearchBox } from './ui/SearchBox';
 import {
   createExportImportService,
   type ExportImportService,
 } from './data/exportImport';
 import { createStorageService } from '../background/storageService';
 import { useFeedback } from './ui/feedback';
+import { WebpagesProvider, useWebpages } from './webpages/WebpagesProvider';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
   return (
     <FeedbackProvider>
       <ErrorBoundary>
-        <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)]">
+        <div className="toby-mode min-h-screen bg-[var(--bg)] text-[var(--fg)]">
           <header className="p-4 flex items-center justify-between border-b border-slate-700">
             <nav className="space-x-4">
               <Link to="/" className="hover:underline">
@@ -49,17 +51,128 @@ export const AppLayout: React.FC = () => {
 export const Home: React.FC = () => (
   <OpenTabsProvider>
     <CategoriesProvider>
-      <div>
-        <h1 className="text-xl font-semibold mb-4">LinkTrove Home</h1>
-        <ThreeColumnLayout
-          sidebar={<Sidebar />}
-          content={<CardGrid />}
-          tabsPanel={<TabsPanel />}
-        />
-      </div>
+      <WebpagesProvider>
+        <HomeInner />
+      </WebpagesProvider>
     </CategoriesProvider>
   </OpenTabsProvider>
 );
+
+const HomeInner: React.FC = () => {
+  const { actions, items } = useWebpages();
+  const { selectedId, actions: catActions, setCurrentCategory } = useCategories();
+  const [density, setDensity] = React.useState<'compact'|'cozy'|'roomy'>('roomy');
+  const [collapsed, setCollapsed] = React.useState(false);
+  const { showToast } = useFeedback();
+  const [showAddCat, setShowAddCat] = React.useState(false);
+  const [newCatName, setNewCatName] = React.useState('');
+  const [newCatColor, setNewCatColor] = React.useState('#64748b');
+  const viewItems = React.useMemo(
+    () => items.filter((it: any) => it.category === selectedId),
+    [items, selectedId]
+  );
+  return (
+    <div>
+      <ThreeColumnLayout
+        sidebar={<Sidebar />}
+        content={
+          <div>
+            <div className="toby-board-header">
+              <div className="title-group">
+                <h1>LinkTrove Home</h1>
+                <div className="subtext">{viewItems.length} collections</div>
+              </div>
+              <div className="toby-board-actions">
+                <button className="link" title="Drag and Drop">DRAG &amp; DROP</button>
+                <div className="inline-block align-middle mr-2">
+                  <SearchBox />
+                </div>
+                <button
+                  className="link"
+                  title="View Options"
+                  onClick={() => setDensity(density === 'cozy' ? 'compact' : density === 'compact' ? 'roomy' : 'cozy')}
+                >
+                  VIEW
+                </button>
+                <button
+                  className="link muted"
+                  title="Expand"
+                  onClick={() => setCollapsed(false)}
+                >
+                  EXPAND
+                </button>
+                <button
+                  className="link muted"
+                  title="Collapse"
+                  onClick={() => setCollapsed(true)}
+                >
+                  COLLAPSE
+                </button>
+                <button className="primary" title="Add Collection" onClick={() => { setNewCatName(''); setNewCatColor('#64748b'); setShowAddCat(true); }}>+ ADD COLLECTION</button>
+              </div>
+            </div>
+            <CardGrid
+              items={viewItems}
+              density={density}
+              collapsed={collapsed}
+              onReorder={(fromId, toId) => actions.reorder(fromId, toId)}
+              onUpdateTitle={(id, title) => actions.updateTitle(id, title)}
+              onUpdateUrl={(id, url) => actions.updateUrl(id, url)}
+              onUpdateCategory={(id, cat) => actions.updateCategory(id, cat)}
+              onDropTab={async (tab) => {
+                try {
+                  const id = (await actions.addFromTab(tab as any)) as unknown as string;
+                  await actions.updateCategory(id, selectedId);
+                  showToast('Saved from tab', 'success');
+                } catch (e) {
+                  showToast('Save failed', 'error');
+                }
+              }}
+              onDeleteMany={async (ids) => {
+                await actions.deleteMany(ids);
+                showToast('Deleted selected', 'success');
+              }}
+              onDeleteOne={async (id) => {
+                await actions.deleteOne(id);
+                showToast('Deleted', 'success');
+              }}
+              onEditNote={async (id, note) => {
+                await actions.updateNote(id, note);
+                showToast('Saved note', 'success');
+              }}
+            />
+          </div>
+        }
+        tabsPanel={<TabsPanel />}
+      />
+      {showAddCat && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60" onClick={() => setShowAddCat(false)}>
+          <div className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[420px] max-w-[90vw]" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Add Collection">
+            <div className="text-lg font-medium mb-3">New Collection</div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm mb-1">Name</label>
+                <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={newCatName} onChange={(e)=>setNewCatName(e.target.value)} placeholder="My Collection" />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Color</label>
+                <input type="color" className="rounded border border-slate-700 bg-slate-900 p-1" value={newCatColor} onChange={(e)=>setNewCatColor(e.target.value)} />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>setShowAddCat(false)}>Cancel</button>
+              <button className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50" disabled={!newCatName.trim()} onClick={async ()=>{
+                const cat = await catActions.addCategory(newCatName.trim(), newCatColor);
+                setCurrentCategory(cat.id);
+                setShowAddCat(false);
+              }}>Create</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
   const svc = React.useMemo(

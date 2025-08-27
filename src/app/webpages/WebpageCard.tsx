@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ContextMenu } from '../ui/ContextMenu';
 
 export interface WebpageCardData {
   id: string;
@@ -8,6 +7,7 @@ export interface WebpageCardData {
   description?: string;
   note?: string;
   favicon?: string;
+  category?: string;
 }
 
 export const WebpageCard: React.FC<{
@@ -15,12 +15,19 @@ export const WebpageCard: React.FC<{
   onOpen?: (url: string) => void;
   onEdit?: (id: string, note: string) => void;
   onDelete?: (id: string) => void;
-}> = ({ data, onOpen, onEdit, onDelete }) => {
+  onUpdateTitle?: (id: string, title: string) => void;
+  onUpdateUrl?: (id: string, url: string) => void;
+  onUpdateCategory?: (id: string, category: string) => void;
+}> = ({ data, onOpen, onEdit, onDelete, onUpdateTitle, onUpdateUrl, onUpdateCategory }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [noteValue, setNoteValue] = useState<string>(data.note ?? '');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [titleValue, setTitleValue] = useState<string>(data.title);
+  const [urlValue, setUrlValue] = useState<string>(data.url);
+  const [urlError, setUrlError] = useState<string>('');
+  const [categoryValue, setCategoryValue] = useState<string>(data.category || 'default');
 
   const handleClick = () => {
     if (isEditing) return;
@@ -32,32 +39,42 @@ export const WebpageCard: React.FC<{
     if (isEditing) textareaRef.current?.focus();
   }, [isEditing]);
 
+  function validateUrl(raw: string): { value?: string; error?: string } {
+    const v = (raw || '').trim();
+    if (!v) return { error: 'URL is required' };
+    try {
+      const u = new URL(v);
+      if (!/^https?:$/.test(u.protocol)) return { error: 'Only http/https supported' };
+      return { value: u.toString() };
+    } catch {
+      return { error: 'Invalid URL' };
+    }
+  }
+
   return (
     <div
+      id={`card-${data.id}`}
       data-testid="webpage-card"
-      className="group cursor-pointer rounded border border-slate-700 p-3 hover:bg-slate-800 transition-colors"
+      className="toby-card group relative cursor-pointer rounded-xl border border-slate-700 p-6 hover:bg-slate-800/70 transition-colors shadow-md hover:shadow-lg min-h-[140px]"
       data-editing={isEditing ? 'true' : undefined}
       onClick={handleClick}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        setMenuPos({ x: e.clientX, y: e.clientY });
-      }}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') handleClick();
       }}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-2 pr-2">
         {data.favicon ? (
-          <img src={data.favicon} alt="" className="w-5 h-5 mt-1" />
+          <img src={data.favicon} alt="" className="w-8 h-8 mt-1" />
         ) : (
-          <div className="w-5 h-5 mt-1 bg-slate-600 rounded" />
+          <div className="w-8 h-8 mt-1 bg-slate-600 rounded" />
         )}
         <div className="min-w-0">
-          <div className="font-medium truncate" title={data.title}>
+          <div className="toby-title" title={data.title}>
             {data.title}
           </div>
+          <div className="text-sm opacity-80 truncate">{data.url}</div>
           {data.description && (
             <div
               className="text-sm opacity-80 truncate"
@@ -67,12 +84,13 @@ export const WebpageCard: React.FC<{
             </div>
           )}
         </div>
+        
       </div>
       {isEditing ? (
         <textarea
           ref={textareaRef}
           role="textbox"
-          className="mt-2 w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm outline-none focus:border-slate-500"
+          className="mt-3 w-full min-h-[72px] rounded bg-slate-900 border border-slate-700 p-2 text-sm outline-none focus:border-slate-500"
           value={noteValue}
           onChange={(e) => setNoteValue(e.target.value)}
           onClick={(e) => e.stopPropagation()}
@@ -82,40 +100,134 @@ export const WebpageCard: React.FC<{
           }}
         />
       ) : (
-        data.note && (
-          <div
-            className="mt-2 text-sm opacity-90"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
-          >
-            {data.note}
-          </div>
-        )
+        <div
+          className={`toby-note mt-4 text-base ${data.note ? 'opacity-90' : 'opacity-60 italic'}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            // Task 6.2 inline editing: clicking note enters inline edit mode
+            setIsEditing(true);
+          }}
+        >
+          {data.note || 'Add note…'}
+        </div>
       )}
 
-      {menuPos && (
-        <ContextMenu
-          x={menuPos.x}
-          y={menuPos.y}
-          onClose={() => setMenuPos(null)}
-          items={[
-            {
-              key: 'delete',
-              label: 'Delete',
-              onSelect: () => {
-                setMenuPos(null);
-                setConfirming(true);
-              },
-            },
-          ]}
-        />
+      {/* Actions row */}
+      <div className="toby-actions absolute right-2 top-2 flex gap-2" onClick={(e)=>e.stopPropagation()}>
+        <button aria-label="Edit" title="Edit note" onClick={() => setShowModal(true)} className="toby-icon">
+          <img src="/icons/toby/OrgGroupModal6.svg" alt="" width={12} height={12} />
+        </button>
+        <button aria-label="Remove" title="Delete" onClick={() => setConfirming(true)} className="toby-icon delete">
+          <img src="/icons/toby/OrgGroupModal5.svg" alt="" width={12} height={12} />
+        </button>
+      </div>
+
+
+      {showModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60" onClick={() => setShowModal(false)}>
+          <div
+            className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[520px] max-w-[90vw]"
+            onClick={(e)=>e.stopPropagation()}
+            role="dialog"
+            aria-label="Edit Card"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setShowModal(false);
+              } else if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const normalized = validateUrl(urlValue);
+                if (normalized.error) {
+                  setUrlError(normalized.error);
+                  return;
+                }
+                if (normalized.value && normalized.value !== data.url) {
+                  onUpdateUrl?.(data.id, normalized.value);
+                }
+                onUpdateTitle?.(data.id, titleValue.trim());
+                onEdit?.(data.id, noteValue);
+                setShowModal(false);
+              }
+            }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              {data.favicon ? (
+                <img src={data.favicon} alt="" className="w-6 h-6" />
+              ) : (
+                <div className="w-6 h-6 bg-slate-600 rounded" />
+              )}
+              <div className="text-sm opacity-80 truncate">{data.url}</div>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm mb-1">Title</label>
+                <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={titleValue} onChange={(e)=>setTitleValue(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Category</label>
+                <CategorySelect value={categoryValue} onChange={setCategoryValue} />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">URL</label>
+                <input
+                  className={`w-full rounded bg-slate-900 border p-2 text-sm ${urlError ? 'border-red-600' : 'border-slate-700'}`}
+                  value={urlValue}
+                  onChange={(e)=>{
+                    setUrlValue(e.target.value);
+                    if (urlError) setUrlError('');
+                  }}
+                  onBlur={() => {
+                    const normalized = validateUrl(urlValue);
+                    if (normalized.error) setUrlError(normalized.error);
+                    else if (normalized.value) setUrlValue(normalized.value);
+                  }}
+                  placeholder="https://example.com"
+                />
+                {urlError && (
+                  <div className="mt-1 text-xs text-red-400">{urlError}</div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Description</label>
+                <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={noteValue} onChange={(e)=>setNoteValue(e.target.value)} />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button className="px-3 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={() => setConfirming(true)}>
+                Delete
+              </button>
+              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>setShowModal(false)}>Cancel</button>
+              <button
+                className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50"
+                disabled={!!urlError}
+                onClick={() => {
+                  const normalized = validateUrl(urlValue);
+                  if (normalized.error) {
+                    setUrlError(normalized.error);
+                    return;
+                  }
+                  if (normalized.value && normalized.value !== data.url) {
+                    onUpdateUrl?.(data.id, normalized.value);
+                  }
+                  if (categoryValue && categoryValue !== (data.category || 'default')) {
+                    onUpdateCategory?.(data.id, categoryValue);
+                  }
+                  onUpdateTitle?.(data.id, titleValue.trim());
+                  onEdit?.(data.id, noteValue);
+                  setShowModal(false);
+                }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
       )}
+
+      
 
       {confirming && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60"
           onClick={() => setConfirming(false)}
         >
           <div
@@ -146,5 +258,23 @@ export const WebpageCard: React.FC<{
         </div>
       )}
     </div>
+  );
+};
+
+import { useCategories } from '../sidebar/categories';
+const CategorySelect: React.FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => {
+  const { categories } = useCategories();
+  return (
+    <select
+      className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      {categories.map((c) => (
+        <option key={c.id} value={c.id}>
+          {c.name}
+        </option>
+      ))}
+    </select>
   );
 };
