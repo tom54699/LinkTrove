@@ -1,4 +1,4 @@
-LinkTrove — 使用說明
+LinkTrove — 使用與安裝說明
 
 概覽
 - 這是一個類 Toby 的分頁/網頁管理 Chrome 擴充。新分頁畫面（New Tab）提供三欄介面：
@@ -47,3 +47,37 @@ Open Tabs（右側）
 - 將常用視窗群組重命名，便於辨識（例如「工作」、「研究」、「影音」）。
 - 拖曳分頁至中間卡片區儲存，建立研究收藏夾；再用搜尋（Ctrl/Cmd+K）快速回到對應卡片。
 
+安裝流程（從原始碼）
+- 需求：
+  - Node.js 18+（建議 18 或 20）
+  - Chrome/Chromium 系瀏覽器（支援 Manifest V3）
+- 步驟：
+  1) 安裝依賴
+     - `npm ci` 或 `npm install`
+  2) 建置產出
+     - `npm run build`
+     - 產物會在 `dist/` 目錄（已包含 `background.js`、`newtab.html` 等）
+  3) 載入擴充
+     - 打開 `chrome://extensions`
+     - 右上角開啟「開發人員模式」
+     - 點「載入未封裝項目（Load unpacked）」
+     - 選擇專案下的 `dist/` 目錄
+  4) 完成後：
+     - 新開分頁（New Tab）即可看到 LinkTrove 介面
+     - 如有更新程式碼，重新執行 `npm run build`，回到 `chrome://extensions` 點「重新載入（Reload）」即可
+
+開發建議
+- 快速迭代：
+  - 編輯程式 → `npm run build` → 在 `chrome://extensions` 重新載入擴充
+- 偵錯：
+  - 新分頁頁面：在 New Tab 介面按 F12 打開 DevTools
+  - 背景 Service Worker：在 `chrome://extensions` 找到 LinkTrove → Service worker → Inspect
+- 權限說明（manifest）：
+  - `tabs`：讀取目前分頁清單與事件，同步右側 Open Tabs 面板
+  - `storage`：儲存資料（卡片、分類、群組標籤）
+  - `host_permissions: <all_urls>`：擷取分頁標題/網址/網站圖示（favicon）
+
+打包（可選）
+- 產生可分發 zip：
+  - `npm run build`
+  - 壓縮 `dist/` 資料夾為 zip，即可用於 Chrome Web Store 上傳（需自行準備清單與商店設定）
