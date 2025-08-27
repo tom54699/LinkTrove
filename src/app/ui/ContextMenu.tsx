@@ -21,7 +21,7 @@ export const ContextMenu: React.FC<{
   return (
     <div
       role="menu"
-      className="absolute z-50 min-w-[160px] rounded border border-slate-700 bg-[var(--bg)] shadow-lg"
+      className="fixed z-[9990] min-w-[160px] rounded border border-slate-700 bg-[var(--bg)] shadow-lg"
       style={{ left: x, top: y }}
       onClick={(e) => e.stopPropagation()}
     >

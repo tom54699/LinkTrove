@@ -7,24 +7,24 @@ export const ThreeColumnLayout: React.FC<{
 }> = ({ sidebar, content, tabsPanel }) => {
   return (
     <div
-      className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)_320px] gap-4"
+      className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)_250px] gap-4"
       data-testid="three-col"
     >
       <aside
         aria-label="Sidebar"
-        className="border border-slate-700 rounded p-3 min-h-[50vh]"
+        className="rounded p-4 min-h-[50vh] bg-[var(--panel)]"
       >
         {sidebar}
       </aside>
       <main
         aria-label="Content Area"
-        className="border border-slate-700 rounded p-3 min-h-[50vh]"
+        className="rounded p-4 min-h-[50vh]"
       >
         {content}
       </main>
       <aside
         aria-label="Open Tabs"
-        className="border border-slate-700 rounded p-3 min-h-[50vh]"
+        className="rounded p-4 min-h-[50vh] bg-[var(--panel)]"
       >
         {tabsPanel}
       </aside>

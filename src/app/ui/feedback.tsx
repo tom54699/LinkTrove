@@ -77,14 +77,14 @@ export function useFeedback(): FeedbackCtx {
 
 export class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean }
+  { hasError: boolean; message?: string }
 > {
   constructor(props: any) {
     super(props);
     this.state = { hasError: false };
   }
-  static getDerivedStateFromError(_: Error) {
-    return { hasError: true };
+  static getDerivedStateFromError(err: Error) {
+    return { hasError: true, message: err?.message };
   }
   componentDidCatch(err: Error) {
     // eslint-disable-next-line no-console
@@ -95,6 +95,9 @@ export class ErrorBoundary extends React.Component<
       return (
         <div className="p-4 rounded border border-red-600 bg-red-950/30">
           Something went wrong.
+        {this.state.message && (
+            <div className="mt-1 text-sm opacity-80">{this.state.message}</div>
+          )}
         </div>
       );
     }

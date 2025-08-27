@@ -1,17 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import './styles/toby.css';
 import { AppProvider } from './app/AppContext';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createHashRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { AppLayout, Home, Settings } from './app/App';
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: '/',
     element: <AppLayout />,
     children: [
       { index: true, element: <Home /> },
       { path: 'settings', element: <Settings /> },
+      { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
 ]);

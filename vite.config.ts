@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 
 // Vite config for multi-page (popup + newtab) and background script bundling
 export default defineConfig({
+  base: '',
   plugins: [react()],
   build: {
     target: 'es2019',

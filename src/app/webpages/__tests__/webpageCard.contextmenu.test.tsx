@@ -12,18 +12,19 @@ const sample: WebpageCardData = {
   favicon: '',
 };
 
-describe('WebpageCard context menu (task 8)', () => {
-  it('shows context menu on right-click and allows delete with confirmation', () => {
+describe('WebpageCard icon actions (no right-click)', () => {
+  it('deletes via top-right delete icon with confirmation', () => {
     const onDelete = vi.fn();
     render(<WebpageCard data={sample} onDelete={onDelete} />);
 
+    // There should be no context menu on right click
     const card = screen.getByTestId('webpage-card');
     fireEvent.contextMenu(card);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
 
-    const menu = screen.getByRole('menu');
-    expect(menu).toBeInTheDocument();
-    const del = screen.getByRole('menuitem', { name: /delete/i });
-    fireEvent.click(del);
+    // Use the delete icon
+    const delIcon = screen.getByRole('button', { name: /remove/i });
+    fireEvent.click(delIcon);
 
     // Confirm dialog appears
     const dialog = screen.getByRole('dialog', { name: /confirm delete/i });
