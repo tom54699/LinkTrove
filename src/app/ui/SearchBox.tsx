@@ -6,13 +6,15 @@ export const SearchBox: React.FC<{
   placeholder?: string;
   onNavigateTo?: (id: string, categoryId: string) => void;
   className?: string;
-}> = ({ placeholder = 'Search…', onNavigateTo, className }) => {
+  hotkey?: boolean;
+}> = ({ placeholder = 'Search…', onNavigateTo, className, hotkey = true }) => {
   const { items } = useWebpages();
   const { setCurrentCategory } = useCategories();
   const [q, setQ] = React.useState('');
   const [open, setOpen] = React.useState(false);
   const [activeIdx, setActiveIdx] = React.useState(0);
   const rootRef = React.useRef<HTMLDivElement | null>(null);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   const results = React.useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -38,10 +40,36 @@ export const SearchBox: React.FC<{
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
+  React.useEffect(() => {
+    if (!hotkey) return;
+    const onKey = (e: KeyboardEvent) => {
+      const key = (e.key || '').toLowerCase();
+      const tgt = e.target as HTMLElement | null;
+      const tag = (tgt?.tagName || '').toLowerCase();
+      const isTyping =
+        tag === 'input' ||
+        tag === 'textarea' ||
+        (tgt as any)?.isContentEditable;
+      if (isTyping) return;
+      if ((e.ctrlKey || e.metaKey) && key === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+        setOpen(!!q);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [hotkey, q]);
+
   function navigateTo(id: string, categoryId: string) {
+    // Clear search UI
+    setQ('');
+    setOpen(false);
+    setActiveIdx(0);
     if (onNavigateTo) return onNavigateTo(id, categoryId);
     // default behavior: switch category, then scroll to card
     setCurrentCategory(categoryId);
+    const HIGHLIGHT_MS = 3000;
     setTimeout(() => {
       const el = document.getElementById(`card-${id}`);
       if (el) {
@@ -50,7 +78,7 @@ export const SearchBox: React.FC<{
         el.classList.add('ring-2', 'ring-emerald-500');
         setTimeout(() => {
           el.classList.remove('ring-2', 'ring-emerald-500');
-        }, 1200);
+        }, HIGHLIGHT_MS);
       }
     }, 60);
   }
@@ -58,6 +86,7 @@ export const SearchBox: React.FC<{
   return (
     <div ref={rootRef} className={`relative ${className || ''}`}>
       <input
+        ref={inputRef}
         aria-label="Search"
         className="text-sm w-64 rounded bg-slate-900 border border-slate-700 px-2 py-1 outline-none focus:border-slate-500"
         placeholder={placeholder}
@@ -124,4 +153,3 @@ export const SearchBox: React.FC<{
     </div>
   );
 };
-
