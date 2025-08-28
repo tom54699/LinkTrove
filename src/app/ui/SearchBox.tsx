@@ -21,7 +21,7 @@ export const SearchBox: React.FC<{
     if (!term) return [] as any[];
     const scored = items
       .map((it) => {
-        const hay = `${it.title} ${it.url} ${it.note || ''}`.toLowerCase();
+        const hay = `${it.title} ${it.url} ${(it as any).description || ''}`.toLowerCase();
         const match = hay.indexOf(term);
         if (match === -1) return null;
         return { it, score: match };

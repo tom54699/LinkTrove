@@ -8,7 +8,6 @@ const sample: WebpageCardData = {
   title: 'Example',
   url: 'https://example.com',
   description: '',
-  note: 'Note',
   favicon: '',
 };
 

@@ -8,7 +8,7 @@ export interface CardGridProps {
   onDropTab?: (tab: TabItemData) => void;
   onDeleteMany?: (ids: string[]) => void;
   onDeleteOne?: (id: string) => void;
-  onEditNote?: (id: string, note: string) => void;
+  onEditDescription?: (id: string, description: string) => void;
   density?: 'compact' | 'cozy' | 'roomy';
   collapsed?: boolean;
   onReorder?: (fromId: string, toId: string) => void;
@@ -23,7 +23,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
   onDropTab,
   onDeleteMany,
   onDeleteOne,
-  onEditNote,
+  onEditDescription,
   density = 'cozy',
   collapsed = false,
   onReorder,
@@ -160,7 +160,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
                 <WebpageCard
                   data={it}
                   onDelete={onDeleteOne}
-                  onEdit={onEditNote}
+                  onEditDescription={onEditDescription}
                   onUpdateTitle={onUpdateTitle}
                   onUpdateUrl={onUpdateUrl}
                   onUpdateCategory={onUpdateCategory}

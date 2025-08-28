@@ -14,7 +14,8 @@ interface CtxValue {
     addFromTab: (tab: TabItemData) => Promise<string>;
     deleteMany: (ids: string[]) => Promise<void>;
     deleteOne: (id: string) => Promise<void>;
-    updateNote: (id: string, note: string) => Promise<void>;
+    updateNote: (id: string, note: string) => Promise<void>; // deprecated alias
+    updateDescription: (id: string, description: string) => Promise<void>;
     updateTitle: (id: string, title: string) => Promise<void>;
     updateUrl: (id: string, url: string) => Promise<void>;
     updateCategory: (id: string, category: string) => Promise<void>;
@@ -31,7 +32,7 @@ function toCard(d: any): WebpageCardData {
     title: d.title,
     url: d.url,
     favicon: d.favicon,
-    note: d.note,
+    description: d.note,
     category: d.category,
     meta: d.meta,
   };
@@ -154,6 +155,14 @@ export const WebpagesProvider: React.FC<{
   const updateNote = React.useCallback(
     async (id: string, note: string) => {
       const updated = await service.updateWebpage(id, { note });
+      setItems((prev) => prev.map((p) => (p.id === id ? toCard(updated) : p)));
+    },
+    [service]
+  );
+
+  const updateDescription = React.useCallback(
+    async (id: string, description: string) => {
+      const updated = await service.updateWebpage(id, { note: description });
       setItems((prev) => prev.map((p) => (p.id === id ? toCard(updated) : p)));
     },
     [service]
@@ -298,9 +307,9 @@ export const WebpagesProvider: React.FC<{
   const value = React.useMemo<CtxValue>(
     () => ({
       items,
-      actions: { load, addFromTab, deleteMany, deleteOne, updateNote, updateTitle, updateUrl, updateCategory, updateMeta, reorder },
+      actions: { load, addFromTab, deleteMany, deleteOne, updateNote, updateDescription, updateTitle, updateUrl, updateCategory, updateMeta, reorder },
     }),
-    [items, load, addFromTab, deleteMany, deleteOne, updateNote, updateTitle, updateUrl, updateCategory, updateMeta, reorder]
+    [items, load, addFromTab, deleteMany, deleteOne, updateNote, updateDescription, updateTitle, updateUrl, updateCategory, updateMeta, reorder]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -7,17 +7,15 @@ const sample: WebpageCardData = {
   id: 'w1',
   title: 'Example Title',
   url: 'https://example.com',
-  description: 'A short description',
-  note: 'My note',
+  description: 'My description',
   favicon: '',
 };
 
 describe('WebpageCard (task 5.1)', () => {
-  it('renders title, description, and note', () => {
+  it('renders title and description', () => {
     render(<WebpageCard data={sample} />);
     expect(screen.getByText('Example Title')).toBeInTheDocument();
-    expect(screen.getByText('A short description')).toBeInTheDocument();
-    expect(screen.getByText('My note')).toBeInTheDocument();
+    expect(screen.getByText('My description')).toBeInTheDocument();
   });
 
   it('invokes onOpen when clicked', () => {

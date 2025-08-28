@@ -134,8 +134,8 @@ const HomeInner: React.FC = () => {
                 await actions.deleteOne(id);
                 showToast('Deleted', 'success');
               }}
-              onEditNote={async (id, note) => {
-                await actions.updateNote(id, note);
+              onEditDescription={async (id, description) => {
+                await actions.updateDescription(id, description);
                 showToast('Saved note', 'success');
               }}
             />

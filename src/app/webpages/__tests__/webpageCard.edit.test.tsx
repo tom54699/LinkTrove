@@ -7,32 +7,31 @@ const sample: WebpageCardData = {
   id: 'w1',
   title: 'Example',
   url: 'https://example.com',
-  description: '',
-  note: 'Initial note',
+  description: 'Initial description',
   favicon: '',
 };
 
-describe('WebpageCard inline note editing (task 6.2)', () => {
+describe('WebpageCard inline description editing (task 6.2)', () => {
   it('enters edit mode and auto-saves on blur', () => {
     const onEdit = vi.fn();
-    render(<WebpageCard data={sample} onEdit={onEdit} />);
-    // Click the note to start editing
-    fireEvent.click(screen.getByText('Initial note'));
+    render(<WebpageCard data={sample} onEditDescription={onEdit} />);
+    // Click the description to start editing
+    fireEvent.click(screen.getByText('Initial description'));
     const textarea = screen.getByRole('textbox');
     expect(textarea).toBeInTheDocument();
     expect(textarea).toHaveFocus();
 
     // Change text
-    fireEvent.change(textarea, { target: { value: 'Updated note' } });
+    fireEvent.change(textarea, { target: { value: 'Updated description' } });
     // Blur to trigger auto-save
     fireEvent.blur(textarea);
 
-    expect(onEdit).toHaveBeenCalledWith('w1', 'Updated note');
+    expect(onEdit).toHaveBeenCalledWith('w1', 'Updated description');
   });
 
   it('shows editing visual state while editing', () => {
     render(<WebpageCard data={sample} />);
-    fireEvent.click(screen.getByText('Initial note'));
+    fireEvent.click(screen.getByText('Initial description'));
     const card = screen.getByTestId('webpage-card');
     expect(card.getAttribute('data-editing')).toBe('true');
   });

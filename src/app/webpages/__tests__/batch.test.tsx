@@ -6,8 +6,8 @@ import { FeedbackProvider } from '../../ui/feedback';
 import type { WebpageCardData } from '../WebpageCard';
 
 const items: WebpageCardData[] = [
-  { id: 'a', title: 'A', url: 'https://a', favicon: '', note: '' },
-  { id: 'b', title: 'B', url: 'https://b', favicon: '', note: '' },
+  { id: 'a', title: 'A', url: 'https://a', favicon: '', description: '' },
+  { id: 'b', title: 'B', url: 'https://b', favicon: '', description: '' },
 ];
 
 describe('Batch operations (task 8)', () => {

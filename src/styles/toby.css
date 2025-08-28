@@ -76,8 +76,8 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-/* Note preview: allow 3 lines */
-.toby-mode .toby-card .toby-note {
+/* Description preview */
+.toby-mode .toby-card .toby-description {
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -236,4 +236,4 @@
 
 /* Collapse view */
 .toby-mode .cards-collapsed .toby-card .toby-actions,
-.toby-mode .cards-collapsed .toby-card .toby-note { display: none !important; }
+.toby-mode .cards-collapsed .toby-card .toby-description { display: none !important; }

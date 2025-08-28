@@ -8,7 +8,6 @@ export interface WebpageCardData {
   title: string;
   url: string;
   description?: string;
-  note?: string;
   favicon?: string;
   category?: string;
   meta?: Record<string, string>;
@@ -17,15 +16,15 @@ export interface WebpageCardData {
 export const WebpageCard: React.FC<{
   data: WebpageCardData;
   onOpen?: (url: string) => void;
-  onEdit?: (id: string, note: string) => void;
+  onEditDescription?: (id: string, description: string) => void;
   onDelete?: (id: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
   onUpdateUrl?: (id: string, url: string) => void;
   onUpdateCategory?: (id: string, category: string) => void;
   onUpdateMeta?: (id: string, meta: Record<string, string>) => void;
-}> = ({ data, onOpen, onEdit, onDelete, onUpdateTitle, onUpdateUrl, onUpdateCategory, onUpdateMeta }) => {
+}> = ({ data, onOpen, onEditDescription, onDelete, onUpdateTitle, onUpdateUrl, onUpdateCategory, onUpdateMeta }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [noteValue, setNoteValue] = useState<string>(data.note ?? '');
+  const [descValue, setDescValue] = useState<string>(data.description ?? '');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -51,10 +50,10 @@ export const WebpageCard: React.FC<{
     if (showModal) {
       setTitleValue(data.title);
       setUrlValue(data.url);
-      setNoteValue(data.note ?? '');
+      setDescValue(data.description ?? '');
       setMetaValue({ ...(data.meta || {}) });
     }
-  }, [showModal, data.title, data.url, data.note, data.meta]);
+  }, [showModal, data.title, data.url, data.description, data.meta]);
 
   function validateUrl(raw: string): { value?: string; error?: string } {
     const v = (raw || '').trim();
@@ -92,14 +91,7 @@ export const WebpageCard: React.FC<{
             {data.title}
           </div>
           <div className="text-sm opacity-80 truncate">{data.url}</div>
-          {data.description && (
-            <div
-              className="text-sm opacity-80 truncate"
-              title={data.description}
-            >
-              {data.description}
-            </div>
-          )}
+          {/* Static description removed; use editable description below */}
         </div>
         
       </div>
@@ -108,25 +100,25 @@ export const WebpageCard: React.FC<{
           ref={textareaRef}
           role="textbox"
           className="mt-3 w-full min-h-[72px] rounded bg-slate-900 border border-slate-700 p-2 text-sm outline-none focus:border-slate-500"
-          value={noteValue}
-          onChange={(e) => setNoteValue(e.target.value)}
+          value={descValue}
+          onChange={(e) => setDescValue(e.target.value)}
           onClick={(e) => e.stopPropagation()}
           onBlur={() => {
             setIsEditing(false);
-            if (onEdit) onEdit(data.id, noteValue);
+            if (onEditDescription) onEditDescription(data.id, descValue);
           }}
         />
       ) : (
         <div
-          className={`toby-note mt-4 text-base ${data.note ? 'opacity-90' : 'opacity-60 italic'}`}
+          className={`toby-description mt-4 text-base ${data.description ? 'opacity-90' : 'opacity-60 italic'}`}
           onClick={(e) => {
             e.stopPropagation();
-            // Task 6.2 inline editing: clicking note enters inline edit mode
-            setNoteValue(data.note ?? '');
+            // Clicking description enters inline edit mode
+            setDescValue(data.description ?? '');
             setIsEditing(true);
           }}
         >
-          {data.note || 'Add note…'}
+          {data.description || 'Add description…'}
         </div>
       )}
 
@@ -138,7 +130,7 @@ export const WebpageCard: React.FC<{
         onMouseDown={(e)=>e.stopPropagation()}
         onPointerDown={(e)=>e.stopPropagation()}
       >
-        <button aria-label="Edit" title="Edit note" onClick={() => setShowModal(true)} className="toby-icon" onMouseDown={(e)=>e.stopPropagation()} onPointerDown={(e)=>e.stopPropagation()}>
+        <button aria-label="Edit" title="Edit description" onClick={() => setShowModal(true)} className="toby-icon" onMouseDown={(e)=>e.stopPropagation()} onPointerDown={(e)=>e.stopPropagation()}>
           <img src="/icons/toby/OrgGroupModal6.svg" alt="" width={12} height={12} />
         </button>
         <button aria-label="Move" title="Move to collection" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setMoveMenuPos({ x: r.left, y: r.bottom + 4 }); }} className="toby-icon" onMouseDown={(e)=>e.stopPropagation()} onPointerDown={(e)=>e.stopPropagation()}>
@@ -171,7 +163,7 @@ export const WebpageCard: React.FC<{
                   onUpdateUrl?.(data.id, normalized.value);
                 }
                 onUpdateTitle?.(data.id, titleValue.trim());
-                onEdit?.(data.id, noteValue);
+                onEditDescription?.(data.id, descValue);
                 setShowModal(false);
               }
             }}
@@ -213,7 +205,7 @@ export const WebpageCard: React.FC<{
               </div>
               <div>
                 <label className="block text-sm mb-1">Description</label>
-                <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={noteValue} onChange={(e)=>setNoteValue(e.target.value)} />
+                <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={descValue} onChange={(e)=>setDescValue(e.target.value)} />
               </div>
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
@@ -235,7 +227,7 @@ export const WebpageCard: React.FC<{
                   }
                   // Category change is handled via Move action or dragging to sidebar
                   onUpdateTitle?.(data.id, titleValue.trim());
-                  onEdit?.(data.id, noteValue);
+                  onEditDescription?.(data.id, descValue);
                   onUpdateMeta?.(data.id, metaValue);
                   setShowModal(false);
                 }}
