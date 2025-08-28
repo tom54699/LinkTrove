@@ -119,10 +119,11 @@ function pageExtractor() {
     }
     return undefined;
   }
-  // Title: og:title → twitter:title → <title>
+  // Title: og:title → og:novel:book_name → twitter:title → <title>
   let titleSrc = '';
   let title = get('og:title');
   if (title) titleSrc = 'meta[property=og:title]';
+  if (!title) { const v = get('og:novel:book_name'); if (v) { title = v; titleSrc = 'meta[property=og:novel:book_name]'; } }
   if (!title) { const v = get('twitter:title'); if (v) { title = v; titleSrc = 'meta[name=twitter:title]'; } }
   if (!title) { if (document.title && document.title.trim()) { title = document.title.trim(); titleSrc = 'title'; } }
   // Description: meta[name="description"] → og:description → twitter:description
@@ -152,10 +153,12 @@ function pageExtractor() {
   let siteName = get('og:site_name'); if (siteName) siteSrc = 'meta[property=og:site_name]';
   if (!siteName) { const v = deriveSiteNameFromTitle(title); if (v) { siteName = v; siteSrc = 'title-suffix'; } }
   if (!siteName) { siteName = location.hostname.replace(/^www\./, ''); siteSrc = 'hostname'; }
-  // Author: meta[name=author] → meta[property=article:author] → link[rel=author] → JSON-LD → microdata
+  // Author: meta[name=author] → meta[property=article:author] → meta[property=books:author] → meta[property=og:novel:author] → link[rel=author] → JSON-LD → microdata
   let authorSrc = '';
   let author = get('author', 'name'); if (author) authorSrc = 'meta[name=author]';
   if (!author) { const v = get('article:author'); if (v) { author = v; authorSrc = 'meta[property=article:author]'; } }
+  if (!author) { const v = get('books:author'); if (v) { author = v; authorSrc = 'meta[property=books:author]'; } }
+  if (!author) { const v = get('og:novel:author'); if (v) { author = v; authorSrc = 'meta[property=og:novel:author]'; } }
   if (!author) { const v = (document.querySelector('link[rel="author"]') as HTMLLinkElement | null)?.href; if (v) { author = v; authorSrc = 'link[rel=author]'; } }
   if (!author) { const v = readJsonLdAuthor(); if (v) { author = v; authorSrc = 'jsonld'; } }
   if (!author) { const v = textOf('[itemprop="author"]'); if (v) { author = v; authorSrc = 'itemprop[author]'; } }
