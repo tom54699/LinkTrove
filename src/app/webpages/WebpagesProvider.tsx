@@ -188,6 +188,10 @@ export const WebpagesProvider: React.FC<{
             (tpl.fields || []) as any,
             item ? { title: item.title, url: item.url, favicon: item.favicon } : undefined
           );
+          // Treat card title/note as the canonical fields; do not persist
+          // title/description into meta even if template has such keys.
+          delete (nextMeta as any).title;
+          delete (nextMeta as any).description;
           // Merge cached extracted meta for common keys (only if field exists and value empty)
           try {
             if (item) {
@@ -207,7 +211,7 @@ export const WebpagesProvider: React.FC<{
                   });
                 } catch {}
               }
-              const wantKeys = ['title', 'description', 'siteName', 'author'] as const;
+              const wantKeys = ['siteName', 'author'] as const;
               const fields = (tpl.fields || []) as any[];
               const hasField = (k: string) => fields.some((f) => f.key === k);
               const merged: Record<string, string> = { ...nextMeta };
