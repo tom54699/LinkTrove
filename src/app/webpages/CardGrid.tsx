@@ -18,6 +18,7 @@ export interface CardGridProps {
   onUpdateUrl?: (id: string, url: string) => void;
   onUpdateCategory?: (id: string, category: string) => void;
   onUpdateMeta?: (id: string, meta: Record<string, string>) => void;
+  onMoveToEnd?: (id: string) => void;
 }
 
 export const CardGrid: React.FC<CardGridProps> = ({
@@ -34,6 +35,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
   onUpdateUrl,
   onUpdateCategory,
   onUpdateMeta,
+  onMoveToEnd,
 }) => {
   const [isOver, setIsOver] = React.useState(false);
   const { showToast } = useFeedback();
@@ -60,8 +62,12 @@ export const CardGrid: React.FC<CardGridProps> = ({
     try {
       const raw = e.dataTransfer.getData('application/x-linktrove-tab');
       if (raw) {
-        const tab: TabItemData = JSON.parse(raw);
-        onDropTab?.(tab);
+        // Only accept drop at container level when list is empty.
+        if ((items?.length ?? 0) === 0) {
+          const tab: TabItemData = JSON.parse(raw);
+          onDropTab?.(tab);
+        }
+        return;
       }
     } catch (err) {
       showToast('Failed to add tab', 'error');
@@ -194,6 +200,23 @@ export const CardGrid: React.FC<CardGridProps> = ({
                 />
               </div>
             ))}
+            {/* End drop target to insert at tail */}
+            <div
+              data-testid="end-drop"
+              className="w-full h-8 rounded border border-dashed border-slate-700/60 flex items-center justify-center text-xs text-slate-400"
+              onDragOver={(e)=>{ e.preventDefault(); setIsOver(true); }}
+              onDragEnter={(e)=>{ e.preventDefault(); setIsOver(true); }}
+              onDragLeave={()=> setIsOver(false)}
+              onDrop={(e)=>{
+                e.preventDefault(); setIsOver(false);
+                const rawTab = e.dataTransfer.getData('application/x-linktrove-tab');
+                if (rawTab) {
+                  try { const tab: TabItemData = JSON.parse(rawTab); (onDropTab as any)?.(tab, '__END__'); return; } catch {}
+                }
+                const fromId = e.dataTransfer.getData('application/x-linktrove-webpage');
+                if (fromId) onMoveToEnd?.(fromId);
+              }}
+            >Drop here to place at end</div>
           </div>
         )}
       </div>

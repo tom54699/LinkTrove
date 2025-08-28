@@ -20,6 +20,7 @@ export interface WebpageService {
   deleteWebpage: (id: string) => Promise<void>;
   loadWebpages: () => Promise<WebpageData[]>;
   reorderWebpages: (fromId: string, toId: string) => Promise<WebpageData[]>;
+  moveWebpageToEnd: (id: string) => Promise<WebpageData[]>;
 }
 
 export function createWebpageService(deps?: {
@@ -150,5 +151,16 @@ export function createWebpageService(deps?: {
     return next;
   }
 
-  return { addWebpageFromTab, updateWebpage, deleteWebpage, loadWebpages, reorderWebpages };
+  async function moveWebpageToEnd(id: string) {
+    const list = await loadWebpages();
+    const idx = list.findIndex((w) => w.id === id);
+    if (idx === -1) return list;
+    const next = [...list];
+    const [moved] = next.splice(idx, 1);
+    next.push(moved);
+    await saveWebpages(next);
+    return next;
+  }
+
+  return { addWebpageFromTab, updateWebpage, deleteWebpage, loadWebpages, reorderWebpages, moveWebpageToEnd };
 }

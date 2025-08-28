@@ -22,6 +22,7 @@ interface CtxValue {
     updateCategory: (id: string, category: string) => Promise<void>;
     updateMeta: (id: string, meta: Record<string, string>) => Promise<void>;
     reorder: (fromId: string, toId: string) => void;
+    moveToEnd: (id: string) => void;
   };
 }
 
@@ -312,6 +313,13 @@ export const WebpagesProvider: React.FC<{
     })();
   }, [service]);
 
+  const moveToEnd = React.useCallback((id: string) => {
+    (async () => {
+      const saved = await (service as any).moveWebpageToEnd(id);
+      setItems(saved.map(toCard));
+    })();
+  }, [service]);
+
   React.useEffect(() => {
     load().catch(() => {
       /* ignore */
@@ -321,9 +329,9 @@ export const WebpagesProvider: React.FC<{
   const value = React.useMemo<CtxValue>(
     () => ({
       items,
-      actions: { load, addFromTab, deleteMany, deleteOne, updateNote, updateDescription, updateCard, updateTitle, updateUrl, updateCategory, updateMeta, reorder },
+      actions: { load, addFromTab, deleteMany, deleteOne, updateNote, updateDescription, updateCard, updateTitle, updateUrl, updateCategory, updateMeta, reorder, moveToEnd },
     }),
-    [items, load, addFromTab, deleteMany, deleteOne, updateNote, updateDescription, updateCard, updateTitle, updateUrl, updateCategory, updateMeta, reorder]
+    [items, load, addFromTab, deleteMany, deleteOne, updateNote, updateDescription, updateCard, updateTitle, updateUrl, updateCategory, updateMeta, reorder, moveToEnd]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
