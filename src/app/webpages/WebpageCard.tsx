@@ -90,7 +90,6 @@ export const WebpageCard: React.FC<{
           <div className="toby-title" title={data.title}>
             {data.title}
           </div>
-          <div className="text-sm opacity-80 truncate">{data.url}</div>
           {/* Static description removed; use editable description below */}
         </div>
         
@@ -110,7 +109,7 @@ export const WebpageCard: React.FC<{
         />
       ) : (
         <div
-          className={`toby-description mt-4 text-base ${data.description ? 'opacity-90' : 'opacity-60 italic'}`}
+          className={`toby-description mt-2 text-base ${data.description ? 'opacity-90' : 'opacity-60 italic'}`}
           onClick={(e) => {
             e.stopPropagation();
             // Clicking description enters inline edit mode

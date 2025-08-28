@@ -51,7 +51,7 @@
 
 /* Title, url, desc scales */
 .toby-mode .toby-card .toby-title {
-  font-size: 11px;
+  font-size: 0.9375rem; /* ~15px for better readability */
   font-weight: 600;
   line-height: 1.3;
   white-space: nowrap;
@@ -61,7 +61,7 @@
   min-height: 1.3em; /* keep row height consistent */
 }
 .toby-mode .toby-card .toby-url {
-  font-size: 11px;
+  font-size: 0.6875rem; /* ~11px */
   opacity: 0.8;
   line-height: 1.25;
   white-space: nowrap;
@@ -69,7 +69,7 @@
   text-overflow: ellipsis;
 }
 .toby-mode .toby-card .toby-desc {
-  font-size: 10px;
+  font-size: 0.5625rem; /* ~9px, slightly smaller */
   color: var(--muted);
   display: -webkit-box;
   -webkit-line-clamp: 2;
