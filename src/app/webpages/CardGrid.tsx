@@ -141,6 +141,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
                 }}
                 onDrop={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   setOverId(null);
                   const rawTab = e.dataTransfer.getData('application/x-linktrove-tab');
                   if (rawTab) {

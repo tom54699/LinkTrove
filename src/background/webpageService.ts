@@ -143,7 +143,9 @@ export function createWebpageService(deps?: {
     if (fromIdx === -1 || toIdx === -1) return list;
     const next = [...list];
     const [moved] = next.splice(fromIdx, 1);
-    next.splice(toIdx, 0, moved);
+    // If removing an item from before the target, the target index shifts left by 1
+    const insertAt = fromIdx < toIdx ? toIdx - 1 : toIdx;
+    next.splice(Math.max(0, insertAt), 0, moved);
     await saveWebpages(next);
     return next;
   }
