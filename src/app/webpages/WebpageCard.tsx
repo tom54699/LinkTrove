@@ -32,7 +32,7 @@ export const WebpageCard: React.FC<{
   const [titleValue, setTitleValue] = useState<string>(data.title);
   const [urlValue, setUrlValue] = useState<string>(data.url);
   const [urlError, setUrlError] = useState<string>('');
-  const [categoryValue] = useState<string>(data.category || 'default');
+  const categoryValue = data.category || 'default';
   const [metaValue, setMetaValue] = useState<Record<string, string>>({ ...(data.meta || {}) });
   const [moveMenuPos, setMoveMenuPos] = useState<{ x: number; y: number } | null>(null);
 
@@ -45,6 +45,15 @@ export const WebpageCard: React.FC<{
   useEffect(() => {
     if (isEditing) textareaRef.current?.focus();
   }, [isEditing]);
+
+  // Keep modal fields in sync with latest data when opening
+  useEffect(() => {
+    if (showModal) {
+      setTitleValue(data.title);
+      setUrlValue(data.url);
+      setNoteValue(data.note ?? '');
+    }
+  }, [showModal, data.title, data.url, data.note]);
 
   function validateUrl(raw: string): { value?: string; error?: string } {
     const v = (raw || '').trim();
@@ -112,6 +121,7 @@ export const WebpageCard: React.FC<{
           onClick={(e) => {
             e.stopPropagation();
             // Task 6.2 inline editing: clicking note enters inline edit mode
+            setNoteValue(data.note ?? '');
             setIsEditing(true);
           }}
         >
