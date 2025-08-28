@@ -45,7 +45,8 @@
   background-color: var(--card) !important;
   border-radius: 8px !important;
   padding: 12px !important;
-  min-height: 90px;
+  height: 140px;
+  overflow: hidden;
 }
 
 /* Title, url, desc scales */
@@ -67,6 +68,10 @@
 .toby-mode .toby-card .toby-desc {
   font-size: 11px;
   color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 /* Note preview: allow 3 lines */
 .toby-mode .toby-card .toby-note {
@@ -219,10 +224,10 @@
 .toby-mode [aria-label="Categories"] button[data-drop="true"] { outline: 2px solid #34d399; background-color: rgba(16,185,129,0.16) !important; }
 
 /* Density controls */
-.toby-mode .density-compact .toby-card { padding: 8px !important; min-height: 80px; }
+.toby-mode .density-compact .toby-card { padding: 8px !important; height: 110px; }
 .toby-mode .density-compact .toby-card .toby-title { font-size: 12px; }
 .toby-mode .density-compact .toby-card .toby-url { font-size: 10px; }
-.toby-mode .density-roomy .toby-card { padding: 16px !important; min-height: 120px; }
+.toby-mode .density-roomy .toby-card { padding: 16px !important; height: 170px; }
 .toby-mode .density-roomy .toby-card .toby-title { font-size: 15px; }
 .toby-mode .density-roomy .toby-card .toby-url { font-size: 12px; }
 

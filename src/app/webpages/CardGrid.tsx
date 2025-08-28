@@ -151,7 +151,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
                     type="checkbox"
                     role="checkbox"
                     aria-label={`Select ${it.title}`}
-                    className="absolute top-2 left-2 w-4 h-4 accent-emerald-500"
+                    className="absolute top-2 left-2 w-4 h-4 z-10 accent-emerald-500"
                     checked={!!selected[it.id]}
                     onChange={() => toggleSelect(it.id)}
                     onClick={(e) => e.stopPropagation()}
