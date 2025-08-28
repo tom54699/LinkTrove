@@ -8,7 +8,7 @@ export const TemplatesManager: React.FC = () => {
   const [name, setName] = React.useState('');
   const [newField, setNewField] = React.useState<Record<string, { key: string; label: string; def: string; type?: 'text'|'number'|'date'|'url'|'select'|'rating'; options?: string; required?: boolean; err?: string }>>({});
   const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
-  const [commonAdd, setCommonAdd] = React.useState<Record<string, { key: 'siteName' | 'author'; required: boolean; type?: 'text'|'number'|'date'|'url'|'select'|'rating' }>>({});
+  const [commonAdd, setCommonAdd] = React.useState<Record<string, { key: 'siteName' | 'author'; required: boolean }>>({});
 
   return (
     <div className="space-y-6">
@@ -47,19 +47,6 @@ export const TemplatesManager: React.FC = () => {
                     <option value="siteName">站名 (siteName)</option>
                     <option value="author">作者 (author)</option>
                   </select>
-                  <select
-                    className="text-xs rounded bg-slate-900 border border-slate-700 px-2 py-1"
-                    value={commonAdd[t.id]?.type || 'text'}
-                    onChange={(e)=>setCommonAdd((m)=>({ ...m, [t.id]: { key: (m[t.id]?.key||'siteName') as any, required: m[t.id]?.required || false, type: e.target.value as any } }))}
-                    title="欄位格式"
-                  >
-                    <option value="text">text</option>
-                    <option value="number">number</option>
-                    <option value="date">date</option>
-                    <option value="url">url</option>
-                    <option value="select">select</option>
-                    <option value="rating">rating (1-5)</option>
-                  </select>
                   <label className="text-xs flex items-center gap-1">
                     <input
                       type="checkbox"
@@ -74,9 +61,8 @@ export const TemplatesManager: React.FC = () => {
                     onClick={async () => {
                       const sel = commonAdd[t.id]?.key || 'siteName';
                       const label = sel === 'siteName' ? '站名' : '作者';
-                      const type = commonAdd[t.id]?.type || 'text';
                       try {
-                        await actions.addField(t.id, { key: sel, label, type });
+                        await actions.addField(t.id, { key: sel, label, type: 'text' });
                         if (commonAdd[t.id]?.required) await actions.updateFieldRequired(t.id, sel, true);
                       } catch {
                         // ignore duplicate errors

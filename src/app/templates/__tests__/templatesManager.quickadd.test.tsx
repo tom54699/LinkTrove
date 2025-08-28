@@ -5,6 +5,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 vi.mock('../TemplatesProvider', () => {
   const addField = vi.fn();
   const updateFieldRequired = vi.fn();
+  const updateField = vi.fn();
   const updateFieldType = vi.fn();
   const updateFieldOptions = vi.fn();
   const reorderField = vi.fn();
@@ -43,14 +44,12 @@ vi.mock('../../sidebar/categories', () => ({
 import { TemplatesManager } from '../TemplatesManager';
 
 describe('TemplatesManager quick-add common fields', () => {
-  it('adds selected common field with chosen type and required', async () => {
+  it('adds selected common field (always text) with required', async () => {
     render(<TemplatesManager />);
     const selectCommon = screen.getByTitle('選擇常用欄位') as HTMLSelectElement;
-    const selectType = screen.getByTitle('欄位格式') as HTMLSelectElement;
     const required = screen.getByLabelText('required') as HTMLInputElement;
 
     fireEvent.change(selectCommon, { target: { value: 'author' } });
-    fireEvent.change(selectType, { target: { value: 'url' } });
     fireEvent.click(required);
 
     const addBtn = screen.getByTitle('新增常用欄位');
@@ -58,7 +57,7 @@ describe('TemplatesManager quick-add common fields', () => {
 
     const { useTemplates } = await import('../TemplatesProvider');
     const { actions } = useTemplates();
-    expect(actions.addField).toHaveBeenCalledWith('t1', expect.objectContaining({ key: 'author', label: '作者', type: 'url' }));
+    expect(actions.addField).toHaveBeenCalledWith('t1', expect.objectContaining({ key: 'author', label: '作者', type: 'text' }));
     expect(actions.updateFieldRequired).toHaveBeenCalledWith('t1', 'author', true);
   });
 
@@ -83,4 +82,3 @@ describe('TemplatesManager quick-add common fields', () => {
     expect(actions.addField).toHaveBeenCalledWith('t1', expect.objectContaining({ key: 'priority', label: 'Priority', type: 'select', options: ['High', 'Medium', 'Low'], required: true }));
   });
 });
-
