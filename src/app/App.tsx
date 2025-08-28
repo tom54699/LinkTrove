@@ -121,7 +121,6 @@ const HomeInner: React.FC = () => {
               // single view retained; no density prop
               collapsed={collapsed}
               onReorder={(fromId, toId) => actions.reorder(fromId, toId)}
-              onMoveToEnd={(id)=> actions.moveToEnd(id)}
               onUpdateTitle={(id, title) => actions.updateTitle(id, title)}
               onUpdateUrl={(id, url) => actions.updateUrl(id, url)}
               onUpdateCategory={(id, cat) => actions.updateCategory(id, cat)}
@@ -130,8 +129,7 @@ const HomeInner: React.FC = () => {
                 try {
                   const id = (await actions.addFromTab(tab as any)) as unknown as string;
                   await actions.updateCategory(id, selectedId);
-                  if (beforeId === '__END__') await actions.moveToEnd(id);
-                  else if (beforeId) await actions.reorder(id, beforeId);
+                  if (beforeId) await actions.reorder(id, beforeId);
                   showToast('Saved from tab', 'success');
                 } catch (e) {
                   showToast('Save failed', 'error');
