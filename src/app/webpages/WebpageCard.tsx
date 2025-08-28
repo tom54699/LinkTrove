@@ -131,14 +131,20 @@ export const WebpageCard: React.FC<{
       )}
 
       {/* Actions row */}
-      <div className="toby-actions absolute right-2 top-2 flex gap-2" onClick={(e)=>e.stopPropagation()}>
-        <button aria-label="Edit" title="Edit note" onClick={() => setShowModal(true)} className="toby-icon">
+      <div
+        className="toby-actions absolute right-2 top-2 flex gap-2"
+        role="group"
+        onClick={(e)=>e.stopPropagation()}
+        onMouseDown={(e)=>e.stopPropagation()}
+        onPointerDown={(e)=>e.stopPropagation()}
+      >
+        <button aria-label="Edit" title="Edit note" onClick={() => setShowModal(true)} className="toby-icon" onMouseDown={(e)=>e.stopPropagation()} onPointerDown={(e)=>e.stopPropagation()}>
           <img src="/icons/toby/OrgGroupModal6.svg" alt="" width={12} height={12} />
         </button>
-        <button aria-label="Move" title="Move to collection" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setMoveMenuPos({ x: r.left, y: r.bottom + 4 }); }} className="toby-icon">
+        <button aria-label="Move" title="Move to collection" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setMoveMenuPos({ x: r.left, y: r.bottom + 4 }); }} className="toby-icon" onMouseDown={(e)=>e.stopPropagation()} onPointerDown={(e)=>e.stopPropagation()}>
           <img src="/icons/toby/ListSectionSort1.svg" alt="" width={12} height={12} />
         </button>
-        <button aria-label="Remove" title="Delete" onClick={() => setConfirming(true)} className="toby-icon delete">
+        <button aria-label="Remove" title="Delete" onClick={() => setConfirming(true)} className="toby-icon delete" onMouseDown={(e)=>e.stopPropagation()} onPointerDown={(e)=>e.stopPropagation()}>
           <img src="/icons/toby/OrgGroupModal5.svg" alt="" width={12} height={12} />
         </button>
       </div>
