@@ -22,12 +22,15 @@ export const Sidebar: React.FC = () => {
             data-active={active ? 'true' : undefined}
             onClick={() => setCurrentCategory(c.id)}
             onDragOver={(e) => { e.preventDefault(); }}
+            onDragEnter={(e) => { (e.currentTarget as HTMLElement).setAttribute('data-drop','true'); }}
+            onDragLeave={(e) => { (e.currentTarget as HTMLElement).removeAttribute('data-drop'); }}
             onDrop={(e) => {
               e.preventDefault();
               try {
                 const id = e.dataTransfer.getData('application/x-linktrove-webpage');
                 if (id) actions.updateCategory(id, c.id);
               } catch {}
+              (e.currentTarget as HTMLElement).removeAttribute('data-drop');
             }}
           >
             <span className="inline-block w-2 h-2 mr-2 rounded bg-slate-400" />

@@ -6,10 +6,8 @@ export const TemplatesManager: React.FC = () => {
   const { templates, actions } = useTemplates();
   const { categories, actions: catActions } = useCategories();
   const [name, setName] = React.useState('');
-  const [fieldKey, setFieldKey] = React.useState('');
-  const [fieldLabel, setFieldLabel] = React.useState('');
-  const [fieldDefault, setFieldDefault] = React.useState('');
-  const [selectedTpl, setSelectedTpl] = React.useState<string>('');
+  const [newField, setNewField] = React.useState<Record<string, { key: string; label: string; def: string; err?: string }>>({});
+  const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
 
   return (
     <div className="space-y-6">
@@ -26,32 +24,77 @@ export const TemplatesManager: React.FC = () => {
         </div>
         <div className="space-y-4">
           {templates.map((t) => (
-            <div key={t.id} className="rounded border border-slate-700 p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" value={t.name} onChange={(e)=>actions.rename(t.id, e.target.value)} />
-                <button className="text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30 ml-auto" onClick={()=>actions.remove(t.id)}>Delete</button>
+            <div key={t.id} className="rounded border border-slate-700">
+              <div className={`flex items-center justify-between px-3 py-2 bg-[var(--card)] ${collapsed[t.id] ? '' : 'border-b border-slate-700'}`}>
+                <div className="flex items-center gap-2">
+                  <button aria-label="Toggle" className="text-xs" onClick={()=>setCollapsed((m)=>({ ...m, [t.id]: !m[t.id] }))}>
+                    {collapsed[t.id] ? '▸' : '▾'}
+                  </button>
+                  {collapsed[t.id] ? (
+                    <span className="text-sm">{t.name}</span>
+                  ) : (
+                    <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" value={t.name} onChange={(e)=>actions.rename(t.id, e.target.value)} />
+                  )}
+                </div>
+                <button className="text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={()=>actions.remove(t.id)}>Delete</button>
               </div>
-              <div className="text-sm opacity-80 mb-1">Fields</div>
-              <div className="space-y-1 mb-2">
-                {(t.fields || []).map((f) => (
-                  <div key={f.key} className="flex items-center gap-2">
-                    <input className="w-40 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" value={f.key} disabled />
-                    <input className="w-40 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" value={f.label} onChange={(e)=>actions.updateField(t.id, f.key, { label: e.target.value })} />
-                    <input className="flex-1 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="Default" value={(f as any).defaultValue || ''} onChange={(e)=>actions.updateField(t.id, f.key, { defaultValue: e.target.value })} />
-                    <button className="text-xs px-2 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>actions.removeField(t.id, f.key)}>Remove</button>
+              {!collapsed[t.id] && (
+                <div className="p-3">
+                  <div className="text-sm opacity-80 mb-1">Fields</div>
+                  <div className="space-y-2 mb-2">
+                    {(t.fields || []).map((f) => (
+                      <div key={f.key} className="rounded border border-slate-700 p-2 bg-[var(--card)]" draggable onDragStart={(e)=>{ e.dataTransfer.setData('application/x-linktrove-field-key', f.key); e.dataTransfer.effectAllowed='move'; }} onDragOver={(e)=>{ e.preventDefault(); }} onDrop={(e)=>{ e.preventDefault(); const fromKey=e.dataTransfer.getData('application/x-linktrove-field-key'); if(fromKey && fromKey!==f.key) actions.reorderField(t.id, fromKey, f.key); }}>
+                        <div className="flex items-center gap-2">
+                          <span className="cursor-move select-none text-slate-400">↕</span>
+                          <input className="w-36 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" value={f.key} disabled />
+                          <input className="w-40 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" value={f.label} onChange={(e)=>actions.updateField(t.id, f.key, { label: e.target.value })} />
+                          <select className="text-sm rounded bg-slate-900 border border-slate-700 px-2 py-1" value={(f as any).type || 'text'} onChange={(e)=>actions.updateFieldType(t.id, f.key, e.target.value as any)}>
+                            <option value="text">text</option>
+                            <option value="number">number</option>
+                            <option value="date">date</option>
+                            <option value="url">url</option>
+                            <option value="select">select</option>
+                          </select>
+                          <label className="text-xs flex items-center gap-1"> 
+                            <input type="checkbox" checked={!!(f as any).required} onChange={(e)=>actions.updateFieldRequired(t.id, f.key, e.target.checked)} /> required
+                          </label>
+                          <button className="ml-auto text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={()=>actions.removeField(t.id, f.key)}>Remove</button>
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                          {((f as any).type === 'select') ? (
+                            <input className="flex-1 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="options (comma-separated)" defaultValue={((f as any).options||[]).join(', ')} onBlur={(e)=>actions.updateFieldOptions(t.id, f.key, e.target.value.split(',').map(s=>s.trim()).filter(Boolean))} />
+                          ) : (
+                            <input className="flex-1 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="Default" defaultValue={(f as any).defaultValue || ''} onBlur={(e)=>actions.updateField(t.id, f.key, { defaultValue: e.target.value })} />
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <input className="w-40 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="key (e.g. author)" value={selectedTpl === t.id ? fieldKey : ''} onChange={(e)=>{ setSelectedTpl(t.id); setFieldKey(e.target.value);} } />
-                <input className="w-40 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="label" value={selectedTpl === t.id ? fieldLabel : ''} onChange={(e)=>{ setSelectedTpl(t.id); setFieldLabel(e.target.value);} } />
-                <input className="flex-1 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="default" value={selectedTpl === t.id ? fieldDefault : ''} onChange={(e)=>{ setSelectedTpl(t.id); setFieldDefault(e.target.value);} } />
-                <button className="text-xs px-2 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30" onClick={async ()=>{
-                  if (!fieldKey.trim() || !fieldLabel.trim()) return;
-                  await actions.addField(t.id, { key: fieldKey.trim(), label: fieldLabel.trim(), defaultValue: fieldDefault });
-                  setFieldKey(''); setFieldLabel(''); setFieldDefault('');
-                }}>Add Field</button>
-              </div>
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 grid grid-cols-3 gap-2">
+                      <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="key (e.g. author)" value={(newField[t.id]?.key) || ''} onChange={(e)=>setNewField({ ...newField, [t.id]: { ...(newField[t.id]||{label:'',def:''}), key: e.target.value } })} />
+                      <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="label" value={(newField[t.id]?.label) || ''} onChange={(e)=>setNewField({ ...newField, [t.id]: { ...(newField[t.id]||{key:'',def:''}), label: e.target.value } })} />
+                      <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="default" value={(newField[t.id]?.def) || ''} onChange={(e)=>setNewField({ ...newField, [t.id]: { ...(newField[t.id]||{key:'',label:''}), def: e.target.value } })} />
+                    </div>
+                    <div>
+                      <button className="text-xs px-2 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30" onClick={async ()=>{
+                        const nf = newField[t.id] || { key:'',label:'',def:'' };
+                        const key = nf.key.trim(); const label = nf.label.trim();
+                        if (!key || !label) { setNewField({ ...newField, [t.id]: { ...nf, err: 'Key/label required' } }); return; }
+                        try {
+                          await actions.addField(t.id, { key, label, defaultValue: nf.def });
+                          setNewField({ ...newField, [t.id]: { key:'', label:'', def:'', err: '' } });
+                        } catch(e:any) {
+                          setNewField({ ...newField, [t.id]: { ...nf, err: e?.message || 'Failed to add' } });
+                        }
+                      }}>Add Field</button>
+                      {(newField[t.id]?.err) && (
+                        <div className="text-xs text-red-400 mt-1">{newField[t.id]?.err}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
           {templates.length === 0 && (

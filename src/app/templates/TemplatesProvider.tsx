@@ -47,11 +47,41 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     async remove(id: string) {
       await persist(templates.filter(t => t.id !== id));
     },
-    async addField(id: string, field: { key: string; label: string; defaultValue?: string }) {
-      await persist(templates.map(t => t.id === id ? { ...t, fields: [...t.fields, { ...field, type: 'text' }] } : t));
+    async addField(id: string, field: { key: string; label: string; defaultValue?: string; type?: 'text'|'number'|'date'|'url'|'select'; options?: string[]; required?: boolean }) {
+      const list = templates.map(t => {
+        if (t.id !== id) return t;
+        const exists = (t.fields || []).some(f => f.key === field.key);
+        if (exists) throw new Error('Field key already exists');
+        const newField = { ...field, type: (field.type || 'text') as any };
+        const nextFields = t.fields && t.fields.length ? [...t.fields, newField] : [newField];
+        return { ...t, fields: nextFields };
+      });
+      await persist(list);
     },
     async updateField(id: string, key: string, patch: Partial<{ label: string; defaultValue: string }>) {
       await persist(templates.map(t => t.id === id ? { ...t, fields: t.fields.map(f => f.key === key ? { ...f, ...patch } : f) } : t));
+    },
+    async updateFieldType(id: string, key: string, type: 'text'|'number'|'date'|'url'|'select') {
+      await persist(templates.map(t => t.id === id ? { ...t, fields: t.fields.map(f => f.key === key ? { ...f, type } : f) } : t));
+    },
+    async updateFieldOptions(id: string, key: string, options: string[]) {
+      await persist(templates.map(t => t.id === id ? { ...t, fields: t.fields.map(f => f.key === key ? { ...f, options } : f) } : t));
+    },
+    async updateFieldRequired(id: string, key: string, required: boolean) {
+      await persist(templates.map(t => t.id === id ? { ...t, fields: t.fields.map(f => f.key === key ? { ...f, required } : f) } : t));
+    },
+    async reorderField(id: string, fromKey: string, toKey: string) {
+      const list = templates.map(t => {
+        if (t.id !== id) return t;
+        const idxFrom = t.fields.findIndex(f => f.key === fromKey);
+        const idxTo = t.fields.findIndex(f => f.key === toKey);
+        if (idxFrom === -1 || idxTo === -1) return t;
+        const arr = [...t.fields];
+        const [m] = arr.splice(idxFrom, 1);
+        arr.splice(idxTo, 0, m);
+        return { ...t, fields: arr };
+      });
+      await persist(list);
     },
     async removeField(id: string, key: string) {
       await persist(templates.map(t => t.id === id ? { ...t, fields: t.fields.filter(f => f.key !== key) } : t));
@@ -67,4 +97,3 @@ export function useTemplates() {
   if (!v) throw new Error('TemplatesProvider missing');
   return v;
 }
-

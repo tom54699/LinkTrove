@@ -21,9 +21,10 @@ export interface CategoryData {
 export interface TemplateField {
   key: string; // e.g. author
   label: string; // 顯示名稱
-  type: 'text'; // 簡化：目前只支援文字
+  type: 'text' | 'number' | 'date' | 'url' | 'select';
   required?: boolean;
   defaultValue?: string;
+  options?: string[]; // for select
 }
 
 export interface TemplateData {
@@ -64,7 +65,13 @@ export function createStorageService(): StorageService {
     );
   }
   function isTemplateField(x: any): x is TemplateField {
-    return x && typeof x.key === 'string' && typeof x.label === 'string';
+    const okBase = x && typeof x.key === 'string' && typeof x.label === 'string';
+    if (!okBase) return false;
+    const t = x.type || 'text';
+    const okType = ['text','number','date','url','select'].includes(t);
+    if (!okType) return false;
+    if (t === 'select' && x.options && !Array.isArray(x.options)) return false;
+    return true;
   }
   function isTemplateData(x: any): x is TemplateData {
     return x && typeof x.id === 'string' && typeof x.name === 'string' && Array.isArray(x.fields) && x.fields.every(isTemplateField);

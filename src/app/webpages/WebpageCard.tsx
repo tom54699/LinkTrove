@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ContextMenu } from '../ui/ContextMenu';
 import { useCategories } from '../sidebar/categories';
+import { useTemplates } from '../templates/TemplatesProvider';
 
 export interface WebpageCardData {
   id: string;
@@ -276,6 +277,53 @@ export const WebpageCard: React.FC<{
             </div>
           </div>
         </div>
+      )}
+    </div>
+  );
+};
+
+const TemplateFields: React.FC<{
+  categoryId: string;
+  meta: Record<string, string>;
+  onChange: (m: Record<string, string>) => void;
+}> = ({ categoryId, meta, onChange }) => {
+  const { categories } = useCategories();
+  const { templates } = useTemplates();
+  const cat = categories.find((c) => c.id === categoryId);
+  const tpl = templates.find((t) => t.id === (cat?.defaultTemplateId || ''));
+  if (!tpl || !tpl.fields || tpl.fields.length === 0) return null;
+  const hasRequiredError = tpl.fields.some((f:any)=>f.required && !((meta[f.key] ?? '').trim()));
+  return (
+    <div className="space-y-2">
+      <div className="text-xs opacity-70">套用自：{tpl.name}</div>
+      {tpl.fields.map((f:any) => {
+        const val = meta[f.key] ?? '';
+        const set = (v: string) => onChange({ ...meta, [f.key]: v });
+        const baseCls = `w-full rounded bg-slate-900 border p-2 text-sm ${f.required && !val ? 'border-red-600' : 'border-slate-700'}`;
+        return (
+          <div key={f.key}>
+            <label className="block text-sm mb-1">
+              {f.label} {f.required && <span className="text-red-400">*</span>}
+            </label>
+            {f.type === 'select' ? (
+              <select className={baseCls} value={val} onChange={(e)=>set(e.target.value)}>
+                <option value="">{f.defaultValue || 'Select...'}</option>
+                {(f.options||[]).map((op:string)=>(<option key={op} value={op}>{op}</option>))}
+              </select>
+            ) : f.type === 'number' ? (
+              <input className={baseCls} type="number" value={val} placeholder={f.defaultValue||''} onChange={(e)=>set(e.target.value)} />
+            ) : f.type === 'date' ? (
+              <input className={baseCls} type="date" value={val} onChange={(e)=>set(e.target.value)} />
+            ) : f.type === 'url' ? (
+              <input className={baseCls} type="url" value={val} placeholder={f.defaultValue||''} onChange={(e)=>set(e.target.value)} />
+            ) : (
+              <input className={baseCls} value={val} placeholder={f.defaultValue||''} onChange={(e)=>set(e.target.value)} />
+            )}
+          </div>
+        );
+      })}
+      {hasRequiredError && (
+        <div className="text-xs text-red-400">請填寫所有必填欄位</div>
       )}
     </div>
   );

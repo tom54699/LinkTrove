@@ -18,12 +18,17 @@ import { createStorageService } from '../background/storageService';
 import { useFeedback } from './ui/feedback';
 import { WebpagesProvider, useWebpages } from './webpages/WebpagesProvider';
 import { TemplatesManager } from './templates/TemplatesManager';
+import { useTemplates } from './templates/TemplatesProvider';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
   return (
     <FeedbackProvider>
       <ErrorBoundary>
+        <OpenTabsProvider>
+          <CategoriesProvider>
+            <TemplatesProvider>
+              <WebpagesProvider>
         <div className="toby-mode min-h-screen bg-[var(--bg)] text-[var(--fg)]">
           <header className="p-4 flex items-center justify-between border-b border-slate-700">
             <nav className="space-x-4">
@@ -45,22 +50,16 @@ export const AppLayout: React.FC = () => {
             <Outlet />
           </main>
         </div>
+              </WebpagesProvider>
+            </TemplatesProvider>
+          </CategoriesProvider>
+        </OpenTabsProvider>
       </ErrorBoundary>
     </FeedbackProvider>
   );
 };
 
-export const Home: React.FC = () => (
-  <OpenTabsProvider>
-    <CategoriesProvider>
-      <TemplatesProvider>
-        <WebpagesProvider>
-          <HomeInner />
-        </WebpagesProvider>
-      </TemplatesProvider>
-    </CategoriesProvider>
-  </OpenTabsProvider>
-);
+export const Home: React.FC = () => <HomeInner />;
 
 const HomeInner: React.FC = () => {
   const { actions, items } = useWebpages();
@@ -123,6 +122,7 @@ const HomeInner: React.FC = () => {
               onUpdateTitle={(id, title) => actions.updateTitle(id, title)}
               onUpdateUrl={(id, url) => actions.updateUrl(id, url)}
               onUpdateCategory={(id, cat) => actions.updateCategory(id, cat)}
+              onUpdateMeta={(id, meta) => actions.updateMeta(id, meta)}
               onDropTab={async (tab) => {
                 try {
                   const id = (await actions.addFromTab(tab as any)) as unknown as string;
@@ -162,11 +162,17 @@ const HomeInner: React.FC = () => {
                 <label className="block text-sm mb-1">Color</label>
                 <input type="color" className="rounded border border-slate-700 bg-slate-900 p-1" value={newCatColor} onChange={(e)=>setNewCatColor(e.target.value)} />
               </div>
+              <div>
+                <label className="block text-sm mb-1">Template</label>
+                <TemplatePicker />
+              </div>
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
               <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>setShowAddCat(false)}>Cancel</button>
               <button className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50" disabled={!newCatName.trim()} onClick={async ()=>{
                 const cat = await catActions.addCategory(newCatName.trim(), newCatColor);
+                const sel = (document.getElementById('tpl-select') as HTMLSelectElement | null)?.value || '';
+                if (sel) await catActions.setDefaultTemplate(cat.id, sel);
                 setCurrentCategory(cat.id);
                 setShowAddCat(false);
               }}>Create</button>
@@ -175,6 +181,18 @@ const HomeInner: React.FC = () => {
         </div>
       )}
     </div>
+  );
+};
+
+const TemplatePicker: React.FC = () => {
+  const { templates } = useTemplates();
+  return (
+    <select id="tpl-select" className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm">
+      <option value="">None</option>
+      {templates.map((t)=> (
+        <option key={t.id} value={t.id}>{t.name}</option>
+      ))}
+    </select>
   );
 };
 

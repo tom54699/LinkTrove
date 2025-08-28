@@ -118,7 +118,9 @@ export const CardGrid: React.FC<CardGridProps> = ({
                 onDragStart={(e) => {
                   e.dataTransfer.setData('application/x-linktrove-webpage', it.id);
                   e.dataTransfer.effectAllowed = 'move';
+                  (e.currentTarget as HTMLElement).setAttribute('data-dragging', 'true');
                 }}
+                onDragEnd={(e) => { (e.currentTarget as HTMLElement).removeAttribute('data-dragging'); }}
                 onDragEnter={(e) => {
                   e.preventDefault();
                   if (overId !== it.id) setOverId(it.id);

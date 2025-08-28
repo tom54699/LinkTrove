@@ -214,6 +214,9 @@
 .toby-mode .toby-card:hover .toby-actions, .toby-mode .toby-card:focus-within .toby-actions { opacity: 1; }
 
 .toby-mode .icon-btn:focus-visible { outline: 2px solid #ff507a; outline-offset: 2px; border-radius: 6px; }
+/* Drag feedback for moving cards to sidebar */
+.toby-mode .toby-card-flex[data-dragging="true"] { transform: scale(0.96); opacity: 0.85; transition: transform .15s ease, opacity .15s ease; }
+.toby-mode [aria-label="Categories"] button[data-drop="true"] { outline: 2px solid #34d399; background-color: rgba(16,185,129,0.16) !important; }
 
 /* Density controls */
 .toby-mode .density-compact .toby-card { padding: 8px !important; min-height: 80px; }
