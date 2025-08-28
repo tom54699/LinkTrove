@@ -156,8 +156,10 @@ export const CardGrid: React.FC<CardGridProps> = ({
                   onToggleSelect={() => toggleSelect(it.id)}
                   onOpen={() => { try { window.open(it.url, '_blank'); } catch {} }}
                   onDelete={() => onDeleteOne?.(it.id)}
-                  onEdit={() => onEditDescription?.(it.id, it.description || '')}
-                  onMove={() => {/* future: open move menu */}}
+                  onUpdateTitle={(v)=>onUpdateTitle?.(it.id, v)}
+                  onUpdateUrl={(v)=>onUpdateUrl?.(it.id, v)}
+                  onUpdateDescription={(v)=>onEditDescription?.(it.id, v)}
+                  onMoveToCategory={(cid)=>onUpdateCategory?.(it.id, cid)}
                 />
               </div>
             ))}
