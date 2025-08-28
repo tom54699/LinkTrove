@@ -10,6 +10,7 @@ export interface CardGridProps {
   onDeleteMany?: (ids: string[]) => void;
   onDeleteOne?: (id: string) => void;
   onEditDescription?: (id: string, description: string) => void;
+  onSave?: (id: string, patch: Partial<{ title: string; description: string; url: string; meta: Record<string,string> }>) => void;
   density?: 'compact' | 'cozy' | 'roomy';
   collapsed?: boolean;
   onReorder?: (fromId: string, toId: string) => void;
@@ -25,6 +26,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
   onDeleteMany,
   onDeleteOne,
   onEditDescription,
+  onSave,
   density = 'cozy',
   collapsed = false,
   onReorder,
@@ -116,6 +118,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
               <div
                 key={it.id}
                 className="toby-card-flex relative"
+                data-testid={`card-wrapper-${it.id}`}
                 draggable={!dragDisabled}
                 onDragStart={(e) => {
                   e.dataTransfer.setData('application/x-linktrove-webpage', it.id);
@@ -125,6 +128,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
                 onDragEnd={(e) => { (e.currentTarget as HTMLElement).removeAttribute('data-dragging'); }}
                 onDragEnter={(e) => {
                   e.preventDefault();
+                  // highlight for both reorder and insert
                   if (overId !== it.id) setOverId(it.id);
                 }}
                 onDragOver={(e) => {
@@ -137,8 +141,18 @@ export const CardGrid: React.FC<CardGridProps> = ({
                 }}
                 onDrop={(e) => {
                   e.preventDefault();
-                  const fromId = e.dataTransfer.getData('application/x-linktrove-webpage');
                   setOverId(null);
+                  const rawTab = e.dataTransfer.getData('application/x-linktrove-tab');
+                  if (rawTab) {
+                    try {
+                      const tab: TabItemData = JSON.parse(rawTab);
+                      // Insert new item before this card
+                      // Prefer new onDropTab signature with beforeId
+                      (onDropTab as any)?.(tab, it.id);
+                      return;
+                    } catch {/* ignore */}
+                  }
+                  const fromId = e.dataTransfer.getData('application/x-linktrove-webpage');
                   if (fromId && fromId !== it.id) onReorder?.(fromId, it.id);
                 }}
               >
@@ -167,6 +181,15 @@ export const CardGrid: React.FC<CardGridProps> = ({
                   onUpdateMeta={(m)=>onUpdateMeta?.(it.id, m)}
                   onMoveToCategory={(cid)=>onUpdateCategory?.(it.id, cid)}
                   onModalOpenChange={(open)=>setDragDisabled(open)}
+                  onSave={(patch)=>{
+                    if (onSave) onSave(it.id, patch);
+                    else {
+                      if (patch.title) onUpdateTitle?.(it.id, patch.title);
+                      if (patch.url) onUpdateUrl?.(it.id, patch.url);
+                      if (patch.description !== undefined) onEditDescription?.(it.id, patch.description);
+                      if (patch.meta) onUpdateMeta?.(it.id, patch.meta);
+                    }
+                  }}
                 />
               </div>
             ))}

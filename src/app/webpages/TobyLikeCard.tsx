@@ -23,6 +23,7 @@ export interface TobyLikeCardProps {
   onUpdateMeta?: (m: Record<string, string>) => void;
   onMoveToCategory?: (categoryId: string) => void;
   onModalOpenChange?: (open: boolean) => void;
+  onSave?: (patch: Partial<{ title: string; description: string; url: string; meta: Record<string,string> }>) => void;
 }
 
 export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
@@ -44,6 +45,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   onUpdateMeta,
   onMoveToCategory,
   onModalOpenChange,
+  onSave,
 }) => {
   const [confirming, setConfirming] = React.useState(false);
   const [showModal, setShowModal] = React.useState(false);
@@ -149,8 +151,9 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60" onClick={()=>{ setShowModal(false); onModalOpenChange?.(false); }}>
-          <div className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[560px] max-w-[95vw]" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Edit Card">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60">
+          <div className="relative rounded border border-slate-700 bg-[var(--panel)] p-5 w-[560px] max-w-[95vw]" role="dialog" aria-label="Edit Card">
+            <button aria-label="Close" title="Close" className="absolute right-2 top-2 text-slate-300 hover:text-white" onClick={()=>{ setShowModal(false); onModalOpenChange?.(false); }}>✕</button>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm mb-1">Title</label>
@@ -169,13 +172,18 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
             <div className="mt-4 flex items-center justify-end gap-2">
               <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>{ setShowModal(false); onModalOpenChange?.(false); }}>Cancel</button>
               <button className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30" onClick={()=>{
-                if (onUpdateTitle) onUpdateTitle(titleValue.trim());
-                if (urlValue.trim()) {
-                  const norm = validateUrl(urlValue);
-                  if (!norm.error && onUpdateUrl) onUpdateUrl(norm.value!);
+                const patch: any = { title: titleValue.trim(), description: descValue };
+                const norm = urlValue.trim() ? validateUrl(urlValue) : undefined;
+                if (!norm || !norm.error) patch.url = norm?.value ?? urlValue;
+                patch.meta = metaValue;
+                if (onSave) {
+                  onSave(patch);
+                } else {
+                  if (onUpdateTitle) onUpdateTitle(patch.title);
+                  if (patch.url && onUpdateUrl) onUpdateUrl(patch.url);
+                  if (onUpdateDescription) onUpdateDescription(patch.description);
+                  if (onUpdateMeta) onUpdateMeta(patch.meta);
                 }
-                if (onUpdateDescription) onUpdateDescription(descValue);
-                if (onUpdateMeta) onUpdateMeta(metaValue);
                 setShowModal(false);
                 onModalOpenChange?.(false);
               }}>Save</button>

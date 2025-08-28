@@ -110,6 +110,14 @@ const HomeInner: React.FC = () => {
             </div>
             <CardGrid
               items={viewItems}
+              onSave={async (id, patch)=>{
+                try {
+                  await actions.updateCard(id, patch);
+                  showToast('Saved', 'success');
+                } catch {
+                  showToast('Save failed', 'error');
+                }
+              }}
               // single view retained; no density prop
               collapsed={collapsed}
               onReorder={(fromId, toId) => actions.reorder(fromId, toId)}
@@ -117,10 +125,11 @@ const HomeInner: React.FC = () => {
               onUpdateUrl={(id, url) => actions.updateUrl(id, url)}
               onUpdateCategory={(id, cat) => actions.updateCategory(id, cat)}
               onUpdateMeta={(id, meta) => actions.updateMeta(id, meta)}
-              onDropTab={async (tab) => {
+              onDropTab={async (tab, beforeId?: string) => {
                 try {
                   const id = (await actions.addFromTab(tab as any)) as unknown as string;
                   await actions.updateCategory(id, selectedId);
+                  if (beforeId) await actions.reorder(id, beforeId);
                   showToast('Saved from tab', 'success');
                 } catch (e) {
                   showToast('Save failed', 'error');

@@ -16,6 +16,7 @@ interface CtxValue {
     deleteOne: (id: string) => Promise<void>;
     updateNote: (id: string, note: string) => Promise<void>; // deprecated alias
     updateDescription: (id: string, description: string) => Promise<void>;
+    updateCard: (id: string, patch: Partial<{ title: string; description: string; url: string; meta: Record<string,string> }>) => Promise<void>;
     updateTitle: (id: string, title: string) => Promise<void>;
     updateUrl: (id: string, url: string) => Promise<void>;
     updateCategory: (id: string, category: string) => Promise<void>;
@@ -168,6 +169,19 @@ export const WebpagesProvider: React.FC<{
     [service]
   );
 
+  const updateCard = React.useCallback(
+    async (id: string, patch: Partial<{ title: string; description: string; url: string; meta: Record<string,string> }>) => {
+      const payload: any = {};
+      if (patch.title !== undefined) payload.title = patch.title;
+      if (patch.description !== undefined) payload.note = patch.description;
+      if (patch.url !== undefined) payload.url = patch.url;
+      if (patch.meta !== undefined) payload.meta = patch.meta;
+      const updated = await service.updateWebpage(id, payload);
+      setItems((prev) => prev.map((p) => (p.id === id ? toCard(updated) : p)));
+    },
+    [service]
+  );
+
   const updateTitle = React.useCallback(
     async (id: string, title: string) => {
       const updated = await service.updateWebpage(id, { title });
@@ -307,9 +321,9 @@ export const WebpagesProvider: React.FC<{
   const value = React.useMemo<CtxValue>(
     () => ({
       items,
-      actions: { load, addFromTab, deleteMany, deleteOne, updateNote, updateDescription, updateTitle, updateUrl, updateCategory, updateMeta, reorder },
+      actions: { load, addFromTab, deleteMany, deleteOne, updateNote, updateDescription, updateCard, updateTitle, updateUrl, updateCategory, updateMeta, reorder },
     }),
-    [items, load, addFromTab, deleteMany, deleteOne, updateNote, updateDescription, updateTitle, updateUrl, updateCategory, updateMeta, reorder]
+    [items, load, addFromTab, deleteMany, deleteOne, updateNote, updateDescription, updateCard, updateTitle, updateUrl, updateCategory, updateMeta, reorder]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

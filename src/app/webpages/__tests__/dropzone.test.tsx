@@ -45,6 +45,7 @@ describe('CardGrid drop zone (task 5.2)', () => {
       JSON.stringify({ id: 7, title: 'T', url: 'https://t' })
     );
     fireEvent.drop(zone, { dataTransfer: dt });
+    // Called with a single argument (back-compat)
     expect(onDropTab).toHaveBeenCalledWith({
       id: 7,
       title: 'T',

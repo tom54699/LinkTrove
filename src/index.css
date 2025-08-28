@@ -12,7 +12,7 @@ html.dark,
   --bg: #282a36; /* page background */
   --fg: #f8f8f2; /* foreground text */
   --panel: #343746; /* side panels */
-  --card: #44475a; /* cards and tab items (currentLine) */
+  --card: #51566e; /* cards and tab items (more distinct from bg) */
   --muted: #6272a4; /* muted/comment */
 }
 body {
