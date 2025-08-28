@@ -8,7 +8,8 @@ export type PageMeta = Partial<{
   author: string;
   url: string;
   collectedAt: string;
-}>;
+  _sources: Partial<{ title: string; description: string; siteName: string; author: string }>;
+}>; 
 
 const CACHE_KEY = 'pageMetaCache';
 const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -119,13 +120,16 @@ function pageExtractor() {
     return undefined;
   }
   // Title: og:title → twitter:title → <title>
-  const title = first(get('og:title'), get('twitter:title'), document.title);
+  let titleSrc = '';
+  let title = get('og:title');
+  if (title) titleSrc = 'meta[property=og:title]';
+  if (!title) { const v = get('twitter:title'); if (v) { title = v; titleSrc = 'meta[name=twitter:title]'; } }
+  if (!title) { if (document.title && document.title.trim()) { title = document.title.trim(); titleSrc = 'title'; } }
   // Description: meta[name="description"] → og:description → twitter:description
-  const description = first(
-    get('description', 'name'),
-    get('og:description'),
-    get('twitter:description')
-  );
+  let descSrc = '';
+  let description = get('description', 'name'); if (description) descSrc = 'meta[name=description]';
+  if (!description) { const v = get('og:description'); if (v) { description = v; descSrc = 'meta[property=og:description]'; } }
+  if (!description) { const v = get('twitter:description'); if (v) { description = v; descSrc = 'meta[name=twitter:description]'; } }
   // Site name: og:site_name → derive from title suffix → hostname
   function deriveSiteNameFromTitle(t?: string): string | undefined {
     const s = (t || '').trim();
@@ -144,20 +148,20 @@ function pageExtractor() {
     }
     return undefined;
   }
-  const siteName = first(
-    get('og:site_name'),
-    deriveSiteNameFromTitle(title),
-    location.hostname.replace(/^www\./, '')
-  );
+  let siteSrc = '';
+  let siteName = get('og:site_name'); if (siteName) siteSrc = 'meta[property=og:site_name]';
+  if (!siteName) { const v = deriveSiteNameFromTitle(title); if (v) { siteName = v; siteSrc = 'title-suffix'; } }
+  if (!siteName) { siteName = location.hostname.replace(/^www\./, ''); siteSrc = 'hostname'; }
   // Author: meta[name=author] → meta[property=article:author] → link[rel=author] → JSON-LD → microdata
-  const author = first(
-    get('author', 'name'),
-    get('article:author'),
-    (document.querySelector('link[rel="author"]') as HTMLLinkElement | null)?.href,
-    readJsonLdAuthor(),
-    textOf('[itemprop="author"]')
-  );
-  return { title, description, siteName, author, url: location.href };
+  let authorSrc = '';
+  let author = get('author', 'name'); if (author) authorSrc = 'meta[name=author]';
+  if (!author) { const v = get('article:author'); if (v) { author = v; authorSrc = 'meta[property=article:author]'; } }
+  if (!author) { const v = (document.querySelector('link[rel="author"]') as HTMLLinkElement | null)?.href; if (v) { author = v; authorSrc = 'link[rel=author]'; } }
+  if (!author) { const v = readJsonLdAuthor(); if (v) { author = v; authorSrc = 'jsonld'; } }
+  if (!author) { const v = textOf('[itemprop="author"]'); if (v) { author = v; authorSrc = 'itemprop[author]'; } }
+  const meta = { title, description, siteName, author, url: location.href, _sources: { title: titleSrc, description: descSrc, siteName: siteSrc, author: authorSrc } };
+  try { console.log('[LinkTrove] pageExtractor', meta); } catch {}
+  return meta as any;
 }
 
 export async function extractMetaForTab(tabId: number): Promise<PageMeta | undefined> {
@@ -168,6 +172,7 @@ export async function extractMetaForTab(tabId: number): Promise<PageMeta | undef
       func: pageExtractor,
     } as any);
     const meta = (result || {}) as PageMeta;
+    try { console.log('[LinkTrove] extractMetaForTab', { tabId, url: meta?.url, meta }); } catch {}
     if (meta && meta.url) await saveMetaCache(meta.url, meta);
     return meta;
   } catch {

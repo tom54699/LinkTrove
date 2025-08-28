@@ -106,6 +106,7 @@ export const WebpagesProvider: React.FC<{
           void (async () => {
             try { await waitForTabComplete(tid); } catch {}
             const meta = await extractMetaForTab(tid);
+            try { console.log('[LinkTrove] addFromTab meta', { url: (tab as any).url, meta }); } catch {}
             if (!meta) return;
             // Optionally refine card fields shortly after creation
             try {
@@ -222,6 +223,7 @@ export const WebpagesProvider: React.FC<{
                   });
                 } catch {}
               }
+              try { console.log('[LinkTrove] updateCategory cache', { url: item.url, cached }); } catch {}
               const wantKeys = ['siteName', 'author'] as const;
               const fields = (tpl.fields || []) as any[];
               const hasField = (k: string) => fields.some((f) => f.key === k);
@@ -231,6 +233,7 @@ export const WebpagesProvider: React.FC<{
                 const val = (cached as any)?.[k] as string | undefined;
                 if (!cur && val && hasField(k)) merged[k] = val;
               }
+              try { console.log('[LinkTrove] updateCategory mergedMeta', { before: nextMeta, after: merged }); } catch {}
               nextMeta = merged;
             }
           } catch {}
