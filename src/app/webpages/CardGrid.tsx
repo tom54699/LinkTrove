@@ -1,5 +1,6 @@
 import React from 'react';
 import { WebpageCard, type WebpageCardData } from './WebpageCard';
+import { TobyLikeCard } from './TobyLikeCard';
 import type { TabItemData } from '../tabs/types';
 import { useFeedback } from '../ui/feedback';
 
@@ -146,17 +147,17 @@ export const CardGrid: React.FC<CardGridProps> = ({
                     className="pointer-events-none absolute left-0 right-0 top-0 h-0.5 bg-emerald-500 shadow-[0_0_0_2px_rgba(16,185,129,0.4)]"
                   />
                 )}
-                <WebpageCard
-                  data={it}
+                <TobyLikeCard
+                  title={it.title}
+                  description={it.description}
+                  faviconText={(it.url || '').replace(/^https?:\/\//,'').replace(/^www\./,'').slice(0,2).toUpperCase() || 'WW'}
                   selectMode={selectMode}
                   selected={!!selected[it.id]}
                   onToggleSelect={() => toggleSelect(it.id)}
-                  onDelete={onDeleteOne}
-                  onEditDescription={onEditDescription}
-                  onUpdateTitle={onUpdateTitle}
-                  onUpdateUrl={onUpdateUrl}
-                  onUpdateCategory={onUpdateCategory}
-                  onUpdateMeta={onUpdateMeta}
+                  onOpen={() => { try { window.open(it.url, '_blank'); } catch {} }}
+                  onDelete={() => onDeleteOne?.(it.id)}
+                  onEdit={() => onEditDescription?.(it.id, it.description || '')}
+                  onMove={() => {/* future: open move menu */}}
                 />
               </div>
             ))}

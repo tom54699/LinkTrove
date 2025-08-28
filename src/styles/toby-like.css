@@ -16,7 +16,7 @@
   cursor: grab;
   transition: background-color 0.3s ease;
 }
-.tobylike .card:hover { background: rgba(255,255,255,0.06); }
+/* Keep card color consistent; no hover-only color change */
 
 .tobylike .card-content { display: flex; padding: 16px 14px; gap: 12px; }
 .tobylike .icon-container {
@@ -35,7 +35,7 @@
 
 .tobylike .content { flex:1; min-width:0; }
 .tobylike .title { font-size:16px; font-weight:600; margin:0 0 4px 0; color: var(--fg); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.tobylike .description { font-size:14px; color: var(--muted); margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tobylike .description { font-size:14px; color: var(--muted); margin:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
 /* Delete bubble */
 .tobylike .delete-btn {
@@ -53,4 +53,3 @@
 .tobylike .action-btn svg { width:16px; height:16px; stroke-width:2; }
 
 .tobylike .card:hover .delete-btn, .tobylike .card:hover .actions { opacity:1; visibility: visible; }
-
