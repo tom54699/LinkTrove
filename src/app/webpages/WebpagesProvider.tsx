@@ -102,7 +102,23 @@ export const WebpagesProvider: React.FC<{
         if (typeof (globalThis as any).chrome !== 'undefined' && (tab as any).id != null) {
           const { extractMetaForTab } = await import('../../background/pageMeta');
           // Fire and forget; cache keyed by URL for future category autofill
-          void extractMetaForTab((tab as any).id as number);
+          void extractMetaForTab((tab as any).id as number).then(async (meta) => {
+            if (!meta) return;
+            // Optionally refine card fields shortly after creation
+            try {
+              const patch: any = {};
+              if (meta.title && meta.title.trim()) patch.title = meta.title.trim();
+              // If note empty, use description as initial note
+              const cur = created as any;
+              if ((!cur.note || !cur.note.trim()) && meta.description && meta.description.trim()) {
+                patch.note = meta.description.trim();
+              }
+              if (Object.keys(patch).length > 0) {
+                const updated = await service.updateWebpage(created.id, patch);
+                setItems((prev) => prev.map((p) => (p.id === created.id ? toCard(updated) : p)));
+              }
+            } catch {}
+          });
         }
       } catch {}
       // Prepend if new
@@ -175,8 +191,22 @@ export const WebpagesProvider: React.FC<{
           // Merge cached extracted meta for common keys (only if field exists and value empty)
           try {
             if (item) {
-              const { getCachedMeta } = await import('../../background/pageMeta');
-              const cached = await getCachedMeta(item.url);
+              const { getCachedMeta, extractMetaForTab } = await import('../../background/pageMeta');
+              let cached = await getCachedMeta(item.url);
+              // Fallback: if cache missing, try to find an open tab with this URL and extract live
+              if (!cached && typeof (globalThis as any).chrome !== 'undefined') {
+                try {
+                  await new Promise<void>((resolve) => {
+                    chrome.tabs.query({}, async (tabs) => {
+                      const match = (tabs || []).find((t: any) => t.url === item.url);
+                      if (match && match.id != null) {
+                        try { cached = await extractMetaForTab(match.id as number); } catch {}
+                      }
+                      resolve();
+                    });
+                  });
+                } catch {}
+              }
               const wantKeys = ['title', 'description', 'siteName', 'author'] as const;
               const fields = (tpl.fields || []) as any[];
               const hasField = (k: string) => fields.some((f) => f.key === k);
