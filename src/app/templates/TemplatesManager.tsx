@@ -48,24 +48,27 @@ export const TemplatesManager: React.FC = () => {
                           <span className="cursor-move select-none text-slate-400">↕</span>
                           <input className="w-36 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" value={f.key} disabled />
                           <input className="w-40 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" value={f.label} onChange={(e)=>actions.updateField(t.id, f.key, { label: e.target.value })} />
-                          <select className="text-sm rounded bg-slate-900 border border-slate-700 px-2 py-1" value={(f as any).type || 'text'} onChange={(e)=>actions.updateFieldType(t.id, f.key, e.target.value as any)}>
-                            <option value="text">text</option>
-                            <option value="number">number</option>
-                            <option value="date">date</option>
-                            <option value="url">url</option>
-                            <option value="select">select</option>
-                          </select>
+                      <select className="text-sm rounded bg-slate-900 border border-slate-700 px-2 py-1" value={(f as any).type || 'text'} onChange={(e)=>actions.updateFieldType(t.id, f.key, e.target.value as any)}>
+                        <option value="text">text</option>
+                        <option value="number">number</option>
+                        <option value="date">date</option>
+                        <option value="url">url</option>
+                        <option value="select">select</option>
+                        <option value="rating">rating (1-5)</option>
+                      </select>
                           <label className="text-xs flex items-center gap-1"> 
                             <input type="checkbox" checked={!!(f as any).required} onChange={(e)=>actions.updateFieldRequired(t.id, f.key, e.target.checked)} /> required
                           </label>
                           <button className="ml-auto text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={()=>actions.removeField(t.id, f.key)}>Remove</button>
                         </div>
                         <div className="mt-2 flex items-center gap-2">
-                          {((f as any).type === 'select') ? (
-                            <input className="flex-1 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="options (comma-separated)" defaultValue={((f as any).options||[]).join(', ')} onBlur={(e)=>actions.updateFieldOptions(t.id, f.key, e.target.value.split(',').map(s=>s.trim()).filter(Boolean))} />
-                          ) : (
-                            <input className="flex-1 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="Default" defaultValue={(f as any).defaultValue || ''} onBlur={(e)=>actions.updateField(t.id, f.key, { defaultValue: e.target.value })} />
-                          )}
+                      {((f as any).type === 'select') ? (
+                        <input className="flex-1 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="options (comma-separated)" defaultValue={((f as any).options||[]).join(', ')} onBlur={(e)=>actions.updateFieldOptions(t.id, f.key, e.target.value.split(',').map(s=>s.trim()).filter(Boolean))} />
+                      ) : ((f as any).type === 'rating') ? (
+                        <input className="w-32 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" type="number" min={1} max={5} placeholder="default (1-5)" defaultValue={(f as any).defaultValue || ''} onBlur={(e)=>actions.updateField(t.id, f.key, { defaultValue: e.target.value })} />
+                      ) : (
+                        <input className="flex-1 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="Default" defaultValue={(f as any).defaultValue || ''} onBlur={(e)=>actions.updateField(t.id, f.key, { defaultValue: e.target.value })} />
+                      )}
                         </div>
                       </div>
                     ))}

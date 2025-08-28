@@ -21,7 +21,7 @@ export interface CategoryData {
 export interface TemplateField {
   key: string; // e.g. author
   label: string; // 顯示名稱
-  type: 'text' | 'number' | 'date' | 'url' | 'select';
+  type: 'text' | 'number' | 'date' | 'url' | 'select' | 'rating';
   required?: boolean;
   defaultValue?: string;
   options?: string[]; // for select
@@ -68,7 +68,7 @@ export function createStorageService(): StorageService {
     const okBase = x && typeof x.key === 'string' && typeof x.label === 'string';
     if (!okBase) return false;
     const t = x.type || 'text';
-    const okType = ['text','number','date','url','select'].includes(t);
+    const okType = ['text','number','date','url','select','rating'].includes(t);
     if (!okType) return false;
     if (t === 'select' && x.options && !Array.isArray(x.options)) return false;
     return true;

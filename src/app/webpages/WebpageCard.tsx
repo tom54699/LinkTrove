@@ -316,6 +316,17 @@ const TemplateFields: React.FC<{
               <input className={baseCls} type="date" value={val} onChange={(e)=>set(e.target.value)} />
             ) : f.type === 'url' ? (
               <input className={baseCls} type="url" value={val} placeholder={f.defaultValue||''} onChange={(e)=>set(e.target.value)} />
+            ) : f.type === 'rating' ? (
+              <div className="flex items-center gap-1">
+                {[1,2,3,4,5].map((n)=>(
+                  <button key={n} type="button" aria-label={`Rate ${n}`} className={`text-lg ${Number(val)>=n? 'text-yellow-400' : 'text-slate-600'} hover:text-yellow-300`}
+                    onClick={()=>set(String(n))}
+                  >
+                    {Number(val) >= n ? '★' : '☆'}
+                  </button>
+                ))}
+                <button type="button" className="ml-2 text-xs text-slate-400 hover:text-slate-200" onClick={()=>set('')}>Clear</button>
+              </div>
             ) : (
               <input className={baseCls} value={val} placeholder={f.defaultValue||''} onChange={(e)=>set(e.target.value)} />
             )}

@@ -47,7 +47,7 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     async remove(id: string) {
       await persist(templates.filter(t => t.id !== id));
     },
-    async addField(id: string, field: { key: string; label: string; defaultValue?: string; type?: 'text'|'number'|'date'|'url'|'select'; options?: string[]; required?: boolean }) {
+    async addField(id: string, field: { key: string; label: string; defaultValue?: string; type?: 'text'|'number'|'date'|'url'|'select'|'rating'; options?: string[]; required?: boolean }) {
       const list = templates.map(t => {
         if (t.id !== id) return t;
         const exists = (t.fields || []).some(f => f.key === field.key);
@@ -61,7 +61,7 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     async updateField(id: string, key: string, patch: Partial<{ label: string; defaultValue: string }>) {
       await persist(templates.map(t => t.id === id ? { ...t, fields: t.fields.map(f => f.key === key ? { ...f, ...patch } : f) } : t));
     },
-    async updateFieldType(id: string, key: string, type: 'text'|'number'|'date'|'url'|'select') {
+    async updateFieldType(id: string, key: string, type: 'text'|'number'|'date'|'url'|'select'|'rating') {
       await persist(templates.map(t => t.id === id ? { ...t, fields: t.fields.map(f => f.key === key ? { ...f, type } : f) } : t));
     },
     async updateFieldOptions(id: string, key: string, options: string[]) {
