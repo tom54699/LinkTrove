@@ -17,12 +17,39 @@ function hasChrome() {
   return typeof (globalThis as any).chrome !== 'undefined' && !!(chrome as any).storage?.local;
 }
 
+function normalizeUrlKey(raw: string): string {
+  try {
+    const u = new URL(raw);
+    const host = (u.hostname || '').toLowerCase().replace(/^www\./, '');
+    let path = u.pathname || '/';
+    if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
+    return `${u.protocol}//${host}${path}`;
+  } catch {
+    return raw;
+  }
+}
+
+function altSlashVariant(key: string): string {
+  try {
+    const u = new URL(key);
+    let path = u.pathname || '/';
+    if (path.endsWith('/')) path = path.slice(0, -1);
+    else path = path + '/';
+    return `${u.protocol}//${u.hostname}${path}`;
+  } catch {
+    return key;
+  }
+}
+
 export async function getCachedMeta(url: string): Promise<PageMeta | undefined> {
   if (!hasChrome()) return undefined;
   return new Promise((resolve) => {
     chrome.storage.local.get({ [CACHE_KEY]: {} }, (res: any) => {
       const map = res?.[CACHE_KEY] || {};
-      const ent = map[url];
+      const exact = map[url];
+      const norm = map[normalizeUrlKey(url)];
+      const alt = map[altSlashVariant(normalizeUrlKey(url))];
+      const ent = exact || norm || alt;
       if (!ent) return resolve(undefined);
       try {
         const ts = new Date(ent.collectedAt || ent.ts || 0).getTime();
@@ -38,7 +65,10 @@ export async function saveMetaCache(url: string, meta: PageMeta): Promise<void> 
   return new Promise((resolve) => {
     chrome.storage.local.get({ [CACHE_KEY]: {} }, (res: any) => {
       const map = res?.[CACHE_KEY] || {};
-      map[url] = { ...meta, url, collectedAt: new Date().toISOString() };
+      const entry = { ...meta, url: meta.url || url, collectedAt: new Date().toISOString() };
+      map[url] = entry;
+      map[normalizeUrlKey(url)] = entry;
+      map[altSlashVariant(normalizeUrlKey(url))] = entry;
       chrome.storage.local.set({ [CACHE_KEY]: map }, () => resolve());
     });
   });
@@ -142,5 +172,32 @@ export async function extractMetaForTab(tabId: number): Promise<PageMeta | undef
     return meta;
   } catch {
     return undefined;
+  }
+}
+
+export async function waitForTabComplete(tabId: number): Promise<void> {
+  return new Promise((resolve) => {
+    try {
+      chrome.tabs.get(tabId, (t) => {
+        if (!t || (t as any).status === 'complete') return resolve();
+        const handler = (id: number, changeInfo: any) => {
+          if (id === tabId && changeInfo?.status === 'complete') {
+            try { chrome.tabs.onUpdated.removeListener(handler as any); } catch {}
+            resolve();
+          }
+        };
+        chrome.tabs.onUpdated.addListener(handler as any);
+      });
+    } catch {
+      resolve();
+    }
+  });
+}
+
+export function urlsRoughlyEqual(a: string, b: string): boolean {
+  try {
+    return normalizeUrlKey(a) === normalizeUrlKey(b) || altSlashVariant(normalizeUrlKey(a)) === normalizeUrlKey(b) || normalizeUrlKey(a) === altSlashVariant(normalizeUrlKey(b));
+  } catch {
+    return a === b;
   }
 }

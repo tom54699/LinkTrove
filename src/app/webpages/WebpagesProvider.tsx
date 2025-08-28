@@ -100,9 +100,12 @@ export const WebpagesProvider: React.FC<{
       // Prefetch page meta and cache for later auto-fill (best-effort)
       try {
         if (typeof (globalThis as any).chrome !== 'undefined' && (tab as any).id != null) {
-          const { extractMetaForTab } = await import('../../background/pageMeta');
-          // Fire and forget; cache keyed by URL for future category autofill
-          void extractMetaForTab((tab as any).id as number).then(async (meta) => {
+          const { extractMetaForTab, waitForTabComplete } = await import('../../background/pageMeta');
+          // Wait for tab load complete to increase chance head/meta are ready
+          const tid = (tab as any).id as number;
+          void (async () => {
+            try { await waitForTabComplete(tid); } catch {}
+            const meta = await extractMetaForTab(tid);
             if (!meta) return;
             // Optionally refine card fields shortly after creation
             try {
@@ -118,7 +121,7 @@ export const WebpagesProvider: React.FC<{
                 setItems((prev) => prev.map((p) => (p.id === created.id ? toCard(updated) : p)));
               }
             } catch {}
-          });
+          })();
         }
       } catch {}
       // Prepend if new
@@ -204,9 +207,11 @@ export const WebpagesProvider: React.FC<{
                 try {
                   await new Promise<void>((resolve) => {
                     chrome.tabs.query({}, async (tabs) => {
-                      const match = (tabs || []).find((t: any) => t.url === item.url);
+                      const { urlsRoughlyEqual, extractMetaForTab, waitForTabComplete } = await import('../../background/pageMeta');
+                      const match = (tabs || []).find((t: any) => t.url && urlsRoughlyEqual(t.url, item.url));
                       if (match && match.id != null) {
                         try {
+                          try { await waitForTabComplete(match.id as number); } catch {}
                           const live = await extractMetaForTab(match.id as number);
                           // Merge live into cached
                           cached = { ...(cached || {}), ...(live || {}) } as any;
@@ -234,6 +239,37 @@ export const WebpagesProvider: React.FC<{
       } catch {}
       const updated = await service.updateWebpage(id, updates);
       setItems((prev) => prev.map((p) => (p.id === id ? toCard(updated) : p)));
+      // Delay-and-check: in case cache is written slightly later, try once more
+      try {
+        const fields = (await (async () => {
+          const { createStorageService } = await import('../../background/storageService');
+          const s = createStorageService();
+          const [cats, tmpls] = await Promise.all([s.loadFromSync(), (s as any).loadTemplates()]);
+          const cat = (cats as any[]).find((c) => c.id === category);
+          const tpl = cat?.defaultTemplateId ? (tmpls as any[]).find((t) => t.id === cat.defaultTemplateId) : null;
+          return tpl?.fields || [];
+        })());
+        const hasSite = fields.some((f: any) => f.key === 'siteName');
+        const hasAuthor = fields.some((f: any) => f.key === 'author');
+        if (hasSite || hasAuthor) {
+          setTimeout(async () => {
+            try {
+              const { getCachedMeta } = await import('../../background/pageMeta');
+              const cached2 = await getCachedMeta(updated.url);
+              if (!cached2) return;
+              const curMeta = (updated as any).meta || {};
+              const patchMeta: Record<string, string> = { ...curMeta };
+              let changed = false;
+              if (hasSite && !((patchMeta.siteName || '').trim()) && (cached2 as any).siteName) { patchMeta.siteName = String((cached2 as any).siteName); changed = true; }
+              if (hasAuthor && !((patchMeta.author || '').trim()) && (cached2 as any).author) { patchMeta.author = String((cached2 as any).author); changed = true; }
+              if (changed) {
+                const upd2 = await service.updateWebpage(id, { meta: patchMeta });
+                setItems((prev) => prev.map((p) => (p.id === id ? toCard(upd2) : p)));
+              }
+            } catch {}
+          }, 500);
+        }
+      } catch {}
     },
     [service]
   );
