@@ -197,14 +197,20 @@ export const WebpagesProvider: React.FC<{
             if (item) {
               const { getCachedMeta, extractMetaForTab } = await import('../../background/pageMeta');
               let cached = await getCachedMeta(item.url);
-              // Fallback: if cache missing, try to find an open tab with this URL and extract live
-              if (!cached && typeof (globalThis as any).chrome !== 'undefined') {
+              const needKeys = ['siteName', 'author'] as const;
+              const missing = (m?: any) => !m || needKeys.some((k) => !((m as any)[k] || '').trim());
+              // Fallback: if cache missing or missing desired keys, try to find an open tab and extract live
+              if ((missing(cached)) && typeof (globalThis as any).chrome !== 'undefined') {
                 try {
                   await new Promise<void>((resolve) => {
                     chrome.tabs.query({}, async (tabs) => {
                       const match = (tabs || []).find((t: any) => t.url === item.url);
                       if (match && match.id != null) {
-                        try { cached = await extractMetaForTab(match.id as number); } catch {}
+                        try {
+                          const live = await extractMetaForTab(match.id as number);
+                          // Merge live into cached
+                          cached = { ...(cached || {}), ...(live || {}) } as any;
+                        } catch {}
                       }
                       resolve();
                     });

@@ -55,6 +55,11 @@ function pageExtractor() {
     for (const v of vals) if (v && v.trim()) return v.trim();
     return undefined;
   }
+  function textOf(sel: string): string | undefined {
+    const el = document.querySelector(sel) as HTMLElement | null;
+    const txt = el?.textContent?.trim();
+    return txt || undefined;
+  }
   function readJsonLdAuthor(): string | undefined {
     const scripts = Array.from(
       document.querySelectorAll('script[type="application/ld+json"]')
@@ -91,10 +96,37 @@ function pageExtractor() {
     get('og:description'),
     get('twitter:description')
   );
-  // Site name: og:site_name
-  const siteName = first(get('og:site_name'));
-  // Author: meta[name=author] → meta[property=article:author] → JSON-LD author.name
-  const author = first(get('author', 'name'), get('article:author'), readJsonLdAuthor());
+  // Site name: og:site_name → derive from title suffix → hostname
+  function deriveSiteNameFromTitle(t?: string): string | undefined {
+    const s = (t || '').trim();
+    if (!s) return undefined;
+    const seps = [' - ', ' – ', ' — ', '｜', '|', '·', '•', '»', '：', ':'];
+    for (const sep of seps) {
+      if (s.includes(sep)) {
+        const parts = s.split(sep).map((x) => x.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+          const cand = parts[parts.length - 1];
+          if (cand && cand.length <= 20) return cand;
+          // sometimes site name is first
+          if (parts[0] && parts[0].length <= 20) return parts[0];
+        }
+      }
+    }
+    return undefined;
+  }
+  const siteName = first(
+    get('og:site_name'),
+    deriveSiteNameFromTitle(title),
+    location.hostname.replace(/^www\./, '')
+  );
+  // Author: meta[name=author] → meta[property=article:author] → link[rel=author] → JSON-LD → microdata
+  const author = first(
+    get('author', 'name'),
+    get('article:author'),
+    (document.querySelector('link[rel="author"]') as HTMLLinkElement | null)?.href,
+    readJsonLdAuthor(),
+    textOf('[itemprop="author"]')
+  );
   return { title, description, siteName, author, url: location.href };
 }
 
