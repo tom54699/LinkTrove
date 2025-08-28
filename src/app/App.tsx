@@ -64,7 +64,7 @@ export const Home: React.FC = () => <HomeInner />;
 const HomeInner: React.FC = () => {
   const { actions, items } = useWebpages();
   const { selectedId, actions: catActions, setCurrentCategory } = useCategories();
-  const [density, setDensity] = React.useState<'compact'|'cozy'|'roomy'>('roomy');
+  // Simplify to a single view; remove density switching
   const [collapsed, setCollapsed] = React.useState(false);
   const { showToast } = useFeedback();
   const [showAddCat, setShowAddCat] = React.useState(false);
@@ -90,13 +90,7 @@ const HomeInner: React.FC = () => {
                 <div className="inline-block align-middle mr-2">
                   <SearchBox />
                 </div>
-                <button
-                  className="link"
-                  title="View Options"
-                  onClick={() => setDensity(density === 'cozy' ? 'compact' : density === 'compact' ? 'roomy' : 'cozy')}
-                >
-                  VIEW
-                </button>
+                {/* Single view only: density control removed */}
                 <button
                   className="link muted"
                   title="Expand"
@@ -116,7 +110,7 @@ const HomeInner: React.FC = () => {
             </div>
             <CardGrid
               items={viewItems}
-              density={density}
+              // single view retained; no density prop
               collapsed={collapsed}
               onReorder={(fromId, toId) => actions.reorder(fromId, toId)}
               onUpdateTitle={(id, title) => actions.updateTitle(id, title)}
