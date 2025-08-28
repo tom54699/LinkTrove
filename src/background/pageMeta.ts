@@ -8,7 +8,6 @@ export type PageMeta = Partial<{
   author: string;
   url: string;
   collectedAt: string;
-  _sources: Partial<{ title: string; description: string; siteName: string; author: string }>;
 }>; 
 
 const CACHE_KEY = 'pageMetaCache';
@@ -162,8 +161,7 @@ function pageExtractor() {
   if (!author) { const v = (document.querySelector('link[rel="author"]') as HTMLLinkElement | null)?.href; if (v) { author = v; authorSrc = 'link[rel=author]'; } }
   if (!author) { const v = readJsonLdAuthor(); if (v) { author = v; authorSrc = 'jsonld'; } }
   if (!author) { const v = textOf('[itemprop="author"]'); if (v) { author = v; authorSrc = 'itemprop[author]'; } }
-  const meta = { title, description, siteName, author, url: location.href, _sources: { title: titleSrc, description: descSrc, siteName: siteSrc, author: authorSrc } };
-  try { console.log('[LinkTrove] pageExtractor', meta); } catch {}
+  const meta = { title, description, siteName, author, url: location.href };
   return meta as any;
 }
 
@@ -175,7 +173,6 @@ export async function extractMetaForTab(tabId: number): Promise<PageMeta | undef
       func: pageExtractor,
     } as any);
     const meta = (result || {}) as PageMeta;
-    try { console.log('[LinkTrove] extractMetaForTab', { tabId, url: meta?.url, meta }); } catch {}
     if (meta && meta.url) await saveMetaCache(meta.url, meta);
     return meta;
   } catch {
