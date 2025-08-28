@@ -2,12 +2,16 @@ import React from 'react';
 import '../../styles/toby-like.css';
 import { ContextMenu } from '../ui/ContextMenu';
 import { useCategories } from '../sidebar/categories';
+import { useTemplates } from '../templates/TemplatesProvider';
 
 export interface TobyLikeCardProps {
   title: string;
   description?: string;
-  faviconText?: string; // e.g., site initials
+  faviconText?: string; // fallback initials
+  faviconUrl?: string;
   url?: string;
+  categoryId?: string;
+  meta?: Record<string, string>;
   selectMode?: boolean;
   selected?: boolean;
   onToggleSelect?: () => void;
@@ -16,6 +20,7 @@ export interface TobyLikeCardProps {
   onUpdateTitle?: (title: string) => void;
   onUpdateUrl?: (url: string) => void;
   onUpdateDescription?: (desc: string) => void;
+  onUpdateMeta?: (m: Record<string, string>) => void;
   onMoveToCategory?: (categoryId: string) => void;
 }
 
@@ -23,6 +28,9 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   title,
   description,
   faviconText = 'WW',
+  faviconUrl,
+  categoryId,
+  meta,
   selectMode,
   selected,
   onToggleSelect,
@@ -31,6 +39,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   onUpdateTitle,
   onUpdateUrl,
   onUpdateDescription,
+  onUpdateMeta,
   onMoveToCategory,
 }) => {
   const [confirming, setConfirming] = React.useState(false);
@@ -40,6 +49,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   const [descValue, setDescValue] = React.useState(description || '');
   const [moveMenuPos, setMoveMenuPos] = React.useState<{ x: number; y: number } | null>(null);
   const { categories } = useCategories();
+  const [metaValue, setMetaValue] = React.useState<Record<string, string>>({ ...(meta || {}) });
 
   function validateUrl(raw: string): { value?: string; error?: string } {
     const v = (raw || '').trim();
@@ -58,7 +68,11 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
       <div className="card" data-select={selectMode ? 'true' : undefined} role="button" tabIndex={0} onClick={onOpen}>
         <div className="card-content">
           <div className="icon-container">
-            {faviconText}
+            {faviconUrl ? (
+              <img src={faviconUrl} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8 }} />
+            ) : (
+              faviconText
+            )}
             <div className="checkbox-overlay" onClick={(e)=>{ e.stopPropagation(); onToggleSelect?.(); }}>
               <div className={`checkbox ${selected ? 'checked' : ''}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
@@ -111,7 +125,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
 
       {showModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60" onClick={()=>setShowModal(false)}>
-          <div className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[520px] max-w-[90vw]" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Edit Card">
+          <div className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[560px] max-w-[95vw]" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Edit Card">
             <div className="space-y-3">
               <div>
                 <label className="block text-sm mb-1">Title</label>
@@ -125,6 +139,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
                 <label className="block text-sm mb-1">Description</label>
                 <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={descValue} onChange={(e)=>setDescValue(e.target.value)} />
               </div>
+              <TemplateFields categoryId={categoryId || 'default'} meta={metaValue} onChange={setMetaValue} />
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
               <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>setShowModal(false)}>Cancel</button>
@@ -135,6 +150,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
                   if (!norm.error && onUpdateUrl) onUpdateUrl(norm.value!);
                 }
                 if (onUpdateDescription) onUpdateDescription(descValue);
+                if (onUpdateMeta) onUpdateMeta(metaValue);
                 setShowModal(false);
               }}>Save</button>
             </div>
@@ -149,6 +165,64 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
           onClose={()=>setMoveMenuPos(null)}
           items={categories.map((c)=>({ key: c.id, label: c.name, onSelect: ()=>{ onMoveToCategory?.(c.id); setMoveMenuPos(null); } }))}
         />
+      )}
+    </div>
+  );
+};
+
+// Local copy of TemplateFields (mirrors WebpageCard version)
+const TemplateFields: React.FC<{
+  categoryId: string;
+  meta: Record<string, string>;
+  onChange: (m: Record<string, string>) => void;
+}> = ({ categoryId, meta, onChange }) => {
+  const { categories } = useCategories();
+  const { templates } = useTemplates();
+  const cat = categories.find((c:any) => c.id === categoryId);
+  const tpl = templates.find((t:any) => t.id === (cat?.defaultTemplateId || ''));
+  if (!tpl || !tpl.fields || tpl.fields.length === 0) return null;
+  const hasRequiredError = tpl.fields.some((f:any)=>f.required && !((meta[f.key] ?? '').trim()));
+  return (
+    <div className="space-y-2">
+      {tpl.fields.map((f:any) => {
+        const val = meta[f.key] ?? '';
+        const set = (v: string) => onChange({ ...meta, [f.key]: v });
+        const baseCls = `w-full rounded bg-slate-900 border p-2 text-sm ${f.required && !val ? 'border-red-600' : 'border-slate-700'}`;
+        return (
+          <div key={f.key}>
+            <label className="block text-sm mb-1">
+              {f.label} {f.required && <span className="text-red-400">*</span>}
+            </label>
+            {f.type === 'select' ? (
+              <select className={baseCls} value={val} onChange={(e)=>set(e.target.value)}>
+                <option value="">{f.defaultValue || 'Select...'}</option>
+                {(f.options||[]).map((op:string)=>(<option key={op} value={op}>{op}</option>))}
+              </select>
+            ) : f.type === 'number' ? (
+              <input className={baseCls} type="number" value={val} placeholder={f.defaultValue||''} onChange={(e)=>set(e.target.value)} />
+            ) : f.type === 'date' ? (
+              <input className={baseCls} type="date" value={val} onChange={(e)=>set(e.target.value)} />
+            ) : f.type === 'url' ? (
+              <input className={baseCls} type="url" value={val} placeholder={f.defaultValue||''} onChange={(e)=>set(e.target.value)} />
+            ) : f.type === 'rating' ? (
+              <div className="flex items-center gap-1">
+                {[1,2,3,4,5].map((n)=>(
+                  <button key={n} type="button" aria-label={`Rate ${n}`} className={`text-lg ${Number(val)>=n? 'text-yellow-400' : 'text-slate-600'} hover:text-yellow-300`}
+                    onClick={()=>set(String(n))}
+                  >
+                    {Number(val) >= n ? '★' : '☆'}
+                  </button>
+                ))}
+                <button type="button" className="ml-2 text-xs text-slate-400 hover:text-slate-200" onClick={()=>set('')}>Clear</button>
+              </div>
+            ) : (
+              <input className={baseCls} value={val} placeholder={f.defaultValue||''} onChange={(e)=>set(e.target.value)} />
+            )}
+          </div>
+        );
+      })}
+      {hasRequiredError && (
+        <div className="text-xs text-red-400">請填寫所有必填欄位</div>
       )}
     </div>
   );

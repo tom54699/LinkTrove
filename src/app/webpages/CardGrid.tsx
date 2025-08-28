@@ -151,6 +151,10 @@ export const CardGrid: React.FC<CardGridProps> = ({
                   title={it.title}
                   description={it.description}
                   faviconText={(it.url || '').replace(/^https?:\/\//,'').replace(/^www\./,'').slice(0,2).toUpperCase() || 'WW'}
+                  faviconUrl={it.favicon}
+                  url={it.url}
+                  categoryId={(it as any).category}
+                  meta={it.meta || {}}
                   selectMode={selectMode}
                   selected={!!selected[it.id]}
                   onToggleSelect={() => toggleSelect(it.id)}
@@ -159,6 +163,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
                   onUpdateTitle={(v)=>onUpdateTitle?.(it.id, v)}
                   onUpdateUrl={(v)=>onUpdateUrl?.(it.id, v)}
                   onUpdateDescription={(v)=>onEditDescription?.(it.id, v)}
+                  onUpdateMeta={(m)=>onUpdateMeta?.(it.id, m)}
                   onMoveToCategory={(cid)=>onUpdateCategory?.(it.id, cid)}
                 />
               </div>
