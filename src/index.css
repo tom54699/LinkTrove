@@ -8,15 +8,14 @@
 }
 html.dark,
 :root {
-  /* Toby-like dark palette */
-  --bg: #0e142b; /* page background */
-  --fg: #f0f0f0; /* foreground text */
-  --panel: #0d1230; /* side panels */
-  --card: #1f254a; /* cards and tab items */
-  --muted: #8889a0; /* muted text */
+  /* Dracula palette */
+  --bg: #282a36; /* page background */
+  --fg: #f8f8f2; /* foreground text */
+  --panel: #343746; /* side panels */
+  --card: #44475a; /* cards and tab items (currentLine) */
+  --muted: #6272a4; /* muted/comment */
 }
 body {
   background: var(--bg);
   color: var(--fg);
 }
-

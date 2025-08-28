@@ -22,7 +22,10 @@ export const WebpageCard: React.FC<{
   onUpdateUrl?: (id: string, url: string) => void;
   onUpdateCategory?: (id: string, category: string) => void;
   onUpdateMeta?: (id: string, meta: Record<string, string>) => void;
-}> = ({ data, onOpen, onEditDescription, onDelete, onUpdateTitle, onUpdateUrl, onUpdateCategory, onUpdateMeta }) => {
+  selectMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
+}> = ({ data, onOpen, onEditDescription, onDelete, onUpdateTitle, onUpdateUrl, onUpdateCategory, onUpdateMeta, selectMode, selected, onToggleSelect }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [descValue, setDescValue] = useState<string>(data.description ?? '');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -81,11 +84,35 @@ export const WebpageCard: React.FC<{
       }}
     >
       <div className="flex items-start gap-2 pr-2">
-        {data.favicon ? (
-          <img src={data.favicon} alt="" className="w-8 h-8 mt-1" />
-        ) : (
-          <div className="w-8 h-8 mt-1 bg-slate-600 rounded" />
-        )}
+        <div className="relative mt-1 w-10 h-10 rounded bg-slate-600 overflow-hidden flex items-center justify-center">
+          {data.favicon ? (
+            <img src={data.favicon} alt="" className="w-10 h-10 object-cover" />
+          ) : (
+            <div className="w-full h-full bg-slate-600" />
+          )}
+          {selectMode && (
+            <label
+              className="absolute inset-0 bg-[rgba(68,71,90,0.9)] rounded flex items-center justify-center cursor-pointer"
+              onClick={(e)=>e.stopPropagation()}
+            >
+              <input
+                type="checkbox"
+                role="checkbox"
+                aria-label={`Select ${data.title}`}
+                className="sr-only"
+                checked={!!selected}
+                onChange={()=>onToggleSelect?.()}
+              />
+              <span className={`w-5 h-5 rounded border-2 ${selected ? 'bg-[#2166E7] border-[#2166E7]' : 'border-[#C5C5D3]'} flex items-center justify-center transition-colors`}>
+                {selected && (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                    <polyline points="20,6 9,17 4,12"></polyline>
+                  </svg>
+                )}
+              </span>
+            </label>
+          )}
+        </div>
         <div className="min-w-0">
           <div className="toby-title" title={data.title}>
             {data.title}
@@ -121,7 +148,7 @@ export const WebpageCard: React.FC<{
         </div>
       )}
 
-      {/* Actions row */}
+      {/* Top-right: Delete only */}
       <div
         className="toby-actions absolute right-2 top-2 flex gap-2"
         role="group"
@@ -129,14 +156,24 @@ export const WebpageCard: React.FC<{
         onMouseDown={(e)=>e.stopPropagation()}
         onPointerDown={(e)=>e.stopPropagation()}
       >
-        <button aria-label="Edit" title="Edit description" onClick={() => setShowModal(true)} className="toby-icon" onMouseDown={(e)=>e.stopPropagation()} onPointerDown={(e)=>e.stopPropagation()}>
-          <img src="/icons/toby/OrgGroupModal6.svg" alt="" width={12} height={12} />
-        </button>
-        <button aria-label="Move" title="Move to collection" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setMoveMenuPos({ x: r.left, y: r.bottom + 4 }); }} className="toby-icon" onMouseDown={(e)=>e.stopPropagation()} onPointerDown={(e)=>e.stopPropagation()}>
-          <img src="/icons/toby/ListSectionSort1.svg" alt="" width={12} height={12} />
-        </button>
         <button aria-label="Remove" title="Delete" onClick={() => setConfirming(true)} className="toby-icon delete" onMouseDown={(e)=>e.stopPropagation()} onPointerDown={(e)=>e.stopPropagation()}>
           <img src="/icons/toby/OrgGroupModal5.svg" alt="" width={12} height={12} />
+        </button>
+      </div>
+
+      {/* Bottom actions: Edit / Move (overlay at bottom-right) */}
+      <div
+        className="toby-actions-bottom absolute right-2 bottom-2 flex gap-2"
+        role="group"
+        onClick={(e)=>e.stopPropagation()}
+        onMouseDown={(e)=>e.stopPropagation()}
+        onPointerDown={(e)=>e.stopPropagation()}
+      >
+        <button aria-label="Edit" title="Edit description" onClick={() => setShowModal(true)} className="toby-icon">
+          <img src="/icons/toby/OrgGroupModal6.svg" alt="" width={12} height={12} />
+        </button>
+        <button aria-label="Move" title="Move to collection" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setMoveMenuPos({ x: r.left, y: r.bottom + 4 }); }} className="toby-icon">
+          <img src="/icons/toby/ListSectionSort1.svg" alt="" width={12} height={12} />
         </button>
       </div>
 

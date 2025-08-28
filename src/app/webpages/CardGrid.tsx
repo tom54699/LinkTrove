@@ -146,19 +146,11 @@ export const CardGrid: React.FC<CardGridProps> = ({
                     className="pointer-events-none absolute left-0 right-0 top-0 h-0.5 bg-emerald-500 shadow-[0_0_0_2px_rgba(16,185,129,0.4)]"
                   />
                 )}
-                {selectMode && (
-                  <input
-                    type="checkbox"
-                    role="checkbox"
-                    aria-label={`Select ${it.title}`}
-                    className="absolute top-2 left-2 w-4 h-4 z-10 accent-emerald-500"
-                    checked={!!selected[it.id]}
-                    onChange={() => toggleSelect(it.id)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                )}
                 <WebpageCard
                   data={it}
+                  selectMode={selectMode}
+                  selected={!!selected[it.id]}
+                  onToggleSelect={() => toggleSelect(it.id)}
                   onDelete={onDeleteOne}
                   onEditDescription={onEditDescription}
                   onUpdateTitle={onUpdateTitle}

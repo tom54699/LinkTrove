@@ -210,16 +210,29 @@
   width: 20px;
   height: 20px;
   border-radius: 3px;
-  background-color: #3e4372;
+  background-color: #6272a4; /* Dracula comment color for icons */
 }
 .toby-mode .toby-card .toby-icon.delete {
-  background-color: #e36464;
+  background-color: #ff5555; /* Dracula red */
 }
 .toby-mode .toby-card .toby-icon:hover { filter: brightness(1.1); }
 
 /* Reveal actions on hover */
 .toby-mode .toby-card .toby-actions { opacity: 0; transition: opacity .15s ease-in-out; z-index: 5; }
 .toby-mode .toby-card:hover .toby-actions, .toby-mode .toby-card:focus-within .toby-actions { opacity: 1; }
+
+/* Bottom actions (edit/move) */
+.toby-mode .toby-card .toby-actions-bottom {
+  opacity: 0;
+  transition: opacity .15s ease-in-out;
+  background-color: rgba(68, 71, 90, 0.85); /* semi-opaque over card */
+  border: 1px solid rgba(98, 114, 164, 0.5);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  z-index: 6;
+}
+.toby-mode .toby-card:hover .toby-actions-bottom, .toby-mode .toby-card:focus-within .toby-actions-bottom { opacity: 1; }
 
 .toby-mode .icon-btn:focus-visible { outline: 2px solid #ff507a; outline-offset: 2px; border-radius: 6px; }
 /* Drag feedback for moving cards to sidebar */
