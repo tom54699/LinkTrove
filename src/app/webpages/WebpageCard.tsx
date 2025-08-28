@@ -52,8 +52,9 @@ export const WebpageCard: React.FC<{
       setTitleValue(data.title);
       setUrlValue(data.url);
       setNoteValue(data.note ?? '');
+      setMetaValue({ ...(data.meta || {}) });
     }
-  }, [showModal, data.title, data.url, data.note]);
+  }, [showModal, data.title, data.url, data.note, data.meta]);
 
   function validateUrl(raw: string): { value?: string; error?: string } {
     const v = (raw || '').trim();
