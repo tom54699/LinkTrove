@@ -1,0 +1,56 @@
+/* Scoped Toby-like demo styles (structure mirrors provided HTML) */
+.tobylike {
+  --bg: var(--bg);
+  --fg: var(--fg);
+  --card: var(--card);
+  --muted: var(--muted);
+}
+
+.tobylike .card {
+  position: relative;
+  max-width: 420px;
+  margin: 0 auto;
+  background: var(--card);
+  border-radius: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  cursor: grab;
+  transition: background-color 0.3s ease;
+}
+.tobylike .card:hover { background: rgba(255,255,255,0.06); }
+
+.tobylike .card-content { display: flex; padding: 16px 14px; gap: 12px; }
+.tobylike .icon-container {
+  width: 40px; height: 40px; border-radius: 8px; display:flex; align-items:center; justify-content:center;
+  background: #2166E7; color:#fff; font-weight:700; font-size: 18px; flex-shrink:0; position: relative; transition: all .3s ease;
+}
+.tobylike .checkbox-overlay {
+  position:absolute; inset:0; background: rgba(71,71,89,0.9); border-radius:8px; display:flex; align-items:center; justify-content:center;
+  opacity:0; visibility:hidden; transition: all .3s ease; cursor: pointer;
+}
+.tobylike .card[data-select="true"] .checkbox-overlay { opacity: 1; visibility: visible; }
+.tobylike .checkbox { width:20px; height:20px; border:2px solid #C5C5D3; border-radius:4px; background:transparent; display:flex; align-items:center; justify-content:center; transition: all .2s ease; }
+.tobylike .checkbox.checked { background:#2166E7; border-color:#2166E7; }
+.tobylike .checkbox svg { width:12px; height:12px; color:#fff; opacity:0; transition: opacity .2s ease; }
+.tobylike .checkbox.checked svg { opacity:1; }
+
+.tobylike .content { flex:1; min-width:0; }
+.tobylike .title { font-size:16px; font-weight:600; margin:0 0 4px 0; color: var(--fg); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tobylike .description { font-size:14px; color: var(--muted); margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Delete bubble */
+.tobylike .delete-btn {
+  position:absolute; top:0; right:-10px; transform: translateY(-30%);
+  width:28px; height:28px; background: var(--card); border:none; border-radius:50%; cursor:pointer; opacity:0; visibility:hidden;
+  transition: all .3s cubic-bezier(0.68,-0.55,0.265,1); display:flex; align-items:center; justify-content:center; color: var(--muted);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.tobylike .delete-btn:hover { background:#ff5555; color:#fff; transform: translateY(-30%) scale(1.1); }
+
+/* Actions sticker */
+.tobylike .actions { position:absolute; bottom:0; right:-15px; transform: translateY(50%); display:flex; gap:8px; opacity:0; visibility:hidden; transition: all .3s cubic-bezier(0.68,-0.55,0.265,1); }
+.tobylike .action-btn { width:32px; height:32px; background: var(--card); border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; color: var(--muted); transition: all .2s ease; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+.tobylike .action-btn:hover { background: rgba(255,255,255,0.08); color: var(--fg); transform: scale(1.1); }
+.tobylike .action-btn svg { width:16px; height:16px; stroke-width:2; }
+
+.tobylike .card:hover .delete-btn, .tobylike .card:hover .actions { opacity:1; visibility: visible; }
+

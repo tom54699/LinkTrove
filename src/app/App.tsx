@@ -19,6 +19,7 @@ import { useFeedback } from './ui/feedback';
 import { WebpagesProvider, useWebpages } from './webpages/WebpagesProvider';
 import { TemplatesManager } from './templates/TemplatesManager';
 import { useTemplates } from './templates/TemplatesProvider';
+import { TobyLikeCard } from './webpages/TobyLikeCard';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
@@ -201,6 +202,23 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
     <div>
       <h1 className="text-xl font-semibold mb-4">Settings</h1>
       <div className="space-y-8">
+        <div>
+          <div className="text-lg font-medium mb-2">UI Demo: Toby-like Card</div>
+          <div className="max-w-[460px]">
+            <TobyLikeCard
+              title="俺寻思术士的快乐你根本想象不到"
+              description="不是很喜歡有玩家"
+              faviconText="69"
+              selectMode={true}
+              selected={false}
+              onToggleSelect={()=>{}}
+              onOpen={()=>{}}
+              onDelete={()=>{}}
+              onEdit={()=>{}}
+              onMove={()=>{}}
+            />
+          </div>
+        </div>
         <div>
           <button
             className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"

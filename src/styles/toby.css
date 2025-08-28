@@ -234,6 +234,52 @@
 }
 .toby-mode .toby-card:hover .toby-actions-bottom, .toby-mode .toby-card:focus-within .toby-actions-bottom { opacity: 1; }
 
+/* Delete bubble at top-right, outside card edge */
+.toby-mode .toby-card .toby-actions.toby-delete-wrap {
+  right: -10px;
+  top: 0;
+  transform: translateY(-30%);
+}
+.toby-mode .toby-card .toby-actions.toby-delete-wrap .toby-icon.delete {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  background-color: var(--card);
+}
+.toby-mode .toby-card .toby-actions.toby-delete-wrap .toby-icon.delete:hover {
+  transform: scale(1.1);
+}
+
+/* Bottom-right sticker outside edge */
+.toby-mode .toby-card .toby-actions-bottom {
+  right: -15px;
+  bottom: 0;
+  transform: translateY(50%);
+}
+.toby-mode .toby-card .toby-actions-bottom .toby-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.toby-mode .toby-card .toby-actions-bottom .toby-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Icon box + checkbox overlay behavior */
+.toby-mode .toby-card .toby-icon-box { border-radius: 8px; }
+.toby-mode .toby-card .toby-icon-box .toby-checkbox-overlay {
+  background: rgba(71,71,89,0.9);
+  opacity: 0;
+  visibility: hidden;
+  transition: all .3s ease;
+}
+.toby-mode .toby-card:hover .toby-icon-box .toby-checkbox-overlay,
+.toby-mode .toby-card:focus-within .toby-icon-box .toby-checkbox-overlay {
+  opacity: 1; visibility: visible;
+}
+
 .toby-mode .icon-btn:focus-visible { outline: 2px solid #ff507a; outline-offset: 2px; border-radius: 6px; }
 /* Drag feedback for moving cards to sidebar */
 .toby-mode .toby-card-flex[data-dragging="true"] { transform: scale(0.96); opacity: 0.85; transition: transform .15s ease, opacity .15s ease; }

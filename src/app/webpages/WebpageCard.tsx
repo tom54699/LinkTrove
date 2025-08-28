@@ -76,6 +76,7 @@ export const WebpageCard: React.FC<{
       data-testid="webpage-card"
       className="toby-card group relative cursor-pointer rounded-xl border border-slate-700 p-6 hover:bg-slate-800/70 transition-colors shadow-md hover:shadow-lg min-h-[140px]"
       data-editing={isEditing ? 'true' : undefined}
+      data-select={selectMode ? 'true' : undefined}
       onClick={handleClick}
       role="button"
       tabIndex={0}
@@ -84,16 +85,20 @@ export const WebpageCard: React.FC<{
       }}
     >
       <div className="flex items-start gap-2 pr-2">
-        <div className="relative mt-1 w-10 h-10 rounded bg-slate-600 overflow-hidden flex items-center justify-center">
+        <div className="toby-icon-box relative mt-1 w-10 h-10 rounded bg-slate-600 overflow-hidden flex items-center justify-center">
           {data.favicon ? (
             <img src={data.favicon} alt="" className="w-10 h-10 object-cover" />
           ) : (
             <div className="w-full h-full bg-slate-600" />
           )}
-          {selectMode && (
+          {(
+            // Checkbox overlay shows on hover for visual parity,
+            // but only toggles selection when selectMode is true
+            true
+          ) && (
             <label
-              className="absolute inset-0 bg-[rgba(68,71,90,0.9)] rounded flex items-center justify-center cursor-pointer"
-              onClick={(e)=>e.stopPropagation()}
+              className="toby-checkbox-overlay absolute inset-0 rounded flex items-center justify-center cursor-pointer"
+              onClick={(e)=>{ e.stopPropagation(); if (selectMode) onToggleSelect?.(); }}
             >
               <input
                 type="checkbox"
@@ -101,7 +106,7 @@ export const WebpageCard: React.FC<{
                 aria-label={`Select ${data.title}`}
                 className="sr-only"
                 checked={!!selected}
-                onChange={()=>onToggleSelect?.()}
+                onChange={()=>{ if (selectMode) onToggleSelect?.(); }}
               />
               <span className={`w-5 h-5 rounded border-2 ${selected ? 'bg-[#2166E7] border-[#2166E7]' : 'border-[#C5C5D3]'} flex items-center justify-center transition-colors`}>
                 {selected && (
@@ -150,7 +155,7 @@ export const WebpageCard: React.FC<{
 
       {/* Top-right: Delete only */}
       <div
-        className="toby-actions absolute right-2 top-2 flex gap-2"
+        className="toby-actions toby-delete-wrap absolute right-2 top-2 flex gap-2"
         role="group"
         onClick={(e)=>e.stopPropagation()}
         onMouseDown={(e)=>e.stopPropagation()}
