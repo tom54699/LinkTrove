@@ -45,6 +45,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
 
   const [confirming, setConfirming] = React.useState(false);
   const [overId, setOverId] = React.useState<string | null>(null);
+  const [dragDisabled, setDragDisabled] = React.useState(false);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -115,7 +116,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
               <div
                 key={it.id}
                 className="toby-card-flex relative"
-                draggable
+                draggable={!dragDisabled}
                 onDragStart={(e) => {
                   e.dataTransfer.setData('application/x-linktrove-webpage', it.id);
                   e.dataTransfer.effectAllowed = 'move';
@@ -165,6 +166,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
                   onUpdateDescription={(v)=>onEditDescription?.(it.id, v)}
                   onUpdateMeta={(m)=>onUpdateMeta?.(it.id, m)}
                   onMoveToCategory={(cid)=>onUpdateCategory?.(it.id, cid)}
+                  onModalOpenChange={(open)=>setDragDisabled(open)}
                 />
               </div>
             ))}

@@ -22,6 +22,7 @@ export interface TobyLikeCardProps {
   onUpdateDescription?: (desc: string) => void;
   onUpdateMeta?: (m: Record<string, string>) => void;
   onMoveToCategory?: (categoryId: string) => void;
+  onModalOpenChange?: (open: boolean) => void;
 }
 
 export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
@@ -29,6 +30,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   description,
   faviconText = 'WW',
   faviconUrl,
+  url,
   categoryId,
   meta,
   selectMode,
@@ -41,6 +43,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   onUpdateDescription,
   onUpdateMeta,
   onMoveToCategory,
+  onModalOpenChange,
 }) => {
   const [confirming, setConfirming] = React.useState(false);
   const [showModal, setShowModal] = React.useState(false);
@@ -62,6 +65,28 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
       return { error: 'Invalid URL' };
     }
   }
+
+  // When opening edit modal, sync fields and try to hydrate siteName/author from cached meta
+  React.useEffect(() => {
+    if (showModal) {
+      setTitleValue(title);
+      setDescValue(description || '');
+      setUrlValue(url || '');
+      (async () => {
+        try {
+          if (!url) return;
+          const mod = await import('../../background/pageMeta');
+          const cached = await mod.getCachedMeta(url);
+          if (cached) {
+            const next = { ...metaValue };
+            if (!((next as any).siteName || '').trim() && (cached as any).siteName) next.siteName = String((cached as any).siteName);
+            if (!((next as any).author || '').trim() && (cached as any).author) next.author = String((cached as any).author);
+            setMetaValue(next);
+          }
+        } catch {}
+      })();
+    }
+  }, [showModal]);
 
   return (
     <div className="tobylike">
@@ -95,7 +120,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
         </button>
 
         <div className="actions" onClick={(e)=>e.stopPropagation()}>
-          <button className="action-btn" title="編輯" onClick={()=>{ setTitleValue(title); setDescValue(description||''); setShowModal(true); }}>
+          <button className="action-btn" title="編輯" onClick={()=>{ setTitleValue(title); setDescValue(description||''); setShowModal(true); onModalOpenChange?.(true); }}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"></path>
               <path d="M13.5 6.5l4 4"></path>
@@ -124,7 +149,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60" onClick={()=>setShowModal(false)}>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60" onClick={()=>{ setShowModal(false); onModalOpenChange?.(false); }}>
           <div className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[560px] max-w-[95vw]" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Edit Card">
             <div className="space-y-3">
               <div>
@@ -132,17 +157,17 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
                 <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={titleValue} onChange={(e)=>setTitleValue(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm mb-1">URL</label>
-                <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={urlValue} onChange={(e)=>setUrlValue(e.target.value)} placeholder="https://example.com" />
-              </div>
-              <div>
                 <label className="block text-sm mb-1">Description</label>
                 <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={descValue} onChange={(e)=>setDescValue(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">URL</label>
+                <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={urlValue} onChange={(e)=>setUrlValue(e.target.value)} placeholder="https://example.com" />
               </div>
               <TemplateFields categoryId={categoryId || 'default'} meta={metaValue} onChange={setMetaValue} />
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
-              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>setShowModal(false)}>Cancel</button>
+              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>{ setShowModal(false); onModalOpenChange?.(false); }}>Cancel</button>
               <button className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30" onClick={()=>{
                 if (onUpdateTitle) onUpdateTitle(titleValue.trim());
                 if (urlValue.trim()) {
@@ -152,6 +177,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
                 if (onUpdateDescription) onUpdateDescription(descValue);
                 if (onUpdateMeta) onUpdateMeta(metaValue);
                 setShowModal(false);
+                onModalOpenChange?.(false);
               }}>Save</button>
             </div>
           </div>
