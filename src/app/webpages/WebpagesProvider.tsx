@@ -1,4 +1,5 @@
 import React from 'react';
+import { computeAutoMeta } from './metaAutoFill';
 import type { TabItemData } from '../tabs/types';
 import {
   createWebpageService,
@@ -96,6 +97,14 @@ export const WebpagesProvider: React.FC<{
   const addFromTab = React.useCallback(
     async (tab: TabItemData) => {
       const created = await service.addWebpageFromTab(tab as any);
+      // Prefetch page meta and cache for later auto-fill (best-effort)
+      try {
+        if (typeof (globalThis as any).chrome !== 'undefined' && (tab as any).id != null) {
+          const { extractMetaForTab } = await import('../../background/pageMeta');
+          // Fire and forget; cache keyed by URL for future category autofill
+          void extractMetaForTab((tab as any).id as number);
+        }
+      } catch {}
       // Prepend if new
       setItems((prev) => {
         if (prev.some((p) => p.id === created.id)) return prev;
@@ -157,11 +166,29 @@ export const WebpagesProvider: React.FC<{
         const cat = (cats as any[]).find((c) => c.id === category);
         const tpl = cat?.defaultTemplateId ? (tmpls as any[]).find((t) => t.id === cat.defaultTemplateId) : null;
         if (tpl) {
-          const current = items.find((i) => i.id === id)?.meta || {};
-          const nextMeta: Record<string, string> = { ...current };
-          for (const f of (tpl.fields || []) as any[]) {
-            if (nextMeta[f.key] == null && f.defaultValue != null) nextMeta[f.key] = f.defaultValue as string;
-          }
+          const item = items.find((i) => i.id === id);
+          let nextMeta = computeAutoMeta(
+            item?.meta,
+            (tpl.fields || []) as any,
+            item ? { title: item.title, url: item.url, favicon: item.favicon } : undefined
+          );
+          // Merge cached extracted meta for common keys (only if field exists and value empty)
+          try {
+            if (item) {
+              const { getCachedMeta } = await import('../../background/pageMeta');
+              const cached = await getCachedMeta(item.url);
+              const wantKeys = ['title', 'description', 'siteName', 'author'] as const;
+              const fields = (tpl.fields || []) as any[];
+              const hasField = (k: string) => fields.some((f) => f.key === k);
+              const merged: Record<string, string> = { ...nextMeta };
+              for (const k of wantKeys) {
+                const cur = (merged[k] ?? '').trim();
+                const val = (cached as any)?.[k] as string | undefined;
+                if (!cur && val && hasField(k)) merged[k] = val;
+              }
+              nextMeta = merged;
+            }
+          } catch {}
           updates.meta = nextMeta;
         }
       } catch {}

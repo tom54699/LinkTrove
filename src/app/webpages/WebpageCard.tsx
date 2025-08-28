@@ -295,7 +295,6 @@ const TemplateFields: React.FC<{
   const hasRequiredError = tpl.fields.some((f:any)=>f.required && !((meta[f.key] ?? '').trim()));
   return (
     <div className="space-y-2">
-      <div className="text-xs opacity-70">套用自：{tpl.name}</div>
       {tpl.fields.map((f:any) => {
         const val = meta[f.key] ?? '';
         const set = (v: string) => onChange({ ...meta, [f.key]: v });

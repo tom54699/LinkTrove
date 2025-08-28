@@ -28,7 +28,19 @@ export const Sidebar: React.FC = () => {
               e.preventDefault();
               try {
                 const id = e.dataTransfer.getData('application/x-linktrove-webpage');
-                if (id) actions.updateCategory(id, c.id);
+                if (id) {
+                  actions.updateCategory(id, c.id);
+                } else {
+                  const rawTab = e.dataTransfer.getData('application/x-linktrove-tab');
+                  if (rawTab) {
+                    const tab = JSON.parse(rawTab);
+                    // Create a new webpage from the dropped tab, then move to this category
+                    void actions
+                      .addFromTab(tab)
+                      .then((newId: any) => actions.updateCategory(String(newId), c.id))
+                      .catch(() => {/* ignore */});
+                  }
+                }
               } catch {}
               (e.currentTarget as HTMLElement).removeAttribute('data-drop');
             }}

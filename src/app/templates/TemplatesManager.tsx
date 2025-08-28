@@ -6,8 +6,9 @@ export const TemplatesManager: React.FC = () => {
   const { templates, actions } = useTemplates();
   const { categories, actions: catActions } = useCategories();
   const [name, setName] = React.useState('');
-  const [newField, setNewField] = React.useState<Record<string, { key: string; label: string; def: string; err?: string }>>({});
+  const [newField, setNewField] = React.useState<Record<string, { key: string; label: string; def: string; type?: 'text'|'number'|'date'|'url'|'select'|'rating'; options?: string; required?: boolean; err?: string }>>({});
   const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
+  const [commonAdd, setCommonAdd] = React.useState<Record<string, { key: 'siteName' | 'author'; required: boolean; type?: 'text'|'number'|'date'|'url'|'select'|'rating' }>>({});
 
   return (
     <div className="space-y-6">
@@ -36,7 +37,54 @@ export const TemplatesManager: React.FC = () => {
                     <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" value={t.name} onChange={(e)=>actions.rename(t.id, e.target.value)} />
                   )}
                 </div>
-                <button className="text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={()=>actions.remove(t.id)}>Delete</button>
+                <div className="flex items-center gap-2">
+                  <select
+                    className="text-xs rounded bg-slate-900 border border-slate-700 px-2 py-1"
+                    value={commonAdd[t.id]?.key || 'siteName'}
+                    onChange={(e)=>setCommonAdd((m)=>({ ...m, [t.id]: { key: (e.target.value as any) || 'siteName', required: m[t.id]?.required || false } }))}
+                    title="選擇常用欄位"
+                  >
+                    <option value="siteName">站名 (siteName)</option>
+                    <option value="author">作者 (author)</option>
+                  </select>
+                  <select
+                    className="text-xs rounded bg-slate-900 border border-slate-700 px-2 py-1"
+                    value={commonAdd[t.id]?.type || 'text'}
+                    onChange={(e)=>setCommonAdd((m)=>({ ...m, [t.id]: { key: (m[t.id]?.key||'siteName') as any, required: m[t.id]?.required || false, type: e.target.value as any } }))}
+                    title="欄位格式"
+                  >
+                    <option value="text">text</option>
+                    <option value="number">number</option>
+                    <option value="date">date</option>
+                    <option value="url">url</option>
+                    <option value="select">select</option>
+                    <option value="rating">rating (1-5)</option>
+                  </select>
+                  <label className="text-xs flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={!!commonAdd[t.id]?.required}
+                      onChange={(e)=>setCommonAdd((m)=>({ ...m, [t.id]: { key: (m[t.id]?.key || 'siteName'), required: e.target.checked } }))}
+                    />
+                    required
+                  </label>
+                  <button
+                    className="text-xs px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                    title="新增常用欄位"
+                    onClick={async () => {
+                      const sel = commonAdd[t.id]?.key || 'siteName';
+                      const label = sel === 'siteName' ? '站名' : '作者';
+                      const type = commonAdd[t.id]?.type || 'text';
+                      try {
+                        await actions.addField(t.id, { key: sel, label, type });
+                        if (commonAdd[t.id]?.required) await actions.updateFieldRequired(t.id, sel, true);
+                      } catch {
+                        // ignore duplicate errors
+                      }
+                    }}
+                  >新增</button>
+                  <button className="text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={()=>actions.remove(t.id)}>Delete</button>
+                </div>
               </div>
               {!collapsed[t.id] && (
                 <div className="p-3">
@@ -74,19 +122,39 @@ export const TemplatesManager: React.FC = () => {
                     ))}
                   </div>
                   <div className="flex items-start gap-2">
-                    <div className="flex-1 grid grid-cols-3 gap-2">
+                    <div className="flex-1 grid grid-cols-5 gap-2">
                       <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="key (e.g. author)" value={(newField[t.id]?.key) || ''} onChange={(e)=>setNewField({ ...newField, [t.id]: { ...(newField[t.id]||{label:'',def:''}), key: e.target.value } })} />
                       <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="label" value={(newField[t.id]?.label) || ''} onChange={(e)=>setNewField({ ...newField, [t.id]: { ...(newField[t.id]||{key:'',def:''}), label: e.target.value } })} />
-                      <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="default" value={(newField[t.id]?.def) || ''} onChange={(e)=>setNewField({ ...newField, [t.id]: { ...(newField[t.id]||{key:'',label:''}), def: e.target.value } })} />
+                      <select className="text-sm rounded bg-slate-900 border border-slate-700 px-2 py-1" value={(newField[t.id]?.type)||'text'} onChange={(e)=>setNewField({ ...newField, [t.id]: { ...(newField[t.id]||{key:'',label:'',def:''}), type: e.target.value as any } })}>
+                        <option value="text">text</option>
+                        <option value="number">number</option>
+                        <option value="date">date</option>
+                        <option value="url">url</option>
+                        <option value="select">select</option>
+                        <option value="rating">rating</option>
+                      </select>
+                      {(newField[t.id]?.type === 'select') ? (
+                        <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="options (comma-separated)" value={(newField[t.id]?.options)||''} onChange={(e)=>setNewField({ ...newField, [t.id]: { ...(newField[t.id]||{key:'',label:'',def:''}), options: e.target.value } })} />
+                      ) : (
+                        <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="default" value={(newField[t.id]?.def) || ''} onChange={(e)=>setNewField({ ...newField, [t.id]: { ...(newField[t.id]||{key:'',label:''}), def: e.target.value } })} />
+                      )}
+                      <label className="text-xs flex items-center gap-1">
+                        <input type="checkbox" checked={!!newField[t.id]?.required} onChange={(e)=>setNewField({ ...newField, [t.id]: { ...(newField[t.id]||{key:'',label:'',def:''}), required: e.target.checked } })} /> required
+                      </label>
                     </div>
                     <div>
                       <button className="text-xs px-2 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30" onClick={async ()=>{
-                        const nf = newField[t.id] || { key:'',label:'',def:'' };
+                        const nf = newField[t.id] || { key:'',label:'',def:'', type:'text' };
                         const key = nf.key.trim(); const label = nf.label.trim();
                         if (!key || !label) { setNewField({ ...newField, [t.id]: { ...nf, err: 'Key/label required' } }); return; }
                         try {
-                          await actions.addField(t.id, { key, label, defaultValue: nf.def });
-                          setNewField({ ...newField, [t.id]: { key:'', label:'', def:'', err: '' } });
+                          const payload: any = { key, label, defaultValue: nf.def, type: nf.type || 'text' };
+                          if (nf.type === 'select' && (nf.options||'').trim()) {
+                            payload.options = (nf.options||'').split(',').map(s=>s.trim()).filter(Boolean);
+                          }
+                          if (nf.required) payload.required = true;
+                          await actions.addField(t.id, payload);
+                          setNewField({ ...newField, [t.id]: { key:'', label:'', def:'', type:'text', options:'', required:false, err: '' } });
                         } catch(e:any) {
                           setNewField({ ...newField, [t.id]: { ...nf, err: e?.message || 'Failed to add' } });
                         }
