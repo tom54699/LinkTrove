@@ -4,6 +4,7 @@ import { TobyLikeCard } from './TobyLikeCard';
 import type { TabItemData } from '../tabs/types';
 import { getDragTab } from '../dnd/dragContext';
 import { useFeedback } from '../ui/feedback';
+import { incrementVisit } from '../metrics/visits';
 
 export interface CardGridProps {
   items?: WebpageCardData[];
@@ -282,7 +283,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
                     selectMode={selectMode}
                     selected={!!selected[(node.item as any).id]}
                     onToggleSelect={() => toggleSelect((node.item as any).id)}
-                    onOpen={() => { try { window.open((node.item as any).url, '_blank'); } catch {} }}
+                  onOpen={() => { try { const u=(node.item as any).url; incrementVisit(u); window.open(u, '_blank'); } catch {} }}
                     onDelete={() => onDeleteOne?.((node.item as any).id)}
                     onUpdateTitle={(v)=>onUpdateTitle?.((node.item as any).id, v)}
                     onUpdateUrl={(v)=>onUpdateUrl?.((node.item as any).id, v)}

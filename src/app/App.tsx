@@ -207,10 +207,46 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
   );
   const { showToast, setLoading } = useFeedback();
   const [text, setText] = React.useState('');
+  const { items, actions } = useWebpages();
+  const { categories, selectedId } = useCategories();
+  const [qaUrl, setQaUrl] = React.useState('');
+  const [qaTitle, setQaTitle] = React.useState('');
+  const [qaCat, setQaCat] = React.useState<string>('');
+  const recent = React.useMemo(() => items.slice().sort((a:any,b:any)=>0).slice(0,10), [items]);
+  const popular = React.useMemo(() => {
+    const { topPopular } = require('./metrics/visits');
+    const urls = items.map((i:any)=>i.url).filter(Boolean);
+    const top = topPopular(urls, 10);
+    const byUrl = new Map(items.map((i:any)=>[i.url,i]));
+    return top.map((u:string)=>byUrl.get(u)).filter(Boolean);
+  }, [items]);
   return (
     <div>
       <h1 className="text-xl font-semibold mb-4">Settings</h1>
       <div className="space-y-8">
+        <div>
+          <div className="text-lg font-medium mb-2">Quick Add</div>
+          <div className="flex gap-2 items-center flex-wrap">
+            <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm min-w-[240px]" placeholder="https://example.com" value={qaUrl} onChange={(e)=>setQaUrl(e.target.value)} />
+            <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm min-w-[160px]" placeholder="Title (optional)" value={qaTitle} onChange={(e)=>setQaTitle(e.target.value)} />
+            <select className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" value={qaCat} onChange={(e)=>setQaCat(e.target.value)}>
+              <option value="">{`Use current (${selectedId})`}</option>
+              {categories.map((c:any)=> (<option key={c.id} value={c.id}>{c.name}</option>))}
+            </select>
+            <button className="text-sm px-2 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30" onClick={async ()=>{
+              const url = qaUrl.trim(); if (!url) { showToast('URL required','error'); return; }
+              try {
+                const tab = { id: -1, url, title: qaTitle.trim() || url, favIconUrl: '' } as any;
+                const id = await actions.addFromTab(tab);
+                await actions.updateCategory(id, qaCat || selectedId);
+                setQaUrl(''); setQaTitle('');
+                showToast('Added','success');
+              } catch {
+                showToast('Add failed','error');
+              }
+            }}>Add</button>
+          </div>
+        </div>
         <div>
           <button
             className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
@@ -235,6 +271,29 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
           >
             Export JSON
           </button>
+        </div>
+        <div>
+          <div className="text-lg font-medium mb-2">Quick Access</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div className="text-sm opacity-80 mb-1">Recent</div>
+              <ul className="space-y-1">
+                {recent.map((i:any)=> (
+                  <li key={i.id}><a className="hover:underline" href={i.url} target="_blank" rel="noreferrer">{i.title || i.url}</a></li>
+                ))}
+                {recent.length === 0 && (<li className="opacity-60 text-sm">No items</li>)}
+              </ul>
+            </div>
+            <div>
+              <div className="text-sm opacity-80 mb-1">Popular</div>
+              <ul className="space-y-1">
+                {popular.map((i:any)=> (
+                  <li key={i.id}><a className="hover:underline" href={i.url} target="_blank" rel="noreferrer">{i.title || i.url}</a></li>
+                ))}
+                {popular.length === 0 && (<li className="opacity-60 text-sm">No data yet</li>)}
+              </ul>
+            </div>
+          </div>
         </div>
         <div>
           <label className="block text-sm mb-1">Import JSON</label>
