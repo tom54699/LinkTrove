@@ -91,17 +91,17 @@
 
 - [ ] 6. 實作效能優化功能
   - [ ] 6.1 建立記憶體管理機制
-    - 實作分頁載入和虛擬滾動功能
-    - 建立智慧快取系統和資源清理
-    - 使用 Web Workers 處理大量資料操作
-    - 實作記憶體使用監控和優化
+    - [x] 實作分頁載入（DatabaseManager.listBookmarksPaged + BookmarkPaginator）
+    - [x] 建立快取系統（分頁 LRU）
+    - [x] 使用 WorkerPool 抽象處理大量任務（限制併發，非阻塞）
+    - [x] 實作記憶體使用監控（MemoryMonitor，best-effort）
     - _需求: 6.1, 6.3, 6.4_
 
   - [ ] 6.2 實作資料庫效能優化
-    - 建立查詢效能監控和分析工具
-    - 實作資料庫維護作業 (VACUUM, ANALYZE)
-    - 建立索引使用情況分析和優化建議
-    - 實作批次操作的事務優化
+    - [x] 建立查詢/程式段效能監控工具（Profiler）
+    - [x] 實作資料庫維護作業 (VACUUM, ANALYZE, REINDEX)
+    - [ ] 建立索引使用情況分析和優化建議（待 sqlite EXPLAIN/PRAGMA 支援）
+    - [x] 實作批次操作的事務優化（既有 transaction 包裝批次）
     - _需求: 6.2, 6.5_
 
 - [ ] 7. 實作安全性和資料保護

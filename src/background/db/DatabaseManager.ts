@@ -299,6 +299,18 @@ export class DatabaseManager {
       .filter(b => (categoryId == null ? true : (b.category_id ?? null) === categoryId))
       .sort((a,b)=> (a.sort_order??0)-(b.sort_order??0) || (a.created_at)-(b.created_at));
   }
+  async listBookmarksPaged(categoryId: number | null | undefined, page: number, pageSize: number): Promise<{ items: BookmarkRow[]; total: number }> {
+    const limit = Math.max(1, pageSize|0);
+    const offset = Math.max(0, (page|0) * limit);
+    if (this.backendKind === 'sqlite') {
+      const where = categoryId == null ? '' : `WHERE category_id ${categoryId===null?'IS NULL':'='+categoryId}`;
+      const total = this.select<{ n: number }>(`SELECT COUNT(1) AS n FROM bookmarks ${where}`).[0]?.n || 0;
+      const items = this.select<BookmarkRow>(`SELECT * FROM bookmarks ${where} ORDER BY sort_order ASC, created_at ASC LIMIT ${limit} OFFSET ${offset}`);
+      return { items, total };
+    }
+    const all = await this.listBookmarksByCategory(categoryId);
+    return { items: all.slice(offset, offset + limit), total: all.length };
+  }
   async fullTextSearch(q: string): Promise<BookmarkRow[]> {
     const kw = (q || '').trim();
     if (!kw) return [];
