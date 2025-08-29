@@ -129,7 +129,8 @@ const HomeInner: React.FC = () => {
                 try {
                   const id = (await actions.addFromTab(tab as any)) as unknown as string;
                   await actions.updateCategory(id, selectedId);
-                  if (beforeId) await actions.reorder(id, beforeId);
+                  if (beforeId === '__END__') await actions.moveToEnd(id);
+                  else if (beforeId) await actions.reorder(id, beforeId);
                   showToast('Saved from tab', 'success');
                 } catch (e) {
                   showToast('Save failed', 'error');

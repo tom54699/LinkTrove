@@ -1,4 +1,5 @@
 import React from 'react';
+import { setDragTab } from '../dnd/dragContext';
 import type { TabItemData } from './types';
 
 export const TabItem: React.FC<
@@ -13,6 +14,7 @@ export const TabItem: React.FC<
         JSON.stringify(tab)
       );
       e.dataTransfer.effectAllowed = 'move';
+      setDragTab({ id: tab.id, title: tab.title, url: tab.url, favIconUrl: tab.favIconUrl });
     } catch (err) {
       // ignore in non-supporting environments
     }
@@ -20,6 +22,7 @@ export const TabItem: React.FC<
   };
   const onDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     setDragging(false);
+    setDragTab(null);
     rest.onDragEnd?.(e);
   };
   return (

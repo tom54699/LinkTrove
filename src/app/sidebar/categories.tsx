@@ -75,9 +75,14 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (selectedId === id) setSelectedId(next[0].id);
       },
       async setDefaultTemplate(id: string, templateId?: string) {
-        const list = categories.map((c) => c.id === id ? { ...c, defaultTemplateId: templateId } : c);
-        setCategories(list);
-        try { await svc?.saveToSync(list as any); } catch {}
+        // Use functional update to avoid stale closure overriding a freshly added category
+        let nextList: Category[] = categories;
+        setCategories((prev) => {
+          const list = prev.map((c) => c.id === id ? { ...c, defaultTemplateId: templateId } : c);
+          nextList = list;
+          return list;
+        });
+        try { await svc?.saveToSync(nextList as any); } catch {}
       },
     }),
     [categories, svc, selectedId]

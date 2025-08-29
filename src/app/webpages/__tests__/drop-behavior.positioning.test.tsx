@@ -11,12 +11,12 @@ function makeDT(payload?: any) {
 }
 
 describe('Drop positioning behavior', () => {
-  it('does not add to start when dropping on container with existing items', () => {
+  it('drops on container with existing items → adds at end by default', () => {
     const onDropTab = vi.fn();
     render(<CardGrid items={[{ id: 'a', title: 'A', url: 'https://a' } as any]} onDropTab={onDropTab} />);
     const zone = screen.getByTestId('drop-zone');
     fireEvent.drop(zone, { dataTransfer: makeDT({ id: 9, title: 'T', url: 'https://t' }) });
-    expect(onDropTab).not.toHaveBeenCalled();
+    expect(onDropTab).toHaveBeenCalledWith({ id: 9, title: 'T', url: 'https://t' }, '__END__');
   });
 
   it('adds when list is empty (back-compat)', () => {
@@ -27,4 +27,3 @@ describe('Drop positioning behavior', () => {
     expect(onDropTab).toHaveBeenCalled();
   });
 });
-
