@@ -100,7 +100,7 @@
   - [ ] 6.2 實作資料庫效能優化
     - [x] 建立查詢/程式段效能監控工具（Profiler）
     - [x] 實作資料庫維護作業 (VACUUM, ANALYZE, REINDEX)
-    - [ ] 建立索引使用情況分析和優化建議（待 sqlite EXPLAIN/PRAGMA 支援）
+    - [x] 建立索引使用情況分析和優化建議（IndexAdvisor + EXPLAIN/PRAGMA；無 sqlite 時跳過）
     - [x] 實作批次操作的事務優化（既有 transaction 包裝批次）
     - _需求: 6.2, 6.5_
 
