@@ -79,7 +79,7 @@
     - [x] 整合 File System 同步抽象（FSAdapter + FileSystemSync）
     - [x] 建立手動備份與一次性同步（onProgress 回報）
     - [x] 實作增量同步（簡易哈希比對，remote 差異時匯入）
-    - [ ] 定期同步與自動備份排程（UI/Timer 待後續）
+    - [x] 定期同步與自動備份排程（AutoSync 定時器 + 指數退避）
     - _需求: 4.3_
 
   - [ ] 5.3 實作雲端同步服務
