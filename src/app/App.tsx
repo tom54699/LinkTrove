@@ -19,6 +19,10 @@ import { useFeedback } from './ui/feedback';
 import { WebpagesProvider, useWebpages } from './webpages/WebpagesProvider';
 import { TemplatesManager } from './templates/TemplatesManager';
 import { useTemplates } from './templates/TemplatesProvider';
+import { FileSystemSync } from '../background/sync/FileSystemSync';
+import { CloudSync } from '../background/sync/CloudSync';
+import { LocalStorageFSAdapter, LocalStorageCloudAdapter } from './sync/adapters';
+import { PassphraseBox } from '../background/crypto/CryptoBox';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
@@ -226,6 +230,7 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
       <h1 className="text-xl font-semibold mb-4">Settings</h1>
       <div className="space-y-8">
         <DiagnosticsPanel />
+        <SyncPanel />
         <div>
           <div className="text-lg font-medium mb-2">Quick Add</div>
           <div className="flex gap-2 items-center flex-wrap">
@@ -377,6 +382,44 @@ const DiagnosticsPanel: React.FC = () => {
           ErrorLog.clear();
           setLogs([]);
         }}>Clear</button>
+      </div>
+    </div>
+  );
+};
+
+const SyncPanel: React.FC = () => {
+  const { showToast } = useFeedback();
+  const [logs, setLogs] = React.useState<string[]>([]);
+  const [pass, setPass] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const onProgressFs = (p: any) => setLogs((l)=>[...l, `FS: ${p}`].slice(-10));
+  const onProgressCloud = (p: any) => setLogs((l)=>[...l, `Cloud: ${p}`].slice(-10));
+  const getEncryptor = React.useCallback(()=> pass.trim() ? new PassphraseBox(pass.trim()) : undefined, [pass]);
+  return (
+    <div>
+      <div className="text-lg font-medium mb-2">Sync & Backup</div>
+      <div className="mb-2 text-sm opacity-80">Demo adapters use localStorage as storage backend. This panel is non-invasive.</div>
+      <div className="flex items-center gap-2 mb-2">
+        <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="Passphrase (optional for E2E encryption)" value={pass} onChange={(e)=>setPass(e.target.value)} />
+        <button className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50" disabled={busy} onClick={async ()=>{
+          setBusy(true); setLogs([]);
+          try {
+            onProgressFs('export'); onProgressFs('write'); onProgressFs('idle');
+            showToast('Backup simulated (local)', 'success');
+          } catch { showToast('Backup failed','error'); } finally { setBusy(false); }
+        }}>Backup Now</button>
+        <button className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50" disabled={busy} onClick={async ()=>{
+          setBusy(true); setLogs([]);
+          try {
+            onProgressCloud('auth'); onProgressCloud('download'); onProgressCloud('merge'); onProgressCloud('upload'); onProgressCloud('idle');
+            showToast('Cloud sync simulated', 'success');
+          } catch { showToast('Cloud sync failed','error'); } finally { setBusy(false); }
+        }}>Sync Cloud</button>
+      </div>
+      <div className="max-h-32 overflow-auto rounded border border-slate-700 bg-slate-900 p-2 text-xs">
+        {logs.length === 0 ? (<div className="opacity-60">No recent activity</div>) : (
+          <ul className="space-y-1">{logs.map((l,idx)=>(<li key={idx}>{l}</li>))}</ul>
+        )}
       </div>
     </div>
   );
