@@ -74,5 +74,32 @@ export class CategoryService {
     }
     return build(null);
   }
-}
 
+  async stats(): Promise<Array<{ id: number; name: string; direct: number; withChildren: number }>> {
+    const snap = await this.db.exportSnapshot();
+    const childrenMap = new Map<number | null, number[]>();
+    for (const c of snap.categories) {
+      const pid = (c.parent_id ?? null) as any;
+      if (!childrenMap.has(pid)) childrenMap.set(pid, []);
+      childrenMap.get(pid)!.push(c.id);
+    }
+    const directCount = new Map<number, number>();
+    for (const b of snap.bookmarks) {
+      const cid = (b.category_id ?? null) as any;
+      if (cid === null) continue; // skip uncategorized in per-category stats
+      directCount.set(cid, (directCount.get(cid) || 0) + 1);
+    }
+    function sumWithChildren(id: number): number {
+      let sum = directCount.get(id) || 0;
+      const kids = childrenMap.get(id) || [];
+      for (const k of kids) sum += sumWithChildren(k);
+      return sum;
+    }
+    return snap.categories.map(c => ({
+      id: c.id,
+      name: c.name,
+      direct: directCount.get(c.id) || 0,
+      withChildren: sumWithChildren(c.id),
+    }));
+  }
+}
