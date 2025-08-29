@@ -79,7 +79,8 @@ export class MigrationService {
     emit({ phase: 'migrating-bookmarks', totalCategories: cats.length, totalBookmarks: pages.length, migratedCategories: catCount, migratedBookmarks: 0 });
     // Wrap bookmark writes in a transaction for atomicity (db implements rollback)
     await this.db.transaction(async () => {
-      for (const p of pages) {
+    let order = 0;
+    for (const p of pages) {
       const title = (p.title || p.url || '').trim();
       const url = (p.url || '').trim();
       if (!title || !url) { continue; }
@@ -94,10 +95,13 @@ export class MigrationService {
             description: (p as any).note || (p as any).description || '',
             category_id: categoryId,
             favicon: p.favicon || '',
+            meta: (p as any).meta || {},
+            sort_order: order,
           });
         }
         bmCount++;
         seen.add(key);
+        order++;
       } catch (e: any) {
         errors.push({ phase: 'bookmarks', message: String(e?.message || e), itemId: p.id });
       }

@@ -21,6 +21,9 @@ export interface BookmarkRow {
   last_visited?: number | null;
   created_at: number;
   updated_at: number;
+  // Extensions to preserve original project semantics
+  meta?: any; // JSON of custom fields / site metadata
+  sort_order?: number; // position within category
 }
 
 export interface TagRow { id: number; name: string; color?: string }
@@ -104,6 +107,8 @@ export class DatabaseManager {
       description TEXT,
       category_id INTEGER,
       favicon TEXT,
+      meta TEXT,
+      sort_order INTEGER DEFAULT 0,
       visit_count INTEGER DEFAULT 0,
       last_visited INTEGER,
       created_at INTEGER,
@@ -233,14 +238,16 @@ export class DatabaseManager {
   async insertBookmark(row: Omit<BookmarkRow, 'id'|'created_at'|'updated_at'>): Promise<number> {
     if (this.backendKind === 'sqlite') {
       const now = Date.now();
-      this.run(`INSERT INTO bookmarks(title,url,description,category_id,favicon,visit_count,last_visited,created_at,updated_at)
-                VALUES (${q(row.title)}, ${q(row.url)}, ${q(row.description)}, ${n(row.category_id)}, ${q(row.favicon)}, 0, NULL, ${now}, ${now});`);
+      const metaJson = row.meta === undefined ? '{}' : (typeof row.meta === 'string' ? row.meta : JSON.stringify(row.meta));
+      const orderVal = row.sort_order ?? 0;
+      this.run(`INSERT INTO bookmarks(title,url,description,category_id,favicon,meta,sort_order,visit_count,last_visited,created_at,updated_at)
+                VALUES (${q(row.title)}, ${q(row.url)}, ${q(row.description)}, ${n(row.category_id)}, ${q(row.favicon)}, ${q(metaJson)}, ${n(orderVal)}, 0, NULL, ${now}, ${now});`);
       const idRow = this.select<{ id: number }>('SELECT last_insert_rowid() AS id')[0];
       return idRow?.id ?? 0;
     }
     const id = this.nextId('bookmarks');
     const now = Date.now();
-    const r: BookmarkRow = { id, created_at: now, updated_at: now, visit_count: 0, ...row } as any;
+    const r: BookmarkRow = { id, created_at: now, updated_at: now, visit_count: 0, meta: row.meta ?? {}, sort_order: row.sort_order ?? 0, ...row } as any;
     this.bookmarks.set(id, r);
     return id;
   }
@@ -258,6 +265,11 @@ export class DatabaseManager {
       if (patch.description !== undefined) sets.push(`description=${q(patch.description)}`);
       if (patch.category_id !== undefined) sets.push(`category_id=${n(patch.category_id as any)}`);
       if (patch.favicon !== undefined) sets.push(`favicon=${q(patch.favicon)}`);
+      if (patch.sort_order !== undefined) sets.push(`sort_order=${n(patch.sort_order)}`);
+      if (patch.meta !== undefined) {
+        const metaJson = typeof (patch.meta as any) === 'string' ? (patch.meta as any) : JSON.stringify(patch.meta);
+        sets.push(`meta=${q(metaJson)}`);
+      }
       sets.push(`updated_at=${Date.now()}`);
       if (sets.length) this.run(`UPDATE bookmarks SET ${sets.join(',')} WHERE id=${id}`);
       return;
@@ -279,13 +291,13 @@ export class DatabaseManager {
   }
   async listBookmarksByCategory(categoryId?: number | null): Promise<BookmarkRow[]> {
     if (this.backendKind === 'sqlite') {
-      if (categoryId == null) return this.select<BookmarkRow>('SELECT * FROM bookmarks ORDER BY created_at ASC');
-      return this.select<BookmarkRow>(`SELECT * FROM bookmarks WHERE category_id ${categoryId===null?'IS NULL':'='+categoryId} ORDER BY created_at ASC`);
+      if (categoryId == null) return this.select<BookmarkRow>('SELECT * FROM bookmarks ORDER BY sort_order ASC, created_at ASC');
+      return this.select<BookmarkRow>(`SELECT * FROM bookmarks WHERE category_id ${categoryId===null?'IS NULL':'='+categoryId} ORDER BY sort_order ASC, created_at ASC`);
     }
     const all = Array.from(this.bookmarks.values());
     return all
       .filter(b => (categoryId == null ? true : (b.category_id ?? null) === categoryId))
-      .sort((a,b)=> (a.created_at)-(b.created_at));
+      .sort((a,b)=> (a.sort_order??0)-(b.sort_order??0) || (a.created_at)-(b.created_at));
   }
   async fullTextSearch(q: string): Promise<BookmarkRow[]> {
     const kw = (q || '').trim();

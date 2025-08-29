@@ -7,6 +7,8 @@ export interface BookmarkData {
   description?: string;
   categoryId?: number | null;
   favicon?: string;
+  meta?: Record<string, string>;
+  sortOrder?: number;
 }
 
 export class BookmarkService {
@@ -21,6 +23,8 @@ export class BookmarkService {
       description: data.description || '',
       category_id: data.categoryId ?? null,
       favicon: data.favicon || '',
+      meta: data.meta,
+      sort_order: data.sortOrder,
     });
     return id;
   }
@@ -36,6 +40,8 @@ export class BookmarkService {
     if (patch.description !== undefined) p.description = patch.description;
     if (patch.categoryId !== undefined) p.category_id = patch.categoryId;
     if (patch.favicon !== undefined) p.favicon = patch.favicon;
+    if (patch.meta !== undefined) (p as any).meta = patch.meta;
+    if (patch.sortOrder !== undefined) (p as any).sort_order = patch.sortOrder;
     await this.db.updateBookmark(id, p);
   }
 
