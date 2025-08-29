@@ -29,6 +29,9 @@ export interface BookmarkTagRow { bookmark_id: number; tag_id: number }
 export class DatabaseManager {
   private ready = false;
   private backendKind: 'memory' | 'sqlite' = 'memory';
+  // sqlite runtime handle (when available)
+  private sqlite: any = null;
+  private sqliteDb: any = null;
   // In-memory fallback store
   private seq: Record<TableName, number> = {
     categories: 0,
@@ -46,13 +49,80 @@ export class DatabaseManager {
   }
 
   async init(): Promise<void> {
-    // In a future patch, attempt to load SQLite-WASM and mount OPFS.
-    // For now, mark as ready for in-memory fallback.
+    if (this.backendKind === 'sqlite') {
+      const ok = await this.tryInitSqlite();
+      if (ok) { this.ready = true; return; }
+      // fallback to memory if sqlite failed
+      this.backendKind = 'memory';
+    }
     this.ready = true;
   }
 
   isReady(): boolean { return this.ready; }
   getBackend(): 'memory' | 'sqlite' { return this.backendKind; }
+
+  private async tryInitSqlite(): Promise<boolean> {
+    try {
+      // Dynamic import; if library is absent, this will throw and we fallback
+      // Note: This is a placeholder import path; real integration can adjust.
+      const mod: any = await import(/* @vite-ignore */ '@sqlite.org/sqlite-wasm');
+      this.sqlite = mod;
+      // Open an OPFS-backed database if available, else memory db
+      // Many sqlite-wasm builds expose `sqlite3InitModule` and `oo1.DB` helpers
+      const sqlite3 = await (mod.sqlite3InitModule ? mod.sqlite3InitModule() : mod.default?.());
+      const cap = sqlite3?.opfs?.isAvailable ? 'opfs' : 'memory';
+      const dbName = 'linktrove.db';
+      this.sqliteDb = cap === 'opfs'
+        ? new sqlite3.oo1.OpfsDb(dbName)
+        : new sqlite3.oo1.DB(dbName, 'ct');
+      await this.createSchemaIfMissing();
+      this.backendKind = 'sqlite';
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private async createSchemaIfMissing(): Promise<void> {
+    if (!this.sqliteDb?.exec) return;
+    const exec = (sql: string) => this.sqliteDb.exec({ sql });
+    // Basic tables; FTS to be added when confirmed supported in build
+    exec(`CREATE TABLE IF NOT EXISTS categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      color TEXT,
+      icon TEXT,
+      parent_id INTEGER,
+      sort_order INTEGER DEFAULT 0,
+      created_at INTEGER
+    );`);
+    exec(`CREATE TABLE IF NOT EXISTS bookmarks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      url TEXT NOT NULL,
+      description TEXT,
+      category_id INTEGER,
+      favicon TEXT,
+      visit_count INTEGER DEFAULT 0,
+      last_visited INTEGER,
+      created_at INTEGER,
+      updated_at INTEGER
+    );`);
+    exec(`CREATE TABLE IF NOT EXISTS tags (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      color TEXT
+    );`);
+    exec(`CREATE TABLE IF NOT EXISTS bookmark_tags (
+      bookmark_id INTEGER,
+      tag_id INTEGER,
+      PRIMARY KEY (bookmark_id, tag_id)
+    );`);
+    exec('CREATE INDEX IF NOT EXISTS idx_bookmarks_url ON bookmarks(url);');
+    exec('CREATE INDEX IF NOT EXISTS idx_bookmarks_title ON bookmarks(title);');
+    exec('CREATE INDEX IF NOT EXISTS idx_bookmarks_category ON bookmarks(category_id);');
+    exec('CREATE INDEX IF NOT EXISTS idx_bookmarks_created ON bookmarks(created_at);');
+  }
 
   // Very small helper – not part of public API in the future
   private nextId(table: TableName): number {

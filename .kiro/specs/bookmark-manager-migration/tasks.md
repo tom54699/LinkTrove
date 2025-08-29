@@ -5,7 +5,7 @@
     - 整合 SQLite-WASM 函式庫到 Chrome Extension 專案
     - 配置 OPFS (Origin Private File System) 存取
     - [x] 建立 DatabaseManager 類別的基礎結構
-    - 實作資料庫初始化和連接管理
+    - [x] 實作資料庫初始化和連接管理（含 sqlite init 嘗試與自動降級）
     - _需求: 1.1, 1.2_
 
   - [ ] 1.2 建立資料庫 Schema 和索引

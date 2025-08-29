@@ -7,19 +7,13 @@ import { DatabaseManager } from './DatabaseManager';
  */
 export async function createDatabaseManager(prefer: 'sqlite' | 'memory' = 'memory'): Promise<DatabaseManager> {
   if (prefer === 'sqlite') {
-    try {
-      // Placeholder for future SQLite init (wasm + OPFS mounting)
-      // If any step throws, we will fall back to memory.
-      // For now, we intentionally fall through to fallback to keep tests stable.
-      throw new Error('sqlite not available in this environment');
-    } catch {
-      const db = new DatabaseManager('memory');
-      await db.init();
-      return db;
-    }
+    const db = new DatabaseManager('sqlite');
+    await db.init();
+    if (db.getBackend() === 'sqlite') return db;
+    // Fallback already handled inside init()
+    return db;
   }
   const db = new DatabaseManager('memory');
   await db.init();
   return db;
 }
-
