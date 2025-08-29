@@ -25,6 +25,7 @@ export const AppLayout: React.FC = () => {
   return (
     <FeedbackProvider>
       <ErrorBoundary>
+        <DiagnosticsBootstrap />
         <OpenTabsProvider>
           <CategoriesProvider>
             <TemplatesProvider>
@@ -224,6 +225,7 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
     <div>
       <h1 className="text-xl font-semibold mb-4">Settings</h1>
       <div className="space-y-8">
+        <DiagnosticsPanel />
         <div>
           <div className="text-lg font-medium mb-2">Quick Add</div>
           <div className="flex gap-2 items-center flex-wrap">
@@ -326,6 +328,55 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
           </div>
         </div>
         <TemplatesManager />
+      </div>
+    </div>
+  );
+};
+
+const DiagnosticsBootstrap: React.FC = () => {
+  const { showToast } = useFeedback();
+  React.useEffect(() => {
+    (async () => { const { initDiagnostics } = await import('./diagnostics/init'); initDiagnostics((m)=>showToast(m, 'error')); })();
+  }, [showToast]);
+  return null;
+};
+
+const DiagnosticsPanel: React.FC = () => {
+  const [logs, setLogs] = React.useState<any[]>([]);
+  React.useEffect(() => {
+    (async () => { const { ErrorLog } = await import('./diagnostics/ErrorLog'); setLogs(ErrorLog.list()); })();
+  }, []);
+  return (
+    <div>
+      <div className="text-lg font-medium mb-2">Diagnostics</div>
+      <div className="mb-2 text-sm opacity-80">Recent errors (last {logs.length})</div>
+      <div className="max-h-40 overflow-auto rounded border border-slate-700 bg-slate-900 p-2 text-xs">
+        {logs.length === 0 ? (
+          <div className="opacity-60">No errors</div>
+        ) : (
+          <ul className="space-y-2">
+            {logs.map((e: any) => (
+              <li key={e.id}>
+                <div className="font-medium">{new Date(e.ts).toLocaleString()} — {e.message}</div>
+                {e.stack && (<pre className="whitespace-pre-wrap opacity-80">{e.stack}</pre>)}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className="mt-2 flex gap-2">
+        <button className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={async ()=>{
+          const { ErrorLog } = await import('./diagnostics/ErrorLog');
+          try {
+            const data = ErrorLog.export();
+            await navigator.clipboard.writeText(data);
+          } catch {}
+        }}>Copy JSON</button>
+        <button className="text-sm px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={async ()=>{
+          const { ErrorLog } = await import('./diagnostics/ErrorLog');
+          ErrorLog.clear();
+          setLogs([]);
+        }}>Clear</button>
       </div>
     </div>
   );
