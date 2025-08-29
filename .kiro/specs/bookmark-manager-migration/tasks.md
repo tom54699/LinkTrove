@@ -69,10 +69,10 @@
 
 - [ ] 5. 實作同步管理系統
   - [ ] 5.1 建立資料匯出匯入功能
-    - 實作 SyncManager 的 JSON 匯出功能
-    - 建立 Netscape HTML 和 Chrome 格式的匯出
-    - 實作多格式資料匯入和格式檢測
-    - 加入匯入時的重複資料處理機制
+    - [x] 實作 SyncManager 的 JSON 匯出功能
+    - [x] 建立 Netscape HTML 和 Chrome 格式的匯出（Chrome 匯出：最小 roots 結構）
+    - [x] 實作多格式資料匯入（JSON 完整；Chrome JSON 最小可用）
+    - [x] 加入匯入時的重複資料處理機制（URL 規範化 keep-first）
     - _需求: 4.1, 4.2_
 
   - [ ] 5.2 實作檔案系統同步
