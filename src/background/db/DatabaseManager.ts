@@ -28,6 +28,7 @@ export interface BookmarkTagRow { bookmark_id: number; tag_id: number }
 
 export class DatabaseManager {
   private ready = false;
+  private backendKind: 'memory' | 'sqlite' = 'memory';
   // In-memory fallback store
   private seq: Record<TableName, number> = {
     categories: 0,
@@ -40,6 +41,10 @@ export class DatabaseManager {
   private tags = new Map<number, TagRow>();
   private bookmarkTags = new Set<string>(); // `${bid}:${tid}`
 
+  constructor(kind: 'memory' | 'sqlite' = 'memory') {
+    this.backendKind = kind;
+  }
+
   async init(): Promise<void> {
     // In a future patch, attempt to load SQLite-WASM and mount OPFS.
     // For now, mark as ready for in-memory fallback.
@@ -47,6 +52,7 @@ export class DatabaseManager {
   }
 
   isReady(): boolean { return this.ready; }
+  getBackend(): 'memory' | 'sqlite' { return this.backendKind; }
 
   // Very small helper – not part of public API in the future
   private nextId(table: TableName): number {
@@ -118,4 +124,3 @@ export class DatabaseManager {
     this.bookmarkTags.add(`${bookmarkId}:${tagId}`);
   }
 }
-
