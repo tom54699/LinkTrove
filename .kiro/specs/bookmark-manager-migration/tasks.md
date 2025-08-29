@@ -4,7 +4,7 @@
   - [ ] 1.1 設定 SQLite-WASM 環境
     - 整合 SQLite-WASM 函式庫到 Chrome Extension 專案
     - 配置 OPFS (Origin Private File System) 存取
-    - 建立 DatabaseManager 類別的基礎結構
+    - [x] 建立 DatabaseManager 類別的基礎結構
     - 實作資料庫初始化和連接管理
     - _需求: 1.1, 1.2_
 
@@ -17,9 +17,9 @@
 
 - [ ] 2. 實作資料遷移服務
   - [ ] 2.1 建立 MigrationService 核心功能
-    - 實作 MigrationService 類別檢測現有 Chrome Storage 資料
-    - 建立資料格式轉換函數 (Chrome Storage → SQLite)
-    - 實作書籤資料的批次遷移功能
+    - [x] 實作 MigrationService 類別檢測現有 Chrome Storage 資料
+    - [x] 建立資料格式轉換函數 (Chrome Storage → SQLite)
+    - [x] 實作書籤資料的批次遷移功能
     - 加入遷移進度追蹤和錯誤處理
     - _需求: 2.1, 2.2, 2.3_
 
