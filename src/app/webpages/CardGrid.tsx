@@ -48,12 +48,14 @@ export const CardGrid: React.FC<CardGridProps> = ({
   const [confirming, setConfirming] = React.useState(false);
   const [overId, setOverId] = React.useState<string | null>(null);
   const [dragDisabled, setDragDisabled] = React.useState(false);
+  const [ghostTab, setGhostTab] = React.useState<TabItemData | null>(null);
+  const [ghostTarget, setGhostTarget] = React.useState<string | null>(null); // item.id or '__END__'
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsOver(true);
   };
-  const handleDragLeave = () => setIsOver(false);
+  const handleDragLeave = () => { setIsOver(false); setGhostTab(null); setGhostTarget(null); };
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsOver(false);
@@ -61,7 +63,9 @@ export const CardGrid: React.FC<CardGridProps> = ({
       const raw = e.dataTransfer.getData('application/x-linktrove-tab');
       if (raw) {
         const tab: TabItemData = JSON.parse(raw);
-        onDropTab?.(tab);
+        if (items.length === 0) onDropTab?.(tab);
+        // when list is not empty, require dropping on a card; just clear preview
+        setGhostTab(null); setGhostTarget(null);
       }
     } catch (err) {
       showToast('Failed to add tab', 'error');
@@ -114,7 +118,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
           <div
             className={`toby-cards-flex ${density === 'compact' ? 'density-compact' : density === 'roomy' ? 'density-roomy' : ''} ${collapsed ? 'cards-collapsed' : ''}`}
           >
-            {items.map((it) => (
+            {items.map((it, idx) => (
               <div
                 key={it.id}
                 className="toby-card-flex relative"
@@ -128,12 +132,29 @@ export const CardGrid: React.FC<CardGridProps> = ({
                 onDragEnd={(e) => { (e.currentTarget as HTMLElement).removeAttribute('data-dragging'); }}
                 onDragEnter={(e) => {
                   e.preventDefault();
-                  // highlight for both reorder and insert
-                  if (overId !== it.id) setOverId(it.id);
+                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                  const mid = rect.top + rect.height / 2;
+                  const isLast = idx === items.length - 1;
+                  const atEnd = isLast && e.clientY > mid;
+                  const target = atEnd ? '__END__' : it.id;
+                  if (overId !== target) setOverId(target);
+                  const raw = e.dataTransfer.getData('application/x-linktrove-tab');
+                  if (raw) {
+                    try { const tab: TabItemData = JSON.parse(raw); setGhostTab(tab); setGhostTarget(target); } catch {}
+                  }
                 }}
                 onDragOver={(e) => {
                   e.preventDefault();
-                  if (overId !== it.id) setOverId(it.id);
+                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                  const mid = rect.top + rect.height / 2;
+                  const isLast = idx === items.length - 1;
+                  const atEnd = isLast && e.clientY > mid;
+                  const target = atEnd ? '__END__' : it.id;
+                  if (overId !== target) setOverId(target);
+                  const raw = e.dataTransfer.getData('application/x-linktrove-tab');
+                  if (raw) {
+                    try { const tab: TabItemData = JSON.parse(raw); setGhostTab(tab); setGhostTarget(target); } catch {}
+                  }
                 }}
                 onDragLeave={(e) => {
                   // Clear when leaving this card entirely
@@ -146,9 +167,13 @@ export const CardGrid: React.FC<CardGridProps> = ({
                   if (rawTab) {
                     try {
                       const tab: TabItemData = JSON.parse(rawTab);
-                      // Insert new item before this card
-                      // Prefer new onDropTab signature with beforeId
-                      (onDropTab as any)?.(tab, it.id);
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      const mid = rect.top + rect.height / 2;
+                      const isLast = idx === items.length - 1;
+                      const atEnd = isLast && e.clientY > mid;
+                      const target = atEnd ? '__END__' : it.id;
+                      (onDropTab as any)?.(tab, target);
+                      setGhostTab(null); setGhostTarget(null);
                       return;
                     } catch {/* ignore */}
                   }
@@ -161,6 +186,17 @@ export const CardGrid: React.FC<CardGridProps> = ({
                     aria-hidden
                     className="pointer-events-none absolute left-0 right-0 top-0 h-0.5 bg-emerald-500 shadow-[0_0_0_2px_rgba(16,185,129,0.4)]"
                   />
+                )}
+                {ghostTab && ghostTarget === it.id && (
+                  <div className="toby-card-flex relative" data-testid="ghost-before">
+                    <TobyLikeCard
+                      title={ghostTab.title || ghostTab.url || 'New'}
+                      description={''}
+                      faviconText={(ghostTab.url || '').replace(/^https?:\/\//,'').replace(/^www\./,'').slice(0,2).toUpperCase() || 'WW'}
+                      faviconUrl={(ghostTab as any)?.favIconUrl}
+                      ghost
+                    />
+                  </div>
                 )}
                 <TobyLikeCard
                   title={it.title}
@@ -193,6 +229,17 @@ export const CardGrid: React.FC<CardGridProps> = ({
                 />
               </div>
             ))}
+            {ghostTab && ghostTarget === '__END__' && (
+              <div className="toby-card-flex relative">
+                <TobyLikeCard
+                  title={ghostTab.title || ghostTab.url || 'New'}
+                  description={''}
+                  faviconText={(ghostTab.url || '').replace(/^https?:\/\//,'').replace(/^www\./,'').slice(0,2).toUpperCase() || 'WW'}
+                  faviconUrl={(ghostTab as any).favIconUrl}
+                  ghost
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

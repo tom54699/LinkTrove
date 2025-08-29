@@ -24,6 +24,7 @@ export interface TobyLikeCardProps {
   onMoveToCategory?: (categoryId: string) => void;
   onModalOpenChange?: (open: boolean) => void;
   onSave?: (patch: Partial<{ title: string; description: string; url: string; meta: Record<string,string> }>) => void;
+  ghost?: boolean;
 }
 
 export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
@@ -46,6 +47,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   onMoveToCategory,
   onModalOpenChange,
   onSave,
+  ghost,
 }) => {
   const [confirming, setConfirming] = React.useState(false);
   const [showModal, setShowModal] = React.useState(false);
@@ -92,7 +94,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
 
   return (
     <div className="tobylike">
-      <div className="card" data-select={selectMode ? 'true' : undefined} role="button" tabIndex={0} onClick={onOpen}>
+      <div className="card" data-select={selectMode ? 'true' : undefined} role="button" tabIndex={0} onClick={onOpen} style={ghost ? { opacity: 0.5, pointerEvents: 'none' } : undefined} data-testid={ghost ? 'ghost-card' : undefined}>
         <div className="card-content">
           <div className="icon-container">
             {faviconUrl ? (
