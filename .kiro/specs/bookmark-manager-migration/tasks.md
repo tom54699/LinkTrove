@@ -8,11 +8,11 @@
     - [x] 實作資料庫初始化和連接管理（含 sqlite init 嘗試與自動降級）
     - _需求: 1.1, 1.2_
 
-  - [ ] 1.2 建立資料庫 Schema 和索引
-    - 實作完整的 SQLite Schema (categories, bookmarks, tags, bookmark_tags)
-    - 建立效能優化索引 (url, title, category, created_at)
-    - 實作 FTS5 全文搜尋索引
-    - 加入資料庫版本控制和遷移機制
+- [ ] 1.2 建立資料庫 Schema 和索引
+    - [x] 實作完整的 SQLite Schema (categories, bookmarks, tags, bookmark_tags)
+    - [x] 建立效能優化索引 (url, title, category, created_at)
+    - [x] 實作 FTS5 全文搜尋索引（偵測失敗自動降級）
+    - [x] 加入資料庫版本控制（meta 表儲存 db_version）
     - _需求: 1.1, 3.1, 3.5_
 
 - [ ] 2. 實作資料遷移服務
