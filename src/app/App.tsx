@@ -25,6 +25,7 @@ import { backupWithEI, cloudSyncWithEI } from './sync/bridge';
 import { buildLegacyStores } from './sync/legacy';
 import { MigrationService } from '../background/migration/MigrationService';
 import { createDatabaseManager } from '../background/db/createDatabase';
+import { topPopular } from './metrics/visits';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
@@ -221,7 +222,6 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
   const [qaCat, setQaCat] = React.useState<string>('');
   const recent = React.useMemo(() => items.slice(0,10), [items]);
   const popular = React.useMemo(() => {
-    const { topPopular } = require('./metrics/visits');
     const urls = items.map((i:any)=>i.url).filter(Boolean);
     const top = topPopular(urls, 10);
     const byUrl = new Map(items.map((i:any)=>[i.url,i]));

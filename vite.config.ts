@@ -11,6 +11,7 @@ export default defineConfig({
     sourcemap: false,
     cssCodeSplit: true,
     rollupOptions: {
+      external: ['@sqlite.org/sqlite-wasm'],
       input: {
         popup: resolve(__dirname, 'public/popup.html'),
         newtab: resolve(__dirname, 'public/newtab.html'),

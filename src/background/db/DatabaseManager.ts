@@ -304,7 +304,7 @@ export class DatabaseManager {
     const offset = Math.max(0, (page|0) * limit);
     if (this.backendKind === 'sqlite') {
       const where = categoryId == null ? '' : `WHERE category_id ${categoryId===null?'IS NULL':'='+categoryId}`;
-      const total = this.select<{ n: number }>(`SELECT COUNT(1) AS n FROM bookmarks ${where}`).[0]?.n || 0;
+      const total = this.select<{ n: number }>(`SELECT COUNT(1) AS n FROM bookmarks ${where}`)[0]?.n || 0;
       const items = this.select<BookmarkRow>(`SELECT * FROM bookmarks ${where} ORDER BY sort_order ASC, created_at ASC LIMIT ${limit} OFFSET ${offset}`);
       return { items, total };
     }

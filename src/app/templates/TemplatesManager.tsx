@@ -19,7 +19,6 @@ export const TemplatesManager: React.FC = () => {
           <button className="text-sm px-2 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30" onClick={async ()=>{
             if (!name.trim()) return;
             const t = await actions.add(name.trim());
-            setSelectedTpl(t.id);
             setName('');
           }}>Add Template</button>
         </div>

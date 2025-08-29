@@ -2,8 +2,19 @@
 
 function enc(s: string): Uint8Array { return new TextEncoder().encode(s); }
 function dec(b: ArrayBuffer): string { return new TextDecoder().decode(b); }
-function toB64(arr: ArrayBuffer): string { return Buffer.from(new Uint8Array(arr)).toString('base64'); }
-function fromB64(b64: string): Uint8Array { return new Uint8Array(Buffer.from(b64, 'base64')); }
+function toB64(arr: ArrayBuffer): string {
+  const bytes = new Uint8Array(arr);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  // btoa expects binary string
+  return typeof btoa !== 'undefined' ? btoa(bin) : Buffer.from(bin, 'binary').toString('base64');
+}
+function fromB64(b64: string): Uint8Array {
+  const bin = typeof atob !== 'undefined' ? atob(b64) : Buffer.from(b64, 'base64').toString('binary');
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
 
 export interface Encryptor {
   encrypt(plain: string): Promise<string>;
@@ -44,4 +55,3 @@ export class PassphraseBox implements Encryptor {
     return dec(buf);
   }
 }
-
