@@ -13,7 +13,8 @@ export class BookmarkService {
   constructor(private db: DatabaseManager) {}
 
   async create(data: BookmarkData): Promise<number> {
-    if (!data.title || !data.url) throw new Error('Invalid bookmark');
+    if (!data.url || !/^https?:\/\//i.test(data.url)) throw new Error('Invalid URL');
+    if (!(data.title || data.url)) throw new Error('Empty title');
     const id = await this.db.insertBookmark({
       title: data.title.trim(),
       url: data.url.trim(),
@@ -49,5 +50,21 @@ export class BookmarkService {
   async search(q: string): Promise<BookmarkRow[]> {
     return this.db.fullTextSearch(q);
   }
-}
 
+  // Batch operations
+  async createMany(arr: BookmarkData[]): Promise<number[]> {
+    const out: number[] = [];
+    await this.db.transaction(async () => {
+      for (const d of arr) {
+        out.push(await this.create(d));
+      }
+    });
+    return out;
+  }
+
+  async deleteMany(ids: number[]): Promise<void> {
+    await this.db.transaction(async () => {
+      for (const id of ids) await this.remove(id);
+    });
+  }
+}
