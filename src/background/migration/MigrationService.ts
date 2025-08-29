@@ -1,5 +1,5 @@
 import type { DatabaseManager } from '../db/DatabaseManager';
-import type { LegacyStores, MigrationResult } from './types';
+import type { LegacyStores, MigrationResult, MigrateOptions, MigrationProgressEvent } from './types';
 
 /**
  * MigrationService moves legacy Chrome Storage data into the new DB.
@@ -25,49 +25,72 @@ export class MigrationService {
    * Migrates categories then bookmarks into the target DB.
    * For the in-memory DB we just map fields; for SQLite this will be transactional.
    */
-  async migrate(): Promise<MigrationResult> {
+  async migrate(opts: MigrateOptions = {}): Promise<MigrationResult> {
     const cats = await this.legacy.loadCategories();
     const pages = await this.legacy.loadWebpages();
 
     // Map legacy category ids (string) to new numeric ids
     const catIdMap = new Map<string, number>();
+    const errors: MigrationResult['errors'] = [];
+
+    const emit = (evt: MigrationProgressEvent) => {
+      try { opts.onProgress?.(evt); } catch {}
+    };
+    emit({ phase: 'prepare', totalCategories: cats.length, totalBookmarks: pages.length, migratedCategories: 0, migratedBookmarks: 0 });
 
     // Insert categories (skip duplicates by name)
     let catCount = 0;
     const seenNames = new Set<string>();
+    emit({ phase: 'migrating-categories', totalCategories: cats.length, totalBookmarks: pages.length, migratedCategories: 0, migratedBookmarks: 0 });
     for (const c of cats) {
       const name = (c.name || '').trim();
-      if (!name || seenNames.has(name)) continue;
+      if (!name || seenNames.has(name)) { continue; }
       seenNames.add(name);
-      const newId = await this.db.insertCategory({
-        name,
-        color: c.color,
-        icon: (c as any).icon,
-        parent_id: (c as any).parentId ?? null,
-        sort_order: c.order ?? 0,
-      });
-      catIdMap.set(c.id, newId);
-      catCount++;
+      try {
+        if (!opts.dryRun) {
+          const newId = await this.db.insertCategory({
+            name,
+            color: c.color,
+            icon: (c as any).icon,
+            parent_id: (c as any).parentId ?? null,
+            sort_order: c.order ?? 0,
+          });
+          catIdMap.set(c.id, newId);
+        }
+        catCount++;
+      } catch (e: any) {
+        errors.push({ phase: 'categories', message: String(e?.message || e), itemId: c.id });
+      }
+      emit({ phase: 'migrating-categories', totalCategories: cats.length, totalBookmarks: pages.length, migratedCategories: catCount, migratedBookmarks: 0 });
     }
 
     // Insert bookmarks
     let bmCount = 0;
+    emit({ phase: 'migrating-bookmarks', totalCategories: cats.length, totalBookmarks: pages.length, migratedCategories: catCount, migratedBookmarks: 0 });
     for (const p of pages) {
       const title = (p.title || p.url || '').trim();
       const url = (p.url || '').trim();
-      if (!title || !url) continue;
+      if (!title || !url) { continue; }
       const categoryId = p.category && catIdMap.has(p.category) ? catIdMap.get(p.category)! : null;
-      await this.db.insertBookmark({
-        title,
-        url,
-        description: (p as any).note || (p as any).description || '',
-        category_id: categoryId,
-        favicon: p.favicon || '',
-      });
-      bmCount++;
+      try {
+        if (!opts.dryRun) {
+          await this.db.insertBookmark({
+            title,
+            url,
+            description: (p as any).note || (p as any).description || '',
+            category_id: categoryId,
+            favicon: p.favicon || '',
+          });
+        }
+        bmCount++;
+      } catch (e: any) {
+        errors.push({ phase: 'bookmarks', message: String(e?.message || e), itemId: p.id });
+      }
+      emit({ phase: 'migrating-bookmarks', totalCategories: cats.length, totalBookmarks: pages.length, migratedCategories: catCount, migratedBookmarks: bmCount });
     }
 
-    return { bookmarks: bmCount, categories: catCount };
+    emit({ phase: 'done', totalCategories: cats.length, totalBookmarks: pages.length, migratedCategories: catCount, migratedBookmarks: bmCount });
+    return { bookmarks: bmCount, categories: catCount, errors };
   }
 
   /**
@@ -86,4 +109,3 @@ export class MigrationService {
     ]);
   }
 }
-

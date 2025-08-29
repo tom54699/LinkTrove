@@ -20,7 +20,7 @@
     - [x] 實作 MigrationService 類別檢測現有 Chrome Storage 資料
     - [x] 建立資料格式轉換函數 (Chrome Storage → SQLite)
     - [x] 實作書籤資料的批次遷移功能
-    - 加入遷移進度追蹤和錯誤處理
+    - [x] 加入遷移進度追蹤和錯誤處理（dry-run、onProgress、錯誤累計不中斷）
     - _需求: 2.1, 2.2, 2.3_
 
   - [ ] 2.2 實作資料驗證和完整性檢查
