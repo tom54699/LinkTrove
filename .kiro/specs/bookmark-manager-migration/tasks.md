@@ -83,10 +83,10 @@
     - _需求: 4.3_
 
   - [ ] 5.3 實作雲端同步服務
-    - 建立 WebDAV 同步的基礎架構
-    - 實作 Google Drive API 整合
-    - 建立雲端服務的認證和權限管理
-    - 實作同步衝突檢測和解決機制
+    - [x] 建立 WebDAV 同步的基礎架構（CloudAdapter + WebDAVAdapter + CloudSync）
+    - [x] 實作 Google Drive API 整合（GoogleDriveAdapter 骨架）
+    - [x] 建立雲端服務的認證和權限管理（authorize 流程於 adapters/CloudSync）
+    - [x] 實作同步衝突檢測和解決機制（both-changed → 匯入後上傳合併結果）
     - _需求: 4.4, 4.5_
 
 - [ ] 6. 實作效能優化功能
