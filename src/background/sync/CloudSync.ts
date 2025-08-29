@@ -1,4 +1,5 @@
 import { SyncManager } from './SyncManager';
+import type { Encryptor } from '../crypto/CryptoBox';
 import type { DatabaseManager } from '../db/DatabaseManager';
 
 export interface CloudFileMeta {
@@ -18,6 +19,7 @@ export interface CloudSyncOptions {
   remotePath?: string; // default '/linktrove.bundle.json'
   state?: CloudSyncState; // persistence of last sync markers
   onProgress?: (phase: 'auth'|'export'|'download'|'merge'|'upload'|'idle') => void;
+  encryptor?: Encryptor;
 }
 
 export interface CloudSyncState {
@@ -50,6 +52,7 @@ export class CloudSync {
     this.sync = new SyncManager(db);
     this.state = opts.state || new InMemoryCloudState();
     this.onProgress = opts.onProgress || (()=>{});
+    this.encryptor = opts.encryptor;
   }
 
   private hash(s: string): string {
@@ -58,6 +61,7 @@ export class CloudSync {
     return ('00000000' + h.toString(16)).slice(-8);
   }
 
+  private encryptor?: Encryptor;
   async syncNow(): Promise<CloudSyncResult> {
     this.onProgress('auth');
     await this.adapter.authorize();
@@ -73,6 +77,9 @@ export class CloudSync {
     if (remoteMeta) {
       this.onProgress('download');
       remoteJson = await this.adapter.download(this.path);
+      if (this.encryptor) {
+        try { remoteJson = await this.encryptor.decrypt(remoteJson); } catch { /* ignore */ }
+      }
       const remoteHash = this.hash(remoteJson);
       const remoteChanged = !prev.lastRemoteEtag || (remoteMeta.etag && remoteMeta.etag !== prev.lastRemoteEtag);
       const localChanged = !prev.lastLocalHash || (localHash !== prev.lastLocalHash);
@@ -87,7 +94,7 @@ export class CloudSync {
         // Export merged and upload
         const mergedJson = await this.sync.exportToJSON();
         this.onProgress('upload');
-        const up = await this.adapter.upload(this.path, mergedJson);
+        const up = await this.adapter.upload(this.path, this.encryptor ? await this.encryptor.encrypt(mergedJson) : mergedJson);
         uploaded = true;
         await this.state.set({ lastLocalHash: this.hash(mergedJson), lastRemoteEtag: up.etag || remoteMeta.etag });
         this.onProgress('idle');
@@ -107,7 +114,7 @@ export class CloudSync {
       if (!remoteChanged && localChanged) {
         // Upload our changes
         this.onProgress('upload');
-        const up = await this.adapter.upload(this.path, localJson);
+        const up = await this.adapter.upload(this.path, this.encryptor ? await this.encryptor.encrypt(localJson) : localJson);
         uploaded = true;
         await this.state.set({ lastLocalHash: localHash, lastRemoteEtag: up.etag || remoteMeta.etag });
         this.onProgress('idle');
@@ -120,7 +127,7 @@ export class CloudSync {
     }
     // No remote: upload local snapshot
     this.onProgress('upload');
-    const up = await this.adapter.upload(this.path, localJson);
+    const up = await this.adapter.upload(this.path, this.encryptor ? await this.encryptor.encrypt(localJson) : localJson);
     uploaded = true;
     await this.state.set({ lastLocalHash: localHash, lastRemoteEtag: up.etag });
     this.onProgress('idle');
@@ -144,4 +151,3 @@ export class GoogleDriveAdapter implements CloudAdapter {
   async download(path: string) { return this.client.download(path); }
   async upload(path: string, content: string) { return this.client.upload(path, content); }
 }
-

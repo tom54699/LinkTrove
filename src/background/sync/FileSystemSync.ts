@@ -1,5 +1,6 @@
 import { DatabaseManager } from '../db/DatabaseManager';
 import { SyncManager } from './SyncManager';
+import type { Encryptor } from '../crypto/CryptoBox';
 
 export interface FSAdapter {
   writeFile(path: string, content: string): Promise<void>;
@@ -10,6 +11,7 @@ export interface FSAdapter {
 export interface FileSystemSyncOptions {
   filename?: string; // default: linktrove.bundle.json
   onProgress?: (phase: 'export' | 'write' | 'read' | 'import' | 'idle') => void;
+  encryptor?: Encryptor; // optional encryption for at-rest bundle
 }
 
 export class FileSystemSync {
@@ -19,8 +21,10 @@ export class FileSystemSync {
     this.filename = opts.filename || 'linktrove.bundle.json';
     this.sync = new SyncManager(db);
     this.onProgress = opts.onProgress || (()=>{});
+    this.encryptor = opts.encryptor;
   }
   onProgress: (phase: 'export' | 'write' | 'read' | 'import' | 'idle') => void;
+  private encryptor?: Encryptor;
 
   private hash(s: string): string {
     // Simple djb2 hash as hex for deterministic compare (not crypto-secure)
@@ -31,7 +35,8 @@ export class FileSystemSync {
 
   async backupNow(): Promise<{ bytes: number; hash: string }> {
     this.onProgress('export');
-    const json = await this.sync.exportToJSON();
+    let json = await this.sync.exportToJSON();
+    if (this.encryptor) json = await this.encryptor.encrypt(json);
     this.onProgress('write');
     await this.fs.writeFile(this.filename, json);
     this.onProgress('idle');
@@ -40,18 +45,24 @@ export class FileSystemSync {
 
   async syncNow(): Promise<{ wrote: boolean; imported: number; skipped: number; currentHash: string }>
   {
-    const json = await this.sync.exportToJSON();
+    let json = await this.sync.exportToJSON();
     const localHash = this.hash(json);
     let remote = '';
     if (await this.fs.exists(this.filename)) {
       this.onProgress('read');
       remote = await this.fs.readFile(this.filename);
     }
+    // decrypt remote if encrypted (best-effort)
+    let remotePlain = remote;
+    if (this.encryptor && remote) {
+      try { remotePlain = await this.encryptor.decrypt(remote); } catch { /* ignore */ }
+    }
     const remoteHash = remote ? this.hash(remote) : '';
     let wrote = false;
     if (!remote || remoteHash !== localHash) {
       this.onProgress('write');
-      await this.fs.writeFile(this.filename, json);
+      const toWrite = this.encryptor ? await this.encryptor.encrypt(json) : json;
+      await this.fs.writeFile(this.filename, toWrite);
       wrote = true;
     }
     // If remote exists and is different/newer, import it
@@ -59,7 +70,7 @@ export class FileSystemSync {
     if (remote && remoteHash !== localHash) {
       this.onProgress('import');
       try {
-        const res = await this.sync.importFromJSON(remote);
+        const res = await this.sync.importFromJSON(remotePlain);
         imported = res.imported; skipped = res.skipped;
       } catch {
         // ignore malformed remote; rely on local snapshot
@@ -69,4 +80,3 @@ export class FileSystemSync {
     return { wrote, imported, skipped, currentHash: localHash };
   }
 }
-
