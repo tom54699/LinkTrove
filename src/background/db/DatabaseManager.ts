@@ -176,8 +176,34 @@ export class DatabaseManager {
   }
 
   async transaction<T>(fn: () => Promise<T>): Promise<T> {
-    // In-memory impl is atomic by function scope; for SQLite we'll BEGIN/COMMIT
-    return await fn();
+    if (this.backendKind === 'sqlite' && this.sqliteDb?.exec) {
+      try {
+        this.sqliteDb.exec({ sql: 'BEGIN' });
+        const out = await fn();
+        this.sqliteDb.exec({ sql: 'COMMIT' });
+        return out;
+      } catch (e) {
+        try { this.sqliteDb.exec({ sql: 'ROLLBACK' }); } catch {}
+        throw e;
+      }
+    }
+    // In-memory: best-effort; clone state and rollback on throw
+    const cats = new Map(this.categories);
+    const bms = new Map(this.bookmarks);
+    const tags = new Map(this.tags);
+    const links = new Set(this.bookmarkTags);
+    const seq = { ...this.seq } as any;
+    try {
+      const out = await fn();
+      return out;
+    } catch (e) {
+      this.categories = cats;
+      this.bookmarks = bms;
+      this.tags = tags;
+      this.bookmarkTags = links;
+      this.seq = seq;
+      throw e;
+    }
   }
 
   // Category ops
@@ -296,6 +322,68 @@ export class DatabaseManager {
       return;
     }
     this.bookmarkTags.add(`${bookmarkId}:${tagId}`);
+  }
+
+  // Snapshot/restore for rollback and export
+  async exportSnapshot(): Promise<{
+    categories: CategoryRow[];
+    bookmarks: BookmarkRow[];
+    tags: TagRow[];
+    bookmark_tags: BookmarkTagRow[];
+    meta?: Record<string,string>;
+  }> {
+    if (this.backendKind === 'sqlite') {
+      const categories = this.select<CategoryRow>('SELECT * FROM categories');
+      const bookmarks = this.select<BookmarkRow>('SELECT * FROM bookmarks');
+      const tags = this.select<TagRow>('SELECT * FROM tags');
+      const bt = this.select<{ bookmark_id: number; tag_id: number }>('SELECT * FROM bookmark_tags');
+      const metaRows = this.select<{ key: string; value: string }>('SELECT key,value FROM meta');
+      const meta: Record<string,string> = {};
+      for (const m of metaRows) meta[m.key] = m.value;
+      return { categories, bookmarks, tags, bookmark_tags: bt, meta };
+    }
+    return {
+      categories: Array.from(this.categories.values()),
+      bookmarks: Array.from(this.bookmarks.values()),
+      tags: Array.from(this.tags.values()),
+      bookmark_tags: Array.from(this.bookmarkTags).map((k)=>{
+        const [b,t] = k.split(':').map(Number); return { bookmark_id: b, tag_id: t };
+      }),
+      meta: { db_version: '1' },
+    };
+  }
+
+  async importSnapshot(s: { categories: CategoryRow[]; bookmarks: BookmarkRow[]; tags: TagRow[]; bookmark_tags: BookmarkTagRow[]; meta?: Record<string,string> }): Promise<void> {
+    if (this.backendKind === 'sqlite') {
+      await this.transaction(async () => {
+        this.run('DELETE FROM bookmark_tags;');
+        this.run('DELETE FROM bookmarks;');
+        this.run('DELETE FROM categories;');
+        this.run('DELETE FROM tags;');
+        for (const c of s.categories) {
+          this.run(`INSERT INTO categories(id,name,color,icon,parent_id,sort_order,created_at) VALUES (${c.id}, ${q(c.name)}, ${q(c.color)}, ${q(c.icon)}, ${n(c.parent_id)}, ${n(c.sort_order)}, ${n(c.created_at)});`);
+        }
+        for (const b of s.bookmarks) {
+          this.run(`INSERT INTO bookmarks(id,title,url,description,category_id,favicon,visit_count,last_visited,created_at,updated_at) VALUES (${b.id}, ${q(b.title)}, ${q(b.url)}, ${q(b.description)}, ${n(b.category_id)}, ${q(b.favicon)}, ${n(b.visit_count)}, ${n(b.last_visited)}, ${n(b.created_at)}, ${n(b.updated_at)});`);
+        }
+        for (const t of s.tags) {
+          this.run(`INSERT INTO tags(id,name,color) VALUES (${t.id}, ${q(t.name)}, ${q(t.color)});`);
+        }
+        for (const bt of s.bookmark_tags) {
+          this.run(`INSERT INTO bookmark_tags(bookmark_id, tag_id) VALUES (${bt.bookmark_id}, ${bt.tag_id});`);
+        }
+      });
+      return;
+    }
+    // memory
+    this.categories = new Map(s.categories.map((c)=>[c.id,c]));
+    this.bookmarks = new Map(s.bookmarks.map((b)=>[b.id,b]));
+    this.tags = new Map(s.tags.map((t)=>[t.id,t]));
+    this.bookmarkTags = new Set(s.bookmark_tags.map((x)=>`${x.bookmark_id}:${x.tag_id}`));
+    // reset seq approximatively to max ids
+    this.seq.categories = Math.max(0, ...s.categories.map(c=>c.id));
+    this.seq.bookmarks = Math.max(0, ...s.bookmarks.map(b=>b.id));
+    this.seq.tags = Math.max(0, ...s.tags.map(t=>t.id));
   }
 }
 

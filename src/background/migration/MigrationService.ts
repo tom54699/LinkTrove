@@ -66,11 +66,25 @@ export class MigrationService {
 
     // Insert bookmarks
     let bmCount = 0;
+    // Duplicate detection by normalized URL (keep-first)
+    const norm = (u: string) => u.replace(/^https?:\/\//, '').replace(/^www\./,'').replace(/\/$/,'').toLowerCase();
+    const seen = new Set<string>();
+    // Also avoid duplicates with existing DB data
+    try {
+      const existing = await this.db.listBookmarksByCategory(undefined);
+      for (const e of existing) if (e.url) seen.add(norm(e.url));
+    } catch {}
+
+    let skipped = 0;
     emit({ phase: 'migrating-bookmarks', totalCategories: cats.length, totalBookmarks: pages.length, migratedCategories: catCount, migratedBookmarks: 0 });
-    for (const p of pages) {
+    // Wrap bookmark writes in a transaction for atomicity (db implements rollback)
+    await this.db.transaction(async () => {
+      for (const p of pages) {
       const title = (p.title || p.url || '').trim();
       const url = (p.url || '').trim();
       if (!title || !url) { continue; }
+      const key = norm(url);
+      if (seen.has(key)) { skipped++; emit({ phase: 'migrating-bookmarks', totalCategories: cats.length, totalBookmarks: pages.length, migratedCategories: catCount, migratedBookmarks: bmCount }); continue; }
       const categoryId = p.category && catIdMap.has(p.category) ? catIdMap.get(p.category)! : null;
       try {
         if (!opts.dryRun) {
@@ -83,14 +97,16 @@ export class MigrationService {
           });
         }
         bmCount++;
+        seen.add(key);
       } catch (e: any) {
         errors.push({ phase: 'bookmarks', message: String(e?.message || e), itemId: p.id });
       }
       emit({ phase: 'migrating-bookmarks', totalCategories: cats.length, totalBookmarks: pages.length, migratedCategories: catCount, migratedBookmarks: bmCount });
-    }
+      }
+    });
 
     emit({ phase: 'done', totalCategories: cats.length, totalBookmarks: pages.length, migratedCategories: catCount, migratedBookmarks: bmCount });
-    return { bookmarks: bmCount, categories: catCount, errors };
+    return { bookmarks: bmCount, categories: catCount, skipped, errors };
   }
 
   /**

@@ -40,4 +40,3 @@ describe('MigrationService', () => {
     expect(ok).toBe(true);
   });
 });
-
