@@ -40,10 +40,21 @@ function toCard(d: any): WebpageCardData {
   };
 }
 
+function shouldUseDb() {
+  try {
+    return (
+      typeof window !== 'undefined' &&
+      localStorage.getItem('linktrove.backend') === 'sqlite' &&
+      localStorage.getItem('migrated.v1') === 'true'
+    );
+  } catch { return false; }
+}
+
 export const WebpagesProvider: React.FC<{
   children: React.ReactNode;
   svc?: WebpageService;
 }> = ({ children, svc }) => {
+  if (shouldUseDb()) return <DbWebpagesProvider>{children}</DbWebpagesProvider> as any;
   const service = React.useMemo(() => {
     if (svc) return svc;
     const hasChrome =
@@ -342,3 +353,135 @@ export function useWebpages() {
   if (!v) throw new Error('WebpagesProvider missing');
   return v;
 }
+
+// --- DB-backed provider (SQLite) ---
+const DbWebpagesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { selectedId, categories } = require('../sidebar/categories').useCategories();
+  const ReactRef = React as any;
+  const [items, setItems] = React.useState<WebpageCardData[]>([]);
+  const [db, setDb] = React.useState<any>(null);
+
+  // Build mapping from sync category id -> db numeric id
+  function readCatMap(): Record<string, number> {
+    try { return JSON.parse(localStorage.getItem('linktrove.catmap') || '{}'); } catch { return {}; }
+  }
+  function writeCatMap(m: Record<string, number>) {
+    try { localStorage.setItem('linktrove.catmap', JSON.stringify(m)); } catch {}
+  }
+  async function ensureCategoryMapping(dbase: any): Promise<Record<string, number>> {
+    const map = readCatMap();
+    const dbCats = await dbase.listCategories();
+    const nameToId = new Map(dbCats.map((c: any)=>[c.name, c.id]));
+    let changed = false;
+    for (const c of categories as any[]) {
+      if (!map[c.id]) {
+        // Try by name; if not exist, create
+        let id = nameToId.get(c.name);
+        if (!id) {
+          id = await dbase.insertCategory({ name: c.name, color: c.color, icon: (c as any).icon, parent_id: null, sort_order: c.order ?? 0 });
+          nameToId.set(c.name, id);
+        }
+        map[c.id] = id; changed = true;
+      }
+    }
+    if (changed) writeCatMap(map);
+    return map;
+  }
+  function mapRowToCard(r: any): WebpageCardData {
+    return {
+      id: String(r.id),
+      title: r.title,
+      url: r.url,
+      favicon: r.favicon,
+      description: r.description,
+      category: selectedId, // display uses sync id; authoritative mapping is in catmap
+      meta: r.meta || {},
+    } as any;
+  }
+  function numId(id: string) { const n = parseInt(id, 10); return isNaN(n) ? 0 : n; }
+
+  React.useEffect(() => {
+    (async () => {
+      const { createDatabaseManager } = await import('../../background/db/createDatabase');
+      const d = await createDatabaseManager('sqlite');
+      setDb(d);
+      const map = await ensureCategoryMapping(d);
+      const dbCat = map[selectedId] ?? null;
+      const list = await d.listBookmarksByCategory(dbCat);
+      setItems(list.map(mapRowToCard));
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, (categories as any[]).map((c)=>c.id+':'+c.name).join('|')]);
+
+  const load = React.useCallback(async () => {
+    if (!db) return;
+    const map = readCatMap();
+    const list = await db.listBookmarksByCategory(map[selectedId] ?? null);
+    setItems(list.map(mapRowToCard));
+  }, [db, selectedId]);
+
+  const addFromTab = React.useCallback(async (tab: TabItemData) => {
+    const map = readCatMap();
+    const dbCat = map[selectedId] ?? null;
+    const title = (tab.title || tab.url || '').trim();
+    const url = (tab.url || '').trim();
+    const id = await db.insertBookmark({ title, url, description: '', category_id: dbCat, favicon: (tab as any).favIconUrl || '', meta: {} });
+    await load();
+    return String(id);
+  }, [db, selectedId, load]);
+
+  const updateTitle = React.useCallback(async (id: string, title: string) => { await db.updateBookmark(numId(id), { title }); await load(); }, [db, load]);
+  const updateUrl = React.useCallback(async (id: string, url: string) => { await db.updateBookmark(numId(id), { url }); await load(); }, [db, load]);
+  const updateDescription = React.useCallback(async (id: string, description: string) => { await db.updateBookmark(numId(id), { description }); await load(); }, [db, load]);
+  const updateMeta = React.useCallback(async (id: string, meta: Record<string,string>) => { await db.updateBookmark(numId(id), { meta }); await load(); }, [db, load]);
+  const deleteOne = React.useCallback(async (id: string) => { await db.deleteBookmark(numId(id)); await load(); }, [db, load]);
+  const deleteMany = React.useCallback(async (ids: string[]) => { for (const id of ids) await db.deleteBookmark(numId(id)); await load(); }, [db, load]);
+
+  const updateCard = React.useCallback(async (id: string, patch: Partial<{ title: string; description: string; url: string; meta: Record<string,string> }>) => {
+    const p: any = {};
+    if (patch.title !== undefined) p.title = patch.title;
+    if (patch.url !== undefined) p.url = patch.url;
+    if (patch.description !== undefined) p.description = patch.description;
+    if (patch.meta !== undefined) p.meta = patch.meta;
+    await db.updateBookmark(numId(id), p);
+    await load();
+  }, [db, load]);
+
+  const updateCategory = React.useCallback(async (id: string, category: string) => {
+    const map = await ensureCategoryMapping(db);
+    const dbCat = map[category] ?? null;
+    await db.updateBookmark(numId(id), { category_id: dbCat });
+    await load();
+  }, [db, load]);
+
+  const reorder = React.useCallback((fromId: string, toId: string) => {
+    (async () => {
+      const map = readCatMap();
+      const dbCat = map[selectedId] ?? null;
+      const list = await db.listBookmarksByCategory(dbCat);
+      const order = list.map((r:any)=>r.id);
+      const from = numId(fromId); const to = numId(toId);
+      const arr = order.filter((x:number)=>x!==from);
+      const idxTo = arr.indexOf(to);
+      arr.splice(Math.max(0, idxTo), 0, from);
+      let i = 0;
+      for (const bid of arr) { await db.updateBookmark(bid, { sort_order: (i++) * 10 }); }
+      await load();
+    })();
+  }, [db, selectedId, load]);
+
+  const moveToEnd = React.useCallback((id: string) => {
+    (async () => {
+      const map = readCatMap();
+      const dbCat = map[selectedId] ?? null;
+      const list = await db.listBookmarksByCategory(dbCat);
+      const max = list.reduce((m:number,r:any)=>Math.max(m, r.sort_order||0), 0);
+      await db.updateBookmark(numId(id), { sort_order: max + 10 });
+      await load();
+    })();
+  }, [db, selectedId, load]);
+
+  const value = React.useMemo<CtxValue>(() => ({ items, actions: { load, addFromTab, deleteMany, deleteOne, updateNote: updateDescription, updateDescription, updateCard, updateTitle, updateUrl, updateCategory, updateMeta, reorder, moveToEnd } }), [items, load, addFromTab, deleteMany, deleteOne, updateDescription, updateCard, updateTitle, updateUrl, updateCategory, updateMeta, reorder, moveToEnd]);
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+};

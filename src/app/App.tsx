@@ -235,6 +235,8 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
         <MigrationPanel />
         <DiagnosticsPanel />
         <SyncPanel />
+        <RollbackPanel />
+        <MaintenancePanel />
         <div>
           <div className="text-lg font-medium mb-2">Quick Add</div>
           <div className="flex gap-2 items-center flex-wrap">
@@ -473,6 +475,67 @@ const MigrationPanel: React.FC = () => {
       {report && (
         <div className="rounded border border-slate-700 bg-slate-900 p-2 text-xs whitespace-pre-wrap">{report}</div>
       )}
+    </div>
+  );
+};
+
+const RollbackPanel: React.FC = () => {
+  const { showToast, setLoading } = useFeedback();
+  const svc = React.useMemo(() => createExportImportService({ storage: createStorageService() }), []);
+  return (
+    <div>
+      <div className="text-lg font-medium mb-2">Rollback (切回 Chrome Storage)</div>
+      <div className="text-sm opacity-80 mb-2">切換前建議備份；切換後需重啟頁面。</div>
+      <div className="flex items-center gap-2">
+        <button className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={async ()=>{
+          setLoading(true);
+          try {
+            // 簡易備份到瀏覽器下載
+            const json = await svc.exportJson();
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'linktrove-backup.json'; a.click(); URL.revokeObjectURL(url);
+            showToast('已導出備份', 'success');
+          } catch { showToast('備份失敗','error'); } finally { setLoading(false); }
+        }}>匯出備份</button>
+        <button className="text-sm px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={()=>{
+          try { localStorage.setItem('linktrove.backend','storage'); showToast('已切換至 Storage，請重載頁面','info'); } catch {}
+        }}>切回 Storage</button>
+      </div>
+    </div>
+  );
+};
+
+const MaintenancePanel: React.FC = () => {
+  const { showToast, setLoading } = useFeedback();
+  const { selectedId } = useCategories();
+  return (
+    <div>
+      <div className="text-lg font-medium mb-2">Maintenance（SQLite）</div>
+      <div className="flex items-center gap-2 flex-wrap">
+        <button className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={async ()=>{
+          setLoading(true);
+          try {
+            const { createDatabaseManager } = await import('../background/db/createDatabase');
+            const db = await createDatabaseManager('sqlite');
+            const map = JSON.parse(localStorage.getItem('linktrove.catmap') || '{}');
+            const dbCat = map[selectedId] ?? null;
+            const list = await db.listBookmarksByCategory(dbCat);
+            let i = 0;
+            for (const r of list) { await db.updateBookmark(r.id, { sort_order: (i++) * 10 }); }
+            showToast('Reindex sort_order 完成', 'success');
+          } catch { showToast('Reindex 失敗','error'); } finally { setLoading(false); }
+        }}>Reindex sort_order（當前分類）</button>
+        <button className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={async ()=>{
+          setLoading(true);
+          try {
+            const { createDatabaseManager } = await import('../background/db/createDatabase');
+            const db = await createDatabaseManager('sqlite');
+            (db as any).run?.('VACUUM;'); (db as any).run?.('ANALYZE;'); (db as any).run?.('REINDEX;');
+            showToast('VACUUM/ANALYZE/REINDEX 已執行', 'success');
+          } catch { showToast('維護指令失敗','error'); } finally { setLoading(false); }
+        }}>VACUUM / ANALYZE / REINDEX</button>
+      </div>
     </div>
   );
 };
