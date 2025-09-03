@@ -18,8 +18,7 @@ export const TemplatesManager: React.FC = () => {
           <input className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm" placeholder="New template name" value={name} onChange={(e)=>setName(e.target.value)} />
           <button className="text-sm px-2 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30" onClick={async ()=>{
             if (!name.trim()) return;
-            const t = await actions.add(name.trim());
-            setSelectedTpl(t.id);
+            await actions.add(name.trim());
             setName('');
           }}>Add Template</button>
         </div>
@@ -160,20 +159,25 @@ export const TemplatesManager: React.FC = () => {
         </div>
       </section>
       <section>
+        {/* 類別的預設模板設定：保留不存在的模板選項（missing）*/}
         <h2 className="text-lg font-semibold mb-2">Category Defaults</h2>
-        <div className="space-y-2">
-          {categories.map((c) => (
-            <div key={c.id} className="flex items-center gap-3">
-              <div className="w-40 text-sm">{c.name}</div>
-              <select className="text-sm rounded bg-slate-900 border border-slate-700 px-2 py-1" value={c.defaultTemplateId || ''} onChange={(e)=>catActions.setDefaultTemplate(c.id, e.target.value || undefined)}>
-                <option value="">None</option>
-                {templates.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </div>
+          <ul className="space-y-2">
+            {categories.map((c:any)=>{
+              const has = templates.some((t)=>t.id === (c.defaultTemplateId||''));
+              return (
+                <li key={c.id} className="flex items-center gap-2">
+                  <span className="min-w-[120px] inline-block">{c.name}</span>
+                  <select className="text-xs rounded bg-slate-900 border border-slate-700 px-2 py-1" value={c.defaultTemplateId || ''} onChange={(e)=>catActions.setDefaultTemplate(c.id, e.target.value || undefined)}>
+                    <option value="">None</option>
+                    {!has && c.defaultTemplateId && (
+                      <option value={c.defaultTemplateId}>{`(missing) ${c.defaultTemplateId}`}</option>
+                    )}
+                    {templates.map((t)=> (<option key={t.id} value={t.id}>{t.name}</option>))}
+                  </select>
+                </li>
+              );
+            })}
+          </ul>
       </section>
     </div>
   );

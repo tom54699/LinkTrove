@@ -207,6 +207,9 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
   );
   const { showToast, setLoading } = useFeedback();
   const [text, setText] = React.useState('');
+  const { actions: pagesActions } = useWebpages();
+  const { actions: catActions } = useCategories() as any;
+  const { actions: tplActions } = useTemplates() as any;
   return (
     <div>
       <h1 className="text-xl font-semibold mb-4">Settings</h1>
@@ -251,6 +254,10 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
                 setLoading(true);
                 try {
                   const res = await svc.importJsonMerge(text);
+                  // Reload in-memory views without manual refresh
+                  try { await pagesActions.load(); } catch {}
+                  try { await catActions?.reload?.(); } catch {}
+                  try { await tplActions?.reload?.(); } catch {}
                   showToast(
                     `Imported: ${res.addedPages} pages, ${res.addedCategories} categories`,
                     'success'

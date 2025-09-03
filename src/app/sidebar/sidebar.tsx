@@ -45,7 +45,11 @@ export const Sidebar: React.FC = () => {
               (e.currentTarget as HTMLElement).removeAttribute('data-drop');
             }}
           >
-            <span className="inline-block w-2 h-2 mr-2 rounded bg-slate-400" />
+            <span
+              className="inline-block w-2 h-2 mr-2 rounded"
+              style={{ backgroundColor: (c as any).color || '#94a3b8' }}
+              aria-hidden
+            />
             {c.name}
           </button>
         );

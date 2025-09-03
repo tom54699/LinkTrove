@@ -4,6 +4,7 @@ import { createStorageService, type TemplateData } from '../../background/storag
 interface TemplatesCtx {
   templates: TemplateData[];
   actions: {
+    reload: () => Promise<void>;
     add: (name: string) => Promise<TemplateData>;
     rename: (id: string, name: string) => Promise<void>;
     remove: (id: string) => Promise<void>;
@@ -22,8 +23,19 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   React.useEffect(() => {
     (async () => {
       try {
-        const list = await svc.loadTemplates();
-        setTemplates(list);
+        // 先從 chrome.storage.local 讀（設定類），若空再讀 IDB
+        const got: any = await new Promise((resolve) => {
+          try { chrome.storage?.local?.get?.({ templates: [] }, resolve); } catch { resolve({}); }
+        });
+        const localTpls: TemplateData[] = Array.isArray(got?.templates) ? got.templates : [];
+        if (localTpls.length > 0) {
+          setTemplates(localTpls);
+          try { await svc.saveTemplates(localTpls); } catch {}
+        } else {
+          const list = await svc.loadTemplates();
+          setTemplates(list);
+          try { chrome.storage?.local?.set?.({ templates: list }); } catch {}
+        }
       } catch {}
     })();
   }, [svc]);
@@ -31,11 +43,15 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const persist = async (list: TemplateData[]) => {
     setTemplates(list);
     try { await svc.saveTemplates(list); } catch {}
+    try { chrome.storage?.local?.set?.({ templates: list }); } catch {}
   };
 
   function genId() { return 't_' + Math.random().toString(36).slice(2,9); }
 
   const actions = useMemo(() => ({
+    async reload() {
+      try { const list = await svc.loadTemplates(); setTemplates(list); } catch {}
+    },
     async add(name: string) {
       const t: TemplateData = { id: genId(), name: name.trim() || 'Template', fields: [] };
       await persist([...templates, t]);

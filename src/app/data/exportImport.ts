@@ -3,6 +3,8 @@ import type {
   CategoryData,
   TemplateData,
 } from '../../background/storageService';
+import { clearStore } from '../../background/idb/db';
+import { setMeta } from '../../background/idb/db';
 
 export interface StorageLike {
   saveToLocal: (data: WebpageData[]) => Promise<void>;
@@ -67,46 +69,35 @@ export function createExportImportService(deps: {
     if (!incomingTpls.every(isTemplate))
       throw new Error('Invalid templates payload');
 
-    const [currentPages, currentCats, currentTpls] = await Promise.all([
-      storage.loadFromLocal(),
-      storage.loadFromSync(),
-      storage.loadTemplates(),
-    ]);
-
-    const pageByUrl = new Map<string, WebpageData>(
-      currentPages.map((p) => [p.url, p])
-    );
-    const toAddPages: WebpageData[] = [];
-    for (const p of incomingPages) {
-      if (!pageByUrl.has(p.url)) toAddPages.push(p);
-    }
-    const mergedPages = [...currentPages, ...toAddPages];
-
-    const catById = new Map<string, CategoryData>(
-      currentCats.map((c) => [c.id, c])
-    );
-    const toAddCats: CategoryData[] = [];
-    for (const c of incomingCats) {
-      if (!catById.has(c.id)) toAddCats.push(c);
-    }
-    const mergedCats = [...currentCats, ...toAddCats];
-
-    const tplById = new Map<string, TemplateData>(
-      currentTpls.map((t) => [t.id, t])
-    );
-    const toAddTpls: TemplateData[] = [];
-    for (const t of incomingTpls) {
-      if (!tplById.has(t.id)) toAddTpls.push(t);
-    }
-    const mergedTpls = [...currentTpls, ...toAddTpls];
-
+    // Overwrite strategy: clear stores then write incoming
     await Promise.all([
-      storage.saveToLocal(mergedPages),
-      storage.saveToSync(mergedCats),
-      storage.saveTemplates(mergedTpls),
+      clearStore('webpages'),
+      clearStore('categories'),
+      clearStore('templates'),
     ]);
+    await Promise.all([
+      storage.saveToLocal(incomingPages),
+      storage.saveToSync(incomingCats),
+      storage.saveTemplates(incomingTpls),
+    ]);
+    // Mirror to chrome.storage for resilience
+    try { chrome.storage?.local?.set?.({ categories: incomingCats }); } catch {}
+    try { chrome.storage?.local?.set?.({ templates: incomingTpls }); } catch {}
 
-    return { addedPages: toAddPages.length, addedCategories: toAddCats.length, addedTemplates: toAddTpls.length };
+    // Apply settings if present in import
+    const settings = parsed?.settings || {};
+    try {
+      if (settings.theme === 'dark' || settings.theme === 'light') {
+        chrome.storage?.local?.set?.({ theme: settings.theme });
+        try { await setMeta('settings.theme', settings.theme); } catch {}
+      }
+      if (typeof settings.selectedCategoryId === 'string' && settings.selectedCategoryId) {
+        chrome.storage?.local?.set?.({ selectedCategoryId: settings.selectedCategoryId });
+        try { await setMeta('settings.selectedCategoryId', settings.selectedCategoryId); } catch {}
+      }
+    } catch {}
+
+    return { addedPages: incomingPages.length, addedCategories: incomingCats.length, addedTemplates: incomingTpls.length };
   }
 
   return { exportJson, importJsonMerge };

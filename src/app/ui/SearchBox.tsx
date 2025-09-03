@@ -9,7 +9,7 @@ export const SearchBox: React.FC<{
   hotkey?: boolean;
 }> = ({ placeholder = 'Search…', onNavigateTo, className, hotkey = true }) => {
   const { items } = useWebpages();
-  const { setCurrentCategory } = useCategories();
+  const { setCurrentCategory, categories } = useCategories() as any;
   const [q, setQ] = React.useState('');
   const [open, setOpen] = React.useState(false);
   const [activeIdx, setActiveIdx] = React.useState(0);
@@ -138,7 +138,11 @@ export const SearchBox: React.FC<{
                 <span className="truncate">{it.title}</span>
                 <span className="opacity-60 truncate">{it.url}</span>
                 {it.category && (
-                  <span className="ml-auto text-[11px] px-1 py-0.5 rounded bg-slate-800 border border-slate-700 opacity-80">{it.category}</span>
+                  <span className="ml-auto text-[11px] px-1 py-0.5 rounded bg-slate-800 border border-slate-700 opacity-80">{(() => {
+                    const cid = String(it.category);
+                    const c = (categories || []).find((x: any) => x.id === cid);
+                    return c?.name || cid;
+                  })()}</span>
                 )}
               </div>
             </button>
