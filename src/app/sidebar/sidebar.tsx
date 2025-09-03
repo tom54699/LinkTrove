@@ -10,6 +10,7 @@ export const Sidebar: React.FC = () => {
   const [editName, setEditName] = React.useState('');
   const [editColor, setEditColor] = React.useState('#64748b');
   const [editTpl, setEditTpl] = React.useState<string>('');
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
 
   function openEditor(cat: any) {
     setEditing(cat);
@@ -91,48 +92,60 @@ export const Sidebar: React.FC = () => {
       })}
     </nav>
     {editing && (
-      <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center" onClick={()=>setEditing(null)}>
-        <div className="rounded border border-slate-700 bg-[var(--panel)] p-4 w-[420px] max-w-[90vw]" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Edit Category">
-          <div className="text-lg font-medium mb-3">Edit Category</div>
-          <div className="space-y-3">
+      <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3" onClick={()=>{ setEditing(null); setConfirmDelete(false); }}>
+        <div className="rounded border border-slate-700 bg-[var(--panel)] w-[560px] max-w-[95vw]" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Edit Category">
+          <div className="px-5 py-4 border-b border-slate-700">
+            <div className="text-lg font-semibold">Edit Category</div>
+            <div className="text-xs opacity-70">Update name, color, and default template</div>
+          </div>
+          <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm mb-1">Name</label>
               <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={editName} onChange={(e)=>setEditName(e.target.value)} />
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <label className="block text-sm mb-1">Color</label>
+            <div>
+              <label className="block text-sm mb-1">Color</label>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: editColor }} />
                 <input type="color" className="rounded border border-slate-700 bg-slate-900 p-1" value={editColor} onChange={(e)=>setEditColor(e.target.value)} />
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm mb-1">Default Template</label>
-                <select className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={editTpl} onChange={(e)=>setEditTpl(e.target.value)}>
-                  <option value="">None</option>
-                  {templates.map((t:any)=> (<option key={t.id} value={t.id}>{t.name}</option>))}
-                </select>
+                <input className="flex-1 rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={editColor} onChange={(e)=>setEditColor(e.target.value)} />
               </div>
             </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm mb-1">Default Template</label>
+              <select className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={editTpl} onChange={(e)=>setEditTpl(e.target.value)}>
+                <option value="">None</option>
+                {templates.map((t:any)=> (<option key={t.id} value={t.id}>{t.name}</option>))}
+              </select>
+            </div>
           </div>
-          <div className="mt-4 flex items-center justify-end gap-2">
-            <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>setEditing(null)}>Cancel</button>
-            <button className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30" onClick={async()=>{
-              try {
-                const id = editing.id as string;
-                if (editName.trim() && editName.trim() !== editing.name) await catActions.renameCategory(id, editName.trim());
-                if ((editColor||'') !== (editing.color||'')) await catActions.updateColor?.(id, editColor||'#64748b');
-                if ((editTpl||'') !== (editing.defaultTemplateId||'')) await catActions.setDefaultTemplate(id, editTpl || undefined);
-                setEditing(null);
-              } catch { /* ignore */ }
-            }}>Save</button>
-            <button className="px-3 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={async()=>{
-              try {
-                if (!editing) return;
-                const ok = confirm('Delete this category?');
-                if (!ok) return;
-                await catActions.deleteCategory(editing.id);
-                setEditing(null);
-              } catch { /* ignore */ }
-            }}>Delete</button>
+          <div className="px-5 py-3 border-t border-slate-700 flex items-center justify-between gap-3">
+            <div>
+              {!confirmDelete ? (
+                <button className="text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={()=>setConfirmDelete(true)}>Delete category…</button>
+              ) : (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-red-300">Confirm deletion?</span>
+                  <button className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>setConfirmDelete(false)}>Cancel</button>
+                  <button className="px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={async()=>{
+                    try { if (!editing) return; await catActions.deleteCategory(editing.id); setEditing(null); setConfirmDelete(false); } catch {}
+                  }}>Delete</button>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>{ setEditing(null); setConfirmDelete(false); }}>Cancel</button>
+              <button className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30" onClick={async()=>{
+                try {
+                  const id = editing.id as string;
+                  if (editName.trim() && editName.trim() !== editing.name) await catActions.renameCategory(id, editName.trim());
+                  if ((editColor||'') !== (editing.color||'')) await catActions.updateColor?.(id, editColor||'#64748b');
+                  if ((editTpl||'') !== (editing.defaultTemplateId||'')) await catActions.setDefaultTemplate(id, editTpl || undefined);
+                  setEditing(null);
+                  setConfirmDelete(false);
+                } catch { /* ignore */ }
+              }}>Save</button>
+            </div>
           </div>
         </div>
       </div>
