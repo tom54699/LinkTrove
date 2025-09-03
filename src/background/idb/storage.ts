@@ -1,5 +1,5 @@
 import type { WebpageData, CategoryData, TemplateData, StorageService } from '../storageService';
-import { getAll, putAll, setMeta, getMeta } from './db';
+import { getAll, putAll, setMeta, getMeta, clearStore } from './db';
 
 async function migrateOnce(): Promise<void> {
   try {
@@ -79,9 +79,11 @@ export function createIdbStorageService(): StorageService {
     // naming preserved for compatibility
     saveToLocal: async (data: WebpageData[]) => { await putAll('webpages', data || []); },
     loadFromLocal: async () => await getAll('webpages') as WebpageData[],
-    saveToSync: async (data: CategoryData[]) => { await putAll('categories', data || []); },
+    // Replace categories set to ensure deletions persist
+    saveToSync: async (data: CategoryData[]) => { await clearStore('categories'); await putAll('categories', data || []); },
     loadFromSync: async () => await getAll('categories') as CategoryData[],
-    saveTemplates: async (data: TemplateData[]) => { await putAll('templates', data || []); },
+    // Replace templates set to ensure deletions persist
+    saveTemplates: async (data: TemplateData[]) => { await clearStore('templates'); await putAll('templates', data || []); },
     loadTemplates: async () => await getAll('templates') as TemplateData[],
     exportData,
     importData,
