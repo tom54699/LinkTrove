@@ -112,6 +112,12 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         try { await svc?.saveToSync(list as any); } catch {}
         try { chrome.storage?.local?.set?.({ categories: list }); } catch {}
       },
+      async updateColor(id: string, color: string) {
+        const list = categories.map((c) => (c.id === id ? { ...c, color: color || c.color } : c));
+        setCategories(list);
+        try { await svc?.saveToSync(list as any); } catch {}
+        try { chrome.storage?.local?.set?.({ categories: list }); } catch {}
+      },
       async deleteCategory(id: string) {
         const list = categories.filter((c) => c.id !== id);
         const next = list.length ? list : DEFAULT_CATEGORIES;
