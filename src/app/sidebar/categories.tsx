@@ -127,6 +127,12 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         try { await svc?.saveToSync(next as any); } catch {}
         try { chrome.storage?.local?.set?.({ categories: next }); } catch {}
         if (selectedId === id) { setSelectedId(next[0].id); try { chrome.storage?.local?.set?.({ selectedCategoryId: next[0].id }); } catch {} }
+        // Also delete webpages under this category
+        try {
+          const pages = await svc?.loadFromLocal();
+          const filtered = (pages || []).filter((p: any) => String(p.category || '') !== String(id));
+          await svc?.saveToLocal(filtered as any);
+        } catch {}
       },
       async setDefaultTemplate(id: string, templateId?: string) {
         // Use functional update to avoid stale closure overriding a freshly added category

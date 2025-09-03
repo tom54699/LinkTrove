@@ -76,8 +76,8 @@ export function createIdbStorageService(): StorageService {
   }
 
   return {
-    // naming preserved for compatibility
-    saveToLocal: async (data: WebpageData[]) => { await putAll('webpages', data || []); },
+    // naming preserved for compatibility; replace full set to persist deletions
+    saveToLocal: async (data: WebpageData[]) => { await clearStore('webpages'); await putAll('webpages', data || []); },
     loadFromLocal: async () => await getAll('webpages') as WebpageData[],
     // Replace categories set to ensure deletions persist
     saveToSync: async (data: CategoryData[]) => { await clearStore('categories'); await putAll('categories', data || []); },
