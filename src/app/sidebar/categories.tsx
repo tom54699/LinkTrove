@@ -17,8 +17,10 @@ interface CategoriesState {
   actions: {
     addCategory: (name: string, color?: string) => Promise<Category>;
     renameCategory: (id: string, name: string) => Promise<void>;
+    updateColor: (id: string, color: string) => Promise<void>;
     deleteCategory: (id: string) => Promise<void>;
     setDefaultTemplate: (id: string, templateId?: string) => Promise<void>;
+    reorderCategories: (orderIds: string[]) => Promise<void>;
   };
 }
 
@@ -136,6 +138,23 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         });
         try { await svc?.saveToSync(nextList as any); } catch {}
         try { chrome.storage?.local?.set?.({ categories: nextList }); } catch {}
+      },
+      async reorderCategories(orderIds: string[]) {
+        // Build new ordered list based on provided id order
+        const byId = new Map(categories.map(c => [c.id, c]));
+        const newList: Category[] = [];
+        let i = 0;
+        for (const id of orderIds) {
+          const c = byId.get(id);
+          if (!c) continue;
+          newList.push({ ...c, order: i++ });
+          byId.delete(id);
+        }
+        // Append any categories not present in orderIds (safety)
+        for (const c of byId.values()) newList.push({ ...c, order: i++ });
+        setCategories(newList);
+        try { await svc?.saveToSync(newList as any); } catch {}
+        try { chrome.storage?.local?.set?.({ categories: newList }); } catch {}
       },
     }),
     [categories, svc, selectedId]

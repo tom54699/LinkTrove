@@ -24,7 +24,7 @@ export const Sidebar: React.FC = () => {
       <div className="mb-4 text-lg font-semibold">Collections</div>
       <div className="text-[11px] uppercase text-[var(--muted)] mb-2">Spaces</div>
       <nav aria-label="Categories" className="space-y-1">
-        {categories.map((c) => {
+        {categories.map((c, idx) => {
         const active = selectedId === c.id;
         return (
           <div
@@ -32,23 +32,40 @@ export const Sidebar: React.FC = () => {
             className={`w-full px-2 py-1 rounded transition-colors flex items-center gap-2 ${active ? 'bg-[#1f254a]' : 'hover:bg-[#1f254a]'}
             `}
             data-active={active ? 'true' : undefined}
+            draggable
+            onDragStart={(e) => {
+              try { e.dataTransfer.setData('application/x-linktrove-category', c.id); e.dataTransfer.effectAllowed = 'move'; } catch {}
+            }}
             onDragOver={(e) => { e.preventDefault(); }}
             onDragEnter={(e) => { (e.currentTarget as HTMLElement).setAttribute('data-drop','true'); }}
             onDragLeave={(e) => { (e.currentTarget as HTMLElement).removeAttribute('data-drop'); }}
             onDrop={(e) => {
               e.preventDefault();
               try {
-                const id = e.dataTransfer.getData('application/x-linktrove-webpage');
-                if (id) {
-                  actions.updateCategory(id, c.id);
+                const catId = e.dataTransfer.getData('application/x-linktrove-category');
+                if (catId) {
+                  const ids = categories.map(x => x.id).filter(Boolean);
+                  const fromIdx = ids.indexOf(catId);
+                  const toIdx = ids.indexOf(c.id);
+                  if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
+                    const arr = [...ids];
+                    const [m] = arr.splice(fromIdx, 1);
+                    arr.splice(toIdx, 0, m);
+                    void catActions.reorderCategories(arr);
+                  }
                 } else {
-                  const rawTab = e.dataTransfer.getData('application/x-linktrove-tab');
-                  if (rawTab) {
-                    const tab = JSON.parse(rawTab);
-                    void actions
-                      .addFromTab(tab)
-                      .then((newId: any) => actions.updateCategory(String(newId), c.id))
-                      .catch(() => {/* ignore */});
+                  const id = e.dataTransfer.getData('application/x-linktrove-webpage');
+                  if (id) {
+                    actions.updateCategory(id, c.id);
+                  } else {
+                    const rawTab = e.dataTransfer.getData('application/x-linktrove-tab');
+                    if (rawTab) {
+                      const tab = JSON.parse(rawTab);
+                      void actions
+                        .addFromTab(tab)
+                        .then((newId: any) => actions.updateCategory(String(newId), c.id))
+                        .catch(() => {/* ignore */});
+                    }
                   }
                 }
               } catch {}
@@ -107,6 +124,15 @@ export const Sidebar: React.FC = () => {
                 setEditing(null);
               } catch { /* ignore */ }
             }}>Save</button>
+            <button className="px-3 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={async()=>{
+              try {
+                if (!editing) return;
+                const ok = confirm('Delete this category?');
+                if (!ok) return;
+                await catActions.deleteCategory(editing.id);
+                setEditing(null);
+              } catch { /* ignore */ }
+            }}>Delete</button>
           </div>
         </div>
       </div>
