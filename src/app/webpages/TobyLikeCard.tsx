@@ -94,7 +94,15 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
 
   return (
     <div className="tobylike">
-      <div className="card" data-select={selectMode ? 'true' : undefined} role="button" tabIndex={0} onClick={onOpen} style={ghost ? { opacity: 0.5, pointerEvents: 'none' } : undefined} data-testid={ghost ? 'ghost-card' : undefined}>
+      <div
+        className="card"
+        data-select={selectMode ? 'true' : undefined}
+        role="button"
+        tabIndex={0}
+        onClick={onOpen}
+        style={{ background: 'var(--card)', ...(ghost ? { opacity: 0.5, pointerEvents: 'none' } : {}) }}
+        data-testid={ghost ? 'ghost-card' : undefined}
+      >
         <div className="card-content">
           <div className="icon-container">
             {faviconUrl ? (
