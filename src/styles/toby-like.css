@@ -1,10 +1,6 @@
 /* Scoped Toby-like demo styles (structure mirrors provided HTML) */
-.tobylike {
-  --bg: var(--bg);
-  --fg: var(--fg);
-  --card: var(--card);
-  --muted: var(--muted);
-}
+/* Do NOT shadow CSS variables with self-references inside .tobylike.
+   Inheriting from :root keeps var(--card) usable here. */
 
 .tobylike .card {
   position: relative;
