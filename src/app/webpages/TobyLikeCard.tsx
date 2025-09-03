@@ -104,12 +104,23 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
         data-testid={ghost ? 'ghost-card' : undefined}
       >
         <div className="card-content">
-          <div className="icon-container">
-            {faviconUrl ? (
-              <img src={faviconUrl} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8 }} />
-            ) : (
-              faviconText
-            )}
+          <div
+            className="icon-container"
+            style={{ background: faviconUrl ? 'transparent' : undefined }}
+          >
+            {(() => {
+              const defaultIconUrl = (() => {
+                try { return (chrome as any)?.runtime?.getURL?.('icons/default-favicon.png') || '/icons/default-favicon.png'; } catch { return '/icons/default-favicon.png'; }
+              })();
+              const src = faviconUrl || defaultIconUrl;
+              return (
+                <img
+                  src={src}
+                  alt=""
+                  style={{ width: 32, height: 32, objectFit: 'cover' }}
+                />
+              );
+            })()}
             <div className="checkbox-overlay" onClick={(e)=>{ e.stopPropagation(); onToggleSelect?.(); }}>
               <div className={`checkbox ${selected ? 'checked' : ''}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
