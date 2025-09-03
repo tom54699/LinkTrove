@@ -30,7 +30,7 @@ export const Sidebar: React.FC = () => {
         return (
           <div
             key={c.id}
-            className={`w-full px-2 py-1 rounded transition-colors flex items-center gap-2 ${active ? 'bg-[#1f254a]' : 'hover:bg-[#1f254a]'}
+            className={`w-full px-2 py-1 rounded border border-slate-700 transition-colors flex items-center gap-2 ${active ? 'bg-[var(--card)]' : 'hover:bg-slate-800/40'}
             `}
             data-active={active ? 'true' : undefined}
             draggable

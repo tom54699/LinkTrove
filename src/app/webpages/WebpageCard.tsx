@@ -74,7 +74,7 @@ export const WebpageCard: React.FC<{
     <div
       id={`card-${data.id}`}
       data-testid="webpage-card"
-      className="toby-card group relative cursor-pointer rounded-xl border border-slate-700 p-6 hover:bg-slate-800/70 transition-colors shadow-md hover:shadow-lg min-h-[140px]"
+      className="toby-card group relative cursor-pointer rounded-xl border border-slate-700 p-6 bg-[var(--card)] transition-colors shadow-md hover:shadow-lg min-h-[140px]"
       data-editing={isEditing ? 'true' : undefined}
       data-select={selectMode ? 'true' : undefined}
       onClick={handleClick}
