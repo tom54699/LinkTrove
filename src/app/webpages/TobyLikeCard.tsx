@@ -129,8 +129,11 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
               </div>
             </div>
           </div>
-          <div className="content">
-            <h2 className="title" title={title}>{title}</h2>
+          <div className="content" style={{ width: '100%' }}>
+            <div className="row-title">
+              <h2 className="title" title={title}>{title}</h2>
+            </div>
+            <div className="sep" />
             <p className="description" title={description}>{description || ''}</p>
           </div>
         </div>
