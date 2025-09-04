@@ -29,8 +29,8 @@ export const AppLayout: React.FC = () => {
           <CategoriesProvider>
             <TemplatesProvider>
               <WebpagesProvider>
-        <div className="toby-mode min-h-screen bg-[var(--bg)] text-[var(--fg)]">
-          <header className="p-4 flex items-center justify-between border-b border-slate-700">
+        <div className="toby-mode h-screen flex flex-col bg-[var(--bg)] text-[var(--fg)]">
+          <header className="p-4 flex items-center justify-between border-b border-slate-700 flex-shrink-0">
             <nav className="space-x-4">
               <Link to="/" className="hover:underline">
                 Home
@@ -46,7 +46,7 @@ export const AppLayout: React.FC = () => {
               Theme: {theme}
             </button>
           </header>
-          <main className="p-6">
+          <main className="p-6 flex-1 overflow-hidden min-h-0">
             <Outlet />
           </main>
         </div>
