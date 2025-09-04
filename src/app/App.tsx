@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { useApp } from './AppContext';
 import { ThreeColumnLayout } from './layout/ThreeColumn';
 import { OpenTabsProvider } from './tabs/OpenTabsProvider';
@@ -31,13 +31,34 @@ export const AppLayout: React.FC = () => {
               <WebpagesProvider>
         <div className="toby-mode h-screen flex flex-col bg-[var(--bg)] text-[var(--fg)]">
           <header className="p-4 flex items-center justify-between border-b border-slate-700 flex-shrink-0">
-            <nav className="space-x-4">
-              <Link to="/" className="hover:underline">
+            <nav aria-label="Primary" className="inline-flex items-center gap-1 p-1 rounded-lg border border-slate-700 bg-[var(--panel)]">
+              <NavLink
+                to="/"
+                end
+                className={({ isActive }) =>
+                  `px-3 py-1.5 rounded-md text-sm ${
+                    isActive
+                      ? 'bg-slate-800 text-white'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  } focus:outline-none focus:ring-2 focus:ring-emerald-600/60`
+                }
+                aria-label="Home"
+              >
                 Home
-              </Link>
-              <Link to="/settings" className="hover:underline">
+              </NavLink>
+              <NavLink
+                to="/settings"
+                className={({ isActive }) =>
+                  `px-3 py-1.5 rounded-md text-sm ${
+                    isActive
+                      ? 'bg-slate-800 text-white'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  } focus:outline-none focus:ring-2 focus:ring-emerald-600/60`
+                }
+                aria-label="Settings"
+              >
                 Settings
-              </Link>
+              </NavLink>
             </nav>
             <button
               className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
