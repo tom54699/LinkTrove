@@ -104,36 +104,48 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
         data-testid={ghost ? 'ghost-card' : undefined}
       >
         <div className="card-content">
-          <div
-            className="icon-container"
-            style={{ background: faviconUrl ? 'transparent' : undefined }}
-          >
-            {(() => {
-              const defaultIconUrl = (() => {
-                try { return (chrome as any)?.runtime?.getURL?.('icons/default-favicon.png') || '/icons/default-favicon.png'; } catch { return '/icons/default-favicon.png'; }
-              })();
-              const src = faviconUrl || defaultIconUrl;
-              return (
-                <img
-                  src={src}
-                  alt=""
-                  style={{ width: 32, height: 32, objectFit: 'cover' }}
+          <div className="block-a" style={{ width: '100%' }}>
+            <div
+              className="icon-container"
+              style={{ background: faviconUrl ? 'transparent' : undefined }}
+            >
+              {(() => {
+                const defaultIconUrl = (() => {
+                  try { return (chrome as any)?.runtime?.getURL?.('icons/default-favicon.png') || '/icons/default-favicon.png'; } catch { return '/icons/default-favicon.png'; }
+                })();
+                const src = faviconUrl || defaultIconUrl;
+                return (
+                  <img
+                    src={src}
+                    alt=""
+                    style={{ width: 32, height: 32, objectFit: 'cover' }}
+                  />
+                );
+              })()}
+              <label
+                className="checkbox-overlay"
+                onClick={(e)=>{ e.stopPropagation(); if (selectMode) onToggleSelect?.(); }}
+              >
+                <input
+                  type="checkbox"
+                  aria-label="Select"
+                  className="sr-only"
+                  checked={!!selected}
+                  onChange={()=>{ if (selectMode) onToggleSelect?.(); }}
                 />
-              );
-            })()}
-            <div className="checkbox-overlay" onClick={(e)=>{ e.stopPropagation(); onToggleSelect?.(); }}>
-              <div className={`checkbox ${selected ? 'checked' : ''}`}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20,6 9,17 4,12"></polyline>
-                </svg>
-              </div>
+                <div className={`checkbox ${selected ? 'checked' : ''}`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20,6 9,17 4,12"></polyline>
+                  </svg>
+                </div>
+              </label>
             </div>
-          </div>
-          <div className="content" style={{ width: '100%' }}>
-            <div className="row-title">
+            <div className="title-box">
               <h2 className="title" title={title}>{title}</h2>
             </div>
-            <div className="sep" />
+          </div>
+          <div className="sep" />
+          <div className="block-b" style={{ width: '100%' }}>
             <p className="description" title={description}>{description || ''}</p>
           </div>
         </div>
