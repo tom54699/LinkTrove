@@ -2,18 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-/* App dark theme base */
+/* Theme variables */
+:root { color-scheme: dark; }
+/* Default to Dracula to avoid FOUC before JS applies class */
 :root {
-  color-scheme: dark;
+  --bg: #282a36;
+  --fg: #f8f8f2;
+  --panel: #343746;
+  --card: #51566e;
+  --muted: #6272a4;
 }
-html.dark,
-:root {
-  /* Dracula palette */
-  --bg: #282a36; /* page background */
-  --fg: #f8f8f2; /* foreground text */
-  --panel: #343746; /* side panels */
-  --card: #51566e; /* cards and tab items (more distinct from bg) */
-  --muted: #6272a4; /* muted/comment */
+
+/* Dracula theme */
+html.theme-dracula {
+  --bg: #282a36;
+  --fg: #f8f8f2;
+  --panel: #343746;
+  --card: #51566e;
+  --muted: #6272a4;
+}
+
+/* Gruvbox (Dark) theme */
+html.theme-gruvbox {
+  --bg: #282828;
+  --fg: #ebdbb2;
+  --panel: #3c3836;
+  --card: #504945;
+  --muted: #a89984;
 }
 body {
   background: var(--bg);

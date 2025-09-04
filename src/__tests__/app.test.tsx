@@ -20,9 +20,9 @@ function renderApp(path: string = '/') {
 }
 
 describe('App foundation (task 3.1)', () => {
-  it('applies dark theme to document', () => {
+  it('applies dracula theme class to document', () => {
     renderApp('/');
-    expect(document.documentElement).toHaveClass('dark');
+    expect(document.documentElement).toHaveClass('theme-dracula');
   });
 
   it('renders home heading', async () => {

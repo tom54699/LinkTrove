@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { setMeta } from '../background/idb/db';
 
-type Theme = 'dark' | 'light';
+type Theme = 'dracula' | 'gruvbox';
 
 interface AppState {
   theme: Theme;
@@ -13,13 +13,16 @@ const Ctx = createContext<AppState | null>(null);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [theme, setTheme] = useState<Theme>('dark');
+  const [theme, setTheme] = useState<Theme>('dracula');
 
   // Load theme from chrome.storage on mount
   React.useEffect(() => {
     try {
-      chrome.storage?.local?.get?.({ theme: 'dark' }, (r) => {
-        const t = (r?.theme === 'light' || r?.theme === 'dark') ? r.theme : 'dark';
+      chrome.storage?.local?.get?.({ theme: 'dracula' }, (r) => {
+        let t = r?.theme as any;
+        // Backward-compat: map old 'dark'/'light' to 'dracula'
+        if (t === 'dark' || t === 'light' || !t) t = 'dracula';
+        if (t !== 'dracula' && t !== 'gruvbox') t = 'dracula';
         setTheme(t);
       });
     } catch {}
@@ -28,8 +31,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   // Apply theme class to <html>
   React.useEffect(() => {
     const el = document.documentElement;
-    if (theme === 'dark') el.classList.add('dark');
-    else el.classList.remove('dark');
+    el.classList.remove('theme-dracula', 'theme-gruvbox', 'dark');
+    // Keep removing legacy 'dark' to avoid clashes; now use explicit theme classes
+    el.classList.add(theme === 'dracula' ? 'theme-dracula' : 'theme-gruvbox');
     try { chrome.storage?.local?.set?.({ theme }); } catch {}
     try { setMeta('settings.theme', theme); } catch {}
   }, [theme]);

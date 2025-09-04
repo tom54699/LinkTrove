@@ -87,9 +87,14 @@ export function createExportImportService(deps: {
     // Apply settings if present in import
     const settings = parsed?.settings || {};
     try {
-      if (settings.theme === 'dark' || settings.theme === 'light') {
-        chrome.storage?.local?.set?.({ theme: settings.theme });
-        try { await setMeta('settings.theme', settings.theme); } catch {}
+      // Accept new and legacy theme values
+      if (settings.theme) {
+        let t = settings.theme as string;
+        if (t === 'dark' || t === 'light') t = 'dracula';
+        if (t === 'dracula' || t === 'gruvbox') {
+          chrome.storage?.local?.set?.({ theme: t });
+          try { await setMeta('settings.theme', t); } catch {}
+        }
       }
       if (typeof settings.selectedCategoryId === 'string' && settings.selectedCategoryId) {
         chrome.storage?.local?.set?.({ selectedCategoryId: settings.selectedCategoryId });

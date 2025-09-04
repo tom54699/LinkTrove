@@ -62,7 +62,7 @@ export const AppLayout: React.FC = () => {
             </nav>
             <button
               className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              onClick={() => setTheme(theme === 'dracula' ? 'gruvbox' : 'dracula')}
             >
               Theme: {theme}
             </button>
