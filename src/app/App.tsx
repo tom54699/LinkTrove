@@ -75,7 +75,7 @@ const HomeInner: React.FC = () => {
     [items, selectedId]
   );
   return (
-    <div>
+    <div className="h-full min-h-0">
       <ThreeColumnLayout
         sidebar={<Sidebar />}
         content={
