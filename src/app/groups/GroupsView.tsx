@@ -30,14 +30,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
   const load = React.useCallback(async () => {
     try {
       if (!svc) return;
-      let list = (await (svc as any).listSubcategories?.(categoryId)) || [];
-      // 若此 collection 尚無任何 group，建立預設 group
-      if (list.length === 0) {
-        try {
-          await (svc as any).createSubcategory?.(categoryId, 'group');
-          list = (await (svc as any).listSubcategories?.(categoryId)) || [];
-        } catch {}
-      }
+      const list = (await (svc as any).listSubcategories?.(categoryId)) || [];
       setGroups(list);
     } catch {}
   }, [svc, categoryId]);
@@ -84,7 +77,10 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
 
   const remove = async (id: string) => {
     try {
-      const others = groups.filter((g) => g.id !== id);
+      // 以最新資料判斷，避免本地 state 與儲存不同步
+      const latest: GroupItem[] =
+        ((await (svc as any).listSubcategories?.(categoryId)) as any) || [];
+      const others = latest.filter((g) => g.id !== id);
       if (others.length === 0) {
         showToast('刪除失敗：至少需要保留一個 group', 'error');
         return;
