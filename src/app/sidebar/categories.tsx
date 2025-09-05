@@ -173,6 +173,16 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
           chrome.storage?.local?.set?.({ categories: list });
         } catch {}
+        // Auto-create default group for the new collection
+        try {
+          const { createStorageService } = await import('../../background/storageService');
+          const s = createStorageService();
+          const existing = (((await (s as any).listSubcategories?.(next.id)) as any[]) || []);
+          if (existing.length === 0) {
+            await (s as any).createSubcategory?.(next.id, 'group');
+            try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
+          }
+        } catch {}
         return next;
       },
       async renameCategory(id: string, name: string) {

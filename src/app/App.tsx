@@ -168,9 +168,15 @@ const HomeInner: React.FC = () => {
                       }
                       const { createStorageService } = await import('../background/storageService');
                       const s = createStorageService();
-                      await (s as any).createSubcategory?.(selectedId, 'group');
+                      // Generate a unique name: group, group 2, group 3...
+                      const list = (((await (s as any).listSubcategories?.(selectedId)) as any[]) || []);
+                      const lower = new Set(list.map((x:any)=>String(x.name||'').toLowerCase()));
+                      let name = 'group';
+                      let i = 2;
+                      while (lower.has(name.toLowerCase())) name = `group ${i++}`;
+                      await (s as any).createSubcategory?.(selectedId, name);
                       try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
-                      showToast('已新增 group', 'success');
+                      showToast(`已新增 ${name}`, 'success');
                     } catch (e) {
                       showToast('新增失敗', 'error');
                     } finally {
