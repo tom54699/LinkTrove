@@ -124,6 +124,7 @@ const HomeInner: React.FC = () => {
   // Simplify to a single view; remove density switching
   const [collapsed, setCollapsed] = React.useState(false);
   const { showToast } = useFeedback();
+  const [creatingGroup, setCreatingGroup] = React.useState(false);
   const [showAddCat, setShowAddCat] = React.useState(false);
   const [newCatName, setNewCatName] = React.useState('');
   const [newCatColor, setNewCatColor] = React.useState('#64748b');
@@ -153,14 +154,17 @@ const HomeInner: React.FC = () => {
                   className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
                   title="新增 group"
                   aria-label="新增 group"
+                  disabled={creatingGroup}
                   onClick={async () => {
                     try {
+                      if (creatingGroup) return;
+                      setCreatingGroup(true);
                       const hasChrome =
                         typeof (globalThis as any).chrome !== 'undefined' &&
                         !!(globalThis as any).chrome?.storage?.local;
                       if (!hasChrome) {
                         showToast('僅於擴充環境可用', 'info');
-                        return;
+                        return; 
                       }
                       const { createStorageService } = await import('../background/storageService');
                       const s = createStorageService();
@@ -169,6 +173,8 @@ const HomeInner: React.FC = () => {
                       showToast('已新增 group', 'success');
                     } catch (e) {
                       showToast('新增失敗', 'error');
+                    } finally {
+                      setCreatingGroup(false);
                     }
                   }}
                 >

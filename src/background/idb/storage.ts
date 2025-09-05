@@ -103,7 +103,8 @@ export function createIdbStorageService(): StorageService {
       const toCreate: any[] = [];
       for (const c of categories as any[]) {
         if (!byCatHasAny[c.id]) {
-          const id = 'g_' + Math.random().toString(36).slice(2, 9);
+          // Use deterministic id to avoid duplicate default creation in race conditions
+          const id = `g_default_${c.id}`;
           const sc = {
             id,
             categoryId: c.id,
@@ -116,7 +117,14 @@ export function createIdbStorageService(): StorageService {
           toCreate.push(sc);
         }
       }
-      if (toCreate.length) await putAll('subcategories' as any, toCreate);
+      if (toCreate.length) {
+        // Re-check current subcategories right before writing
+        const current = (await getAll('subcategories' as any).catch(() => [])) as any[];
+        const curByCat: Record<string, boolean> = {};
+        for (const sc of current) curByCat[sc.categoryId] = true;
+        const filtered = toCreate.filter((sc) => !curByCat[sc.categoryId]);
+        if (filtered.length) await putAll('subcategories' as any, filtered);
+      }
       // Assign missing subcategoryId on webpages
       const toUpdate: any[] = [];
       for (const p of pages as any[]) {
