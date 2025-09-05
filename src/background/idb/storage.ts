@@ -67,11 +67,15 @@ export function createIdbStorageService(): StorageService {
         // @ts-expect-error ts dom lib
         const idx = s.index('by_categoryId_order');
         const range = IDBKeyRange.bound([categoryId, -Infinity], [categoryId, Infinity]);
-        return await new Promise<any[]>((resolve, reject) => {
+        const rows = await new Promise<any[]>((resolve, reject) => {
           const req = idx.getAll(range);
           req.onsuccess = () => resolve(req.result || []);
           req.onerror = () => reject(req.error);
         });
+        // 去重（以 id 為準）
+        const byId = new Map<string, any>();
+        for (const r of rows) if (!byId.has(r.id)) byId.set(r.id, r);
+        return Array.from(byId.values());
       }
       // Fallback: getAll then filter/sort
       const all = await new Promise<any[]>((resolve, reject) => {
@@ -79,7 +83,10 @@ export function createIdbStorageService(): StorageService {
         req.onsuccess = () => resolve(req.result || []);
         req.onerror = () => reject(req.error);
       });
-      return all
+      // 去重（以 id 為準）
+      const byId = new Map<string, any>();
+      for (const r of all) if (!byId.has(r.id)) byId.set(r.id, r);
+      return Array.from(byId.values())
         .filter((x) => x.categoryId === categoryId)
         .sort((a, b) => a.order - b.order);
     });
@@ -243,11 +250,29 @@ export function createIdbStorageService(): StorageService {
     listSubcategories: async (categoryId: string) => listSubcategoriesImpl(categoryId),
     createSubcategory: async (categoryId: string, name: string) => {
       const list = await listSubcategoriesImpl(categoryId);
+      // 若同名已存在（忽略大小寫），直接回傳現有的，避免重複建立
+      const exists = list.find(
+        (g) => String(g.name || '').toLowerCase() === String(name || '').toLowerCase()
+      );
+      if (exists) return exists as any;
       const now = Date.now();
       const id = 'g_' + Math.random().toString(36).slice(2, 9);
       const sc = { id, categoryId, name, order: (list[list.length - 1]?.order ?? -1) + 1, createdAt: now, updatedAt: now } as any;
       await tx(['subcategories' as any], 'readwrite', async (t) => {
-        t.objectStore('subcategories' as any).put(sc);
+        const s = t.objectStore('subcategories' as any);
+        // 交易內再次檢查同名，避免競態
+        try {
+          const all: any[] = await new Promise((resolve, reject) => {
+            const req = s.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+          });
+          const dup = all.find(
+            (g: any) => g.categoryId === categoryId && String(g.name || '').toLowerCase() === String(name || '').toLowerCase()
+          );
+          if (dup) return; // 已有同名，放棄寫入
+        } catch {}
+        s.put(sc);
       });
       return sc as any;
     },

@@ -31,7 +31,10 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     try {
       if (!svc) return;
       const list = (await (svc as any).listSubcategories?.(categoryId)) || [];
-      setGroups(list);
+      // 去重（以 id 為準）
+      const m = new Map<string, GroupItem>();
+      for (const g of list as any[]) if (!m.has(g.id)) m.set(g.id, g);
+      setGroups(Array.from(m.values()));
     } catch {}
   }, [svc, categoryId]);
 

@@ -210,8 +210,6 @@ const HomeInner: React.FC = () => {
             </div>
             {/* 以 group 分段呈現卡片 */}
             <GroupsView categoryId={selectedId} />
-            {/* Groups sections (initial UI scaffolding) */}
-            <GroupsView categoryId={selectedId} />
           </div>
         }
         tabsPanel={<TabsPanel />}
