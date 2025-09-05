@@ -30,7 +30,14 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
   const load = React.useCallback(async () => {
     try {
       if (!svc) return;
-      const list = (await (svc as any).listSubcategories?.(categoryId)) || [];
+      let list = (await (svc as any).listSubcategories?.(categoryId)) || [];
+      // 若此 collection 尚無任何 group，建立預設 group
+      if (list.length === 0) {
+        try {
+          await (svc as any).createSubcategory?.(categoryId, 'group');
+          list = (await (svc as any).listSubcategories?.(categoryId)) || [];
+        } catch {}
+      }
       setGroups(list);
     } catch {}
   }, [svc, categoryId]);

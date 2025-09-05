@@ -99,9 +99,9 @@ export const AppLayout: React.FC = () => {
                       <span className="sr-only">Toggle theme</span>
                     </button>
                   </header>
-                  <main className="p-6 flex-1 overflow-hidden min-h-0">
-                    <Outlet />
-                  </main>
+          <main className="p-6 flex-1 overflow-auto min-h-0">
+            <Outlet />
+          </main>
                 </div>
               </WebpagesProvider>
             </TemplatesProvider>

@@ -173,6 +173,10 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
           chrome.storage?.local?.set?.({ categories: list });
         } catch {}
+        // 為新 collection 建立預設 group
+        try {
+          await (svc as any)?.createSubcategory?.(next.id, 'group');
+        } catch {}
         return next;
       },
       async renameCategory(id: string, name: string) {
