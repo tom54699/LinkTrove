@@ -21,7 +21,8 @@ export const SearchBox: React.FC<{
     if (!term) return [] as any[];
     const scored = items
       .map((it) => {
-        const hay = `${it.title} ${it.url} ${(it as any).description || ''}`.toLowerCase();
+        const hay =
+          `${it.title} ${it.url} ${(it as any).description || ''}`.toLowerCase();
         const match = hay.indexOf(term);
         if (match === -1) return null;
         return { it, score: match };
@@ -98,7 +99,8 @@ export const SearchBox: React.FC<{
         }}
         onFocus={() => q && setOpen(true)}
         onKeyDown={(e) => {
-          if (!open && (e.key === 'ArrowDown' || e.key === 'Enter')) setOpen(true);
+          if (!open && (e.key === 'ArrowDown' || e.key === 'Enter'))
+            setOpen(true);
           if (!results.length) return;
           if (e.key === 'ArrowDown') {
             e.preventDefault();
@@ -138,11 +140,15 @@ export const SearchBox: React.FC<{
                 <span className="truncate">{it.title}</span>
                 <span className="opacity-60 truncate">{it.url}</span>
                 {it.category && (
-                  <span className="ml-auto text-[11px] px-1 py-0.5 rounded bg-slate-800 border border-slate-700 opacity-80">{(() => {
-                    const cid = String(it.category);
-                    const c = (categories || []).find((x: any) => x.id === cid);
-                    return c?.name || cid;
-                  })()}</span>
+                  <span className="ml-auto text-[11px] px-1 py-0.5 rounded bg-slate-800 border border-slate-700 opacity-80">
+                    {(() => {
+                      const cid = String(it.category);
+                      const c = (categories || []).find(
+                        (x: any) => x.id === cid
+                      );
+                      return c?.name || cid;
+                    })()}
+                  </span>
                 )}
               </div>
             </button>

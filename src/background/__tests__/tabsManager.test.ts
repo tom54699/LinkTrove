@@ -34,9 +34,14 @@ beforeEach(async () => {
       onUpdated: createEvent<[number, any, any]>(),
       onActivated: createEvent<[any]>(),
       onReplaced: createEvent<[number, number]>(),
-      onMoved: createEvent<[number, { windowId: number; fromIndex: number; toIndex: number }]>(),
-      onAttached: createEvent<[number, { newWindowId: number; newPosition: number }]>(),
-      onDetached: createEvent<[number, { oldWindowId: number; oldPosition: number }]>(),
+      onMoved:
+        createEvent<
+          [number, { windowId: number; fromIndex: number; toIndex: number }]
+        >(),
+      onAttached:
+        createEvent<[number, { newWindowId: number; newPosition: number }]>(),
+      onDetached:
+        createEvent<[number, { oldWindowId: number; oldPosition: number }]>(),
     },
   };
 

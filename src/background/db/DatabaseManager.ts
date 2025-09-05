@@ -23,8 +23,15 @@ export interface BookmarkRow {
   updated_at: number;
 }
 
-export interface TagRow { id: number; name: string; color?: string }
-export interface BookmarkTagRow { bookmark_id: number; tag_id: number }
+export interface TagRow {
+  id: number;
+  name: string;
+  color?: string;
+}
+export interface BookmarkTagRow {
+  bookmark_id: number;
+  tag_id: number;
+}
 
 export class DatabaseManager {
   private ready = false;
@@ -46,7 +53,9 @@ export class DatabaseManager {
     this.ready = true;
   }
 
-  isReady(): boolean { return this.ready; }
+  isReady(): boolean {
+    return this.ready;
+  }
 
   // Very small helper – not part of public API in the future
   private nextId(table: TableName): number {
@@ -60,25 +69,48 @@ export class DatabaseManager {
   }
 
   // Category ops
-  async insertCategory(row: Omit<CategoryRow, 'id' | 'created_at'>): Promise<number> {
+  async insertCategory(
+    row: Omit<CategoryRow, 'id' | 'created_at'>
+  ): Promise<number> {
     const id = this.nextId('categories');
     const now = Date.now();
-    const r: CategoryRow = { id, created_at: now, sort_order: row.sort_order ?? 0, ...row } as any;
+    const r: CategoryRow = {
+      id,
+      created_at: now,
+      sort_order: row.sort_order ?? 0,
+      ...row,
+    } as any;
     this.categories.set(id, r);
     return id;
   }
-  async getCategory(id: number): Promise<CategoryRow | undefined> { return this.categories.get(id); }
-  async listCategories(): Promise<CategoryRow[]> { return Array.from(this.categories.values()).sort((a,b)=> (a.sort_order??0)-(b.sort_order??0)); }
+  async getCategory(id: number): Promise<CategoryRow | undefined> {
+    return this.categories.get(id);
+  }
+  async listCategories(): Promise<CategoryRow[]> {
+    return Array.from(this.categories.values()).sort(
+      (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    );
+  }
 
   // Bookmark ops
-  async insertBookmark(row: Omit<BookmarkRow, 'id'|'created_at'|'updated_at'>): Promise<number> {
+  async insertBookmark(
+    row: Omit<BookmarkRow, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<number> {
     const id = this.nextId('bookmarks');
     const now = Date.now();
-    const r: BookmarkRow = { id, created_at: now, updated_at: now, visit_count: 0, ...row } as any;
+    const r: BookmarkRow = {
+      id,
+      created_at: now,
+      updated_at: now,
+      visit_count: 0,
+      ...row,
+    } as any;
     this.bookmarks.set(id, r);
     return id;
   }
-  async getBookmark(id: number): Promise<BookmarkRow | undefined> { return this.bookmarks.get(id); }
+  async getBookmark(id: number): Promise<BookmarkRow | undefined> {
+    return this.bookmarks.get(id);
+  }
   async updateBookmark(id: number, patch: Partial<BookmarkRow>): Promise<void> {
     const cur = this.bookmarks.get(id);
     if (!cur) return;
@@ -92,24 +124,29 @@ export class DatabaseManager {
       if (key.startsWith(id + ':')) this.bookmarkTags.delete(key);
     }
   }
-  async listBookmarksByCategory(categoryId?: number | null): Promise<BookmarkRow[]> {
+  async listBookmarksByCategory(
+    categoryId?: number | null
+  ): Promise<BookmarkRow[]> {
     const all = Array.from(this.bookmarks.values());
     return all
-      .filter(b => (categoryId == null ? true : (b.category_id ?? null) === categoryId))
-      .sort((a,b)=> (a.created_at)-(b.created_at));
+      .filter((b) =>
+        categoryId == null ? true : (b.category_id ?? null) === categoryId
+      )
+      .sort((a, b) => a.created_at - b.created_at);
   }
   async fullTextSearch(q: string): Promise<BookmarkRow[]> {
     const kw = (q || '').toLowerCase();
     if (!kw) return [];
-    return Array.from(this.bookmarks.values()).filter(b =>
-      (b.title||'').toLowerCase().includes(kw) ||
-      (b.description||'').toLowerCase().includes(kw) ||
-      (b.url||'').toLowerCase().includes(kw)
+    return Array.from(this.bookmarks.values()).filter(
+      (b) =>
+        (b.title || '').toLowerCase().includes(kw) ||
+        (b.description || '').toLowerCase().includes(kw) ||
+        (b.url || '').toLowerCase().includes(kw)
     );
   }
 
   // Tags
-  async insertTag(row: Omit<TagRow,'id'>): Promise<number> {
+  async insertTag(row: Omit<TagRow, 'id'>): Promise<number> {
     const id = this.nextId('tags');
     this.tags.set(id, { id, ...row });
     return id;
@@ -118,4 +155,3 @@ export class DatabaseManager {
     this.bookmarkTags.add(`${bookmarkId}:${tagId}`);
   }
 }
-

@@ -95,7 +95,7 @@ export class ErrorBoundary extends React.Component<
       return (
         <div className="p-4 rounded border border-red-600 bg-red-950/30">
           Something went wrong.
-        {this.state.message && (
+          {this.state.message && (
             <div className="mt-1 text-sm opacity-80">{this.state.message}</div>
           )}
         </div>

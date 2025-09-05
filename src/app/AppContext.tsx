@@ -34,8 +34,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     el.classList.remove('theme-dracula', 'theme-gruvbox', 'dark');
     // Keep removing legacy 'dark' to avoid clashes; now use explicit theme classes
     el.classList.add(theme === 'dracula' ? 'theme-dracula' : 'theme-gruvbox');
-    try { chrome.storage?.local?.set?.({ theme }); } catch {}
-    try { setMeta('settings.theme', theme); } catch {}
+    try {
+      chrome.storage?.local?.set?.({ theme });
+    } catch {}
+    try {
+      setMeta('settings.theme', theme);
+    } catch {}
   }, [theme]);
 
   const value = useMemo(() => ({ theme, setTheme }), [theme]);

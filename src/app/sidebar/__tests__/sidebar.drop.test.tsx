@@ -52,4 +52,3 @@ describe('Sidebar drop behavior', () => {
     expect(updateCategory).toHaveBeenCalledWith('new_id', 'c1');
   });
 });
-

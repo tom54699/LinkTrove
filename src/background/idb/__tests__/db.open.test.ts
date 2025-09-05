@@ -6,10 +6,11 @@ describe('IDB open + basic ops', () => {
     const db = await openDb();
     expect(db.name).toBe('linktrove');
     await clearStore('categories');
-    await putAll('categories', [{ id: 'c1', name: 'Default', color: '#999', order: 0 }]);
+    await putAll('categories', [
+      { id: 'c1', name: 'Default', color: '#999', order: 0 },
+    ]);
     const cats = await getAll('categories');
     expect(cats.length).toBe(1);
     expect(cats[0].id).toBe('c1');
   });
 });
-

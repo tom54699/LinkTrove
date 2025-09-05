@@ -162,5 +162,12 @@ export function createWebpageService(deps?: {
     return next;
   }
 
-  return { addWebpageFromTab, updateWebpage, deleteWebpage, loadWebpages, reorderWebpages, moveWebpageToEnd };
+  return {
+    addWebpageFromTab,
+    updateWebpage,
+    deleteWebpage,
+    loadWebpages,
+    reorderWebpages,
+    moveWebpageToEnd,
+  };
 }

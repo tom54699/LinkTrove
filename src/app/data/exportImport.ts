@@ -19,9 +19,11 @@ export interface StorageLike {
 
 export interface ExportImportService {
   exportJson: () => Promise<string>;
-  importJsonMerge: (
-    jsonData: string
-  ) => Promise<{ addedPages: number; addedCategories: number; addedTemplates: number }>;
+  importJsonMerge: (jsonData: string) => Promise<{
+    addedPages: number;
+    addedCategories: number;
+    addedTemplates: number;
+  }>;
 }
 
 function isWebpage(x: any): x is WebpageData {
@@ -36,7 +38,12 @@ function isCategory(x: any): x is CategoryData {
   return x && typeof x.id === 'string' && typeof x.name === 'string';
 }
 function isTemplate(x: any): x is TemplateData {
-  return x && typeof x.id === 'string' && typeof x.name === 'string' && Array.isArray((x as any).fields);
+  return (
+    x &&
+    typeof x.id === 'string' &&
+    typeof x.name === 'string' &&
+    Array.isArray((x as any).fields)
+  );
 }
 
 export function createExportImportService(deps: {
@@ -61,7 +68,9 @@ export function createExportImportService(deps: {
     const incomingCats = Array.isArray(parsed?.categories)
       ? parsed.categories
       : [];
-    const incomingTpls = Array.isArray(parsed?.templates) ? parsed.templates : [];
+    const incomingTpls = Array.isArray(parsed?.templates)
+      ? parsed.templates
+      : [];
     if (!incomingPages.every(isWebpage))
       throw new Error('Invalid webpages payload');
     if (!incomingCats.every(isCategory))
@@ -81,8 +90,12 @@ export function createExportImportService(deps: {
       storage.saveTemplates(incomingTpls),
     ]);
     // Mirror to chrome.storage for resilience
-    try { chrome.storage?.local?.set?.({ categories: incomingCats }); } catch {}
-    try { chrome.storage?.local?.set?.({ templates: incomingTpls }); } catch {}
+    try {
+      chrome.storage?.local?.set?.({ categories: incomingCats });
+    } catch {}
+    try {
+      chrome.storage?.local?.set?.({ templates: incomingTpls });
+    } catch {}
 
     // Apply settings if present in import
     const settings = parsed?.settings || {};
@@ -93,16 +106,32 @@ export function createExportImportService(deps: {
         if (t === 'dark' || t === 'light') t = 'dracula';
         if (t === 'dracula' || t === 'gruvbox') {
           chrome.storage?.local?.set?.({ theme: t });
-          try { await setMeta('settings.theme', t); } catch {}
+          try {
+            await setMeta('settings.theme', t);
+          } catch {}
         }
       }
-      if (typeof settings.selectedCategoryId === 'string' && settings.selectedCategoryId) {
-        chrome.storage?.local?.set?.({ selectedCategoryId: settings.selectedCategoryId });
-        try { await setMeta('settings.selectedCategoryId', settings.selectedCategoryId); } catch {}
+      if (
+        typeof settings.selectedCategoryId === 'string' &&
+        settings.selectedCategoryId
+      ) {
+        chrome.storage?.local?.set?.({
+          selectedCategoryId: settings.selectedCategoryId,
+        });
+        try {
+          await setMeta(
+            'settings.selectedCategoryId',
+            settings.selectedCategoryId
+          );
+        } catch {}
       }
     } catch {}
 
-    return { addedPages: incomingPages.length, addedCategories: incomingCats.length, addedTemplates: incomingTpls.length };
+    return {
+      addedPages: incomingPages.length,
+      addedCategories: incomingCats.length,
+      addedTemplates: incomingTpls.length,
+    };
   }
 
   return { exportJson, importJsonMerge };

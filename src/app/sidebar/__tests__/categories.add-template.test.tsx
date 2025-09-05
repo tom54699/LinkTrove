@@ -10,7 +10,7 @@ const Probe: React.FC = () => {
       const cat = await actions.addCategory('MyCat', '#123456');
       await actions.setDefaultTemplate(cat.id, 't_custom');
     })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return <pre data-testid="cats">{JSON.stringify(categories)}</pre>;
 };
@@ -32,4 +32,3 @@ describe('Categories add with custom template', () => {
     });
   });
 });
-

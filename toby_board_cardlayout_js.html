@@ -1,602 +1,622 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
-<head>
-  <meta charset="utf-8">
-  <title>Toby 看板卡片互動示範</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: "Segoe UI", "PingFang TC", "Helvetica Neue", sans-serif;
-      background-color: #0e142b;
-      color: #f0f0f0;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
-    .sidebar {
-      width: 220px;
-      background-color: #0d1230;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow-y: auto;
-    }
-    .sidebar .logo {
-      font-size: 22px;
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-    .sidebar .search input {
-      width: 100%;
-      padding: 8px 10px;
-      border: none;
-      border-radius: 6px;
-      background-color: #1f254a;
-      color: #fff;
-      outline: none;
-    }
-    .sidebar .section {
-      margin-top: 24px;
-    }
-    .sidebar .section .heading {
-      font-size: 12px;
-      color: #8889a0;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .sidebar .section ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .sidebar .section li {
-      padding: 6px 10px;
-      margin: 4px 0;
-      border-radius: 4px;
-      font-size: 14px;
-      transition: background-color 0.2s;
-      cursor: pointer;
-    }
-    .sidebar .section li:hover {
-      background-color: #1f254a;
-    }
-    .main {
-      flex: 1;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-    }
-    .board-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .board-header .title-group h1 {
-      margin: 0;
-      font-size: 20px;
-    }
-    .board-header .title-group .subtext {
-      font-size: 12px;
-      color: #8889a0;
-    }
-    .board-header .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .board-header .actions button {
-      background: none;
-      border: none;
-      color: #ff507a;
-      font-size: 12px;
-      cursor: pointer;
-      padding: 4px 6px;
-    }
-    .board-header .actions button:hover {
-      text-decoration: underline;
-    }
-    .add-collection {
-      align-self: flex-end;
-      margin: 16px 0;
-    }
-    .add-collection button {
-      background-color: #ff507a;
-      border: none;
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-    }
-    .board {
-      margin-bottom: 32px;
-    }
-    .board-title {
-      display: flex;
-      align-items: center;
-      font-size: 14px;
-      margin-bottom: 12px;
-      cursor: pointer;
-      user-select: none;
-    }
-    .board-title span {
-      margin-right: 8px;
-    }
-    .board-title::after {
-      content: "";
-      flex-grow: 1;
-      height: 1px;
-      background-color: #2f365f;
-    }
-    .cards {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-    .card {
-      background-color: #1f254a;
-      border-radius: 8px;
-      padding: 12px;
-      box-sizing: border-box;
-      width: calc((100% - 48px) / 4);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 90px;
-      cursor: pointer;
-    }
-    .card-header {
-      display: flex;
-      align-items: center;
-    }
-    .card-header .favicon {
-      width: 20px;
-      height: 20px;
-      border-radius: 4px;
-      background-color: #4a4e75;
-      margin-right: 8px;
-      flex-shrink: 0;
-    }
-    .card-header h3 {
-      margin: 0;
-      font-size: 13px;
-      flex-grow: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .card-description {
-      margin-top: 4px;
-      font-size: 11px;
-      color: #a0a5c0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .card-actions {
-      margin-top: 6px;
-      display: flex;
-      gap: 8px;
-    }
-    .card-actions .icon {
-      width: 16px;
-      height: 16px;
-      border-radius: 3px;
-      background-color: #3e4372;
-    }
-    @media (max-width: 1200px) {
-      .card {
-        width: calc((100% - 32px) / 3);
+  <head>
+    <meta charset="utf-8" />
+    <title>Toby 看板卡片互動示範</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: 'Segoe UI', 'PingFang TC', 'Helvetica Neue', sans-serif;
+        background-color: #0e142b;
+        color: #f0f0f0;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
       }
-    }
-    @media (max-width: 800px) {
-      .card {
-        width: calc((100% - 16px) / 2);
+      .sidebar {
+        width: 220px;
+        background-color: #0d1230;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
       }
-    }
-    @media (max-width: 500px) {
-      .sidebar,
-      .right-panel {
-        display: none;
+      .sidebar .logo {
+        font-size: 22px;
+        font-weight: bold;
+        margin-bottom: 20px;
       }
-      .card {
+      .sidebar .search input {
         width: 100%;
+        padding: 8px 10px;
+        border: none;
+        border-radius: 6px;
+        background-color: #1f254a;
+        color: #fff;
+        outline: none;
       }
-    }
-    .right-panel {
-      width: 250px;
-      background-color: #0d1230;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow-y: auto;
-    }
-    .right-panel h3 {
-      margin-top: 0;
-      font-size: 14px;
-      margin-bottom: 12px;
-    }
-    .right-panel .tab {
-      display: flex;
-      align-items: center;
-      background-color: #1f254a;
-      padding: 8px 10px;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      font-size: 12px;
-      cursor: pointer;
-    }
-    .right-panel .tab:hover {
-      background-color: #283069;
-    }
-    .right-panel .tab .icon {
-      width: 14px;
-      height: 14px;
-      border-radius: 3px;
-      background-color: #ff507a;
-      margin-right: 8px;
-      flex-shrink: 0;
-    }
-    .right-panel .tab .title {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-    /* 模態視窗樣式 */
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.6);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-    .modal.active {
-      display: flex;
-    }
-    .modal-content {
-      background-color: #1f254a;
-      padding: 20px;
-      border-radius: 8px;
-      width: 320px;
-      box-sizing: border-box;
-    }
-    .modal-content h2 {
-      margin-top: 0;
-      margin-bottom: 12px;
-      font-size: 18px;
-    }
-    .modal-content label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 12px;
-      color: #c8cbe5;
-    }
-    .modal-content input[type="text"] {
-      width: 100%;
-      padding: 6px 8px;
-      margin-top: 2px;
-      margin-bottom: 10px;
-      border: none;
-      border-radius: 4px;
-      background-color: #283069;
-      color: #f0f0f0;
-      box-sizing: border-box;
-    }
-    .modal-content .buttons {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 16px;
-    }
-    .modal-content button {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-    }
-    .modal-content .delete-btn {
-      background-color: #e36464;
-      color: #fff;
-    }
-    .modal-content .cancel-btn {
-      background-color: #44486f;
-      color: #fff;
-    }
-    .modal-content .save-btn {
-      background-color: #5c9ead;
-      color: #fff;
-      flex-grow: 1;
-      margin-left: 8px;
-    }
-  </style>
-</head>
-<body>
-  <div class="sidebar">
-    <div class="logo">小說分類區</div>
-    <div class="search"><input type="text" placeholder="Search"></div>
-    <div class="section">
-      <div class="heading">SPACES</div>
-      <ul>
-        <li>Starred Collections</li>
-        <li>My Collections</li>
-      </ul>
-    </div>
-    <div class="section">
-      <ul>
-        <li>小說待看區</li>
-        <li>小說停留區</li>
-        <li>小說完成區</li>
-        <li>疑似太監區</li>
-        <li>動漫區</li>
-      </ul>
-    </div>
-  </div>
-  <div class="main">
-    <div class="board-header">
-      <div class="title-group">
-        <h1>小說待看區</h1>
-        <div class="subtext">3 collections</div>
-      </div>
-      <div class="actions">
-        <button>DRAG &amp; DROP</button>
-        <button>TAG FILTER</button>
-        <button>VIEW</button>
-        <button>EXPAND</button>
-        <button>COLLAPSE</button>
-      </div>
-    </div>
-    <div class="add-collection">
-      <button>+ ADD COLLECTION</button>
-    </div>
-    <!-- 第 1 個板塊 -->
-    <div class="board">
-      <div class="board-title"><span>小說論壇</span></div>
-      <div class="cards">
-        <!-- 卡片範例 -->
-        <div class="card">
-          <div class="card-header">
-            <div class="favicon"></div>
-            <h3>BookLink.Me: 最有愛的小說搜索引擎</h3>
-          </div>
-          <div class="card-description">最有愛的小說搜索引擎</div>
-          <div class="card-actions">
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="favicon"></div>
-            <h3>看板 CFantasy 文章列表 - 批踢踢實業坊</h3>
-          </div>
-          <div class="card-description">CFantasy 熱門文章聚合</div>
-          <div class="card-actions">
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="favicon"></div>
-            <h3>起點中文網 _ 閱文集團官方網站</h3>
-          </div>
-          <div class="card-description">熱門在線閱讀站點</div>
-          <div class="card-actions">
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="favicon"></div>
-            <h3>斷青絲小說 - 線上免費閱讀</h3>
-          </div>
-          <div class="card-description">熱門小說站</div>
-          <div class="card-actions">
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="favicon"></div>
-            <h3>2021 新書推薦 - Google 試算表</h3>
-          </div>
-          <div class="card-description">好書排行榜推薦</div>
-          <div class="card-actions">
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- 第 2 個板塊 -->
-    <div class="board">
-      <div class="board-title"><span>小說待看</span></div>
-      <div class="cards">
-        <div class="card">
-          <div class="card-header">
-            <div class="favicon"></div>
-            <h3>美利堅財富人生 第308章</h3>
-          </div>
-          <div class="card-description">芬蘭的下一步發展故事</div>
-          <div class="card-actions">
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="favicon"></div>
-            <h3>阿茲特克的火生者 第79章</h3>
-          </div>
-          <div class="card-description">烏龜谷冒險</div>
-          <div class="card-actions">
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="favicon"></div>
-            <h3>貓奴高校應屆新生章節</h3>
-          </div>
-          <div class="card-description">貓奴成長故事</div>
-          <div class="card-actions">
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="favicon"></div>
-            <h3>狩魔獵人的異世之旅</h3>
-          </div>
-          <div class="card-description">異世冒險史詩</div>
-          <div class="card-actions">
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="favicon"></div>
-            <h3>塔羅贗品書屍館 奇案簿</h3>
-          </div>
-          <div class="card-description">神秘案件集</div>
-          <div class="card-actions">
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="favicon"></div>
-            <h3>世界樹的彌賽亞 新篇預告</h3>
-          </div>
-          <div class="card-description">奇幻小說新篇章</div>
-          <div class="card-actions">
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-            <span class="icon"></span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="right-panel">
-    <h3>OPEN TABS</h3>
-    <div class="tab"><div class="icon"></div><div class="title">ChatGPT - Sidebar</div></div>
-    <div class="tab"><div class="icon"></div><div class="title">Docker TLS 超級詳細指南</div></div>
-    <div class="tab"><div class="icon"></div><div class="title">Laravel Octane 開發筆記</div></div>
-    <div class="tab"><div class="icon"></div><div class="title">Laravel API 加密實戰</div></div>
-    <div class="tab"><div class="icon"></div><div class="title">Aion Ascend 遊戲攻略</div></div>
-    <div class="tab"><div class="icon"></div><div class="title">JSON Formatter 工具</div></div>
-  </div>
-  <!-- 編輯卡片的模態視窗 -->
-  <div id="modal" class="modal">
-    <div class="modal-content">
-      <h2>編輯卡片</h2>
-      <label>標題
-        <input type="text" id="modalTitle" />
-      </label>
-      <label>描述
-        <input type="text" id="modalDesc" />
-      </label>
-      <div class="buttons">
-        <button class="delete-btn" id="modalDelete">Delete</button>
-        <button class="cancel-btn" id="modalCancel">Cancel</button>
-        <button class="save-btn" id="modalSave">Save</button>
-      </div>
-    </div>
-  </div>
-  <script>
-    // 折疊／展開板塊
-    document.querySelectorAll('.board-title').forEach(function(title){
-      title.addEventListener('click', function(){
-        const cards = title.parentElement.querySelector('.cards');
-        if (cards.style.display === 'none') {
-          cards.style.display = 'flex';
-        } else {
-          cards.style.display = 'none';
+      .sidebar .section {
+        margin-top: 24px;
+      }
+      .sidebar .section .heading {
+        font-size: 12px;
+        color: #8889a0;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .sidebar .section ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .sidebar .section li {
+        padding: 6px 10px;
+        margin: 4px 0;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: background-color 0.2s;
+        cursor: pointer;
+      }
+      .sidebar .section li:hover {
+        background-color: #1f254a;
+      }
+      .main {
+        flex: 1;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      .board-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .board-header .title-group h1 {
+        margin: 0;
+        font-size: 20px;
+      }
+      .board-header .title-group .subtext {
+        font-size: 12px;
+        color: #8889a0;
+      }
+      .board-header .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .board-header .actions button {
+        background: none;
+        border: none;
+        color: #ff507a;
+        font-size: 12px;
+        cursor: pointer;
+        padding: 4px 6px;
+      }
+      .board-header .actions button:hover {
+        text-decoration: underline;
+      }
+      .add-collection {
+        align-self: flex-end;
+        margin: 16px 0;
+      }
+      .add-collection button {
+        background-color: #ff507a;
+        border: none;
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .board {
+        margin-bottom: 32px;
+      }
+      .board-title {
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .board-title span {
+        margin-right: 8px;
+      }
+      .board-title::after {
+        content: '';
+        flex-grow: 1;
+        height: 1px;
+        background-color: #2f365f;
+      }
+      .cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      .card {
+        background-color: #1f254a;
+        border-radius: 8px;
+        padding: 12px;
+        box-sizing: border-box;
+        width: calc((100% - 48px) / 4);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 90px;
+        cursor: pointer;
+      }
+      .card-header {
+        display: flex;
+        align-items: center;
+      }
+      .card-header .favicon {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        background-color: #4a4e75;
+        margin-right: 8px;
+        flex-shrink: 0;
+      }
+      .card-header h3 {
+        margin: 0;
+        font-size: 13px;
+        flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .card-description {
+        margin-top: 4px;
+        font-size: 11px;
+        color: #a0a5c0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .card-actions {
+        margin-top: 6px;
+        display: flex;
+        gap: 8px;
+      }
+      .card-actions .icon {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+        background-color: #3e4372;
+      }
+      @media (max-width: 1200px) {
+        .card {
+          width: calc((100% - 32px) / 3);
         }
+      }
+      @media (max-width: 800px) {
+        .card {
+          width: calc((100% - 16px) / 2);
+        }
+      }
+      @media (max-width: 500px) {
+        .sidebar,
+        .right-panel {
+          display: none;
+        }
+        .card {
+          width: 100%;
+        }
+      }
+      .right-panel {
+        width: 250px;
+        background-color: #0d1230;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+      }
+      .right-panel h3 {
+        margin-top: 0;
+        font-size: 14px;
+        margin-bottom: 12px;
+      }
+      .right-panel .tab {
+        display: flex;
+        align-items: center;
+        background-color: #1f254a;
+        padding: 8px 10px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .right-panel .tab:hover {
+        background-color: #283069;
+      }
+      .right-panel .tab .icon {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        background-color: #ff507a;
+        margin-right: 8px;
+        flex-shrink: 0;
+      }
+      .right-panel .tab .title {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      /* 模態視窗樣式 */
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+      }
+      .modal.active {
+        display: flex;
+      }
+      .modal-content {
+        background-color: #1f254a;
+        padding: 20px;
+        border-radius: 8px;
+        width: 320px;
+        box-sizing: border-box;
+      }
+      .modal-content h2 {
+        margin-top: 0;
+        margin-bottom: 12px;
+        font-size: 18px;
+      }
+      .modal-content label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 12px;
+        color: #c8cbe5;
+      }
+      .modal-content input[type='text'] {
+        width: 100%;
+        padding: 6px 8px;
+        margin-top: 2px;
+        margin-bottom: 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #283069;
+        color: #f0f0f0;
+        box-sizing: border-box;
+      }
+      .modal-content .buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 16px;
+      }
+      .modal-content button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .modal-content .delete-btn {
+        background-color: #e36464;
+        color: #fff;
+      }
+      .modal-content .cancel-btn {
+        background-color: #44486f;
+        color: #fff;
+      }
+      .modal-content .save-btn {
+        background-color: #5c9ead;
+        color: #fff;
+        flex-grow: 1;
+        margin-left: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="logo">小說分類區</div>
+      <div class="search"><input type="text" placeholder="Search" /></div>
+      <div class="section">
+        <div class="heading">SPACES</div>
+        <ul>
+          <li>Starred Collections</li>
+          <li>My Collections</li>
+        </ul>
+      </div>
+      <div class="section">
+        <ul>
+          <li>小說待看區</li>
+          <li>小說停留區</li>
+          <li>小說完成區</li>
+          <li>疑似太監區</li>
+          <li>動漫區</li>
+        </ul>
+      </div>
+    </div>
+    <div class="main">
+      <div class="board-header">
+        <div class="title-group">
+          <h1>小說待看區</h1>
+          <div class="subtext">3 collections</div>
+        </div>
+        <div class="actions">
+          <button>DRAG &amp; DROP</button>
+          <button>TAG FILTER</button>
+          <button>VIEW</button>
+          <button>EXPAND</button>
+          <button>COLLAPSE</button>
+        </div>
+      </div>
+      <div class="add-collection">
+        <button>+ ADD COLLECTION</button>
+      </div>
+      <!-- 第 1 個板塊 -->
+      <div class="board">
+        <div class="board-title"><span>小說論壇</span></div>
+        <div class="cards">
+          <!-- 卡片範例 -->
+          <div class="card">
+            <div class="card-header">
+              <div class="favicon"></div>
+              <h3>BookLink.Me: 最有愛的小說搜索引擎</h3>
+            </div>
+            <div class="card-description">最有愛的小說搜索引擎</div>
+            <div class="card-actions">
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="favicon"></div>
+              <h3>看板 CFantasy 文章列表 - 批踢踢實業坊</h3>
+            </div>
+            <div class="card-description">CFantasy 熱門文章聚合</div>
+            <div class="card-actions">
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="favicon"></div>
+              <h3>起點中文網 _ 閱文集團官方網站</h3>
+            </div>
+            <div class="card-description">熱門在線閱讀站點</div>
+            <div class="card-actions">
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="favicon"></div>
+              <h3>斷青絲小說 - 線上免費閱讀</h3>
+            </div>
+            <div class="card-description">熱門小說站</div>
+            <div class="card-actions">
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="favicon"></div>
+              <h3>2021 新書推薦 - Google 試算表</h3>
+            </div>
+            <div class="card-description">好書排行榜推薦</div>
+            <div class="card-actions">
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 第 2 個板塊 -->
+      <div class="board">
+        <div class="board-title"><span>小說待看</span></div>
+        <div class="cards">
+          <div class="card">
+            <div class="card-header">
+              <div class="favicon"></div>
+              <h3>美利堅財富人生 第308章</h3>
+            </div>
+            <div class="card-description">芬蘭的下一步發展故事</div>
+            <div class="card-actions">
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="favicon"></div>
+              <h3>阿茲特克的火生者 第79章</h3>
+            </div>
+            <div class="card-description">烏龜谷冒險</div>
+            <div class="card-actions">
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="favicon"></div>
+              <h3>貓奴高校應屆新生章節</h3>
+            </div>
+            <div class="card-description">貓奴成長故事</div>
+            <div class="card-actions">
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="favicon"></div>
+              <h3>狩魔獵人的異世之旅</h3>
+            </div>
+            <div class="card-description">異世冒險史詩</div>
+            <div class="card-actions">
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="favicon"></div>
+              <h3>塔羅贗品書屍館 奇案簿</h3>
+            </div>
+            <div class="card-description">神秘案件集</div>
+            <div class="card-actions">
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="favicon"></div>
+              <h3>世界樹的彌賽亞 新篇預告</h3>
+            </div>
+            <div class="card-description">奇幻小說新篇章</div>
+            <div class="card-actions">
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+              <span class="icon"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <h3>OPEN TABS</h3>
+      <div class="tab">
+        <div class="icon"></div>
+        <div class="title">ChatGPT - Sidebar</div>
+      </div>
+      <div class="tab">
+        <div class="icon"></div>
+        <div class="title">Docker TLS 超級詳細指南</div>
+      </div>
+      <div class="tab">
+        <div class="icon"></div>
+        <div class="title">Laravel Octane 開發筆記</div>
+      </div>
+      <div class="tab">
+        <div class="icon"></div>
+        <div class="title">Laravel API 加密實戰</div>
+      </div>
+      <div class="tab">
+        <div class="icon"></div>
+        <div class="title">Aion Ascend 遊戲攻略</div>
+      </div>
+      <div class="tab">
+        <div class="icon"></div>
+        <div class="title">JSON Formatter 工具</div>
+      </div>
+    </div>
+    <!-- 編輯卡片的模態視窗 -->
+    <div id="modal" class="modal">
+      <div class="modal-content">
+        <h2>編輯卡片</h2>
+        <label
+          >標題
+          <input type="text" id="modalTitle" />
+        </label>
+        <label
+          >描述
+          <input type="text" id="modalDesc" />
+        </label>
+        <div class="buttons">
+          <button class="delete-btn" id="modalDelete">Delete</button>
+          <button class="cancel-btn" id="modalCancel">Cancel</button>
+          <button class="save-btn" id="modalSave">Save</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      // 折疊／展開板塊
+      document.querySelectorAll('.board-title').forEach(function (title) {
+        title.addEventListener('click', function () {
+          const cards = title.parentElement.querySelector('.cards');
+          if (cards.style.display === 'none') {
+            cards.style.display = 'flex';
+          } else {
+            cards.style.display = 'none';
+          }
+        });
       });
-    });
-    // 卡片編輯邏輯
-    let currentCard = null;
-    const modal = document.getElementById('modal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalDesc = document.getElementById('modalDesc');
-    const modalDelete = document.getElementById('modalDelete');
-    const modalCancel = document.getElementById('modalCancel');
-    const modalSave = document.getElementById('modalSave');
-    // 開啟模態視窗
-    document.querySelectorAll('.card').forEach(function(card){
-      card.addEventListener('click', function(){
-        currentCard = card;
-        const titleEl = card.querySelector('.card-header h3');
-        const descEl = card.querySelector('.card-description');
-        modalTitle.value = titleEl.textContent;
-        modalDesc.value = descEl.textContent;
-        modal.classList.add('active');
+      // 卡片編輯邏輯
+      let currentCard = null;
+      const modal = document.getElementById('modal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalDesc = document.getElementById('modalDesc');
+      const modalDelete = document.getElementById('modalDelete');
+      const modalCancel = document.getElementById('modalCancel');
+      const modalSave = document.getElementById('modalSave');
+      // 開啟模態視窗
+      document.querySelectorAll('.card').forEach(function (card) {
+        card.addEventListener('click', function () {
+          currentCard = card;
+          const titleEl = card.querySelector('.card-header h3');
+          const descEl = card.querySelector('.card-description');
+          modalTitle.value = titleEl.textContent;
+          modalDesc.value = descEl.textContent;
+          modal.classList.add('active');
+        });
       });
-    });
-    // 取消編輯
-    modalCancel.addEventListener('click', function(){
-      modal.classList.remove('active');
-      currentCard = null;
-    });
-    // 儲存更改
-    modalSave.addEventListener('click', function(){
-      if (!currentCard) return;
-      const titleEl = currentCard.querySelector('.card-header h3');
-      const descEl = currentCard.querySelector('.card-description');
-      titleEl.textContent = modalTitle.value;
-      descEl.textContent = modalDesc.value;
-      modal.classList.remove('active');
-      currentCard = null;
-    });
-    // 刪除卡片
-    modalDelete.addEventListener('click', function(){
-      if (!currentCard) return;
-      currentCard.remove();
-      modal.classList.remove('active');
-      currentCard = null;
-    });
-    // 點擊背景關閉模態
-    modal.addEventListener('click', function(e){
-      if (e.target === modal) {
+      // 取消編輯
+      modalCancel.addEventListener('click', function () {
         modal.classList.remove('active');
         currentCard = null;
-      }
-    });
-  </script>
-</body>
+      });
+      // 儲存更改
+      modalSave.addEventListener('click', function () {
+        if (!currentCard) return;
+        const titleEl = currentCard.querySelector('.card-header h3');
+        const descEl = currentCard.querySelector('.card-description');
+        titleEl.textContent = modalTitle.value;
+        descEl.textContent = modalDesc.value;
+        modal.classList.remove('active');
+        currentCard = null;
+      });
+      // 刪除卡片
+      modalDelete.addEventListener('click', function () {
+        if (!currentCard) return;
+        currentCard.remove();
+        modal.classList.remove('active');
+        currentCard = null;
+      });
+      // 點擊背景關閉模態
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) {
+          modal.classList.remove('active');
+          currentCard = null;
+        }
+      });
+    </script>
+  </body>
 </html>

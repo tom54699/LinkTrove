@@ -31,7 +31,11 @@ export function openDb(): Promise<IDBDatabase> {
   return dbPromise;
 }
 
-export async function tx<T>(stores: StoreName[] | StoreName, mode: IDBTransactionMode, fn: (t: IDBTransaction) => Promise<T> | T): Promise<T> {
+export async function tx<T>(
+  stores: StoreName[] | StoreName,
+  mode: IDBTransactionMode,
+  fn: (t: IDBTransaction) => Promise<T> | T
+): Promise<T> {
   const db = await openDb();
   const names = Array.isArray(stores) ? stores : [stores];
   return new Promise<T>((resolve, reject) => {
@@ -64,10 +68,12 @@ export async function getAll(store: StoreName): Promise<any[]> {
 }
 
 export async function clearStore(store: StoreName): Promise<void> {
-  await tx(store, 'readwrite', async (t) => { t.objectStore(store).clear(); });
+  await tx(store, 'readwrite', async (t) => {
+    t.objectStore(store).clear();
+  });
 }
 
-export async function getMeta<T=any>(key: string): Promise<T | undefined> {
+export async function getMeta<T = any>(key: string): Promise<T | undefined> {
   return tx('meta', 'readonly', async (t) => {
     const s = t.objectStore('meta');
     return await new Promise<T | undefined>((resolve, reject) => {
@@ -84,4 +90,3 @@ export async function setMeta(key: string, value: any): Promise<void> {
     s.put({ key, value });
   });
 }
-

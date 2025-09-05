@@ -25,7 +25,19 @@ export const WebpageCard: React.FC<{
   selectMode?: boolean;
   selected?: boolean;
   onToggleSelect?: () => void;
-}> = ({ data, onOpen, onEditDescription, onDelete, onUpdateTitle, onUpdateUrl, onUpdateCategory, onUpdateMeta, selectMode, selected, onToggleSelect }) => {
+}> = ({
+  data,
+  onOpen,
+  onEditDescription,
+  onDelete,
+  onUpdateTitle,
+  onUpdateUrl,
+  onUpdateCategory,
+  onUpdateMeta,
+  selectMode,
+  selected,
+  onToggleSelect,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [descValue, setDescValue] = useState<string>(data.description ?? '');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -35,8 +47,13 @@ export const WebpageCard: React.FC<{
   const [urlValue, setUrlValue] = useState<string>(data.url);
   const [urlError, setUrlError] = useState<string>('');
   const categoryValue = data.category || 'default';
-  const [metaValue, setMetaValue] = useState<Record<string, string>>({ ...(data.meta || {}) });
-  const [moveMenuPos, setMoveMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [metaValue, setMetaValue] = useState<Record<string, string>>({
+    ...(data.meta || {}),
+  });
+  const [moveMenuPos, setMoveMenuPos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   const handleClick = () => {
     if (isEditing) return;
@@ -63,7 +80,8 @@ export const WebpageCard: React.FC<{
     if (!v) return { error: 'URL is required' };
     try {
       const u = new URL(v);
-      if (!/^https?:$/.test(u.protocol)) return { error: 'Only http/https supported' };
+      if (!/^https?:$/.test(u.protocol))
+        return { error: 'Only http/https supported' };
       return { value: u.toString() };
     } catch {
       return { error: 'Invalid URL' };
@@ -92,32 +110,48 @@ export const WebpageCard: React.FC<{
           ) : (
             <div className="w-full h-full bg-slate-600" />
           )}
-          {(
+          {
             // Checkbox overlay shows on hover for visual parity,
             // but only toggles selection when selectMode is true
-            true
-          ) && (
-            <label
-              className="toby-checkbox-overlay absolute inset-0 rounded flex items-center justify-center cursor-pointer"
-              onClick={(e)=>{ e.stopPropagation(); if (selectMode) onToggleSelect?.(); }}
-            >
-              <input
-                type="checkbox"
-                role="checkbox"
-                aria-label={`Select ${data.title}`}
-                className="sr-only"
-                checked={!!selected}
-                onChange={()=>{ if (selectMode) onToggleSelect?.(); }}
-              />
-              <span className={`w-5 h-5 rounded border-2 ${selected ? 'bg-[#2166E7] border-[#2166E7]' : 'border-[#C5C5D3]'} flex items-center justify-center transition-colors`}>
-                {selected && (
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
-                    <polyline points="20,6 9,17 4,12"></polyline>
-                  </svg>
-                )}
-              </span>
-            </label>
-          )}
+            true && (
+              <label
+                className="toby-checkbox-overlay absolute inset-0 rounded flex items-center justify-center cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (selectMode) onToggleSelect?.();
+                }}
+              >
+                <input
+                  type="checkbox"
+                  role="checkbox"
+                  aria-label={`Select ${data.title}`}
+                  className="sr-only"
+                  checked={!!selected}
+                  onChange={() => {
+                    if (selectMode) onToggleSelect?.();
+                  }}
+                />
+                <span
+                  className={`w-5 h-5 rounded border-2 ${selected ? 'bg-[#2166E7] border-[#2166E7]' : 'border-[#C5C5D3]'} flex items-center justify-center transition-colors`}
+                >
+                  {selected && (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-3 h-3"
+                    >
+                      <polyline points="20,6 9,17 4,12"></polyline>
+                    </svg>
+                  )}
+                </span>
+              </label>
+            )
+          }
         </div>
         <div className="min-w-0">
           <div className="toby-title" title={data.title}>
@@ -125,7 +159,6 @@ export const WebpageCard: React.FC<{
           </div>
           {/* Static description removed; use editable description below */}
         </div>
-        
       </div>
       {isEditing ? (
         <textarea
@@ -158,12 +191,24 @@ export const WebpageCard: React.FC<{
       <div
         className="toby-actions toby-delete-wrap absolute right-2 top-2 flex gap-2"
         role="group"
-        onClick={(e)=>e.stopPropagation()}
-        onMouseDown={(e)=>e.stopPropagation()}
-        onPointerDown={(e)=>e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
       >
-        <button aria-label="Remove" title="Delete" onClick={() => setConfirming(true)} className="toby-icon delete" onMouseDown={(e)=>e.stopPropagation()} onPointerDown={(e)=>e.stopPropagation()}>
-          <img src="/icons/toby/OrgGroupModal5.svg" alt="" width={12} height={12} />
+        <button
+          aria-label="Remove"
+          title="Delete"
+          onClick={() => setConfirming(true)}
+          className="toby-icon delete"
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <img
+            src="/icons/toby/OrgGroupModal5.svg"
+            alt=""
+            width={12}
+            height={12}
+          />
         </button>
       </div>
 
@@ -171,24 +216,49 @@ export const WebpageCard: React.FC<{
       <div
         className="toby-actions-bottom absolute right-2 bottom-2 flex gap-2"
         role="group"
-        onClick={(e)=>e.stopPropagation()}
-        onMouseDown={(e)=>e.stopPropagation()}
-        onPointerDown={(e)=>e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
       >
-        <button aria-label="Edit" title="Edit description" onClick={() => setShowModal(true)} className="toby-icon">
-          <img src="/icons/toby/OrgGroupModal6.svg" alt="" width={12} height={12} />
+        <button
+          aria-label="Edit"
+          title="Edit description"
+          onClick={() => setShowModal(true)}
+          className="toby-icon"
+        >
+          <img
+            src="/icons/toby/OrgGroupModal6.svg"
+            alt=""
+            width={12}
+            height={12}
+          />
         </button>
-        <button aria-label="Move" title="Move to collection" onClick={(e) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setMoveMenuPos({ x: r.left, y: r.bottom + 4 }); }} className="toby-icon">
-          <img src="/icons/toby/ListSectionSort1.svg" alt="" width={12} height={12} />
+        <button
+          aria-label="Move"
+          title="Move to collection"
+          onClick={(e) => {
+            const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            setMoveMenuPos({ x: r.left, y: r.bottom + 4 });
+          }}
+          className="toby-icon"
+        >
+          <img
+            src="/icons/toby/ListSectionSort1.svg"
+            alt=""
+            width={12}
+            height={12}
+          />
         </button>
       </div>
 
-
       {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60" onClick={() => setShowModal(false)}>
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60"
+          onClick={() => setShowModal(false)}
+        >
           <div
             className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[520px] max-w-[90vw]"
-            onClick={(e)=>e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label="Edit Card"
             onKeyDown={(e) => {
@@ -221,16 +291,24 @@ export const WebpageCard: React.FC<{
             <div className="space-y-3">
               <div>
                 <label className="block text-sm mb-1">Title</label>
-                <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={titleValue} onChange={(e)=>setTitleValue(e.target.value)} />
+                <input
+                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                  value={titleValue}
+                  onChange={(e) => setTitleValue(e.target.value)}
+                />
               </div>
               {/* Category selection removed; use Move action or drag to sidebar to change category */}
-              <TemplateFields categoryId={categoryValue} meta={metaValue} onChange={setMetaValue} />
+              <TemplateFields
+                categoryId={categoryValue}
+                meta={metaValue}
+                onChange={setMetaValue}
+              />
               <div>
                 <label className="block text-sm mb-1">URL</label>
                 <input
                   className={`w-full rounded bg-slate-900 border p-2 text-sm ${urlError ? 'border-red-600' : 'border-slate-700'}`}
                   value={urlValue}
-                  onChange={(e)=>{
+                  onChange={(e) => {
                     setUrlValue(e.target.value);
                     if (urlError) setUrlError('');
                   }}
@@ -247,14 +325,26 @@ export const WebpageCard: React.FC<{
               </div>
               <div>
                 <label className="block text-sm mb-1">Description</label>
-                <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={descValue} onChange={(e)=>setDescValue(e.target.value)} />
+                <input
+                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                  value={descValue}
+                  onChange={(e) => setDescValue(e.target.value)}
+                />
               </div>
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
-              <button className="px-3 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={() => setConfirming(true)}>
+              <button
+                className="px-3 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30"
+                onClick={() => setConfirming(true)}
+              >
                 Delete
               </button>
-              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>setShowModal(false)}>Cancel</button>
+              <button
+                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                onClick={() => setShowModal(false)}
+              >
+                Cancel
+              </button>
               <button
                 className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50"
                 disabled={!!urlError}
@@ -291,7 +381,8 @@ export const WebpageCard: React.FC<{
             label: c.name,
             onSelect: () => {
               setMoveMenuPos(null);
-              if (c.id !== (data as any).category) onUpdateCategory?.(data.id, c.id);
+              if (c.id !== (data as any).category)
+                onUpdateCategory?.(data.id, c.id);
             },
           }))}
         />
@@ -343,10 +434,12 @@ const TemplateFields: React.FC<{
   const cat = categories.find((c) => c.id === categoryId);
   const tpl = templates.find((t) => t.id === (cat?.defaultTemplateId || ''));
   if (!tpl || !tpl.fields || tpl.fields.length === 0) return null;
-  const hasRequiredError = tpl.fields.some((f:any)=>f.required && !((meta[f.key] ?? '').trim()));
+  const hasRequiredError = tpl.fields.some(
+    (f: any) => f.required && !(meta[f.key] ?? '').trim()
+  );
   return (
     <div className="space-y-2">
-      {tpl.fields.map((f:any) => {
+      {tpl.fields.map((f: any) => {
         const val = meta[f.key] ?? '';
         const set = (v: string) => onChange({ ...meta, [f.key]: v });
         const baseCls = `w-full rounded bg-slate-900 border p-2 text-sm ${f.required && !val ? 'border-red-600' : 'border-slate-700'}`;
@@ -356,29 +449,69 @@ const TemplateFields: React.FC<{
               {f.label} {f.required && <span className="text-red-400">*</span>}
             </label>
             {f.type === 'select' ? (
-              <select className={baseCls} value={val} onChange={(e)=>set(e.target.value)}>
+              <select
+                className={baseCls}
+                value={val}
+                onChange={(e) => set(e.target.value)}
+              >
                 <option value="">{f.defaultValue || 'Select...'}</option>
-                {(f.options||[]).map((op:string)=>(<option key={op} value={op}>{op}</option>))}
+                {(f.options || []).map((op: string) => (
+                  <option key={op} value={op}>
+                    {op}
+                  </option>
+                ))}
               </select>
             ) : f.type === 'number' ? (
-              <input className={baseCls} type="number" value={val} placeholder={f.defaultValue||''} onChange={(e)=>set(e.target.value)} />
+              <input
+                className={baseCls}
+                type="number"
+                value={val}
+                placeholder={f.defaultValue || ''}
+                onChange={(e) => set(e.target.value)}
+              />
             ) : f.type === 'date' ? (
-              <input className={baseCls} type="date" value={val} onChange={(e)=>set(e.target.value)} />
+              <input
+                className={baseCls}
+                type="date"
+                value={val}
+                onChange={(e) => set(e.target.value)}
+              />
             ) : f.type === 'url' ? (
-              <input className={baseCls} type="url" value={val} placeholder={f.defaultValue||''} onChange={(e)=>set(e.target.value)} />
+              <input
+                className={baseCls}
+                type="url"
+                value={val}
+                placeholder={f.defaultValue || ''}
+                onChange={(e) => set(e.target.value)}
+              />
             ) : f.type === 'rating' ? (
               <div className="flex items-center gap-1">
-                {[1,2,3,4,5].map((n)=>(
-                  <button key={n} type="button" aria-label={`Rate ${n}`} className={`text-lg ${Number(val)>=n? 'text-yellow-400' : 'text-slate-600'} hover:text-yellow-300`}
-                    onClick={()=>set(String(n))}
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-label={`Rate ${n}`}
+                    className={`text-lg ${Number(val) >= n ? 'text-yellow-400' : 'text-slate-600'} hover:text-yellow-300`}
+                    onClick={() => set(String(n))}
                   >
                     {Number(val) >= n ? '★' : '☆'}
                   </button>
                 ))}
-                <button type="button" className="ml-2 text-xs text-slate-400 hover:text-slate-200" onClick={()=>set('')}>Clear</button>
+                <button
+                  type="button"
+                  className="ml-2 text-xs text-slate-400 hover:text-slate-200"
+                  onClick={() => set('')}
+                >
+                  Clear
+                </button>
               </div>
             ) : (
-              <input className={baseCls} value={val} placeholder={f.defaultValue||''} onChange={(e)=>set(e.target.value)} />
+              <input
+                className={baseCls}
+                value={val}
+                placeholder={f.defaultValue || ''}
+                onChange={(e) => set(e.target.value)}
+              />
             )}
           </div>
         );
@@ -391,7 +524,10 @@ const TemplateFields: React.FC<{
 };
 
 import { useCategories } from '../sidebar/categories';
-const CategorySelect: React.FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => {
+const CategorySelect: React.FC<{
+  value: string;
+  onChange: (v: string) => void;
+}> = ({ value, onChange }) => {
   const { categories } = useCategories();
   return (
     <select

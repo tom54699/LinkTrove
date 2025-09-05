@@ -61,10 +61,17 @@ chrome.runtime.onConnect.addListener((port) => {
   chrome.windows.getLastFocused?.({ populate: false }, (w) => {
     const activeWindowId = w?.id;
     chrome.windows.getAll?.({ populate: false }, (wins) => {
-      const windowIds = (wins || []).map((x) => x.id).filter((x) => typeof x === 'number');
+      const windowIds = (wins || [])
+        .map((x) => x.id)
+        .filter((x) => typeof x === 'number');
       chrome.tabs.query({}, (tabs) => {
         try {
-          const payload = { kind: 'init', activeWindowId, windowIds, tabs: tabs.map(tabToPayload) };
+          const payload = {
+            kind: 'init',
+            activeWindowId,
+            windowIds,
+            tabs: tabs.map(tabToPayload),
+          };
           port.postMessage(payload);
         } catch (err) {
           // eslint-disable-next-line no-console
@@ -90,11 +97,21 @@ chrome.windows?.onFocusChanged?.addListener?.((windowId) => {
 // Broadcast window create/remove so UI can render groups immediately
 chrome.windows?.onCreated?.addListener?.((win) => {
   clients.forEach((p) => {
-    try { p.postMessage({ kind: 'window-event', evt: { type: 'created', windowId: win?.id } }); } catch {}
+    try {
+      p.postMessage({
+        kind: 'window-event',
+        evt: { type: 'created', windowId: win?.id },
+      });
+    } catch {}
   });
 });
 chrome.windows?.onRemoved?.addListener?.((windowId) => {
   clients.forEach((p) => {
-    try { p.postMessage({ kind: 'window-event', evt: { type: 'removed', windowId } }); } catch {}
+    try {
+      p.postMessage({
+        kind: 'window-event',
+        evt: { type: 'removed', windowId },
+      });
+    } catch {}
   });
 });

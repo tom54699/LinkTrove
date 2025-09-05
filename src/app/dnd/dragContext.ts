@@ -1,4 +1,9 @@
-export type DragTab = { id: number; title?: string; url?: string; favIconUrl?: string };
+export type DragTab = {
+  id: number;
+  title?: string;
+  url?: string;
+  favIconUrl?: string;
+};
 
 let current: DragTab | null = null;
 

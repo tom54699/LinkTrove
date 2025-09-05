@@ -7,7 +7,9 @@ describe('ThreeColumnLayout behavior (scroll and sizing)', () => {
   it('applies fixed height columns with right column scroll', () => {
     render(
       <div style={{ height: '600px' }}>
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div
+          style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+        >
           <div style={{ flex: '0 0 auto' }}>Header</div>
           <div style={{ flex: '1 1 auto', minHeight: 0, overflow: 'hidden' }}>
             <ThreeColumnLayout
@@ -36,4 +38,3 @@ describe('ThreeColumnLayout behavior (scroll and sizing)', () => {
     expect(right.className).toMatch(/h-full/);
   });
 });
-

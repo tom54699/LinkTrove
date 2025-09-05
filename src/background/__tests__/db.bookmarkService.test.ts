@@ -17,7 +17,11 @@ describe('DatabaseManager + BookmarkService (in-memory fallback)', () => {
   });
 
   it('creates, reads, updates, deletes a bookmark', async () => {
-    const id = await svc.create({ title: 'Hello', url: 'https://a.test', description: 'World' });
+    const id = await svc.create({
+      title: 'Hello',
+      url: 'https://a.test',
+      description: 'World',
+    });
     const got1 = await svc.get(id);
     expect(got1?.title).toBe('Hello');
     expect(got1?.url).toBe('https://a.test');
@@ -34,17 +38,29 @@ describe('DatabaseManager + BookmarkService (in-memory fallback)', () => {
   it('filters by category and supports search', async () => {
     const catA = 1; // no strict category table needed for this test
     const catB = 2;
-    const a = await svc.create({ title: 'SQLite Intro', url: 'https://sq.test', categoryId: catA });
-    const b = await svc.create({ title: 'React Patterns', url: 'https://re.test', categoryId: catB });
-    const c = await svc.create({ title: 'Vite Guide', url: 'https://vi.test', categoryId: catA, description: 'Build tool' });
+    const a = await svc.create({
+      title: 'SQLite Intro',
+      url: 'https://sq.test',
+      categoryId: catA,
+    });
+    const b = await svc.create({
+      title: 'React Patterns',
+      url: 'https://re.test',
+      categoryId: catB,
+    });
+    const c = await svc.create({
+      title: 'Vite Guide',
+      url: 'https://vi.test',
+      categoryId: catA,
+      description: 'Build tool',
+    });
 
     const listA = await svc.byCategory(catA);
-    expect(listA.map(x => x.id).sort()).toEqual([a, c].sort());
+    expect(listA.map((x) => x.id).sort()).toEqual([a, c].sort());
 
     const q1 = await svc.search('react');
-    expect(q1.map(x => x.id)).toEqual([b]);
+    expect(q1.map((x) => x.id)).toEqual([b]);
     const q2 = await svc.search('Build');
-    expect(q2.map(x => x.id)).toEqual([c]);
+    expect(q2.map((x) => x.id)).toEqual([c]);
   });
 });
-

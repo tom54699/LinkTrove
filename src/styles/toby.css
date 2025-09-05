@@ -31,13 +31,19 @@
   width: calc((100% - 32px) / 3); /* wider cards: 3 per row by default */
 }
 @media (max-width: 1200px) {
-  .toby-mode .toby-card-flex { width: calc((100% - 16px) / 2); }
+  .toby-mode .toby-card-flex {
+    width: calc((100% - 16px) / 2);
+  }
 }
 @media (max-width: 800px) {
-  .toby-mode .toby-card-flex { width: 100%; }
+  .toby-mode .toby-card-flex {
+    width: 100%;
+  }
 }
 @media (max-width: 500px) {
-  .toby-mode .toby-card-flex { width: 100%; }
+  .toby-mode .toby-card-flex {
+    width: 100%;
+  }
 }
 
 /* Card look */
@@ -86,7 +92,7 @@
 }
 
 /* Tabs list in right panel */
-.toby-mode [aria-label="Open Tabs"] .toby-tab {
+.toby-mode [aria-label='Open Tabs'] .toby-tab {
   display: flex;
   align-items: center;
   background-color: var(--card);
@@ -95,7 +101,7 @@
   margin-bottom: 8px;
   font-size: 12px;
 }
-.toby-mode [aria-label="Open Tabs"] .toby-tab:hover {
+.toby-mode [aria-label='Open Tabs'] .toby-tab:hover {
   background-color: #283069;
 }
 
@@ -162,7 +168,9 @@
   padding: 4px 6px;
   cursor: pointer;
 }
-.toby-mode .icon-btn.link:hover { text-decoration: underline; }
+.toby-mode .icon-btn.link:hover {
+  text-decoration: underline;
+}
 .toby-mode .icon-btn.primary {
   background-color: #ff507a;
   color: #fff;
@@ -172,7 +180,9 @@
   cursor: pointer;
   font-weight: 600;
 }
-.toby-mode .icon-btn.primary:hover { filter: brightness(1.05); }
+.toby-mode .icon-btn.primary:hover {
+  filter: brightness(1.05);
+}
 
 /* Optional separators between action links (not for primary) */
 .toby-mode .toby-board-actions .link + .link {
@@ -183,7 +193,7 @@
   display: inline-block;
   width: 1px;
   height: 10px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
   margin: 0 6px 0 2px;
 }
 .toby-mode .toby-add-collection {
@@ -215,24 +225,36 @@
 .toby-mode .toby-card .toby-icon.delete {
   background-color: #ff5555; /* Dracula red */
 }
-.toby-mode .toby-card .toby-icon:hover { filter: brightness(1.1); }
+.toby-mode .toby-card .toby-icon:hover {
+  filter: brightness(1.1);
+}
 
 /* Reveal actions on hover */
-.toby-mode .toby-card .toby-actions { opacity: 0; transition: opacity .15s ease-in-out; z-index: 5; }
-.toby-mode .toby-card:hover .toby-actions, .toby-mode .toby-card:focus-within .toby-actions { opacity: 1; }
+.toby-mode .toby-card .toby-actions {
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
+  z-index: 5;
+}
+.toby-mode .toby-card:hover .toby-actions,
+.toby-mode .toby-card:focus-within .toby-actions {
+  opacity: 1;
+}
 
 /* Bottom actions (edit/move) */
 .toby-mode .toby-card .toby-actions-bottom {
   opacity: 0;
-  transition: opacity .15s ease-in-out;
+  transition: opacity 0.15s ease-in-out;
   background-color: rgba(68, 71, 90, 0.85); /* semi-opaque over card */
   border: 1px solid rgba(98, 114, 164, 0.5);
   border-radius: 8px;
   padding: 4px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   z-index: 6;
 }
-.toby-mode .toby-card:hover .toby-actions-bottom, .toby-mode .toby-card:focus-within .toby-actions-bottom { opacity: 1; }
+.toby-mode .toby-card:hover .toby-actions-bottom,
+.toby-mode .toby-card:focus-within .toby-actions-bottom {
+  opacity: 1;
+}
 
 /* Delete bubble at top-right, outside card edge */
 .toby-mode .toby-card .toby-actions.toby-delete-wrap {
@@ -244,7 +266,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   background-color: var(--card);
 }
 .toby-mode .toby-card .toby-actions.toby-delete-wrap .toby-icon.delete:hover {
@@ -261,38 +283,70 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 .toby-mode .toby-card .toby-actions-bottom .toby-icon:hover {
   transform: scale(1.1);
 }
 
 /* Icon box + checkbox overlay behavior */
-.toby-mode .toby-card .toby-icon-box { border-radius: 8px; }
+.toby-mode .toby-card .toby-icon-box {
+  border-radius: 8px;
+}
 .toby-mode .toby-card .toby-icon-box .toby-checkbox-overlay {
-  background: rgba(71,71,89,0.9);
+  background: rgba(71, 71, 89, 0.9);
   opacity: 0;
   visibility: hidden;
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 .toby-mode .toby-card:hover .toby-icon-box .toby-checkbox-overlay,
 .toby-mode .toby-card:focus-within .toby-icon-box .toby-checkbox-overlay {
-  opacity: 1; visibility: visible;
+  opacity: 1;
+  visibility: visible;
 }
 
-.toby-mode .icon-btn:focus-visible { outline: 2px solid #ff507a; outline-offset: 2px; border-radius: 6px; }
+.toby-mode .icon-btn:focus-visible {
+  outline: 2px solid #ff507a;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
 /* Drag feedback for moving cards to sidebar */
-.toby-mode .toby-card-flex[data-dragging="true"] { transform: scale(0.96); opacity: 0.85; transition: transform .15s ease, opacity .15s ease; }
-.toby-mode [aria-label="Categories"] button[data-drop="true"] { outline: 2px solid #34d399; background-color: rgba(16,185,129,0.16) !important; }
+.toby-mode .toby-card-flex[data-dragging='true'] {
+  transform: scale(0.96);
+  opacity: 0.85;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
+}
+.toby-mode [aria-label='Categories'] button[data-drop='true'] {
+  outline: 2px solid #34d399;
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
 
 /* Density controls */
-.toby-mode .density-compact .toby-card { padding: 8px !important; height: 140px; }
-.toby-mode .density-compact .toby-card .toby-title { font-size: 12px; }
-.toby-mode .density-compact .toby-card .toby-url { font-size: 10px; }
-.toby-mode .density-roomy .toby-card { padding: 16px !important; height: 140px; }
-.toby-mode .density-roomy .toby-card .toby-title { font-size: 15px; }
-.toby-mode .density-roomy .toby-card .toby-url { font-size: 12px; }
+.toby-mode .density-compact .toby-card {
+  padding: 8px !important;
+  height: 140px;
+}
+.toby-mode .density-compact .toby-card .toby-title {
+  font-size: 12px;
+}
+.toby-mode .density-compact .toby-card .toby-url {
+  font-size: 10px;
+}
+.toby-mode .density-roomy .toby-card {
+  padding: 16px !important;
+  height: 140px;
+}
+.toby-mode .density-roomy .toby-card .toby-title {
+  font-size: 15px;
+}
+.toby-mode .density-roomy .toby-card .toby-url {
+  font-size: 12px;
+}
 
 /* Collapse view */
 .toby-mode .cards-collapsed .toby-card .toby-actions,
-.toby-mode .cards-collapsed .toby-card .toby-description { display: none !important; }
+.toby-mode .cards-collapsed .toby-card .toby-description {
+  display: none !important;
+}

@@ -14,7 +14,12 @@ export const TabItem: React.FC<
         JSON.stringify(tab)
       );
       e.dataTransfer.effectAllowed = 'move';
-      setDragTab({ id: tab.id, title: tab.title, url: tab.url, favIconUrl: tab.favIconUrl });
+      setDragTab({
+        id: tab.id,
+        title: tab.title,
+        url: tab.url,
+        favIconUrl: tab.favIconUrl,
+      });
     } catch (err) {
       // ignore in non-supporting environments
     }

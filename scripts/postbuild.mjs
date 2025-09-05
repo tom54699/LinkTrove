@@ -1,4 +1,10 @@
-import { cpSync, existsSync, readFileSync, writeFileSync, statSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  statSync,
+} from 'node:fs';
 import { join } from 'node:path';
 
 const dist = 'dist';

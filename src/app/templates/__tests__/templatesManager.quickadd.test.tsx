@@ -37,7 +37,12 @@ vi.mock('../../sidebar/categories', () => ({
     categories: [{ id: 'default', name: 'Default', color: '#aaa', order: 0 }],
     selectedId: 'default',
     setCurrentCategory: vi.fn(),
-    actions: { setDefaultTemplate: vi.fn(), addCategory: vi.fn(), renameCategory: vi.fn(), deleteCategory: vi.fn() },
+    actions: {
+      setDefaultTemplate: vi.fn(),
+      addCategory: vi.fn(),
+      renameCategory: vi.fn(),
+      deleteCategory: vi.fn(),
+    },
   }),
 }));
 
@@ -57,20 +62,31 @@ describe('TemplatesManager quick-add common fields', () => {
 
     const { useTemplates } = await import('../TemplatesProvider');
     const { actions } = useTemplates();
-    expect(actions.addField).toHaveBeenCalledWith('t1', expect.objectContaining({ key: 'author', label: '作者', type: 'text' }));
-    expect(actions.updateFieldRequired).toHaveBeenCalledWith('t1', 'author', true);
+    expect(actions.addField).toHaveBeenCalledWith(
+      't1',
+      expect.objectContaining({ key: 'author', label: '作者', type: 'text' })
+    );
+    expect(actions.updateFieldRequired).toHaveBeenCalledWith(
+      't1',
+      'author',
+      true
+    );
   });
 
   it('adds custom field with type/options/required', async () => {
     render(<TemplatesManager />);
-    const key = screen.getByPlaceholderText('key (e.g. author)') as HTMLInputElement;
+    const key = screen.getByPlaceholderText(
+      'key (e.g. author)'
+    ) as HTMLInputElement;
     const label = screen.getByPlaceholderText('label') as HTMLInputElement;
     const typeSel = screen.getAllByRole('combobox')[2] as HTMLSelectElement; // third select in the row
 
     fireEvent.change(key, { target: { value: 'priority' } });
     fireEvent.change(label, { target: { value: 'Priority' } });
     fireEvent.change(typeSel, { target: { value: 'select' } });
-    const options = screen.getByPlaceholderText('options (comma-separated)') as HTMLInputElement;
+    const options = screen.getByPlaceholderText(
+      'options (comma-separated)'
+    ) as HTMLInputElement;
     fireEvent.change(options, { target: { value: 'High, Medium, Low' } });
     const req = screen.getByLabelText('required') as HTMLInputElement;
     fireEvent.click(req);
@@ -79,6 +95,15 @@ describe('TemplatesManager quick-add common fields', () => {
 
     const { useTemplates } = await import('../TemplatesProvider');
     const { actions } = useTemplates();
-    expect(actions.addField).toHaveBeenCalledWith('t1', expect.objectContaining({ key: 'priority', label: 'Priority', type: 'select', options: ['High', 'Medium', 'Low'], required: true }));
+    expect(actions.addField).toHaveBeenCalledWith(
+      't1',
+      expect.objectContaining({
+        key: 'priority',
+        label: 'Priority',
+        type: 'select',
+        options: ['High', 'Medium', 'Low'],
+        required: true,
+      })
+    );
   });
 });

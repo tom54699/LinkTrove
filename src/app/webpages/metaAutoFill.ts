@@ -20,7 +20,8 @@ export function computeAutoMeta(
   // Apply template defaults
   for (const field of f) {
     const cur = (meta[field.key] ?? '').trim();
-    if (!cur && field.defaultValue != null) meta[field.key] = String(field.defaultValue);
+    if (!cur && field.defaultValue != null)
+      meta[field.key] = String(field.defaultValue);
   }
   if (!page) return meta;
   try {
@@ -38,7 +39,9 @@ export function computeAutoMeta(
     };
     ['title', 'name', 'pageTitle'].forEach((k) => title && maybeSet(k, title));
     ['url', 'link', 'href'].forEach((k) => maybeSet(k, u.toString()));
-    ['host', 'hostname', 'domain', 'site'].forEach((k) => maybeSet(k, hostname));
+    ['host', 'hostname', 'domain', 'site'].forEach((k) =>
+      maybeSet(k, hostname)
+    );
     ['origin'].forEach((k) => maybeSet(k, origin));
     ['path', 'pathname'].forEach((k) => maybeSet(k, pathname));
     ['favicon'].forEach((k) => favicon && maybeSet(k, favicon));
@@ -47,4 +50,3 @@ export function computeAutoMeta(
   }
   return meta;
 }
-

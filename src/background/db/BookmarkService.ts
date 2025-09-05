@@ -50,4 +50,3 @@ export class BookmarkService {
     return this.db.fullTextSearch(q);
   }
 }
-

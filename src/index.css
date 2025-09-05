@@ -3,7 +3,9 @@
 @tailwind utilities;
 
 /* Theme variables */
-:root { color-scheme: dark; }
+:root {
+  color-scheme: dark;
+}
 /* Default to Dracula to avoid FOUC before JS applies class */
 :root {
   --bg: #282a36;

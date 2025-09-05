@@ -4,9 +4,23 @@ type TabEvent =
   | { type: 'updated'; payload: { tabId: number; changeInfo: any } }
   | { type: 'activated'; payload: { tabId: number; windowId: number } }
   | { type: 'replaced'; payload: { addedTabId: number; removedTabId: number } }
-  | { type: 'moved'; payload: { tabId: number; fromIndex: number; toIndex: number; windowId: number } }
-  | { type: 'attached'; payload: { tabId: number; newWindowId: number; newPosition: number } }
-  | { type: 'detached'; payload: { tabId: number; oldWindowId: number; oldPosition: number } };
+  | {
+      type: 'moved';
+      payload: {
+        tabId: number;
+        fromIndex: number;
+        toIndex: number;
+        windowId: number;
+      };
+    }
+  | {
+      type: 'attached';
+      payload: { tabId: number; newWindowId: number; newPosition: number };
+    }
+  | {
+      type: 'detached';
+      payload: { tabId: number; oldWindowId: number; oldPosition: number };
+    };
 
 export interface TabsManagerOptions {
   onChange: (event: TabEvent) => void;
@@ -27,12 +41,24 @@ export function createTabsManager(opts: TabsManagerOptions) {
     safe(() =>
       onChange({ type: 'replaced', payload: { addedTabId, removedTabId } })
     );
-  const moved = (tabId: number, moveInfo: { windowId: number; fromIndex: number; toIndex: number }) =>
-    safe(() => onChange({ type: 'moved', payload: { tabId, ...moveInfo } }));
-  const attached = (tabId: number, attachInfo: { newWindowId: number; newPosition: number }) =>
-    safe(() => onChange({ type: 'attached', payload: { tabId, ...attachInfo } }));
-  const detached = (tabId: number, detachInfo: { oldWindowId: number; oldPosition: number }) =>
-    safe(() => onChange({ type: 'detached', payload: { tabId, ...detachInfo } }));
+  const moved = (
+    tabId: number,
+    moveInfo: { windowId: number; fromIndex: number; toIndex: number }
+  ) => safe(() => onChange({ type: 'moved', payload: { tabId, ...moveInfo } }));
+  const attached = (
+    tabId: number,
+    attachInfo: { newWindowId: number; newPosition: number }
+  ) =>
+    safe(() =>
+      onChange({ type: 'attached', payload: { tabId, ...attachInfo } })
+    );
+  const detached = (
+    tabId: number,
+    detachInfo: { oldWindowId: number; oldPosition: number }
+  ) =>
+    safe(() =>
+      onChange({ type: 'detached', payload: { tabId, ...detachInfo } })
+    );
 
   function addListeners() {
     chrome.tabs.onCreated.addListener(created);
@@ -80,9 +106,12 @@ export function createTabsManager(opts: TabsManagerOptions) {
       updated(tabId, ci);
     (removeListeners as any)._activated = activated;
     (removeListeners as any)._replaced = replaced;
-    (removeListeners as any)._moved = (tabId: number, mi: any) => moved(tabId, mi);
-    (removeListeners as any)._attached = (tabId: number, ai: any) => attached(tabId, ai);
-    (removeListeners as any)._detached = (tabId: number, di: any) => detached(tabId, di);
+    (removeListeners as any)._moved = (tabId: number, mi: any) =>
+      moved(tabId, mi);
+    (removeListeners as any)._attached = (tabId: number, ai: any) =>
+      attached(tabId, ai);
+    (removeListeners as any)._detached = (tabId: number, di: any) =>
+      detached(tabId, di);
 
     chrome.tabs.onCreated.addListener((removeListeners as any)._created);
     chrome.tabs.onRemoved.addListener((removeListeners as any)._removed);

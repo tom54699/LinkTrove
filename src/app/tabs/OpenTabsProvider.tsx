@@ -29,7 +29,11 @@ export const OpenTabsProvider: React.FC<{
   const [windowLabels, setWindowLabels] = useState<Record<number, string>>({});
 
   const sortByIndex = (arr: TabItemData[]) =>
-    [...arr].sort((a, b) => (a.index ?? Number.MAX_SAFE_INTEGER) - (b.index ?? Number.MAX_SAFE_INTEGER));
+    [...arr].sort(
+      (a, b) =>
+        (a.index ?? Number.MAX_SAFE_INTEGER) -
+        (b.index ?? Number.MAX_SAFE_INTEGER)
+    );
 
   const actions = useMemo(
     () => ({
@@ -37,14 +41,21 @@ export const OpenTabsProvider: React.FC<{
       addTab: (tab: TabItemData) =>
         setTabsState((prev) => {
           const exists = prev.some((p) => p.id === tab.id);
-          return exists ? sortByIndex(prev.map(p => p.id === tab.id ? { ...p, ...tab } : p)) : sortByIndex([...prev, tab]);
+          return exists
+            ? sortByIndex(
+                prev.map((p) => (p.id === tab.id ? { ...p, ...tab } : p))
+              )
+            : sortByIndex([...prev, tab]);
         }),
       removeTab: (id: number) =>
         setTabsState((prev) => prev.filter((t) => t.id !== id)),
       updateTab: (id: number, patch: Partial<TabItemData>) =>
-        setTabsState((prev) => sortByIndex(prev.map((t) => (t.id === id ? { ...t, ...patch } : t)))),
+        setTabsState((prev) =>
+          sortByIndex(prev.map((t) => (t.id === id ? { ...t, ...patch } : t)))
+        ),
       setActiveWindow: (wid: number | null) => setActiveWindowId(wid),
-      setWindowLabel: (wid: number, name: string) => setWindowLabels((m) => ({ ...m, [wid]: name })),
+      setWindowLabel: (wid: number, name: string) =>
+        setWindowLabels((m) => ({ ...m, [wid]: name })),
       getWindowLabel: (wid: number) => windowLabels[wid],
     }),
     [windowLabels]
@@ -78,7 +89,9 @@ export const OpenTabsProvider: React.FC<{
   React.useEffect(() => {
     // Persist window labels
     const st = (globalThis as any)?.chrome?.storage?.local;
-    try { st?.set?.({ windowLabels }); } catch {}
+    try {
+      st?.set?.({ windowLabels });
+    } catch {}
   }, [windowLabels]);
 
   React.useEffect(() => {
@@ -89,7 +102,8 @@ export const OpenTabsProvider: React.FC<{
       if (msg?.kind === 'init' && Array.isArray(msg.tabs)) {
         setTabsState(sortByIndex(msg.tabs));
         if (Array.isArray(msg.windowIds)) setWindowIds(msg.windowIds);
-        if (typeof msg.activeWindowId === 'number') setActiveWindowId(msg.activeWindowId);
+        if (typeof msg.activeWindowId === 'number')
+          setActiveWindowId(msg.activeWindowId);
       } else if (msg?.kind === 'tab-event' && msg.evt) {
         const evt = msg.evt;
         if (evt.type === 'created' && evt.payload) actions.addTab(evt.payload);
@@ -97,21 +111,32 @@ export const OpenTabsProvider: React.FC<{
         else if (evt.type === 'updated')
           actions.updateTab(evt.payload.tabId, evt.payload.changeInfo);
         else if (evt.type === 'moved')
-          actions.updateTab(evt.payload.tabId, { index: evt.payload.toIndex, windowId: evt.payload.windowId });
+          actions.updateTab(evt.payload.tabId, {
+            index: evt.payload.toIndex,
+            windowId: evt.payload.windowId,
+          });
         else if (evt.type === 'attached') {
-          actions.updateTab(evt.payload.tabId, { index: evt.payload.newPosition, windowId: evt.payload.newWindowId });
+          actions.updateTab(evt.payload.tabId, {
+            index: evt.payload.newPosition,
+            windowId: evt.payload.newWindowId,
+          });
           // ensure window id exists in group list
-          setWindowIds((prev) => Array.from(new Set([...(prev||[]), evt.payload.newWindowId])));
+          setWindowIds((prev) =>
+            Array.from(new Set([...(prev || []), evt.payload.newWindowId]))
+          );
         }
         // detached will be followed by attached; ignore interim
         else if (evt.type === 'replaced')
           actions.removeTab(evt.payload.removedTabId);
       } else if (msg?.kind === 'window-focus') {
-        if (typeof msg.windowId === 'number' && msg.windowId > 0) setActiveWindowId(msg.windowId);
+        if (typeof msg.windowId === 'number' && msg.windowId > 0)
+          setActiveWindowId(msg.windowId);
       } else if (msg?.kind === 'window-event' && msg.evt) {
         const e = msg.evt;
-        if (e.type === 'created' && typeof e.windowId === 'number') setWindowIds((prev) => Array.from(new Set([...prev, e.windowId])));
-        else if (e.type === 'removed' && typeof e.windowId === 'number') setWindowIds((prev) => prev.filter((id) => id !== e.windowId));
+        if (e.type === 'created' && typeof e.windowId === 'number')
+          setWindowIds((prev) => Array.from(new Set([...prev, e.windowId])));
+        else if (e.type === 'removed' && typeof e.windowId === 'number')
+          setWindowIds((prev) => prev.filter((id) => id !== e.windowId));
       }
     };
     port.onMessage.addListener(onMsg);

@@ -16,10 +16,15 @@ export const TabsPanel: React.FC = () => {
     }
     const arr = Array.from(byWin.entries()).sort((a, b) => a[0] - b[0]);
     // Assign labels web1, web2 by order
-    return arr.map(([id, tabs], idx) => ({ id, label: actions.getWindowLabel(id) || `web${idx + 1}`, tabs: tabs.sort((a,b)=> (a.index??0)-(b.index??0)) }));
+    return arr.map(([id, tabs], idx) => ({
+      id,
+      label: actions.getWindowLabel(id) || `web${idx + 1}`,
+      tabs: tabs.sort((a, b) => (a.index ?? 0) - (b.index ?? 0)),
+    }));
   }, [allTabs, actions]);
 
-  const toggle = (wid: number) => setCollapsed((m) => ({ ...m, [wid]: !m[wid] }));
+  const toggle = (wid: number) =>
+    setCollapsed((m) => ({ ...m, [wid]: !m[wid] }));
 
   return (
     <div>
@@ -30,9 +35,15 @@ export const TabsPanel: React.FC = () => {
       <div className="space-y-3">
         {groups.map((g) => (
           <div key={g.id} className="border border-slate-700 rounded">
-            <div className={`w-full flex items-center justify-between px-2 py-1 text-left bg-[var(--card)] ${activeWindowId===g.id ? 'ring-1 ring-emerald-600' : ''}`}>
+            <div
+              className={`w-full flex items-center justify-between px-2 py-1 text-left bg-[var(--card)] ${activeWindowId === g.id ? 'ring-1 ring-emerald-600' : ''}`}
+            >
               <div className="flex items-center gap-2">
-                <button className="text-xs" onClick={() => toggle(g.id)} aria-label="Toggle">
+                <button
+                  className="text-xs"
+                  onClick={() => toggle(g.id)}
+                  aria-label="Toggle"
+                >
                   {collapsed[g.id] ? '▸' : '▾'}
                 </button>
                 {editing === g.id ? (
@@ -41,18 +52,41 @@ export const TabsPanel: React.FC = () => {
                     value={editText}
                     autoFocus
                     onChange={(e) => setEditText(e.target.value)}
-                    onBlur={() => { actions.setWindowLabel(g.id, editText.trim() || g.label); setEditing(null); }}
+                    onBlur={() => {
+                      actions.setWindowLabel(g.id, editText.trim() || g.label);
+                      setEditing(null);
+                    }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') { actions.setWindowLabel(g.id, editText.trim() || g.label); setEditing(null); }
-                      if (e.key === 'Escape') { setEditing(null); }
+                      if (e.key === 'Enter') {
+                        actions.setWindowLabel(
+                          g.id,
+                          editText.trim() || g.label
+                        );
+                        setEditing(null);
+                      }
+                      if (e.key === 'Escape') {
+                        setEditing(null);
+                      }
                     }}
                   />
                 ) : (
-                  <span className="text-xs">{g.label} <span className="opacity-60">({g.tabs.length})</span></span>
+                  <span className="text-xs">
+                    {g.label}{' '}
+                    <span className="opacity-60">({g.tabs.length})</span>
+                  </span>
                 )}
               </div>
               {editing === g.id ? null : (
-                <button className="text-xs opacity-80 hover:opacity-100" aria-label="Rename" onClick={() => { setEditing(g.id); setEditText(g.label); }}>✎</button>
+                <button
+                  className="text-xs opacity-80 hover:opacity-100"
+                  aria-label="Rename"
+                  onClick={() => {
+                    setEditing(g.id);
+                    setEditText(g.label);
+                  }}
+                >
+                  ✎
+                </button>
               )}
             </div>
             {!collapsed[g.id] && (
