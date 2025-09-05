@@ -201,49 +201,8 @@ const HomeInner: React.FC = () => {
                 </button>
               </div>
             </div>
-            <CardGrid
-              items={viewItems}
-              onSave={async (id, patch) => {
-                try {
-                  await actions.updateCard(id, patch);
-                  showToast('Saved', 'success');
-                } catch {
-                  showToast('Save failed', 'error');
-                }
-              }}
-              // single view retained; no density prop
-              collapsed={collapsed}
-              onReorder={(fromId, toId) => actions.reorder(fromId, toId)}
-              onUpdateTitle={(id, title) => actions.updateTitle(id, title)}
-              onUpdateUrl={(id, url) => actions.updateUrl(id, url)}
-              onUpdateCategory={(id, cat) => actions.updateCategory(id, cat)}
-              onUpdateMeta={(id, meta) => actions.updateMeta(id, meta)}
-              onDropTab={async (tab, beforeId?: string) => {
-                try {
-                  const id = (await actions.addFromTab(
-                    tab as any
-                  )) as unknown as string;
-                  await actions.updateCategory(id, selectedId);
-                  if (beforeId === '__END__') await actions.moveToEnd(id);
-                  else if (beforeId) await actions.reorder(id, beforeId);
-                  showToast('Saved from tab', 'success');
-                } catch (e) {
-                  showToast('Save failed', 'error');
-                }
-              }}
-              onDeleteMany={async (ids) => {
-                await actions.deleteMany(ids);
-                showToast('Deleted selected', 'success');
-              }}
-              onDeleteOne={async (id) => {
-                await actions.deleteOne(id);
-                showToast('Deleted', 'success');
-              }}
-              onEditDescription={async (id, description) => {
-                await actions.updateDescription(id, description);
-                showToast('Saved note', 'success');
-              }}
-            />
+            {/* 以 group 分段呈現卡片 */}
+            <GroupsView categoryId={selectedId} />
             {/* Groups sections (initial UI scaffolding) */}
             <GroupsView categoryId={selectedId} />
           </div>

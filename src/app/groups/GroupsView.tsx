@@ -1,6 +1,9 @@
 import React from 'react';
 import { createStorageService } from '../../background/storageService';
 import { useFeedback } from '../ui/feedback';
+import { useWebpages } from '../webpages/WebpagesProvider';
+import { CardGrid } from '../webpages/CardGrid';
+import type { TabItemData } from '../tabs/types';
 
 interface GroupItem {
   id: string;
@@ -11,6 +14,7 @@ interface GroupItem {
 
 export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => {
   const { showToast } = useFeedback();
+  const { items, actions } = useWebpages();
   const [groups, setGroups] = React.useState<GroupItem[]>([]);
   const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
   const [renaming, setRenaming] = React.useState<string | null>(null);
@@ -106,7 +110,41 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     <div className="space-y-3 mt-3">
       {groups.map((g) => (
         <section key={g.id} className="rounded border border-slate-700 bg-[var(--panel)]">
-          <header className="flex items-center justify-between px-3 py-2 border-b border-slate-700">
+          <header
+            className="flex items-center justify-between px-3 py-2 border-b border-slate-700"
+            onDragOver={(e) => {
+              e.preventDefault();
+              try { e.dataTransfer.dropEffect = 'move'; } catch {}
+            }}
+            onDrop={async (e) => {
+              e.preventDefault();
+              // Existing card moved into this group
+              const fromId = e.dataTransfer.getData('application/x-linktrove-webpage');
+              if (fromId) {
+                try {
+                  await (svc as any).updateCardSubcategory?.(fromId, g.id);
+                  await actions.load();
+                  showToast('已移動到 group', 'success');
+                  return;
+                } catch {
+                  showToast('移動失敗', 'error');
+                }
+              }
+              // New tab dropped on header → create then assign
+              const rawTab = e.dataTransfer.getData('application/x-linktrove-tab');
+              if (rawTab) {
+                try {
+                  const tab: TabItemData = JSON.parse(rawTab);
+                  const createdId = (await actions.addFromTab(tab as any)) as any as string;
+                  await (svc as any).updateCardSubcategory?.(createdId, g.id);
+                  await actions.load();
+                  showToast('已從分頁建立並加入 group', 'success');
+                } catch {
+                  showToast('建立失敗', 'error');
+                }
+              }
+            }}
+          >
             <div className="flex items-center gap-2">
               <button
                 className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:bg-slate-800"
@@ -139,11 +177,33 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
             </div>
           </header>
           {!collapsed[g.id] && (
-            <div className="p-3 text-slate-400 text-sm">此區將呈現該 group 內的卡片（之後會接上分組顯示與拖放）。</div>
+            <div className="p-3">
+              <CardGrid
+                items={items.filter((it: any) => it.category === categoryId && it.subcategoryId === g.id)}
+                onDropTab={async (tab: any, beforeId?: string) => {
+                  try {
+                    const createdId = (await actions.addFromTab(tab as any)) as any as string;
+                    await (svc as any).updateCardSubcategory?.(createdId, g.id);
+                    await actions.load();
+                    showToast('已從分頁建立並加入 group', 'success');
+                  } catch {
+                    showToast('建立失敗', 'error');
+                  }
+                }}
+                onDeleteMany={async (ids) => { await actions.deleteMany(ids); showToast('Deleted selected', 'success'); }}
+                onDeleteOne={async (id) => { await actions.deleteOne(id); showToast('Deleted', 'success'); }}
+                onEditDescription={async (id, description) => { await actions.updateDescription(id, description); showToast('Saved note', 'success'); }}
+                onSave={async (id, patch) => { await actions.updateCard(id, patch); showToast('Saved', 'success'); }}
+                onReorder={(fromId, toId) => actions.reorder(fromId, toId)}
+                onUpdateTitle={(id, title) => actions.updateTitle(id, title)}
+                onUpdateUrl={(id, url) => actions.updateUrl(id, url)}
+                onUpdateCategory={(id, cat) => actions.updateCategory(id, cat)}
+                onUpdateMeta={(id, meta) => actions.updateMeta(id, meta)}
+              />
+            </div>
           )}
         </section>
       ))}
     </div>
   );
 };
-
