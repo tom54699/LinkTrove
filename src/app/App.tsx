@@ -148,6 +148,30 @@ const HomeInner: React.FC = () => {
                 <div className="inline-block align-middle mr-2">
                   <SearchBox />
                 </div>
+                <button
+                  className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
+                  title="新增 group"
+                  aria-label="新增 group"
+                  onClick={async () => {
+                    try {
+                      const hasChrome =
+                        typeof (globalThis as any).chrome !== 'undefined' &&
+                        !!(globalThis as any).chrome?.storage?.local;
+                      if (!hasChrome) {
+                        showToast('僅於擴充環境可用', 'info');
+                        return;
+                      }
+                      const { createStorageService } = await import('../background/storageService');
+                      const s = createStorageService();
+                      await (s as any).createSubcategory?.(selectedId, 'group');
+                      showToast('已新增 group', 'success');
+                    } catch (e) {
+                      showToast('新增失敗', 'error');
+                    }
+                  }}
+                >
+                  新增 group
+                </button>
                 {/* Single view only: density control removed */}
                 <button
                   className="link muted"
