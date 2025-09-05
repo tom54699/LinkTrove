@@ -194,5 +194,132 @@ export function createIdbStorageService(): StorageService {
     loadTemplates: async () => (await getAll('templates')) as TemplateData[],
     exportData,
     importData,
+    // Subcategories (groups)
+    listSubcategories: async (categoryId: string) => {
+      return await tx(['subcategories' as any], 'readonly', async (t) => {
+        const s = t.objectStore('subcategories' as any);
+        let useIdx = false;
+        try {
+          // prefer composite index for ordering
+          // @ts-expect-error runtime check
+          if (s.indexNames.contains('by_categoryId_order')) useIdx = true;
+        } catch {}
+        if (useIdx) {
+          // Query by categoryId via index
+          // @ts-expect-error ts dom lib
+          const idx = s.index('by_categoryId_order');
+          const range = IDBKeyRange.bound([categoryId, -Infinity], [categoryId, Infinity]);
+          return await new Promise<any[]>((resolve, reject) => {
+            const req = idx.getAll(range);
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+          });
+        }
+        // Fallback: getAll then filter/sort
+        const all = await new Promise<any[]>((resolve, reject) => {
+          const req = s.getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => reject(req.error);
+        });
+        return all.filter((x) => x.categoryId === categoryId).sort((a, b) => a.order - b.order);
+      });
+    },
+    createSubcategory: async (categoryId: string, name: string) => {
+      const list = (await (this as any).listSubcategories?.(categoryId)) || [];
+      const now = Date.now();
+      const id = 'g_' + Math.random().toString(36).slice(2, 9);
+      const sc = { id, categoryId, name, order: (list[list.length - 1]?.order ?? -1) + 1, createdAt: now, updatedAt: now } as any;
+      await tx(['subcategories' as any], 'readwrite', async (t) => {
+        t.objectStore('subcategories' as any).put(sc);
+      });
+      return sc as any;
+    },
+    renameSubcategory: async (id: string, name: string) => {
+      await tx(['subcategories' as any], 'readwrite', async (t) => {
+        const s = t.objectStore('subcategories' as any);
+        const cur = await new Promise<any>((resolve, reject) => {
+          const req = s.get(id);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        if (!cur) return;
+        cur.name = name;
+        cur.updatedAt = Date.now();
+        s.put(cur);
+      });
+    },
+    deleteSubcategory: async (id: string, reassignTo: string) => {
+      await tx(['subcategories' as any, 'webpages'], 'readwrite', async (t) => {
+        const ss = t.objectStore('subcategories' as any);
+        const ws = t.objectStore('webpages');
+        const cur = await new Promise<any>((resolve, reject) => {
+          const req = ss.get(id);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        if (!cur) return;
+        const target = await new Promise<any>((resolve, reject) => {
+          const req = ss.get(reassignTo);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        if (!target || target.categoryId !== cur.categoryId) {
+          throw new Error('Invalid reassign target');
+        }
+        // Reassign all webpages referencing this subcategory
+        const idx = (() => {
+          try { return ws.index('category_subcategory'); } catch { return null as any; }
+        })();
+        const pages: any[] = await new Promise((resolve, reject) => {
+          if (idx) {
+            const range = IDBKeyRange.only([cur.categoryId, id]);
+            const req = idx.getAll(range);
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+          } else {
+            const rq = ws.getAll();
+            rq.onsuccess = () => resolve((rq.result || []).filter((p: any) => p.category === cur.categoryId && p.subcategoryId === id));
+            rq.onerror = () => reject(rq.error);
+          }
+        });
+        for (const p of pages) {
+          p.subcategoryId = reassignTo;
+          ws.put(p);
+        }
+        // Delete the subcategory
+        ss.delete(id);
+      });
+    },
+    reorderSubcategories: async (categoryId: string, orderedIds: string[]) => {
+      await tx(['subcategories' as any], 'readwrite', async (t) => {
+        const s = t.objectStore('subcategories' as any);
+        let order = 0;
+        for (const id of orderedIds) {
+          const cur = await new Promise<any>((resolve, reject) => {
+            const req = s.get(id);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          });
+          if (!cur || cur.categoryId !== categoryId) continue;
+          cur.order = order++;
+          cur.updatedAt = Date.now();
+          s.put(cur);
+        }
+      });
+    },
+    updateCardSubcategory: async (cardId: string, subcategoryId: string) => {
+      await tx('webpages', 'readwrite', async (t) => {
+        const s = t.objectStore('webpages');
+        const cur = await new Promise<any>((resolve, reject) => {
+          const req = s.get(cardId);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        if (!cur) return;
+        cur.subcategoryId = subcategoryId;
+        cur.updatedAt = new Date().toISOString();
+        s.put(cur);
+      });
+    },
   };
 }

@@ -5,6 +5,8 @@ export interface WebpageData {
   favicon: string;
   note: string;
   category: string;
+  // Subcategory (group) id; optional in types for gradual migration
+  subcategoryId?: string;
   meta?: Record<string, string>;
   createdAt: string; // ISO string for storage
   updatedAt: string;
@@ -16,6 +18,15 @@ export interface CategoryData {
   color: string;
   order: number;
   defaultTemplateId?: string;
+}
+
+export interface SubcategoryData {
+  id: string;
+  categoryId: string;
+  name: string;
+  order: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface TemplateField {
@@ -42,6 +53,13 @@ export interface StorageService {
   loadTemplates: () => Promise<TemplateData[]>;
   exportData: () => Promise<string>;
   importData: (jsonData: string) => Promise<void>;
+  // Subcategories (groups)
+  listSubcategories?: (categoryId: string) => Promise<SubcategoryData[]>;
+  createSubcategory?: (categoryId: string, name: string) => Promise<SubcategoryData>;
+  renameSubcategory?: (id: string, name: string) => Promise<void>;
+  deleteSubcategory?: (id: string, reassignTo: string) => Promise<void>;
+  reorderSubcategories?: (categoryId: string, orderedIds: string[]) => Promise<void>;
+  updateCardSubcategory?: (cardId: string, subcategoryId: string) => Promise<void>;
 }
 
 import { createIdbStorageService } from './idb/storage';
