@@ -104,10 +104,11 @@ export function createIdbStorageService(): StorageService {
   }
 
   async function exportData(): Promise<string> {
-    const [webpages, categories, templates] = await Promise.all([
+    const [webpages, categories, templates, subcategories] = await Promise.all([
       getAll('webpages'),
       getAll('categories'),
       getAll('templates'),
+      getAll('subcategories' as any).catch(() => []),
     ]);
     // Include minimal settings (theme, selectedCategoryId)
     let theme: any = undefined;
@@ -144,7 +145,7 @@ export function createIdbStorageService(): StorageService {
     if (theme !== undefined) settings.theme = theme;
     if (selectedCategoryId !== undefined)
       settings.selectedCategoryId = selectedCategoryId;
-    return JSON.stringify({ webpages, categories, templates, settings });
+    return JSON.stringify({ webpages, categories, templates, subcategories, settings });
   }
 
   async function importData(jsonData: string): Promise<void> {
@@ -163,14 +164,18 @@ export function createIdbStorageService(): StorageService {
     const tmpls: TemplateData[] = Array.isArray(parsed?.templates)
       ? parsed.templates
       : [];
+    const subcats: any[] = Array.isArray(parsed?.subcategories)
+      ? parsed.subcategories
+      : [];
     // Basic validation (keep same checks)
     if (!Array.isArray(pages)) throw new Error('Invalid webpages payload');
     if (!Array.isArray(cats)) throw new Error('Invalid categories payload');
     if (!Array.isArray(tmpls)) throw new Error('Invalid templates payload');
     // Bulk put
-    if (pages.length) await putAll('webpages', pages);
     if (cats.length) await putAll('categories', cats);
     if (tmpls.length) await putAll('templates', tmpls);
+    if (subcats.length) await putAll('subcategories' as any, subcats);
+    if (pages.length) await putAll('webpages', pages);
   }
 
   return {

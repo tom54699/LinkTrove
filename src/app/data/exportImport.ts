@@ -4,6 +4,7 @@ import type {
   TemplateData,
 } from '../../background/storageService';
 import { clearStore } from '../../background/idb/db';
+import { putAll } from '../../background/idb/db';
 import { setMeta } from '../../background/idb/db';
 
 export interface StorageLike {
@@ -71,6 +72,9 @@ export function createExportImportService(deps: {
     const incomingTpls = Array.isArray(parsed?.templates)
       ? parsed.templates
       : [];
+    const incomingSubcats = Array.isArray(parsed?.subcategories)
+      ? parsed.subcategories
+      : [];
     if (!incomingPages.every(isWebpage))
       throw new Error('Invalid webpages payload');
     if (!incomingCats.every(isCategory))
@@ -83,7 +87,54 @@ export function createExportImportService(deps: {
       clearStore('webpages'),
       clearStore('categories'),
       clearStore('templates'),
+      clearStore('subcategories' as any).catch(() => {}),
     ]);
+
+    // Prepare subcategories and ensure every page has a valid subcategoryId
+    const byCat: Record<string, any[]> = {};
+    const subcatsToWrite: any[] = [];
+    if (Array.isArray(incomingSubcats)) {
+      for (const s of incomingSubcats) {
+        if (s && typeof s.id === 'string' && typeof s.categoryId === 'string') {
+          (byCat[s.categoryId] ||= []).push(s);
+          subcatsToWrite.push(s);
+        }
+      }
+    }
+    const defaults: Record<string, any> = {};
+    function ensureDefault(catId: string): any {
+      if (!defaults[catId]) {
+        const sc = {
+          id: 'g_' + Math.random().toString(36).slice(2, 9),
+          categoryId: catId,
+          name: 'group',
+          order: (byCat[catId]?.length ?? 0),
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        defaults[catId] = sc;
+        (byCat[catId] ||= []).push(sc);
+        subcatsToWrite.push(sc);
+      }
+      return defaults[catId];
+    }
+    // Guarantee at least one group per category
+    for (const c of incomingCats) {
+      if (!byCat[c.id] || byCat[c.id].length === 0) ensureDefault(c.id);
+    }
+    // Normalize webpages' subcategoryId
+    const subcatIndex: Record<string, any> = {};
+    for (const s of subcatsToWrite) subcatIndex[s.id] = s;
+    for (const p of incomingPages as any[]) {
+      const valid = p.subcategoryId && subcatIndex[p.subcategoryId];
+      if (!valid || subcatIndex[p.subcategoryId].categoryId !== p.category) {
+        const def = ensureDefault(p.category);
+        p.subcategoryId = def.id;
+      }
+    }
+    // Write subcategories first so webpages reference exist
+    if (subcatsToWrite.length)
+      await putAll('subcategories' as any, subcatsToWrite);
     await Promise.all([
       storage.saveToLocal(incomingPages),
       storage.saveToSync(incomingCats),
