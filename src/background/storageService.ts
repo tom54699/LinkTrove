@@ -60,6 +60,7 @@ export interface StorageService {
   deleteSubcategory?: (id: string, reassignTo: string) => Promise<void>;
   reorderSubcategories?: (categoryId: string, orderedIds: string[]) => Promise<void>;
   updateCardSubcategory?: (cardId: string, subcategoryId: string) => Promise<void>;
+  deleteSubcategoriesByCategory?: (categoryId: string) => Promise<void>;
 }
 
 import { createIdbStorageService } from './idb/storage';

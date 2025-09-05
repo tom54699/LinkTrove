@@ -330,5 +330,30 @@ export function createIdbStorageService(): StorageService {
         s.put(cur);
       });
     },
+    deleteSubcategoriesByCategory: async (categoryId: string) => {
+      await tx(['subcategories' as any], 'readwrite', async (t) => {
+        const s = t.objectStore('subcategories' as any);
+        try {
+          // Fast path via index
+          // @ts-expect-error runtime check
+          const idx = s.index('by_categoryId');
+          const range = IDBKeyRange.only(categoryId);
+          const list: any[] = await new Promise((resolve, reject) => {
+            const req = idx.getAll(range);
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+          });
+          for (const it of list) s.delete(it.id);
+        } catch {
+          // Fallback: getAll then filter
+          const all: any[] = await new Promise((resolve, reject) => {
+            const req = s.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+          });
+          for (const it of all) if (it.categoryId === categoryId) s.delete(it.id);
+        }
+      });
+    },
   };
 }

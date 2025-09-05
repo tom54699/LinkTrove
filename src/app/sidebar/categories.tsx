@@ -173,10 +173,6 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
           chrome.storage?.local?.set?.({ categories: list });
         } catch {}
-        // 為新 collection 建立預設 group
-        try {
-          await (svc as any)?.createSubcategory?.(next.id, 'group');
-        } catch {}
         return next;
       },
       async renameCategory(id: string, name: string) {
@@ -226,6 +222,10 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
             (p: any) => String(p.category || '') !== String(id)
           );
           await svc?.saveToLocal(filtered as any);
+        } catch {}
+        // Also delete all groups under this category
+        try {
+          await (svc as any)?.deleteSubcategoriesByCategory?.(id);
         } catch {}
       },
       async setDefaultTemplate(id: string, templateId?: string) {
