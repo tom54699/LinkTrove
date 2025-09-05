@@ -165,6 +165,7 @@ const HomeInner: React.FC = () => {
                       const { createStorageService } = await import('../background/storageService');
                       const s = createStorageService();
                       await (s as any).createSubcategory?.(selectedId, 'group');
+                      try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
                       showToast('已新增 group', 'success');
                     } catch (e) {
                       showToast('新增失敗', 'error');

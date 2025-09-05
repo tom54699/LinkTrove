@@ -53,6 +53,38 @@ export function createIdbStorageService(): StorageService {
   void migrateOnce();
   void migrateSubcategoriesOnce();
 
+  async function listSubcategoriesImpl(categoryId: string): Promise<any[]> {
+    return await tx(['subcategories' as any], 'readonly', async (t) => {
+      const s = t.objectStore('subcategories' as any);
+      let useIdx = false;
+      try {
+        // prefer composite index for ordering
+        // @ts-expect-error runtime check
+        if (s.indexNames.contains('by_categoryId_order')) useIdx = true;
+      } catch {}
+      if (useIdx) {
+        // Query by categoryId via index
+        // @ts-expect-error ts dom lib
+        const idx = s.index('by_categoryId_order');
+        const range = IDBKeyRange.bound([categoryId, -Infinity], [categoryId, Infinity]);
+        return await new Promise<any[]>((resolve, reject) => {
+          const req = idx.getAll(range);
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => reject(req.error);
+        });
+      }
+      // Fallback: getAll then filter/sort
+      const all = await new Promise<any[]>((resolve, reject) => {
+        const req = s.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+      return all
+        .filter((x) => x.categoryId === categoryId)
+        .sort((a, b) => a.order - b.order);
+    });
+  }
+
   async function migrateSubcategoriesOnce(): Promise<void> {
     try {
       const done = await getMeta<boolean>('migratedSubcategoriesV1');
@@ -200,37 +232,9 @@ export function createIdbStorageService(): StorageService {
     exportData,
     importData,
     // Subcategories (groups)
-    listSubcategories: async (categoryId: string) => {
-      return await tx(['subcategories' as any], 'readonly', async (t) => {
-        const s = t.objectStore('subcategories' as any);
-        let useIdx = false;
-        try {
-          // prefer composite index for ordering
-          // @ts-expect-error runtime check
-          if (s.indexNames.contains('by_categoryId_order')) useIdx = true;
-        } catch {}
-        if (useIdx) {
-          // Query by categoryId via index
-          // @ts-expect-error ts dom lib
-          const idx = s.index('by_categoryId_order');
-          const range = IDBKeyRange.bound([categoryId, -Infinity], [categoryId, Infinity]);
-          return await new Promise<any[]>((resolve, reject) => {
-            const req = idx.getAll(range);
-            req.onsuccess = () => resolve(req.result || []);
-            req.onerror = () => reject(req.error);
-          });
-        }
-        // Fallback: getAll then filter/sort
-        const all = await new Promise<any[]>((resolve, reject) => {
-          const req = s.getAll();
-          req.onsuccess = () => resolve(req.result || []);
-          req.onerror = () => reject(req.error);
-        });
-        return all.filter((x) => x.categoryId === categoryId).sort((a, b) => a.order - b.order);
-      });
-    },
+    listSubcategories: async (categoryId: string) => listSubcategoriesImpl(categoryId),
     createSubcategory: async (categoryId: string, name: string) => {
-      const list = (await (this as any).listSubcategories?.(categoryId)) || [];
+      const list = await listSubcategoriesImpl(categoryId);
       const now = Date.now();
       const id = 'g_' + Math.random().toString(36).slice(2, 9);
       const sc = { id, categoryId, name, order: (list[list.length - 1]?.order ?? -1) + 1, createdAt: now, updatedAt: now } as any;

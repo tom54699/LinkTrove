@@ -44,6 +44,11 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
 
   React.useEffect(() => {
     load();
+    const onChanged = () => { load(); };
+    try { window.addEventListener('groups:changed', onChanged as any); } catch {}
+    return () => {
+      try { window.removeEventListener('groups:changed', onChanged as any); } catch {}
+    };
   }, [load]);
 
   React.useEffect(() => {
