@@ -4,7 +4,7 @@ import type {
   TemplateData,
   StorageService,
 } from '../storageService';
-import { getAll, putAll, setMeta, getMeta, clearStore } from './db';
+import { getAll, putAll, setMeta, getMeta, clearStore, tx } from './db';
 
 async function migrateOnce(): Promise<void> {
   try {
@@ -51,6 +51,57 @@ async function migrateOnce(): Promise<void> {
 export function createIdbStorageService(): StorageService {
   // ensure migration runs once per session
   void migrateOnce();
+  void migrateSubcategoriesOnce();
+
+  async function migrateSubcategoriesOnce(): Promise<void> {
+    try {
+      const done = await getMeta<boolean>('migratedSubcategoriesV1');
+      if (done) return;
+    } catch {}
+    try {
+      const [categories, subcats, pages] = await Promise.all([
+        getAll('categories'),
+        getAll('subcategories' as any).catch(() => []),
+        getAll('webpages'),
+      ]);
+      const now = Date.now();
+      const byCatHasAny: Record<string, boolean> = {};
+      for (const sc of subcats as any[]) byCatHasAny[sc.categoryId] = true;
+      const defaults: Record<string, any> = {};
+      const toCreate: any[] = [];
+      for (const c of categories as any[]) {
+        if (!byCatHasAny[c.id]) {
+          const id = 'g_' + Math.random().toString(36).slice(2, 9);
+          const sc = {
+            id,
+            categoryId: c.id,
+            name: 'group',
+            order: 0,
+            createdAt: now,
+            updatedAt: now,
+          };
+          defaults[c.id] = sc;
+          toCreate.push(sc);
+        }
+      }
+      if (toCreate.length) await putAll('subcategories' as any, toCreate);
+      // Assign missing subcategoryId on webpages
+      const toUpdate: any[] = [];
+      for (const p of pages as any[]) {
+        if (!(p as any).subcategoryId) {
+          const def = defaults[p.category];
+          if (def) {
+            (p as any).subcategoryId = def.id;
+            toUpdate.push(p);
+          }
+        }
+      }
+      if (toUpdate.length) await putAll('webpages', toUpdate);
+    } catch {
+      // ignore
+    }
+    try { await setMeta('migratedSubcategoriesV1', true); } catch {}
+  }
 
   async function exportData(): Promise<string> {
     const [webpages, categories, templates] = await Promise.all([

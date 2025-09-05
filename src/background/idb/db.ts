@@ -1,11 +1,16 @@
-export type StoreName = 'webpages' | 'categories' | 'templates' | 'meta';
+export type StoreName =
+  | 'webpages'
+  | 'categories'
+  | 'templates'
+  | 'meta'
+  | 'subcategories';
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
 export function openDb(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
-    const req = indexedDB.open('linktrove', 1);
+    const req = indexedDB.open('linktrove', 2);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains('webpages')) {
@@ -13,6 +18,19 @@ export function openDb(): Promise<IDBDatabase> {
         s.createIndex('category', 'category');
         s.createIndex('url', 'url');
         s.createIndex('updatedAt', 'updatedAt');
+        try {
+          s.createIndex('category_subcategory', ['category', 'subcategoryId']);
+        } catch {}
+      }
+      // If upgrading from v1, add missing index to existing store
+      if (db.objectStoreNames.contains('webpages')) {
+        const s = req.transaction?.objectStore('webpages');
+        try {
+          // Create composite index if not present
+          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+          s && !s.indexNames.contains('category_subcategory') &&
+            s.createIndex('category_subcategory', ['category', 'subcategoryId']);
+        } catch {}
       }
       if (!db.objectStoreNames.contains('categories')) {
         const s = db.createObjectStore('categories', { keyPath: 'id' });
@@ -23,6 +41,11 @@ export function openDb(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains('meta')) {
         db.createObjectStore('meta', { keyPath: 'key' });
+      }
+      if (!db.objectStoreNames.contains('subcategories')) {
+        const s = db.createObjectStore('subcategories', { keyPath: 'id' });
+        try { s.createIndex('by_categoryId', 'categoryId'); } catch {}
+        try { s.createIndex('by_categoryId_order', ['categoryId', 'order']); } catch {}
       }
     };
     req.onsuccess = () => resolve(req.result);
