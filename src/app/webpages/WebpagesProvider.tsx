@@ -44,6 +44,7 @@ function toCard(d: any): WebpageCardData {
     favicon: d.favicon,
     description: d.note,
     category: d.category,
+    subcategoryId: (d as any).subcategoryId,
     meta: d.meta,
   };
 }

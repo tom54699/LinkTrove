@@ -10,6 +10,7 @@ export interface WebpageCardData {
   description?: string;
   favicon?: string;
   category?: string;
+  subcategoryId?: string;
   meta?: Record<string, string>;
 }
 

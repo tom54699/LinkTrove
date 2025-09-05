@@ -19,6 +19,7 @@ import { useFeedback } from './ui/feedback';
 import { WebpagesProvider, useWebpages } from './webpages/WebpagesProvider';
 import { TemplatesManager } from './templates/TemplatesManager';
 import { useTemplates } from './templates/TemplatesProvider';
+import { GroupsView } from './groups/GroupsView';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
@@ -243,6 +244,8 @@ const HomeInner: React.FC = () => {
                 showToast('Saved note', 'success');
               }}
             />
+            {/* Groups sections (initial UI scaffolding) */}
+            <GroupsView categoryId={selectedId} />
           </div>
         }
         tabsPanel={<TabsPanel />}
