@@ -123,7 +123,7 @@
     - [x] 為 WebpageService 建立單元測試
     - [x] 測試 Chrome API 的模擬呼叫
     - [x] 測試錯誤處理機制
-    - _需求: 所有功能需求_
+  - _需求: 所有功能需求_
 
 - [ ] 12. 整合測試和最終優化
   - [x] 進行完整的拖拉操作流程測試
@@ -131,3 +131,46 @@
   - [x] 優化建置輸出和載入速度
   - [ ] 進行跨瀏覽器相容性測試
   - _需求: 所有功能需求_
+
+---
+
+- [ ] 13. 小分類（Subcategories）功能
+  - [ ] 13.1 資料模型與 IndexedDB 遷移
+    - 新增 `SubcategoryData` 與 `webpages.subcategoryId` 欄位
+    - 建立 `subcategories` store 與索引；為 `webpages` 建立 composite index
+    - 撰寫遷移與單元測試（相容舊資料）
+    - _規格: subcategories.md_
+
+  - [ ] 13.2 儲存服務 API（含單元測試）
+    - `listSubcategories`、`createSubcategory`、`renameSubcategory`、`deleteSubcategory`、`reorderSubcategories`
+    - `updateCardSubcategory`（跨大分類時清空或指定）
+    - _規格: subcategories.md_
+
+  - [ ] 13.3 匯出/匯入擴充（含測試）
+    - 匯出 `subcategories` 與卡片 `subcategoryId`
+    - 匯入時相容舊版（缺欄位視為 null）
+    - _規格: subcategories.md_
+
+  - [ ] 13.4 主內容段落 UI（顯示/摺疊/新增/重命名/刪除）
+    - 以段落呈現小分類與「未分組」，支援摺疊並持久化
+    - 段首內聯重命名、刪除（含轉移至未分組或指定小分類）
+    - _規格: subcategories.md_
+
+  - [ ] 13.5 卡片拖放到小分類段落
+    - 同大分類：拖放更改 `subcategoryId`
+    - 視覺高亮與成功/失敗回饋
+    - _規格: subcategories.md_
+
+  - [ ] 13.6 小分類排序（段首拖曳 + 鍵盤）
+    - 段首拖曳重排；提供鍵盤操作與 A11y
+    - _規格: subcategories.md_
+
+  - [ ] 13.7 側欄行為調整（導覽僅顯示）
+    - 側欄顯示小分類但不提供 CRUD/排序/拖放
+    - 選取小分類僅切換主區塊過濾
+    - _規格: subcategories.md_
+
+  - [ ] 13.8 整合測試與效能驗證
+    - DnD 流程、跨大分類移動、段落摺疊狀態
+    - 大量小分類/卡片下的表現與索引查詢
+    - _規格: subcategories.md_
