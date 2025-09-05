@@ -136,8 +136,9 @@
 
 - [ ] 13. 小分類（Subcategories）功能
   - [ ] 13.1 資料模型與 IndexedDB 遷移
-    - 新增 `SubcategoryData` 與 `webpages.subcategoryId` 欄位
+    - 新增 `SubcategoryData` 與 `webpages.subcategoryId` 欄位（卡片必須有 group）
     - 建立 `subcategories` store 與索引；為 `webpages` 建立 composite index
+    - 遷移採方案 A：每個 collection 自動建立預設 group「group」，並指派舊卡片
     - 撰寫遷移與單元測試（相容舊資料）
     - _規格: subcategories.md_
 
@@ -148,12 +149,12 @@
 
   - [ ] 13.3 匯出/匯入擴充（含測試）
     - 匯出 `subcategories` 與卡片 `subcategoryId`
-    - 匯入時相容舊版（缺欄位視為 null）
+    - 匯入時相容舊版（缺欄位以預設 group 取代）
     - _規格: subcategories.md_
 
   - [ ] 13.4 主內容段落 UI（顯示/摺疊/新增/重命名/刪除）
-    - 以段落呈現小分類與「未分組」，支援摺疊並持久化
-    - 段首內聯重命名、刪除（含轉移至未分組或指定小分類）
+    - 以段落呈現各 group，支援摺疊並持久化
+    - 段首內聯重命名、刪除（需轉移至同 collection 其他 group）
     - _規格: subcategories.md_
 
   - [ ] 13.5 卡片拖放到小分類段落

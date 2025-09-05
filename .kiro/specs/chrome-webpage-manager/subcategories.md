@@ -8,7 +8,7 @@
 
 - 大分類（Category）：既有側欄清單項目。
 - 小分類（Subcategory）：隸屬某一大分類之下的次階層。
-- 卡片（Webpage/Card）：歸屬於某一大分類；新增可選屬於某一小分類。
+ - 卡片（Webpage/Card）：歸屬於某一大分類；必須屬於該大分類底下某一小分類（強制分組）。
 
 ## 主要需求
 
@@ -28,7 +28,7 @@
   - `createdAt: number`
   - `updatedAt: number`
 - WebpageData 變更
-  - 新增 `subcategoryId?: string | null`（null 代表「未分組」）。
+  - 新增 `subcategoryId: string`（卡片必須歸屬某一小分類）。
 - App/UI 狀態
   - `selectedCategoryId: string | null`（既有）
   - `selectedSubcategoryId: string | null`（可選；為 null 時顯示全部小分類段落）。
@@ -39,7 +39,9 @@
   - 索引：`by_categoryId`（categoryId）、`by_categoryId_order`（categoryId+order）。
 - 既有 `webpages` store：
   - 新增 composite index：`by_categoryId_subcategoryId`（categoryId+subcategoryId）。
-- 遷移：DB 版本 +1；建立新 store 與索引；既有卡片 `subcategoryId` 預設為 null（未分組）。
+- 遷移：DB 版本 +1；建立新 store 與索引；既有資料採【方案 A】
+  - 為每個大分類（collection）自動建立一個預設小分類名稱「group」。
+  - 將該大分類底下所有未帶 `subcategoryId` 的卡片指派到此預設 group。
 - 匯出/匯入：
   - 匯出 JSON 包含 `subcategories` 陣列與每張卡片的 `subcategoryId`。
   - 匯入時相容舊版（缺少欄位視為 null）。
@@ -62,20 +64,19 @@
   - 僅導覽用途：列出大分類下的小分類，可展開/收合、點擊以過濾主內容。
   - 不提供新增/改名/刪除/排序/拖放等操作。
 
-- 主內容（Content）
+ - 主內容（Content）
   - 每個小分類為一段，段首為「標題列＋工具列」。
     - 重新命名：標題可點擊 inline edit，或透過操作選單。
-    - 刪除：按鈕/選單；彈出確認並支援將卡片轉移到「未分組」或指定其他小分類。
+    - 刪除：按鈕/選單；彈出確認並要求將卡片轉移到同一 collection 的其他小分類（不得留空）。
     - 排序：拖曳段首在同一大分類內重排。
     - 摺疊：可切換並持久化（本地）。
-  - 新增小分類：類別頁面頂部提供「新增小分類」按鈕；建立後自動進入重命名。
-  - 「未分組」段落：呈現 `subcategoryId=null` 的卡片，可摺疊。
+  - 新增小分類：collection 頁面頂部提供「新增 group」按鈕；建立後自動進入重命名。
 
 ## 拖放（DnD）規格
 
-- 卡片移動
+ - 卡片移動
   - 同大分類內：拖到目標小分類段落（段首/空狀態/段內）→ `updateCardSubcategory`。
-  - 跨大分類：沿用「切換分類」流程；完成後 `subcategoryId` 預設為 null（可選擇目標小分類）。
+  - 跨大分類：沿用「切換分類」流程；完成後必須指定目標小分類（可於流程中選擇）。
   - 載荷：`{ type: 'card', id, fromCategoryId, fromSubcategoryId }`。
 
 - 小分類排序
@@ -107,7 +108,6 @@
 
 - 主內容以「小分類段落」呈現卡片，各段可摺疊且狀態可記憶。
 - 小分類可新增/改名/刪除/排序；所有操作皆於主內容段首完成；側欄僅導覽。
-- 卡片可於小分類間或跨大分類移動（拖放與既有「切換分類」皆可）。
-- IndexedDB 版本升級成功；舊資料自動歸入「未分組」；匯出含小分類，匯入相容。
+- 卡片可於小分類間或跨大分類移動（拖放與既有「切換分類」皆可；跨大分類必選目標 group）。
+- IndexedDB 版本升級成功；舊資料自動建立預設「group」並指派；匯出含小分類，匯入相容。
 - 測試通過（覆蓋率 ≥ 80%）、型別嚴格、lint/format 乾淨；文件更新。
-
