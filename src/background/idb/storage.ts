@@ -330,6 +330,37 @@ export function createIdbStorageService(): StorageService {
         ss.delete(id);
       });
     },
+    // Delete the subcategory and all webpages referencing it in one transaction
+    deleteSubcategoryAndPages: async (id: string) => {
+      await tx(['subcategories' as any, 'webpages'], 'readwrite', async (t) => {
+        const ss = t.objectStore('subcategories' as any);
+        const ws = t.objectStore('webpages');
+        const cur = await new Promise<any>((resolve, reject) => {
+          const req = ss.get(id);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        if (!cur) return;
+        // Query pages by composite index when available, fallback to scan
+        const pages: any[] = await new Promise((resolve, reject) => {
+          let idx: any = null;
+          try { idx = ws.index('category_subcategory'); } catch {}
+          if (idx) {
+            const range = IDBKeyRange.only([cur.categoryId, id]);
+            const req = idx.getAll(range);
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+          } else {
+            const rq: any = ws.getAll();
+            rq.onsuccess = () =>
+              resolve((rq.result || []).filter((p: any) => p.category === cur.categoryId && p.subcategoryId === id));
+            rq.onerror = () => reject(rq.error);
+          }
+        });
+        for (const p of pages) ws.delete(p.id);
+        ss.delete(id);
+      });
+    },
     reorderSubcategories: async (categoryId: string, orderedIds: string[]) => {
       await tx(['subcategories' as any], 'readwrite', async (t) => {
         const s = t.objectStore('subcategories' as any);

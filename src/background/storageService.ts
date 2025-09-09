@@ -58,6 +58,8 @@ export interface StorageService {
   createSubcategory?: (categoryId: string, name: string) => Promise<SubcategoryData>;
   renameSubcategory?: (id: string, name: string) => Promise<void>;
   deleteSubcategory?: (id: string, reassignTo: string) => Promise<void>;
+  // Delete a subcategory and all webpages under it (atomic within IDB tx)
+  deleteSubcategoryAndPages?: (id: string) => Promise<void>;
   reorderSubcategories?: (categoryId: string, orderedIds: string[]) => Promise<void>;
   updateCardSubcategory?: (cardId: string, subcategoryId: string) => Promise<void>;
   deleteSubcategoriesByCategory?: (categoryId: string) => Promise<void>;

@@ -89,13 +89,29 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
         showToast('刪除失敗：至少需要保留一個 group', 'error');
         return;
       }
-      const target = others[0];
-      await (svc as any).deleteSubcategory?.(id, target.id);
+      // 提示不可逆刪除
+      // eslint-disable-next-line no-alert
+      const ok = globalThis.confirm?.('刪除此 group 以及其底下的書籤？此操作無法復原') ?? true;
+      if (!ok) return;
+      // 直接刪除該 group 及其關聯書籤
+      if ((svc as any).deleteSubcategoryAndPages) {
+        await (svc as any).deleteSubcategoryAndPages(id);
+      } else {
+        // 後備方案：以 UI 端刪除卡片後，再刪 group（較不原子）
+        try {
+          const ids = items.filter((it: any) => it.subcategoryId === id).map((it: any) => it.id);
+          if (ids.length) await actions.deleteMany(ids);
+        } catch {}
+        try {
+          // 無重指派版本：非原子，僅作為後備
+          await (svc as any).deleteSubcategory?.(id, '__NO_REASSIGN__');
+        } catch {}
+      }
       // Remove collapse state for deleted group
-      const { [id]: _, ...rest } = collapsed;
+      const { [id]: _omit, ...rest } = collapsed;
       await persistCollapsed(rest);
-      await load();
-      showToast('已刪除並轉移卡片', 'success');
+      await actions.load();
+      showToast('已刪除 group 與其書籤', 'success');
     } catch {
       showToast('刪除失敗', 'error');
     }
