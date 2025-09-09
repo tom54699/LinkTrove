@@ -404,21 +404,19 @@ export const WebpagesProvider: React.FC<{
   );
 
   const reorder = React.useCallback(
-    (fromId: string, toId: string) => {
-      (async () => {
-        const saved = await service.reorderWebpages(fromId, toId);
-        setItems(saved.map(toCard));
-      })();
+    async (fromId: string, toId: string) => {
+      const saved = await service.reorderWebpages(fromId, toId);
+      setItems(saved.map(toCard));
+      return saved;
     },
     [service]
   );
 
   const moveToEnd = React.useCallback(
-    (id: string) => {
-      (async () => {
-        const saved = await (service as any).moveWebpageToEnd(id);
-        setItems(saved.map(toCard));
-      })();
+    async (id: string) => {
+      const saved = await (service as any).moveWebpageToEnd(id);
+      setItems(saved.map(toCard));
+      return saved;
     },
     [service]
   );
