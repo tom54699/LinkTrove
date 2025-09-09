@@ -5,7 +5,6 @@ import { ThreeColumnLayout } from './layout/ThreeColumn';
 import { OpenTabsProvider } from './tabs/OpenTabsProvider';
 import { TemplatesProvider } from './templates/TemplatesProvider';
 import { TabsPanel } from './tabs/TabsPanel';
-import { CardGrid } from './webpages/CardGrid';
 import { CategoriesProvider, useCategories } from './sidebar/categories';
 import { Sidebar } from './sidebar/sidebar';
 import { FeedbackProvider, ErrorBoundary } from './ui/feedback';
@@ -115,14 +114,14 @@ export const AppLayout: React.FC = () => {
 export const Home: React.FC = () => <HomeInner />;
 
 const HomeInner: React.FC = () => {
-  const { actions, items } = useWebpages();
+  const { items } = useWebpages();
   const {
     selectedId,
     actions: catActions,
     setCurrentCategory,
   } = useCategories();
   // Simplify to a single view; remove density switching
-  const [collapsed, setCollapsed] = React.useState(false);
+  const [_collapsed, setCollapsed] = React.useState(false);
   const { showToast } = useFeedback();
   const [creatingGroup, setCreatingGroup] = React.useState(false);
   const [showAddCat, setShowAddCat] = React.useState(false);
@@ -177,7 +176,7 @@ const HomeInner: React.FC = () => {
                       await (s as any).createSubcategory?.(selectedId, name);
                       try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
                       showToast(`已新增 ${name}`, 'success');
-                    } catch (e) {
+                    } catch {
                       showToast('新增失敗', 'error');
                     } finally {
                       setCreatingGroup(false);

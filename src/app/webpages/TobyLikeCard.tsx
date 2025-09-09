@@ -37,7 +37,7 @@ export interface TobyLikeCardProps {
 export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   title,
   description,
-  faviconText = 'WW',
+  faviconText: _faviconText = 'WW',
   faviconUrl,
   url,
   categoryId,

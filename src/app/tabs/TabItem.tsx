@@ -20,7 +20,7 @@ export const TabItem: React.FC<
         url: tab.url,
         favIconUrl: tab.favIconUrl,
       });
-    } catch (err) {
+    } catch {
       // ignore in non-supporting environments
     }
     rest.onDragStart?.(e);

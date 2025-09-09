@@ -23,7 +23,6 @@ const tabsManager = createTabsManager({
       try {
         p.postMessage({ kind: 'tab-event', evt });
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error('postMessage failed', err);
       }
     });
@@ -37,7 +36,6 @@ async function boot() {
       started = true;
     }
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error('Failed to start tabs manager', err);
   }
 }
@@ -74,7 +72,6 @@ chrome.runtime.onConnect.addListener((port) => {
           };
           port.postMessage(payload);
         } catch (err) {
-          // eslint-disable-next-line no-console
           console.error('failed to send init tabs', err);
         }
       });

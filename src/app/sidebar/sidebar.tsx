@@ -32,7 +32,7 @@ export const Sidebar: React.FC = () => {
         Spaces
       </div>
       <nav aria-label="Categories" className="space-y-1">
-        {categories.map((c, idx) => {
+        {categories.map((c, _idx) => {
           const active = selectedId === c.id;
           return (
             <div

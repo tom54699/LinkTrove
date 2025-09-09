@@ -60,7 +60,7 @@ export function createTabsManager(opts: TabsManagerOptions) {
       onChange({ type: 'detached', payload: { tabId, ...detachInfo } })
     );
 
-  function addListeners() {
+  function _addListeners() {
     chrome.tabs.onCreated.addListener(created);
     chrome.tabs.onRemoved.addListener((tabId: number) => removed(tabId));
     chrome.tabs.onUpdated.addListener((tabId: number, changeInfo: any) =>
@@ -142,7 +142,6 @@ function safe(fn: () => void) {
   try {
     fn();
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error('tabsManager handler error', err);
   }
 }

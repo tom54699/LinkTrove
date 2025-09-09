@@ -273,7 +273,7 @@ export const WebpagesProvider: React.FC<{
           // Merge cached extracted meta for common keys (only if field exists and value empty)
           try {
             if (item) {
-              const { getCachedMeta, extractMetaForTab } = await import(
+              const { getCachedMeta } = await import(
                 '../../background/pageMeta'
               );
               let cached = await getCachedMeta(item.url);

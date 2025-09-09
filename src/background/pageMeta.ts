@@ -96,10 +96,6 @@ function pageExtractor() {
       ) as HTMLMetaElement | null
     )?.content?.trim();
   }
-  function first(...vals: Array<string | undefined | null>) {
-    for (const v of vals) if (v && v.trim()) return v.trim();
-    return undefined;
-  }
   function textOf(sel: string): string | undefined {
     const el = document.querySelector(sel) as HTMLElement | null;
     const txt = el?.textContent?.trim();
@@ -134,45 +130,45 @@ function pageExtractor() {
     return undefined;
   }
   // Title: og:title → og:novel:book_name → twitter:title → <title>
-  let titleSrc = '';
+  let _titleSrc = '';
   let title = get('og:title');
-  if (title) titleSrc = 'meta[property=og:title]';
+  if (title) _titleSrc = 'meta[property=og:title]';
   if (!title) {
     const v = get('og:novel:book_name');
     if (v) {
       title = v;
-      titleSrc = 'meta[property=og:novel:book_name]';
+      _titleSrc = 'meta[property=og:novel:book_name]';
     }
   }
   if (!title) {
     const v = get('twitter:title');
     if (v) {
       title = v;
-      titleSrc = 'meta[name=twitter:title]';
+      _titleSrc = 'meta[name=twitter:title]';
     }
   }
   if (!title) {
     if (document.title && document.title.trim()) {
       title = document.title.trim();
-      titleSrc = 'title';
+      _titleSrc = 'title';
     }
   }
   // Description: meta[name="description"] → og:description → twitter:description
-  let descSrc = '';
+  let _descSrc = '';
   let description = get('description', 'name');
-  if (description) descSrc = 'meta[name=description]';
+  if (description) _descSrc = 'meta[name=description]';
   if (!description) {
     const v = get('og:description');
     if (v) {
       description = v;
-      descSrc = 'meta[property=og:description]';
+      _descSrc = 'meta[property=og:description]';
     }
   }
   if (!description) {
     const v = get('twitter:description');
     if (v) {
       description = v;
-      descSrc = 'meta[name=twitter:description]';
+      _descSrc = 'meta[name=twitter:description]';
     }
   }
   // Site name: og:site_name → derive from title suffix → hostname
@@ -196,43 +192,43 @@ function pageExtractor() {
     }
     return undefined;
   }
-  let siteSrc = '';
+  let _siteSrc = '';
   let siteName = get('og:site_name');
-  if (siteName) siteSrc = 'meta[property=og:site_name]';
+  if (siteName) _siteSrc = 'meta[property=og:site_name]';
   if (!siteName) {
     const v = deriveSiteNameFromTitle(title);
     if (v) {
       siteName = v;
-      siteSrc = 'title-suffix';
+      _siteSrc = 'title-suffix';
     }
   }
   if (!siteName) {
     siteName = location.hostname.replace(/^www\./, '');
-    siteSrc = 'hostname';
+    _siteSrc = 'hostname';
   }
   // Author: meta[name=author] → meta[property=article:author] → meta[property=books:author] → meta[property=og:novel:author] → link[rel=author] → JSON-LD → microdata
-  let authorSrc = '';
+  let _authorSrc = '';
   let author = get('author', 'name');
-  if (author) authorSrc = 'meta[name=author]';
+  if (author) _authorSrc = 'meta[name=author]';
   if (!author) {
     const v = get('article:author');
     if (v) {
       author = v;
-      authorSrc = 'meta[property=article:author]';
+      _authorSrc = 'meta[property=article:author]';
     }
   }
   if (!author) {
     const v = get('books:author');
     if (v) {
       author = v;
-      authorSrc = 'meta[property=books:author]';
+      _authorSrc = 'meta[property=books:author]';
     }
   }
   if (!author) {
     const v = get('og:novel:author');
     if (v) {
       author = v;
-      authorSrc = 'meta[property=og:novel:author]';
+      _authorSrc = 'meta[property=og:novel:author]';
     }
   }
   if (!author) {
@@ -241,21 +237,21 @@ function pageExtractor() {
     )?.href;
     if (v) {
       author = v;
-      authorSrc = 'link[rel=author]';
+      _authorSrc = 'link[rel=author]';
     }
   }
   if (!author) {
     const v = readJsonLdAuthor();
     if (v) {
       author = v;
-      authorSrc = 'jsonld';
+      _authorSrc = 'jsonld';
     }
   }
   if (!author) {
     const v = textOf('[itemprop="author"]');
     if (v) {
       author = v;
-      authorSrc = 'itemprop[author]';
+      _authorSrc = 'itemprop[author]';
     }
   }
   const meta = { title, description, siteName, author, url: location.href };

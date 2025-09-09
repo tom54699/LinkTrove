@@ -27,9 +27,9 @@ export function openDb(): Promise<IDBDatabase> {
         const s = req.transaction?.objectStore('webpages');
         try {
           // Create composite index if not present
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-          s && !s.indexNames.contains('category_subcategory') &&
+          if (s && !s.indexNames.contains('category_subcategory')) {
             s.createIndex('category_subcategory', ['category', 'subcategoryId']);
+          }
         } catch {}
       }
       if (!db.objectStoreNames.contains('categories')) {

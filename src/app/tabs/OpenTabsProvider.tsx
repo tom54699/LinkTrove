@@ -25,7 +25,7 @@ export const OpenTabsProvider: React.FC<{
 }> = ({ children, initialTabs = [], expose }) => {
   const [allTabs, setTabsState] = useState<TabItemData[]>(initialTabs);
   const [activeWindowId, setActiveWindowId] = useState<number | null>(null);
-  const [windowIds, setWindowIds] = useState<number[]>([]);
+  const [_windowIds, setWindowIds] = useState<number[]>([]);
   const [windowLabels, setWindowLabels] = useState<Record<number, string>>({});
 
   const sortByIndex = (arr: TabItemData[]) =>

@@ -526,6 +526,7 @@ const TemplateFields: React.FC<{
   );
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const CategorySelect: React.FC<{
   value: string;
   onChange: (v: string) => void;

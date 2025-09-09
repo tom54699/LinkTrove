@@ -1,5 +1,5 @@
 import React from 'react';
-import { WebpageCard, type WebpageCardData } from './WebpageCard';
+import type { WebpageCardData } from './WebpageCard';
 import { TobyLikeCard } from './TobyLikeCard';
 import type { TabItemData } from '../tabs/types';
 import { getDragTab, getDragWebpage, setDragWebpage, broadcastGhostActive } from '../dnd/dragContext';
@@ -308,7 +308,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
         try { broadcastGhostActive(null); } catch {}
         return;
       }
-    } catch (err) {
+    } catch {
       showToast('Failed to add tab', 'error');
     }
     // Clear ghost on non-tab drops

@@ -192,7 +192,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
             <div className="p-3">
               <CardGrid
                 items={items.filter((it: any) => it.category === categoryId && it.subcategoryId === g.id)}
-                onDropTab={async (tab: any, beforeId?: string) => {
+                onDropTab={async (tab: any, _beforeId?: string) => {
                   try {
                     const createdId = (await actions.addFromTab(tab as any)) as any as string;
                     await (svc as any).updateCardSubcategory?.(createdId, g.id);
