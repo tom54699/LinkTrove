@@ -20,6 +20,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
   const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
   const [renaming, setRenaming] = React.useState<string | null>(null);
   const [renameText, setRenameText] = React.useState<string>('');
+  const [confirmDeleteGroup, setConfirmDeleteGroup] = React.useState<string | null>(null);
 
   const svc = React.useMemo(() => {
     const hasChrome =
@@ -89,10 +90,6 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
         showToast('刪除失敗：至少需要保留一個 group', 'error');
         return;
       }
-      // 提示不可逆刪除
-      // eslint-disable-next-line no-alert
-      const ok = globalThis.confirm?.('刪除此 group 以及其底下的書籤？此操作無法復原') ?? true;
-      if (!ok) return;
       // 直接刪除該 group 及其關聯書籤
       if ((svc as any).deleteSubcategoryAndPages) {
         await (svc as any).deleteSubcategoryAndPages(id);
@@ -110,7 +107,8 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       // Remove collapse state for deleted group
       const { [id]: _omit, ...rest } = collapsed;
       await persistCollapsed(rest);
-      await actions.load();
+      await load();
+      try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
       showToast('已刪除 group 與其書籤', 'success');
     } catch {
       showToast('刪除失敗', 'error');
@@ -201,7 +199,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
               <button className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:bg-slate-800" onClick={() => { setRenaming(g.id); setRenameText(g.name); }}>重新命名</button>
               <button className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:bg-slate-800" onClick={() => move(g.id, -1)} aria-label="上移">↑</button>
               <button className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:bg-slate-800" onClick={() => move(g.id, 1)} aria-label="下移">↓</button>
-              <button className="text-xs px-1.5 py-0.5 rounded border border-rose-700 text-rose-300 hover:bg-rose-950/30" onClick={() => remove(g.id)}>刪除</button>
+              <button className="text-xs px-1.5 py-0.5 rounded border border-rose-700 text-rose-300 hover:bg-rose-950/30" onClick={() => setConfirmDeleteGroup(g.id)}>刪除</button>
             </div>
           </header>
           {!collapsed[g.id] && (
@@ -255,6 +253,44 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
           )}
         </section>
       ))}
+      {confirmDeleteGroup && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
+          onClick={() => setConfirmDeleteGroup(null)}
+        >
+          <div
+            className="rounded border border-slate-700 bg-[var(--bg)] w-[520px] max-w-[95vw]"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Delete Group"
+          >
+            <div className="px-5 py-4 border-b border-slate-700">
+              <div className="text-lg font-semibold">刪除 Group</div>
+              <div className="text-xs opacity-80 mt-1">
+                刪除此 group 以及其底下的書籤？此操作無法復原。
+              </div>
+            </div>
+            <div className="px-5 py-3 flex items-center justify-end gap-2">
+              <button
+                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                onClick={() => setConfirmDeleteGroup(null)}
+              >
+                取消
+              </button>
+              <button
+                className="px-3 py-1 rounded border border-rose-700 text-rose-300 hover:bg-rose-950/30"
+                onClick={async () => {
+                  const id = confirmDeleteGroup;
+                  setConfirmDeleteGroup(null);
+                  if (id) await remove(id);
+                }}
+              >
+                刪除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
