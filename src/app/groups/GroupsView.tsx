@@ -5,6 +5,7 @@ import { useWebpages } from '../webpages/WebpagesProvider';
 import { CardGrid } from '../webpages/CardGrid';
 import { broadcastGhostActive } from '../dnd/dragContext';
 import type { TabItemData } from '../tabs/types';
+import { dbg } from '../../utils/debug';
 
 interface GroupItem {
   id: string;
@@ -212,11 +213,14 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                     await (svc as any).updateCardSubcategory?.(createdId, g.id);
                     // Adjust ordering relative to target position if provided
                     if (beforeId && beforeId !== '__END__') {
+                      dbg('dnd', 'onDropTab reorder', { createdId, beforeId });
                       await actions.reorder(createdId, beforeId);
                     } else if (beforeId === '__END__') {
+                      dbg('dnd', 'onDropTab moveToEnd', { createdId });
                       await (actions as any).moveToEnd(createdId);
                     }
                     await actions.load();
+                    dbg('dnd', 'afterDrop load()', { groupId: g.id });
                     showToast('已從分頁建立並加入 group', 'success');
                   } catch {
                     showToast('建立失敗', 'error');

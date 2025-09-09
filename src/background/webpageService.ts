@@ -142,12 +142,14 @@ export function createWebpageService(deps?: {
     const fromIdx = list.findIndex((w) => w.id === fromId);
     const toIdx = list.findIndex((w) => w.id === toId);
     if (fromIdx === -1 || toIdx === -1) return list;
+    try { console.debug('[lt:dnd] reorderWebpages', { fromId, toId, fromIdx, toIdx, order: list.map(x=>x.id) }); } catch {}
     const next = [...list];
     const [moved] = next.splice(fromIdx, 1);
     // If removing an item from before the target, the target index shifts left by 1
     const insertAt = fromIdx < toIdx ? toIdx - 1 : toIdx;
     next.splice(Math.max(0, insertAt), 0, moved);
     await saveWebpages(next);
+    try { console.debug('[lt:dnd] after reorder', { order: next.map(x=>x.id) }); } catch {}
     return next;
   }
 

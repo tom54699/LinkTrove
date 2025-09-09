@@ -4,6 +4,7 @@ import { TobyLikeCard } from './TobyLikeCard';
 import type { TabItemData } from '../tabs/types';
 import { getDragTab, getDragWebpage, setDragWebpage, broadcastGhostActive } from '../dnd/dragContext';
 import { useFeedback } from '../ui/feedback';
+import { dbg, isDebug } from '../../utils/debug';
 
 export interface CardGridProps {
   items?: WebpageCardData[];
@@ -195,7 +196,9 @@ export const CardGrid: React.FC<CardGridProps> = ({
     if (tab) {
       setGhostTab(tab);
       setGhostType('tab');
-      setGhostIndex(computeGhostIndex(e.clientX, e.clientY, e.target));
+      const gi = computeGhostIndex(e.clientX, e.clientY, e.target);
+      setGhostIndex(gi);
+      dbg('dnd', 'dragOver(tab)', { gi, len: items.length });
       return;
     }
     // Existing card being dragged (possibly cross-group)
@@ -227,7 +230,9 @@ export const CardGrid: React.FC<CardGridProps> = ({
         } else {
           setGhostTab(null);
         }
-        setGhostIndex(computeGhostIndex(e.clientX, e.clientY, e.target));
+        const gi = computeGhostIndex(e.clientX, e.clientY, e.target);
+        setGhostIndex(gi);
+        dbg('dnd', 'dragOver(card)', { gi, len: items.length, fromId });
         return;
       }
     } catch {}
@@ -241,7 +246,9 @@ export const CardGrid: React.FC<CardGridProps> = ({
           try { broadcastGhostActive((meta as any).id || null); } catch {}
           setGhostTab({ id: -1, title: meta.title, url: meta.url, favIconUrl: meta.favicon } as any);
         } else setGhostTab(null);
-        setGhostIndex(computeGhostIndex(e.clientX, e.clientY, e.target));
+        const gi = computeGhostIndex(e.clientX, e.clientY, e.target);
+        setGhostIndex(gi);
+        dbg('dnd', 'dragOver(type-detect)', { gi, len: items.length, types });
         return;
       }
       if (types.includes('application/x-linktrove-tab')) {
@@ -281,6 +288,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
         const list = hiddenCardId ? items.filter((x) => x.id !== hiddenCardId) : items;
         if (idx == null) idx = list.length;
         const beforeId = idx >= list.length ? '__END__' : list[idx].id;
+        dbg('dnd', 'drop(card→grid)', { fromId, idx, beforeId, list: list.map((x)=>x.id) });
         onDropExistingCard?.(fromId, beforeId);
         setGhostTab(null);
         setGhostType(null);
@@ -300,6 +308,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
         const list = hiddenCardId ? items.filter((x) => x.id !== hiddenCardId) : items;
         if (idx == null) idx = list.length;
         const beforeId = idx >= list.length ? '__END__' : list[idx].id;
+        dbg('dnd', 'drop(tab→grid)', { idx, beforeId, list: list.map((x)=>x.id) });
         (onDropTab as any)?.(tab, beforeId);
         setGhostTab(null);
         setGhostType(null);
