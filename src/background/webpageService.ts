@@ -1,8 +1,5 @@
-import {
-  createStorageService,
-  type StorageService,
-  type WebpageData,
-} from './storageService';
+import { createStorageService, type StorageService, type WebpageData } from './storageService';
+import { getMeta, setMeta } from './idb/db';
 
 export interface TabLike {
   id?: number;
@@ -74,11 +71,22 @@ export function createWebpageService(deps?: {
   }
 
   async function loadWebpages() {
-    return storage.loadFromLocal();
+    const list = await storage.loadFromLocal();
+    try {
+      const order: string[] | undefined = await getMeta('order.webpages');
+      if (Array.isArray(order) && order.length) {
+        const pos = new Map(order.map((id, i) => [id, i]));
+        return [...list].sort((a, b) =>
+          (pos.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (pos.get(b.id) ?? Number.MAX_SAFE_INTEGER)
+        );
+      }
+    } catch {}
+    return list;
   }
 
   async function saveWebpages(all: WebpageData[]) {
     await storage.saveToLocal(all);
+    try { await setMeta('order.webpages', all.map((x) => x.id)); } catch {}
   }
 
   async function addWebpageFromTab(tab: TabLike): Promise<WebpageData> {
@@ -132,7 +140,7 @@ export function createWebpageService(deps?: {
   }
 
   async function deleteWebpage(id: string) {
-    const list = await loadWebpages();
+    const list = await storage.loadFromLocal();
     const next = list.filter((w) => w.id !== id);
     await saveWebpages(next);
   }
