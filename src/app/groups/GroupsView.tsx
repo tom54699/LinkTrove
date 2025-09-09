@@ -192,10 +192,16 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
             <div className="p-3">
               <CardGrid
                 items={items.filter((it: any) => it.category === categoryId && it.subcategoryId === g.id)}
-                onDropTab={async (tab: any, _beforeId?: string) => {
+                onDropTab={async (tab: any, beforeId?: string) => {
                   try {
                     const createdId = (await actions.addFromTab(tab as any)) as any as string;
                     await (svc as any).updateCardSubcategory?.(createdId, g.id);
+                    // Adjust ordering relative to target position if provided
+                    if (beforeId && beforeId !== '__END__') {
+                      await actions.reorder(createdId, beforeId);
+                    } else if (beforeId === '__END__') {
+                      await (actions as any).moveToEnd(createdId);
+                    }
                     await actions.load();
                     showToast('已從分頁建立並加入 group', 'success');
                   } catch {
