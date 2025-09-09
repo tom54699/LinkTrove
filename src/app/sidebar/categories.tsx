@@ -93,6 +93,16 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         chrome.storage?.local?.set?.({ categories: merged });
       } catch {}
+      // Ensure each category has at least one default group ("group")
+      try {
+        for (const c of merged) {
+          const list = (((await (svc as any).listSubcategories?.(c.id)) as any[]) || []);
+          if (!Array.isArray(list) || list.length === 0) {
+            await (svc as any).createSubcategory?.(c.id, 'group');
+          }
+        }
+        try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
+      } catch {}
       // Restore last selected category if it exists
       try {
         const gotSel: any = await new Promise((resolve) => {
