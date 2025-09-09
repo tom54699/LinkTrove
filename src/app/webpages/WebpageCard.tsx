@@ -55,6 +55,8 @@ export const WebpageCard: React.FC<{
     x: number;
     y: number;
   } | null>(null);
+  // Needed for Move menu; hooks must run unconditionally
+  const { categories } = useCategories();
 
   const handleClick = () => {
     if (isEditing) return;
@@ -377,7 +379,7 @@ export const WebpageCard: React.FC<{
           x={moveMenuPos.x}
           y={moveMenuPos.y}
           onClose={() => setMoveMenuPos(null)}
-          items={useCategories().categories.map((c) => ({
+          items={categories.map((c) => ({
             key: c.id,
             label: c.name,
             onSelect: () => {
