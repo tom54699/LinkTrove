@@ -3,6 +3,7 @@ import { createStorageService } from '../../background/storageService';
 import { useFeedback } from '../ui/feedback';
 import { useWebpages } from '../webpages/WebpagesProvider';
 import { CardGrid } from '../webpages/CardGrid';
+import { broadcastGhostActive } from '../dnd/dragContext';
 import type { TabItemData } from '../tabs/types';
 
 interface GroupItem {
@@ -199,6 +200,23 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                     showToast('已從分頁建立並加入 group', 'success');
                   } catch {
                     showToast('建立失敗', 'error');
+                  }
+                }}
+                onDropExistingCard={async (cardId, beforeId) => {
+                  try {
+                    await (svc as any).updateCardSubcategory?.(cardId, g.id);
+                    // Adjust ordering relative to target position if provided
+                    if (beforeId && beforeId !== '__END__') {
+                      await actions.reorder(cardId, beforeId);
+                    } else if (beforeId === '__END__') {
+                      await (actions as any).moveToEnd(cardId);
+                    }
+                    await actions.load();
+                    try { broadcastGhostActive(null); } catch {}
+                    showToast('已移動到 group', 'success');
+                  } catch {
+                    try { broadcastGhostActive(null); } catch {}
+                    showToast('移動失敗', 'error');
                   }
                 }}
                 onDeleteMany={async (ids) => { await actions.deleteMany(ids); showToast('Deleted selected', 'success'); }}

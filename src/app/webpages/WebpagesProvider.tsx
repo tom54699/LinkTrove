@@ -6,6 +6,7 @@ import {
   type WebpageService,
 } from '../../background/webpageService';
 import type { WebpageCardData } from './WebpageCard';
+import { useCategories } from '../sidebar/categories';
 
 interface CtxValue {
   items: WebpageCardData[];
@@ -100,6 +101,7 @@ export const WebpagesProvider: React.FC<{
     } as WebpageService;
   }, [svc]);
   const [items, setItems] = React.useState<WebpageCardData[]>([]);
+  const { selectedId } = useCategories();
 
   const load = React.useCallback(async () => {
     const list = await service.loadWebpages();
@@ -108,7 +110,16 @@ export const WebpagesProvider: React.FC<{
 
   const addFromTab = React.useCallback(
     async (tab: TabItemData) => {
-      const created = await service.addWebpageFromTab(tab as any);
+      let created = await service.addWebpageFromTab(tab as any);
+      // Ensure new card belongs to currently selected collection
+      try {
+        if (selectedId && created.category !== selectedId) {
+          const updated = await service.updateWebpage(created.id, {
+            category: selectedId,
+          } as any);
+          created = updated;
+        }
+      } catch {}
       // Prefetch page meta and cache for later auto-fill (best-effort)
       try {
         if (
@@ -158,7 +169,7 @@ export const WebpagesProvider: React.FC<{
       });
       return created.id;
     },
-    [service]
+    [service, selectedId]
   );
 
   const deleteMany = React.useCallback(

@@ -2,12 +2,13 @@ import React from 'react';
 import { WebpageCard, type WebpageCardData } from './WebpageCard';
 import { TobyLikeCard } from './TobyLikeCard';
 import type { TabItemData } from '../tabs/types';
-import { getDragTab } from '../dnd/dragContext';
+import { getDragTab, getDragWebpage, setDragWebpage, broadcastGhostActive } from '../dnd/dragContext';
 import { useFeedback } from '../ui/feedback';
 
 export interface CardGridProps {
   items?: WebpageCardData[];
   onDropTab?: (tab: TabItemData) => void;
+  onDropExistingCard?: (id: string, beforeId?: string) => void;
   onDeleteMany?: (ids: string[]) => void;
   onDeleteOne?: (id: string) => void;
   onEditDescription?: (id: string, description: string) => void;
@@ -39,6 +40,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
   density = 'cozy',
   collapsed = false,
   onReorder,
+  onDropExistingCard,
   onUpdateTitle,
   onUpdateUrl,
   onUpdateCategory,
@@ -57,7 +59,10 @@ export const CardGrid: React.FC<CardGridProps> = ({
   const [confirming, setConfirming] = React.useState(false);
   const [dragDisabled, setDragDisabled] = React.useState(false);
   const [ghostTab, setGhostTab] = React.useState<TabItemData | null>(null);
+  const [ghostType, setGhostType] = React.useState<'tab' | 'card' | null>(null);
   const [ghostIndex, setGhostIndex] = React.useState<number | null>(null);
+  const [draggingCardId, setDraggingCardId] = React.useState<string | null>(null);
+  const [hiddenCardId, setHiddenCardId] = React.useState<string | null>(null);
   const zoneRef = React.useRef<HTMLDivElement | null>(null);
 
   // Compute ghost insertion index based on pointer and grid layout
@@ -163,8 +168,19 @@ export const CardGrid: React.FC<CardGridProps> = ({
     []
   );
 
+  // Subscribe to global ghost-active to hide original card even in source group
+  React.useEffect(() => {
+    const onGhost = (e: any) => {
+      const id = (e?.detail as string) ?? null;
+      setHiddenCardId(id);
+    };
+    try { window.addEventListener('lt:ghost-active', onGhost as any); } catch {}
+    return () => { try { window.removeEventListener('lt:ghost-active', onGhost as any); } catch {} };
+  }, []);
+
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    try { e.dataTransfer.dropEffect = 'move'; } catch {}
     setIsOver(true);
     // Update ghost: prefer dragContext for reliability, fallback to dataTransfer
     let tab: TabItemData | null = (getDragTab() as any) || null;
@@ -178,18 +194,102 @@ export const CardGrid: React.FC<CardGridProps> = ({
     }
     if (tab) {
       setGhostTab(tab);
+      setGhostType('tab');
       setGhostIndex(computeGhostIndex(e.clientX, e.clientY, e.target));
+      return;
     }
+    // Existing card being dragged (possibly cross-group)
+    try {
+      const fromId = e.dataTransfer.getData('application/x-linktrove-webpage');
+      if (fromId) {
+        setGhostType('card');
+        // Use meta from dragContext or payload to show favicon/title
+        let meta: any = null;
+        try { meta = getDragWebpage(); } catch {}
+        if (!meta) {
+          try {
+            const raw = e.dataTransfer.getData('application/x-linktrove-webpage-meta');
+            if (raw) meta = JSON.parse(raw);
+          } catch {}
+        }
+        try {
+          const id = (meta?.id as string) || fromId;
+          setDraggingCardId(id);
+          try { broadcastGhostActive(id); } catch {}
+        } catch {}
+        if (meta) {
+          setGhostTab({
+            id: -1,
+            title: meta.title,
+            url: meta.url,
+            favIconUrl: meta.favicon,
+          } as any);
+        } else {
+          setGhostTab(null);
+        }
+        setGhostIndex(computeGhostIndex(e.clientX, e.clientY, e.target));
+        return;
+      }
+    } catch {}
+    // Fallback: some browsers restrict getData during dragover; detect by type list
+    try {
+      const types = Array.from((e.dataTransfer?.types as any) || []);
+      if (types.includes('application/x-linktrove-webpage')) {
+        setGhostType('card');
+        const meta = (() => { try { return getDragWebpage(); } catch { return null; } })();
+        if (meta) {
+          try { broadcastGhostActive((meta as any).id || null); } catch {}
+          setGhostTab({ id: -1, title: meta.title, url: meta.url, favIconUrl: meta.favicon } as any);
+        } else setGhostTab(null);
+        setGhostIndex(computeGhostIndex(e.clientX, e.clientY, e.target));
+        return;
+      }
+      if (types.includes('application/x-linktrove-tab')) {
+        setGhostType('tab');
+        // Without full tab payload, still show a generic ghost
+        setGhostTab(null);
+        setGhostIndex(computeGhostIndex(e.clientX, e.clientY, e.target));
+        return;
+      }
+    } catch {}
   };
   const handleDragLeave = () => {
     setIsOver(false);
     setGhostTab(null);
+    setGhostType(null);
     setGhostIndex(null);
-  };
+    setDraggingCardId(null);
+    try { broadcastGhostActive(null); } catch {}
+  }
+  // Global safety: clear hidden state on dragend anywhere
+  React.useEffect(() => {
+    const onEnd = () => { try { broadcastGhostActive(null); } catch {} };
+    try { window.addEventListener('dragend', onEnd as any); } catch {}
+    return () => { try { window.removeEventListener('dragend', onEnd as any); } catch {} };
+  }, []);
+;
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsOver(false);
     try {
+      // 1) Existing webpage card dropped into this grid (possibly cross-group)
+      const fromId = e.dataTransfer.getData('application/x-linktrove-webpage');
+      if (fromId) {
+        let idx = ghostIndex;
+        if (idx == null)
+          idx = computeGhostIndex(e.clientX, e.clientY, e.target);
+        const list = hiddenCardId ? items.filter((x) => x.id !== hiddenCardId) : items;
+        if (idx == null) idx = list.length;
+        const beforeId = idx >= list.length ? '__END__' : list[idx].id;
+        onDropExistingCard?.(fromId, beforeId);
+        setGhostTab(null);
+        setGhostType(null);
+        setGhostIndex(null);
+        setDraggingCardId(null);
+        try { broadcastGhostActive(null); } catch {}
+        return;
+      }
+      // 2) New tab dropped into this grid
       const raw = e.dataTransfer.getData('application/x-linktrove-tab');
       if (raw) {
         const tab: TabItemData = JSON.parse(raw);
@@ -197,11 +297,15 @@ export const CardGrid: React.FC<CardGridProps> = ({
         let idx = ghostIndex;
         if (idx == null)
           idx = computeGhostIndex(e.clientX, e.clientY, e.target);
-        if (idx == null) idx = items.length;
-        const beforeId = idx >= items.length ? '__END__' : items[idx].id;
+        const list = hiddenCardId ? items.filter((x) => x.id !== hiddenCardId) : items;
+        if (idx == null) idx = list.length;
+        const beforeId = idx >= list.length ? '__END__' : list[idx].id;
         (onDropTab as any)?.(tab, beforeId);
         setGhostTab(null);
+        setGhostType(null);
         setGhostIndex(null);
+        setDraggingCardId(null);
+        try { broadcastGhostActive(null); } catch {}
         return;
       }
     } catch (err) {
@@ -209,7 +313,10 @@ export const CardGrid: React.FC<CardGridProps> = ({
     }
     // Clear ghost on non-tab drops
     setGhostTab(null);
+    setGhostType(null);
     setGhostIndex(null);
+    setDraggingCardId(null);
+    try { broadcastGhostActive(null); } catch {}
   };
 
   return (
@@ -254,25 +361,29 @@ export const CardGrid: React.FC<CardGridProps> = ({
             : 'border-slate-700'
         }`}
       >
-        {items.length === 0 ? (
+        {items.length === 0 && !((ghostTab != null || ghostType === 'card') && ghostIndex != null) ? (
           <div className="opacity-70">Drag tabs here to save</div>
         ) : (
           <div
             className={`toby-cards-flex ${density === 'compact' ? 'density-compact' : density === 'roomy' ? 'density-roomy' : ''} ${collapsed ? 'cards-collapsed' : ''}`}
           >
             {(() => {
+              // Hide original only when a ghost is visible (i.e., cursor in a drop zone with computed index)
+              const ghostActive = (ghostTab != null || ghostType === 'card') && ghostIndex != null;
+              const viewItems = ghostActive && draggingCardId
+                ? items.filter((x) => x.id !== draggingCardId)
+                : items;
               const renderList: Array<
                 { type: 'card'; item: WebpageCardData } | { type: 'ghost' }
               > = [];
-              const gIdx =
-                ghostTab != null && ghostIndex != null
-                  ? Math.max(0, Math.min(items.length, ghostIndex))
-                  : -1;
-              for (let i = 0; i < items.length; i++) {
+              const gIdx = ghostActive
+                ? Math.max(0, Math.min(viewItems.length, ghostIndex as number))
+                : -1;
+              for (let i = 0; i < viewItems.length; i++) {
                 if (i === gIdx) renderList.push({ type: 'ghost' });
-                renderList.push({ type: 'card', item: items[i] });
+                renderList.push({ type: 'card', item: viewItems[i] });
               }
-              if (gIdx === items.length) renderList.push({ type: 'ghost' });
+              if (gIdx === viewItems.length) renderList.push({ type: 'ghost' });
               return renderList;
             })().map((node, idx) => (
               <div
@@ -280,6 +391,12 @@ export const CardGrid: React.FC<CardGridProps> = ({
                   node.type === 'card' ? (node.item as any).id : `ghost-${idx}`
                 }
                 className="toby-card-flex relative"
+                data-card-id={node.type === 'card' ? (node.item as any).id : undefined}
+                style={
+                  node.type === 'card' && hiddenCardId === (node.item as any).id
+                    ? { display: 'none' }
+                    : undefined
+                }
                 data-testid={
                   node.type === 'card'
                     ? `card-wrapper-${(node.item as any).id}`
@@ -294,7 +411,14 @@ export const CardGrid: React.FC<CardGridProps> = ({
                           'application/x-linktrove-webpage',
                           it.id
                         );
+                        try {
+                          e.dataTransfer.setData(
+                            'application/x-linktrove-webpage-meta',
+                            JSON.stringify({ id: it.id, title: it.title, url: it.url, favicon: it.favicon })
+                          );
+                        } catch {}
                         e.dataTransfer.effectAllowed = 'move';
+                        try { setDragWebpage({ id: it.id, title: it.title, url: it.url, favicon: it.favicon }); } catch {}
                         (e.currentTarget as HTMLElement).setAttribute(
                           'data-dragging',
                           'true'
@@ -308,6 +432,8 @@ export const CardGrid: React.FC<CardGridProps> = ({
                         (e.currentTarget as HTMLElement).removeAttribute(
                           'data-dragging'
                         );
+                        setDraggingCardId(null);
+                        try { setDragWebpage(null); } catch {}
                       }
                     : undefined
                 }
@@ -327,9 +453,12 @@ export const CardGrid: React.FC<CardGridProps> = ({
                               e.currentTarget as HTMLElement
                             ).getBoundingClientRect();
                             const midY = (rect.top + rect.bottom) / 2;
+                            const list = draggingCardId
+                              ? items.filter((x) => x.id !== draggingCardId)
+                              : items;
                             const isLast =
-                              items.length > 0 &&
-                              it.id === (items[items.length - 1] as any).id;
+                              list.length > 0 &&
+                              it.id === (list[list.length - 1] as any).id;
                             const atEnd = isLast && e.clientY > midY;
                             const beforeId = atEnd ? '__END__' : it.id;
                             (onDropTab as any)?.(tab, beforeId);
@@ -338,27 +467,30 @@ export const CardGrid: React.FC<CardGridProps> = ({
                             /* ignore */
                           }
                         }
-                        // 2) Existing card reorder
+                        // 2) Existing card dropped on a specific card
                         const fromId = e.dataTransfer.getData(
                           'application/x-linktrove-webpage'
                         );
-                        if (fromId && fromId !== it.id)
-                          onReorder?.(fromId, it.id);
+                        if (fromId && fromId !== it.id) {
+                          // If caller provided cross-group handler, prefer it; otherwise fallback to reorder
+                          if (onDropExistingCard) onDropExistingCard(fromId, it.id);
+                          else onReorder?.(fromId, it.id);
+                        }
                       }
                     : undefined
                 }
               >
                 {node.type === 'ghost' ? (
-                  ghostTab ? (
+                  ghostTab || ghostType === 'card' ? (
                     <TobyLikeCard
-                      title={ghostTab.title || ghostTab.url || 'New'}
+                      title={(ghostTab?.title || (ghostTab as any)?.url || (ghostType === 'card' ? 'Moving' : 'New'))}
                       description={''}
                       faviconText={
-                        (ghostTab.url || '')
+                        ((ghostTab?.url || '')
                           .replace(/^https?:\/\//, '')
                           .replace(/^www\./, '')
                           .slice(0, 2)
-                          .toUpperCase() || 'WW'
+                          .toUpperCase() || 'WW')
                       }
                       faviconUrl={(ghostTab as any)?.favIconUrl}
                       ghost

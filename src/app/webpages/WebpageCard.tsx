@@ -524,7 +524,6 @@ const TemplateFields: React.FC<{
   );
 };
 
-import { useCategories } from '../sidebar/categories';
 const CategorySelect: React.FC<{
   value: string;
   onChange: (v: string) => void;

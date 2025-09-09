@@ -59,12 +59,10 @@ export function createIdbStorageService(): StorageService {
       let useIdx = false;
       try {
         // prefer composite index for ordering
-        // @ts-expect-error runtime check
         if (s.indexNames.contains('by_categoryId_order')) useIdx = true;
       } catch {}
       if (useIdx) {
         // Query by categoryId via index
-        // @ts-expect-error ts dom lib
         const idx = s.index('by_categoryId_order');
         const range = IDBKeyRange.bound([categoryId, -Infinity], [categoryId, Infinity]);
         const rows = await new Promise<any[]>((resolve, reject) => {
@@ -368,7 +366,6 @@ export function createIdbStorageService(): StorageService {
         const s = t.objectStore('subcategories' as any);
         try {
           // Fast path via index
-          // @ts-expect-error runtime check
           const idx = s.index('by_categoryId');
           const range = IDBKeyRange.only(categoryId);
           const list: any[] = await new Promise((resolve, reject) => {
