@@ -62,6 +62,8 @@ export const CardGrid: React.FC<CardGridProps> = ({
   const [ghostTab, setGhostTab] = React.useState<TabItemData | null>(null);
   const [ghostType, setGhostType] = React.useState<'tab' | 'card' | null>(null);
   const [ghostIndex, setGhostIndex] = React.useState<number | null>(null);
+  const prevGiRef = React.useRef<number | null>(null);
+  const ghostBeforeRef = React.useRef<string | '__END__' | null>(null);
   const [draggingCardId, setDraggingCardId] = React.useState<string | null>(null);
   const [hiddenCardId, setHiddenCardId] = React.useState<string | null>(null);
   const zoneRef = React.useRef<HTMLDivElement | null>(null);
@@ -79,9 +81,11 @@ export const CardGrid: React.FC<CardGridProps> = ({
       let wrappers = Array.from(
         zone.querySelectorAll('.toby-card-flex')
       ) as HTMLElement[];
-      // Ignore any existing ghost wrapper to keep indices stable
+      // Ignore any existing ghost wrapper and any hidden wrapper (original dragged card)
       wrappers = wrappers.filter(
-        (el) => !el.querySelector('[data-testid="ghost-card"]')
+        (el) =>
+          !el.querySelector('[data-testid="ghost-card"]') &&
+          el.getAttribute('data-hidden') !== 'true'
       );
       if (!wrappers.length) return 0;
 
@@ -198,7 +202,8 @@ export const CardGrid: React.FC<CardGridProps> = ({
       setGhostType('tab');
       const gi = computeGhostIndex(e.clientX, e.clientY, e.target);
       setGhostIndex(gi);
-      dbg('dnd', 'dragOver(tab)', { gi, len: items.length });
+      try { const list = hiddenCardId ? items.filter((x)=>x.id!==hiddenCardId) : items; ghostBeforeRef.current = gi==null? null : gi>=list.length ? '__END__' : list[gi].id; } catch {}
+      if (gi !== prevGiRef.current) { prevGiRef.current = gi; dbg('dnd','dragOver(tab)',{gi,len:items.length}); }
       return;
     }
     // Existing card being dragged (possibly cross-group)
@@ -232,7 +237,8 @@ export const CardGrid: React.FC<CardGridProps> = ({
         }
         const gi = computeGhostIndex(e.clientX, e.clientY, e.target);
         setGhostIndex(gi);
-        dbg('dnd', 'dragOver(card)', { gi, len: items.length, fromId });
+        try { const list = hiddenCardId ? items.filter((x)=>x.id!==hiddenCardId) : items; ghostBeforeRef.current = gi==null? null : gi>=list.length ? '__END__' : list[gi].id; } catch {}
+        if (gi !== prevGiRef.current) { prevGiRef.current = gi; dbg('dnd','dragOver(card)',{gi,len:items.length,fromId}); }
         return;
       }
     } catch {}
@@ -248,7 +254,8 @@ export const CardGrid: React.FC<CardGridProps> = ({
         } else setGhostTab(null);
         const gi = computeGhostIndex(e.clientX, e.clientY, e.target);
         setGhostIndex(gi);
-        dbg('dnd', 'dragOver(type-detect)', { gi, len: items.length, types });
+        try { const list = hiddenCardId ? items.filter((x)=>x.id!==hiddenCardId) : items; ghostBeforeRef.current = gi==null? null : gi>=list.length ? '__END__' : list[gi].id; } catch {}
+        if (gi !== prevGiRef.current) { prevGiRef.current = gi; dbg('dnd','dragOver(type-detect)',{gi,len:items.length,types}); }
         return;
       }
       if (types.includes('application/x-linktrove-tab')) {
@@ -282,13 +289,36 @@ export const CardGrid: React.FC<CardGridProps> = ({
       // 1) Existing webpage card dropped into this grid (possibly cross-group)
       const fromId = e.dataTransfer.getData('application/x-linktrove-webpage');
       if (fromId) {
-        let idx = ghostIndex;
-        if (idx == null)
-          idx = computeGhostIndex(e.clientX, e.clientY, e.target);
-        const list = hiddenCardId ? items.filter((x) => x.id !== hiddenCardId) : items;
-        if (idx == null) idx = list.length;
-        const beforeId = idx >= list.length ? '__END__' : list[idx].id;
-        dbg('dnd', 'drop(card→grid)', { fromId, idx, beforeId, list: list.map((x)=>x.id) });
+        // Prefer DOM-based ghost position → next card wrapper id
+        let beforeId: string | '__END__' | null = null;
+        try {
+          const zone = zoneRef.current;
+          const ghost = zone?.querySelector('[data-testid="ghost-card"]');
+          let next = ghost?.nextElementSibling as HTMLElement | null | undefined;
+          while (
+            next && (
+              !next.getAttribute('data-card-id') ||
+              next.getAttribute('data-hidden') === 'true' ||
+              next.getAttribute('data-card-id') === fromId
+            )
+          ) {
+            next = next.nextElementSibling as any;
+          }
+          beforeId = (next?.getAttribute('data-card-id') as string) || '__END__';
+        } catch {}
+        if (!beforeId) {
+          // Fallback: ghost-captured id during dragOver
+          beforeId = ghostBeforeRef.current;
+        }
+        if (!beforeId) {
+          let idx = ghostIndex;
+          if (idx == null)
+            idx = computeGhostIndex(e.clientX, e.clientY, e.target);
+          const list = hiddenCardId ? items.filter((x) => x.id !== hiddenCardId) : items;
+          if (idx == null) idx = list.length;
+          beforeId = idx >= list.length ? '__END__' : list[idx].id;
+        }
+        dbg('dnd', 'drop(card→grid)', { fromId, idx: ghostIndex, beforeId, list: (hiddenCardId ? items.filter((x)=>x.id!==hiddenCardId):items).map((x)=>x.id) });
         onDropExistingCard?.(fromId, beforeId);
         setGhostTab(null);
         setGhostType(null);
@@ -302,13 +332,32 @@ export const CardGrid: React.FC<CardGridProps> = ({
       if (raw) {
         const tab: TabItemData = JSON.parse(raw);
         // Determine insertion index from current ghost or pointer
-        let idx = ghostIndex;
-        if (idx == null)
-          idx = computeGhostIndex(e.clientX, e.clientY, e.target);
-        const list = hiddenCardId ? items.filter((x) => x.id !== hiddenCardId) : items;
-        if (idx == null) idx = list.length;
-        const beforeId = idx >= list.length ? '__END__' : list[idx].id;
-        dbg('dnd', 'drop(tab→grid)', { idx, beforeId, list: list.map((x)=>x.id) });
+        // Determine insertion index using DOM ghost position when possible
+        let beforeId: string | '__END__' | null = null;
+        try {
+          const zone = zoneRef.current;
+          const ghost = zone?.querySelector('[data-testid="ghost-card"]');
+          let next = ghost?.nextElementSibling as HTMLElement | null | undefined;
+          while (
+            next && (
+              !next.getAttribute('data-card-id') ||
+              next.getAttribute('data-hidden') === 'true'
+            )
+          ) {
+            next = next.nextElementSibling as any;
+          }
+          beforeId = (next?.getAttribute('data-card-id') as string) || '__END__';
+        } catch {}
+        if (!beforeId) beforeId = ghostBeforeRef.current;
+        if (!beforeId) {
+          let idx = ghostIndex;
+          if (idx == null)
+            idx = computeGhostIndex(e.clientX, e.clientY, e.target);
+          const list = hiddenCardId ? items.filter((x) => x.id !== hiddenCardId) : items;
+          if (idx == null) idx = list.length;
+          beforeId = idx >= list.length ? '__END__' : list[idx].id;
+        }
+        dbg('dnd', 'drop(tab→grid)', { idx: ghostIndex, beforeId, list: (hiddenCardId ? items.filter((x)=>x.id!==hiddenCardId):items).map((x)=>x.id) });
         (onDropTab as any)?.(tab, beforeId);
         setGhostTab(null);
         setGhostType(null);
@@ -401,14 +450,15 @@ export const CardGrid: React.FC<CardGridProps> = ({
                 }
                 className="toby-card-flex relative"
                 data-card-id={node.type === 'card' ? (node.item as any).id : undefined}
+                data-hidden={
+                  node.type === 'card' && hiddenCardId === (node.item as any).id
+                    ? 'true'
+                    : undefined
+                }
+                data-testid={node.type === 'ghost' ? 'ghost-card' : (node.type === 'card' ? `card-wrapper-${(node.item as any).id}` : undefined)}
                 style={
                   node.type === 'card' && hiddenCardId === (node.item as any).id
                     ? { display: 'none' }
-                    : undefined
-                }
-                data-testid={
-                  node.type === 'card'
-                    ? `card-wrapper-${(node.item as any).id}`
                     : undefined
                 }
                 draggable={node.type === 'card' && !dragDisabled}

@@ -360,6 +360,7 @@ export function createIdbStorageService(): StorageService {
         for (const p of pages) ws.delete(p.id);
         ss.delete(id);
       });
+      try { await setMeta(`order.subcat.${id}`, []); } catch {}
     },
     reorderSubcategories: async (categoryId: string, orderedIds: string[]) => {
       await tx(['subcategories' as any], 'readwrite', async (t) => {
@@ -387,9 +388,25 @@ export function createIdbStorageService(): StorageService {
           req.onerror = () => reject(req.error);
         });
         if (!cur) return;
-        cur.subcategoryId = subcategoryId;
+        const prev = (cur as any).subcategoryId as string | undefined;
+        const next = subcategoryId;
+        cur.subcategoryId = next;
         cur.updatedAt = new Date().toISOString();
         s.put(cur);
+        // Maintain per-group order lists
+        try {
+          if (prev && prev !== next) {
+            const keyPrev = `order.subcat.${prev}`;
+            const prevOrder = ((await getMeta<string[]>(keyPrev)) || []).filter((x) => x !== cardId);
+            await setMeta(keyPrev, prevOrder);
+          }
+          if (next) {
+            const keyNext = `order.subcat.${next}`;
+            const nextOrder = ((await getMeta<string[]>(keyNext)) || []).filter((x) => x !== cardId);
+            nextOrder.push(cardId);
+            await setMeta(keyNext, nextOrder);
+          }
+        } catch {}
       });
     },
     deleteSubcategoriesByCategory: async (categoryId: string) => {

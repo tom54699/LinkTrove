@@ -70,23 +70,51 @@ export function createWebpageService(deps?: {
     return h | 0;
   }
 
+  async function getGroupOrder(gid: string): Promise<string[]> {
+    try {
+      const v = await getMeta<string[]>(`order.subcat.${gid}`);
+      return Array.isArray(v) ? v : [];
+    } catch {
+      return [];
+    }
+  }
+
+  async function setGroupOrder(gid: string, ids: string[]): Promise<void> {
+    try {
+      await setMeta(`order.subcat.${gid}`, ids);
+    } catch {}
+  }
+
   async function loadWebpages() {
     const list = await storage.loadFromLocal();
+    // Sort within the same subcategory by its order list; otherwise keep storage order
+    const index = new Map(list.map((w, i) => [w.id, i]));
     try {
-      const order: string[] | undefined = await getMeta('order.webpages');
-      if (Array.isArray(order) && order.length) {
-        const pos = new Map(order.map((id, i) => [id, i]));
-        return [...list].sort((a, b) =>
-          (pos.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (pos.get(b.id) ?? Number.MAX_SAFE_INTEGER)
-        );
-      }
-    } catch {}
-    return list;
+      const groupIds = Array.from(
+        new Set((list as any[]).map((w: any) => w.subcategoryId).filter(Boolean))
+      ) as string[];
+      const orders = await Promise.all(groupIds.map((g) => getGroupOrder(g)));
+      const posMap = new Map<string, Map<string, number>>(
+        groupIds.map((g, i) => [g, new Map(orders[i].map((id, j) => [id, j]))])
+      );
+      return [...list].sort((a: any, b: any) => {
+        const ga = a.subcategoryId;
+        const gb = b.subcategoryId;
+        if (ga && gb && ga === gb) {
+          const pm = posMap.get(ga);
+          const ia = pm?.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+          const ib = pm?.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+          if (ia !== ib) return ia - ib;
+        }
+        return (index.get(a.id) ?? 0) - (index.get(b.id) ?? 0);
+      });
+    } catch {
+      return list;
+    }
   }
 
   async function saveWebpages(all: WebpageData[]) {
     await storage.saveToLocal(all);
-    try { await setMeta('order.webpages', all.map((x) => x.id)); } catch {}
   }
 
   async function addWebpageFromTab(tab: TabLike): Promise<WebpageData> {
@@ -141,35 +169,62 @@ export function createWebpageService(deps?: {
 
   async function deleteWebpage(id: string) {
     const list = await storage.loadFromLocal();
+    const victim = list.find((w) => w.id === id) as any;
     const next = list.filter((w) => w.id !== id);
     await saveWebpages(next);
+    // Remove from its group's order
+    try {
+      const gid = victim?.subcategoryId as string | undefined;
+      if (gid) {
+        const order = await getGroupOrder(gid);
+        const pruned = order.filter((x) => x !== id);
+        if (pruned.length !== order.length) await setGroupOrder(gid, pruned);
+      }
+    } catch {}
   }
 
   async function reorderWebpages(fromId: string, toId: string) {
-    const list = await loadWebpages();
-    const fromIdx = list.findIndex((w) => w.id === fromId);
-    const toIdx = list.findIndex((w) => w.id === toId);
-    if (fromIdx === -1 || toIdx === -1) return list;
-    try { console.debug('[lt:dnd] reorderWebpages', { fromId, toId, fromIdx, toIdx, order: list.map(x=>x.id) }); } catch {}
-    const next = [...list];
-    const [moved] = next.splice(fromIdx, 1);
-    // If removing an item from before the target, the target index shifts left by 1
-    const insertAt = fromIdx < toIdx ? toIdx - 1 : toIdx;
-    next.splice(Math.max(0, insertAt), 0, moved);
-    await saveWebpages(next);
-    try { console.debug('[lt:dnd] after reorder', { order: next.map(x=>x.id) }); } catch {}
-    return next;
+    // Only require toId to exist; fromId might be moving across groups
+    const list = await storage.loadFromLocal();
+    const to = list.find((w) => w.id === toId) as any;
+    if (!to) return await loadWebpages();
+    const gid = to.subcategoryId as string | undefined;
+    if (!gid) return await loadWebpages();
+    // Build baseline from current storage order merged with existing
+    const currentIds = (list as any[])
+      .filter((w: any) => w.subcategoryId === gid)
+      .map((w: any) => w.id);
+    const existing = await getGroupOrder(gid);
+    const seen = new Set<string>();
+    const base: string[] = [];
+    for (const id of existing) if (currentIds.includes(id) && !seen.has(id)) { seen.add(id); base.push(id); }
+    for (const id of currentIds) if (!seen.has(id)) { seen.add(id); base.push(id); }
+    const filtered = base.filter((x) => x !== fromId);
+    const idx = filtered.indexOf(toId);
+    const insertAt = idx === -1 ? filtered.length : idx;
+    filtered.splice(insertAt, 0, fromId);
+    await setGroupOrder(gid, filtered);
+    return await loadWebpages();
   }
 
   async function moveWebpageToEnd(id: string) {
-    const list = await loadWebpages();
-    const idx = list.findIndex((w) => w.id === id);
-    if (idx === -1) return list;
-    const next = [...list];
-    const [moved] = next.splice(idx, 1);
-    next.push(moved);
-    await saveWebpages(next);
-    return next;
+    const list = await storage.loadFromLocal();
+    const it = list.find((w) => w.id === id) as any;
+    if (!it) return await loadWebpages();
+    const gid = it.subcategoryId as string | undefined;
+    if (!gid) return await loadWebpages();
+    const currentIds = (list as any[])
+      .filter((w: any) => w.subcategoryId === gid)
+      .map((w: any) => w.id);
+    const existing = await getGroupOrder(gid);
+    const seen = new Set<string>();
+    const base: string[] = [];
+    for (const x of existing) if (currentIds.includes(x) && !seen.has(x)) { seen.add(x); base.push(x); }
+    for (const x of currentIds) if (!seen.has(x)) { seen.add(x); base.push(x); }
+    const filtered = base.filter((x) => x !== id);
+    filtered.push(id);
+    await setGroupOrder(gid, filtered);
+    return await loadWebpages();
   }
 
   return {
