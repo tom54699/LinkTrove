@@ -148,6 +148,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
                     src={src}
                     alt=""
                     style={{ width: 32, height: 32, objectFit: 'cover' }}
+                    draggable={false}
                   />
                 );
               })()}
