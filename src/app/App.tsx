@@ -315,87 +315,206 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
   );
   const { showToast, setLoading } = useFeedback();
   const [file, setFile] = React.useState<File | null>(null);
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [inlineMsg, setInlineMsg] = React.useState<
+    null | { kind: 'success' | 'error'; text: string }
+  >(null);
   const { actions: pagesActions } = useWebpages();
   const { actions: catActions } = useCategories() as any;
   const { actions: tplActions } = useTemplates() as any;
+
+  function humanSize(n: number) {
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+    return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+
+  async function performImport() {
+    if (!file) {
+      showToast('請選擇 JSON 檔案', 'error');
+      return;
+    }
+    setConfirmOpen(false);
+    setLoading(true);
+    setInlineMsg(null);
+    try {
+      const text = await file.text();
+      // Create a simple summary even without preview
+      let pagesCount = 0;
+      let catsCount = 0;
+      try {
+        const parsed = JSON.parse(text);
+        pagesCount = Array.isArray(parsed?.webpages) ? parsed.webpages.length : 0;
+        catsCount = Array.isArray(parsed?.categories) ? parsed.categories.length : 0;
+      } catch {}
+      if (ei) {
+        await svc.importJsonMerge(text);
+      } else {
+        const storage = createStorageService();
+        await (storage as any).importData(text);
+      }
+      try { await pagesActions.load(); } catch {}
+      try { await catActions?.reload?.(); } catch {}
+      try { await tplActions?.reload?.(); } catch {}
+      const summary = `Imported: ${pagesCount} pages, ${catsCount} categories`;
+      setInlineMsg({ kind: 'success', text: summary });
+      showToast('Import success', 'success');
+    } catch (e: any) {
+      const msg = e?.message || 'Import failed';
+      setInlineMsg({ kind: 'error', text: msg });
+      showToast(msg, 'error');
+    } finally {
+      setLoading(false);
+    }
+  }
   return (
     <div>
       <h1 className="text-xl font-semibold mb-4">Settings</h1>
       <div className="space-y-8">
-        <div>
-          <button
-            className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
-            onClick={async () => {
-              setLoading(true);
-              try {
-                const json = await svc.exportJson();
-                const blob = new Blob([json], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'linktrove-export.json';
-                a.click();
-                URL.revokeObjectURL(url);
-                showToast('Export ready', 'success');
-              } catch {
-                showToast('Export failed', 'error');
-              } finally {
-                setLoading(false);
-              }
-            }}
-          >
-            Export JSON
-          </button>
-        </div>
-        <div>
-          <label className="block text-sm mb-1" htmlFor="import-json-file">Import JSON file</label>
-          <input
-            id="import-json-file"
-            aria-label="Import JSON file"
-            type="file"
-            accept="application/json,.json"
-            className="text-sm"
-            onChange={(e) => setFile(e.currentTarget.files?.[0] ?? null)}
-          />
-          <div className="mt-2">
-            <button
-              className="text-sm px-2 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30"
-              onClick={async () => {
-                if (!file) {
-                  showToast('請選擇 JSON 檔案', 'error');
-                  return;
-                }
-                setLoading(true);
-                try {
-                  const text = await file.text();
-                  // parse once for counts
-                  let parsed: any = {};
-                  try { parsed = JSON.parse(text); } catch { parsed = {}; }
-                  const pagesCnt = Array.isArray(parsed?.webpages) ? parsed.webpages.length : 0;
-                  const catsCnt = Array.isArray(parsed?.categories) ? parsed.categories.length : 0;
-                  const tplsCnt = Array.isArray(parsed?.templates) ? parsed.templates.length : 0;
-                  if (ei) {
-                    await svc.importJsonMerge(text);
-                  } else {
-                    // Fallback: use storage service full import (Replace)
-                    const storage = createStorageService();
-                    await (storage as any).importData(text);
-                  }
-                  // Reload in-memory views without manual refresh
-                  try { await pagesActions.load(); } catch {}
-                  try { await catActions?.reload?.(); } catch {}
-                  try { await tplActions?.reload?.(); } catch {}
-                  showToast(`Imported: ${pagesCnt} pages, ${catsCnt} categories${tplsCnt?`, ${tplsCnt} templates`:''}`, 'success');
-                } catch (e: any) {
-                  showToast(e?.message || 'Import failed', 'error');
-                } finally {
-                  setLoading(false);
-                }
-              }}
-            >
-              Import JSON
-            </button>
+        <div className="rounded border border-slate-700 bg-[var(--panel)] p-4">
+          <div className="mb-2 text-lg font-semibold">專案備份與還原（僅本專案）</div>
+          <div className="text-sm opacity-80 mb-4">
+            此區塊用於本專案格式的 JSON 備份與還原，僅適用於本專案資料的匯出/匯入。
+            與「群組」的匯出/匯入不同（可對接外部來源或其他服務），這裡的匯入會完全取代目前資料，建議先匯出備份。
           </div>
+
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm font-medium mb-2">匯出備份（本專案格式）</div>
+              <button
+                className="text-sm px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    const json = await svc.exportJson();
+                    const blob = new Blob([json], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'linktrove-export.json';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    showToast('Export ready', 'success');
+                  } catch {
+                    showToast('Export failed', 'error');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                Export JSON
+              </button>
+            </div>
+
+            <div className="border-t border-slate-700 pt-4">
+              <div className="text-sm font-medium mb-2">還原（取代現有資料）</div>
+              <div
+                className="rounded border-2 border-dashed border-slate-600 hover:border-emerald-600/70 hover:bg-emerald-950/10 p-3 text-sm"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  const f = e.dataTransfer.files?.[0];
+                  if (f) {
+                    setFile(f);
+                    try {
+                      JSON.parse(await f.text());
+                    } catch {
+                      showToast('Invalid JSON', 'error');
+                    }
+                  }
+                }}
+              >
+                <div className="flex items-center gap-3 flex-wrap">
+                  <input
+                    id="import-json-file"
+                    aria-label="Import JSON file"
+                    type="file"
+                    accept="application/json,.json"
+                    className="text-sm"
+                    onChange={async (e) => {
+                      const f = e.currentTarget.files?.[0] ?? null;
+                      setFile(f);
+                      if (f) {
+                        try {
+                          JSON.parse(await f.text());
+                        } catch {
+                          showToast('Invalid JSON', 'error');
+                        }
+                      }
+                    }}
+                    onClick={(e) => {
+                      (e.currentTarget as HTMLInputElement).value = '';
+                    }}
+                  />
+                  {file && (
+                    <div className="text-xs opacity-80">
+                      {file.name} — {humanSize(file.size)}
+                    </div>
+                  )}
+                  <button
+                    className="ml-auto text-sm px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50"
+                    disabled={!file}
+                    onClick={() => {
+                      if (!file) return showToast('請選擇 JSON 檔案', 'error');
+                      if (ei) {
+                        void performImport();
+                      } else {
+                        setConfirmOpen(true);
+                      }
+                    }}
+                  >
+                    Import JSON
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {inlineMsg && (
+            <div
+              className={`mt-3 text-sm px-3 py-2 rounded border ${
+                inlineMsg.kind === 'success'
+                  ? 'bg-emerald-900/30 border-emerald-700'
+                  : 'bg-red-900/30 border-red-700'
+              }`}
+            >
+              {inlineMsg.text}
+            </div>
+          )}
+
+          {confirmOpen && (
+            <div
+              className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
+              onClick={() => setConfirmOpen(false)}
+            >
+              <div
+                className="rounded border border-slate-700 bg-[var(--panel)] w-[520px] max-w-[95vw]"
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-label="Confirm Import"
+              >
+                <div className="px-5 py-4 border-b border-slate-700">
+                  <div className="text-lg font-semibold">確認匯入</div>
+                  <div className="text-xs opacity-80 mt-1">將取代現有資料。檔案：{file ? `${file.name} — ${humanSize(file.size)}` : ''}</div>
+                </div>
+                <div className="px-5 py-3 flex items-center justify-end gap-2">
+                  <button
+                    className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                    onClick={() => setConfirmOpen(false)}
+                  >
+                    取消
+                  </button>
+                  <button
+                    className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30"
+                    onClick={performImport}
+                  >
+                    確認匯入
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <TemplatesManager />
       </div>
