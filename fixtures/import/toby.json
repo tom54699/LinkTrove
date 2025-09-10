@@ -1,0 +1,19 @@
+{
+  "version": 3,
+  "lists": [
+    {
+      "title": "Dev",
+      "cards": [
+        { "title": "Node.js", "url": "https://nodejs.org" },
+        { "customTitle": "TS Handbook", "url": "https://www.typescriptlang.org/docs/", "customDescription": "TS Guide" }
+      ]
+    },
+    {
+      "title": "Design",
+      "cards": [
+        { "title": "Figma", "url": "https://www.figma.com" }
+      ]
+    }
+  ]
+}
+
