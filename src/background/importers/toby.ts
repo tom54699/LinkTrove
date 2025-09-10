@@ -164,3 +164,62 @@ export async function importTobyV3(json: string): Promise<TobyImportResult> {
   return { categoriesCreated: catsCreated, groupsCreated, pagesCreated };
 }
 
+/** Import a Toby v3 JSON (single list/group) into an existing group within a category. */
+export async function importTobyV3IntoGroup(
+  groupId: string,
+  categoryId: string,
+  json: string
+): Promise<{ pagesCreated: number }> {
+  let parsed: any;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    throw new Error('Invalid JSON');
+  }
+  // Accept: { version:3, lists:[{cards:[]}, ...] } or { version:3, cards:[...] }
+  let cards: TobyCard[] = [];
+  if (Array.isArray(parsed?.lists)) {
+    for (const l of parsed.lists) if (Array.isArray(l?.cards)) cards.push(...l.cards);
+  } else if (Array.isArray(parsed?.cards)) {
+    cards = parsed.cards;
+  } else {
+    throw new Error('Unsupported Toby format');
+  }
+  // Validate group exists and matches category
+  const subcats = await getAll('subcategories' as any).catch(() => []) as any[];
+  const target = subcats.find((s) => s.id === groupId);
+  if (!target || target.categoryId !== categoryId) throw new Error('Invalid target group');
+
+  const webpagesToPut: WebpageData[] = [];
+  const newIds: string[] = [];
+  for (const card of cards) {
+    const url = normalizeUrl(card.url);
+    if (!url) continue;
+    const id = genId('w');
+    webpagesToPut.push({
+      id,
+      title: normalizeTitle(card),
+      url,
+      favicon: '',
+      note: (card.customDescription || '').trim(),
+      category: categoryId,
+      subcategoryId: groupId,
+      meta: undefined,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    });
+    newIds.push(id);
+  }
+  if (webpagesToPut.length) await putAll('webpages', webpagesToPut);
+  // Append to group order
+  try {
+    const key = `order.subcat.${groupId}`;
+    let base: string[] = [];
+    try {
+      const v = await (await import('../idb/db')).getMeta<string[]>(key);
+      base = Array.isArray(v) ? v : [];
+    } catch {}
+    await setMeta(key, [...base, ...newIds]);
+  } catch {}
+  return { pagesCreated: webpagesToPut.length };
+}

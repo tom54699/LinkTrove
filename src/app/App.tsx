@@ -516,72 +516,8 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
             </div>
           )}
         </div>
-        <div className="rounded border border-slate-700 bg-[var(--panel)] p-4">
-          <div className="mb-2 text-lg font-semibold">外部匯入（Toby JSON）</div>
-          <div className="text-sm opacity-80 mb-4">
-            從 Toby 匯出的 JSON 匯入到本專案。此操作為合併匯入，不會刪除現有資料；每個 Toby 清單會轉成一個集合（Category），並建立同名群組（Group）承載卡片，保留卡片順序。
-          </div>
-          <TobyImportPanel />
-        </div>
         <TemplatesManager />
       </div>
-    </div>
-  );
-};
-
-const TobyImportPanel: React.FC = () => {
-  const { showToast, setLoading } = useFeedback();
-  const [file, setFile] = React.useState<File | null>(null);
-  const { actions: pagesActions } = useWebpages();
-  const { actions: catActions } = useCategories() as any;
-
-  async function doImport() {
-    if (!file) return showToast('請選擇 JSON 檔案', 'error');
-    setLoading(true);
-    try {
-      const text = await file.text();
-      // Lazy import to avoid bundling cost elsewhere
-      const { importTobyV3 } = await import('../background/importers/toby');
-      const res = await importTobyV3(text);
-      try { await pagesActions.load(); } catch {}
-      try { await catActions?.reload?.(); } catch {}
-      showToast(`Imported from Toby: ${res.pagesCreated} pages in ${res.groupsCreated} groups`, 'success');
-    } catch (e: any) {
-      showToast(e?.message || 'Import failed', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function humanSize(n: number) {
-    if (n < 1024) return `${n} B`;
-    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-    return `${(n / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
-  return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <input
-        aria-label="Import Toby JSON file"
-        type="file"
-        accept="application/json,.json"
-        className="text-sm"
-        onChange={(e) => {
-          const f = e.currentTarget.files?.[0] ?? null;
-          setFile(f);
-        }}
-        onClick={(e) => { (e.currentTarget as HTMLInputElement).value = ''; }}
-      />
-      {file && (
-        <div className="text-xs opacity-80">{file.name} — {humanSize(file.size)}</div>
-      )}
-      <button
-        className="ml-auto text-sm px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50"
-        disabled={!file}
-        onClick={doImport}
-      >
-        Import from Toby
-      </button>
     </div>
   );
 };

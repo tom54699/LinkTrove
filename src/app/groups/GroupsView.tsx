@@ -197,6 +197,34 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
               )}
             </div>
             <div className="flex items-center gap-2">
+              <input
+                id={`toby-file-${g.id}`}
+                type="file"
+                accept="application/json,.json"
+                aria-label="Import Toby JSON file"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.currentTarget.files?.[0];
+                  e.currentTarget.value = '';
+                  if (!f) return;
+                  try {
+                    const text = await f.text();
+                    const { importTobyV3IntoGroup } = await import('../../background/importers/toby');
+                    const res = await importTobyV3IntoGroup(g.id, g.categoryId, text);
+                    await actions.load();
+                    showToast(`已匯入 Toby：新增 ${res.pagesCreated} 筆`, 'success');
+                  } catch (err: any) {
+                    showToast(err?.message || '匯入失敗', 'error');
+                  }
+                }}
+              />
+              <button
+                className="text-xs px-1.5 py-0.5 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30"
+                onClick={() => { try { document.getElementById(`toby-file-${g.id}`)?.click(); } catch {} }}
+                title="匯入 Toby JSON 至此 group"
+              >
+                匯入 Toby
+              </button>
               <button className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:bg-slate-800" onClick={() => { setRenaming(g.id); setRenameText(g.name); }}>重新命名</button>
               <button className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:bg-slate-800" onClick={() => move(g.id, -1)} aria-label="上移">↑</button>
               <button className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:bg-slate-800" onClick={() => move(g.id, 1)} aria-label="下移">↓</button>
