@@ -314,7 +314,7 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
     [ei]
   );
   const { showToast, setLoading } = useFeedback();
-  const [text, setText] = React.useState('');
+  const [file, setFile] = React.useState<File | null>(null);
   const { actions: pagesActions } = useWebpages();
   const { actions: catActions } = useCategories() as any;
   const { actions: tplActions } = useTemplates() as any;
@@ -348,34 +348,44 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
           </button>
         </div>
         <div>
-          <label className="block text-sm mb-1">Import JSON</label>
-          <textarea
-            aria-label="Import JSON"
-            className="w-full h-32 rounded border border-slate-700 bg-slate-900 p-2 text-sm"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
+          <label className="block text-sm mb-1" htmlFor="import-json-file">Import JSON file</label>
+          <input
+            id="import-json-file"
+            aria-label="Import JSON file"
+            type="file"
+            accept="application/json,.json"
+            className="text-sm"
+            onChange={(e) => setFile(e.currentTarget.files?.[0] ?? null)}
           />
           <div className="mt-2">
             <button
               className="text-sm px-2 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30"
               onClick={async () => {
+                if (!file) {
+                  showToast('請選擇 JSON 檔案', 'error');
+                  return;
+                }
                 setLoading(true);
                 try {
-                  const res = await svc.importJsonMerge(text);
+                  const text = await file.text();
+                  // parse once for counts
+                  let parsed: any = {};
+                  try { parsed = JSON.parse(text); } catch { parsed = {}; }
+                  const pagesCnt = Array.isArray(parsed?.webpages) ? parsed.webpages.length : 0;
+                  const catsCnt = Array.isArray(parsed?.categories) ? parsed.categories.length : 0;
+                  const tplsCnt = Array.isArray(parsed?.templates) ? parsed.templates.length : 0;
+                  if (ei) {
+                    await svc.importJsonMerge(text);
+                  } else {
+                    // Fallback: use storage service full import (Replace)
+                    const storage = createStorageService();
+                    await (storage as any).importData(text);
+                  }
                   // Reload in-memory views without manual refresh
-                  try {
-                    await pagesActions.load();
-                  } catch {}
-                  try {
-                    await catActions?.reload?.();
-                  } catch {}
-                  try {
-                    await tplActions?.reload?.();
-                  } catch {}
-                  showToast(
-                    `Imported: ${res.addedPages} pages, ${res.addedCategories} categories`,
-                    'success'
-                  );
+                  try { await pagesActions.load(); } catch {}
+                  try { await catActions?.reload?.(); } catch {}
+                  try { await tplActions?.reload?.(); } catch {}
+                  showToast(`Imported: ${pagesCnt} pages, ${catsCnt} categories${tplsCnt?`, ${tplsCnt} templates`:''}`, 'success');
                 } catch (e: any) {
                   showToast(e?.message || 'Import failed', 'error');
                 } finally {

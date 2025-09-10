@@ -33,7 +33,7 @@ function makeStorage(
 }
 
 describe('Settings import/export UI (task 10)', () => {
-  it('imports pasted JSON and shows success toast', async () => {
+  it('imports JSON file and shows success toast', async () => {
     const storage = makeStorage({
       pages: [{ id: '1', title: 'A', url: 'https://a' }],
       cats: [{ id: 'c1', name: 'Default', color: '#fff', order: 0 }],
@@ -45,22 +45,22 @@ describe('Settings import/export UI (task 10)', () => {
       </FeedbackProvider>
     );
 
-    const textarea = screen.getByLabelText('Import JSON');
-    fireEvent.change(textarea, {
-      target: {
-        value: JSON.stringify({
-          webpages: [{ id: '2', title: 'B', url: 'https://b' }],
-          categories: [{ id: 'c2', name: 'Work', color: '#0f0', order: 1 }],
-        }),
-      },
-    });
+    const input = screen.getByLabelText('Import JSON file');
+    const file = new File([
+      JSON.stringify({
+        webpages: [{ id: '2', title: 'B', url: 'https://b' }],
+        categories: [{ id: 'c2', name: 'Work', color: '#0f0', order: 1 }],
+      }),
+    ], 'import.json', { type: 'application/json' });
+    Object.defineProperty(input, 'files', { value: [file] });
+    fireEvent.change(input);
     fireEvent.click(screen.getByRole('button', { name: /import json/i }));
     expect(
       await screen.findByText(/Imported: 1 pages, 1 categories/i)
     ).toBeInTheDocument();
   });
 
-  it('shows error toast on invalid JSON', async () => {
+  it('shows error toast on invalid JSON file', async () => {
     const storage = makeStorage();
     const ei = createExportImportService({ storage });
     render(
@@ -68,8 +68,10 @@ describe('Settings import/export UI (task 10)', () => {
         <Settings ei={ei} />
       </FeedbackProvider>
     );
-    const textarea = screen.getByLabelText('Import JSON');
-    fireEvent.change(textarea, { target: { value: '{bad json' } });
+    const input = screen.getByLabelText('Import JSON file');
+    const file = new File(['{bad json'], 'import.json', { type: 'application/json' });
+    Object.defineProperty(input, 'files', { value: [file] });
+    fireEvent.change(input);
     fireEvent.click(screen.getByRole('button', { name: /import json/i }));
     expect(await screen.findByText(/invalid json/i)).toBeInTheDocument();
   });

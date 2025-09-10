@@ -190,7 +190,28 @@ export function createIdbStorageService(): StorageService {
     if (theme !== undefined) settings.theme = theme;
     if (selectedCategoryId !== undefined)
       settings.selectedCategoryId = selectedCategoryId;
-    return JSON.stringify({ webpages, categories, templates, subcategories, settings });
+    // Export per-group orders
+    const orders: { subcategories: Record<string, string[]> } = { subcategories: {} };
+    try {
+      for (const sc of (subcategories as any[])) {
+        const key = `order.subcat.${sc.id}`;
+        try {
+          const vals = (await getMeta<string[]>(key)) || [];
+          if (Array.isArray(vals) && vals.length > 0) orders.subcategories[sc.id] = vals.slice();
+        } catch {}
+      }
+    } catch {}
+
+    const payload = {
+      schemaVersion: 1,
+      webpages,
+      categories,
+      templates,
+      subcategories,
+      settings,
+      orders,
+    } as any;
+    return JSON.stringify(payload);
   }
 
   async function importData(jsonData: string): Promise<void> {
@@ -212,15 +233,36 @@ export function createIdbStorageService(): StorageService {
     const subcats: any[] = Array.isArray(parsed?.subcategories)
       ? parsed.subcategories
       : [];
+    const ordersObj: any = parsed?.orders;
+    const ordersSubcats: Record<string, string[]> =
+      ordersObj && ordersObj.subcategories && typeof ordersObj.subcategories === 'object'
+        ? ordersObj.subcategories
+        : {};
     // Basic validation (keep same checks)
     if (!Array.isArray(pages)) throw new Error('Invalid webpages payload');
     if (!Array.isArray(cats)) throw new Error('Invalid categories payload');
     if (!Array.isArray(tmpls)) throw new Error('Invalid templates payload');
-    // Bulk put
+    // Replace semantics: clear then bulk put
+    await clearStore('categories');
+    await clearStore('templates');
+    await clearStore('subcategories' as any);
+    await clearStore('webpages');
     if (cats.length) await putAll('categories', cats);
     if (tmpls.length) await putAll('templates', tmpls);
     if (subcats.length) await putAll('subcategories' as any, subcats);
     if (pages.length) await putAll('webpages', pages);
+    // Restore per-group orders for groups present
+    try {
+      const presentGroups: Set<string> = new Set((subcats as any[]).map((s: any) => s.id));
+      for (const [gid, arr] of Object.entries(ordersSubcats || {})) {
+        if (!presentGroups.has(gid)) continue;
+        const key = `order.subcat.${gid}`;
+        try {
+          const ids = Array.isArray(arr) ? (arr as string[]) : [];
+          await setMeta(key, ids);
+        } catch {}
+      }
+    } catch {}
   }
 
   return {
