@@ -109,7 +109,19 @@ export const WebpageCard: React.FC<{
       <div className="flex items-start gap-2 pr-2">
         <div className="toby-icon-box relative mt-1 w-10 h-10 rounded bg-slate-600 overflow-hidden flex items-center justify-center">
           {data.favicon ? (
-            <img src={data.favicon} alt="" className="w-10 h-10 object-cover" draggable={false} />
+            <img
+              src={data.favicon}
+              alt=""
+              className="w-10 h-10 object-cover"
+              draggable={false}
+              onError={(e) => {
+                // Hide broken image and show fallback block
+                const img = e.currentTarget as HTMLImageElement;
+                img.style.display = 'none';
+                const parent = img.parentElement;
+                if (parent) parent.appendChild(Object.assign(document.createElement('div'), { className: 'w-full h-full bg-slate-600' }));
+              }}
+            />
           ) : (
             <div className="w-full h-full bg-slate-600" />
           )}

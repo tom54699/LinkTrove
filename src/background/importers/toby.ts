@@ -53,6 +53,18 @@ function normalizeUrl(raw?: string): string | null {
   }
 }
 
+function guessFavicon(u: string): string {
+  try {
+    const url = new URL(u);
+    // Prefer a highly reliable CDN-based favicon service to avoid broken icons
+    const host = url.hostname;
+    // DuckDuckGo service returns ICO/PNG reliably without CORS issues for <img>
+    return `https://icons.duckduckgo.com/ip3/${host}.ico`;
+  } catch {
+    return '';
+  }
+}
+
 /**
  * Import Toby v3 JSON. Non-destructive: merges into existing data.
  * - Each Toby list becomes a category (if same name exists, reuse it)
@@ -130,7 +142,7 @@ export async function importTobyV3(json: string): Promise<TobyImportResult> {
         id,
         title: normalizeTitle(card),
         url,
-        favicon: '',
+        favicon: guessFavicon(url),
         note: (card.customDescription || '').trim(),
         category: cat.id,
         subcategoryId: gid,
@@ -200,7 +212,7 @@ export async function importTobyV3IntoGroup(
       id,
       title: normalizeTitle(card),
       url,
-      favicon: '',
+      favicon: guessFavicon(url),
       note: (card.customDescription || '').trim(),
       category: categoryId,
       subcategoryId: groupId,
