@@ -109,7 +109,7 @@ export const WebpageCard: React.FC<{
       <div className="flex items-start gap-2 pr-2">
         <div className="toby-icon-box relative mt-1 w-10 h-10 rounded bg-slate-600 overflow-hidden flex items-center justify-center">
           {data.favicon ? (
-            <img src={data.favicon} alt="" className="w-10 h-10 object-cover" />
+            <img src={data.favicon} alt="" className="w-10 h-10 object-cover" draggable={false} />
           ) : (
             <div className="w-full h-full bg-slate-600" />
           )}
@@ -211,6 +211,7 @@ export const WebpageCard: React.FC<{
             alt=""
             width={12}
             height={12}
+            draggable={false}
           />
         </button>
       </div>
@@ -234,6 +235,7 @@ export const WebpageCard: React.FC<{
             alt=""
             width={12}
             height={12}
+            draggable={false}
           />
         </button>
         <button
@@ -250,6 +252,7 @@ export const WebpageCard: React.FC<{
             alt=""
             width={12}
             height={12}
+            draggable={false}
           />
         </button>
       </div>
@@ -285,7 +288,7 @@ export const WebpageCard: React.FC<{
           >
             <div className="flex items-center gap-3 mb-4">
               {data.favicon ? (
-                <img src={data.favicon} alt="" className="w-6 h-6" />
+                <img src={data.favicon} alt="" className="w-6 h-6" draggable={false} />
               ) : (
                 <div className="w-6 h-6 bg-slate-600 rounded" />
               )}

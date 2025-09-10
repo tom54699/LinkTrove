@@ -40,7 +40,7 @@ export const TabItem: React.FC<
       {...rest}
     >
       {tab.favIconUrl ? (
-        <img src={tab.favIconUrl} alt="" className="w-4 h-4" />
+        <img src={tab.favIconUrl} alt="" className="w-4 h-4" draggable={false} />
       ) : (
         <div className="w-4 h-4 bg-slate-600 rounded" />
       )}
