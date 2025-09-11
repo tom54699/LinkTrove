@@ -31,17 +31,15 @@ export function computeAutoMeta(
     const hostname = u.hostname;
     const origin = u.origin;
     const pathname = u.pathname;
-    const hasKey = (k: string) => f.some((x) => x.key === k);
-    const maybeSet = (k: string, v: string) => {
-      if (!hasKey(k)) return;
-      if ((meta[k] ?? '').trim()) return;
-      meta[k] = v;
+    const hasKey = (keyName: string) => f.some((x) => x.key === keyName);
+    const maybeSet = (fieldKey: string, value: string) => {
+      if (!hasKey(fieldKey)) return;
+      if ((meta[fieldKey] ?? '').trim()) return;
+      meta[fieldKey] = value;
     };
     ['title', 'name', 'pageTitle'].forEach((key) => title && maybeSet(key, title));
     ['url', 'link', 'href'].forEach((key) => maybeSet(key, u.toString()));
-    ['host', 'hostname', 'domain', 'site'].forEach((key) =>
-      maybeSet(key, hostname)
-    );
+    ['host', 'hostname', 'domain', 'site'].forEach((key) => maybeSet(key, hostname));
     ['origin'].forEach((key) => maybeSet(key, origin));
     ['path', 'pathname'].forEach((key) => maybeSet(key, pathname));
     ['favicon'].forEach((key) => favicon && maybeSet(key, favicon));

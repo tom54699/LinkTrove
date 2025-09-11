@@ -279,7 +279,7 @@ export const WebpagesProvider: React.FC<{
               let cached = await getCachedMeta(item.url);
               const needKeys = ['siteName', 'author'] as const;
               const missing = (m?: any) =>
-                !m || needKeys.some((k) => !((m as any)[k] || '').trim());
+                !m || needKeys.some((key) => !((m as any)[key] || '').trim());
               // Fallback: if cache missing or missing desired keys, try to find an open tab and extract live
               if (
                 missing(cached) &&
