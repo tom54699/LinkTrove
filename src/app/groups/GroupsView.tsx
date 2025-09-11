@@ -22,6 +22,10 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
   const [renaming, setRenaming] = React.useState<string | null>(null);
   const [renameText, setRenameText] = React.useState<string>('');
   const [confirmDeleteGroup, setConfirmDeleteGroup] = React.useState<string | null>(null);
+  // Toby import wizard state
+  const [tobyOpenFor, setTobyOpenFor] = React.useState<string | null>(null);
+  const [tobyFile, setTobyFile] = React.useState<File | null>(null);
+  const [tobyPreview, setTobyPreview] = React.useState<{ links: number } | null>(null);
 
   const svc = React.useMemo(() => {
     const hasChrome =
@@ -236,15 +240,22 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   const f = e.currentTarget.files?.[0];
                   e.currentTarget.value = '';
                   if (!f) return;
+                  // Open wizard modal for this group
+                  setTobyFile(f);
+                  setTobyOpenFor(g.id);
                   try {
-                    const text = await f.text();
-                    const { importTobyV3IntoGroup } = await import('../../background/importers/toby');
-                    const res = await importTobyV3IntoGroup(g.id, g.categoryId, text);
-                    await actions.load();
-                    showToast(`已匯入 Toby：新增 ${res.pagesCreated} 筆`, 'success');
-                  } catch (err: any) {
-                    showToast(err?.message || '匯入失敗', 'error');
-                  }
+                    const txt = await f.text();
+                    let count = 0;
+                    try {
+                      const obj = JSON.parse(txt);
+                      if (Array.isArray(obj?.lists)) {
+                        for (const l of obj.lists) if (Array.isArray(l?.cards)) count += l.cards.length;
+                      } else if (Array.isArray(obj?.cards)) {
+                        count = obj.cards.length;
+                      }
+                    } catch {}
+                    setTobyPreview({ links: count });
+                  } catch { setTobyPreview(null); }
                 }}
               />
               <button
@@ -347,6 +358,50 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 }}
               >
                 刪除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {tobyOpenFor && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
+          onClick={() => { setTobyOpenFor(null); setTobyFile(null); setTobyPreview(null); }}
+        >
+          <div
+            className="rounded border border-slate-700 bg-[var(--bg)] w-[520px] max-w-[95vw] p-5"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Import Toby"
+          >
+            <div className="text-lg font-semibold">匯入 Toby 到此 group</div>
+            <div className="mt-2 text-sm opacity-80">檔案：{tobyFile?.name} {tobyPreview ? `— 連結 ${tobyPreview.links}` : ''}</div>
+            {/* Dedup option removed per request */}
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => { setTobyOpenFor(null); setTobyFile(null); setTobyPreview(null); }}>取消</button>
+              <button
+                className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50"
+                onClick={async () => {
+                  const gid = tobyOpenFor;
+                  const f = tobyFile;
+                  setTobyOpenFor(null);
+                  if (!gid || !f) return;
+                  try {
+                    const text = await f.text();
+                    const { importTobyV3IntoGroup } = await import('../../background/importers/toby');
+                    const g = groups.find((x)=>x.id===gid);
+                    const res = await importTobyV3IntoGroup(gid, g?.categoryId || categoryId, text);
+                    await actions.load();
+                    showToast(`已匯入 Toby：新增 ${res.pagesCreated} 筆`, 'success');
+                  } catch (err: any) {
+                    showToast(err?.message || '匯入失敗', 'error');
+                  } finally {
+                    setTobyFile(null);
+                    setTobyPreview(null);
+                  }
+                }}
+              >
+                開始匯入
               </button>
             </div>
           </div>

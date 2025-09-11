@@ -131,6 +131,10 @@ const HomeInner: React.FC = () => {
   const [htmlImportFile, setHtmlImportFile] = React.useState<File | null>(null);
   const [htmlImportOpen, setHtmlImportOpen] = React.useState(false);
   const [htmlImportName, setHtmlImportName] = React.useState('');
+  const [htmlImportMode, setHtmlImportMode] = React.useState<'multi' | 'flat'>('multi');
+  const [htmlImportFlatName, setHtmlImportFlatName] = React.useState('Imported');
+  const [htmlImportDedup, setHtmlImportDedup] = React.useState(true);
+  const [htmlPreview, setHtmlPreview] = React.useState<{ groups: number; links: number } | null>(null);
   const viewItems = React.useMemo(
     () => items.filter((it: any) => it.category === selectedId),
     [items, selectedId]
@@ -167,6 +171,18 @@ const HomeInner: React.FC = () => {
                     // Open pretty modal to capture optional collection name
                     setHtmlImportFile(f);
                     setHtmlImportName('');
+                    setHtmlImportMode('multi');
+                    setHtmlImportFlatName('Imported');
+                    setHtmlImportDedup(true);
+                    // parse preview
+                    try {
+                      const text = await f.text();
+                      const mod = await import('../background/importers/html');
+                      const map = mod.parseNetscapeGroups(text);
+                      let groups = 0; let links = 0;
+                      map.forEach((arr: any[]) => { groups++; links += (arr?.length || 0); });
+                      setHtmlPreview({ groups, links });
+                    } catch { setHtmlPreview(null); }
                     setHtmlImportOpen(true);
                   }}
                 />
@@ -332,6 +348,9 @@ const HomeInner: React.FC = () => {
             <div className="text-lg font-medium mb-3">匯入 HTML（新集合）</div>
             <div className="space-y-3">
               <div className="text-sm opacity-80">檔案：{htmlImportFile?.name}</div>
+              {htmlPreview && (
+                <div className="text-xs opacity-80">預覽：群組 {htmlPreview.groups}、連結 {htmlPreview.links}</div>
+              )}
               <div>
                 <label className="block text-sm mb-1">集合名稱（可留空自動命名）</label>
                 <input
@@ -341,6 +360,34 @@ const HomeInner: React.FC = () => {
                   placeholder="Imported"
                 />
               </div>
+              <div>
+                <label className="block text-sm mb-1">匯入模式</label>
+                <div className="flex items-center gap-4 text-sm">
+                  <label className="inline-flex items-center gap-1">
+                    <input type="radio" name="html-mode" checked={htmlImportMode==='multi'} onChange={() => setHtmlImportMode('multi')} />
+                    <span>依資料夾建立多群組</span>
+                  </label>
+                  <label className="inline-flex items-center gap-1">
+                    <input type="radio" name="html-mode" checked={htmlImportMode==='flat'} onChange={() => setHtmlImportMode('flat')} />
+                    <span>扁平匯入到單一群組</span>
+                  </label>
+                </div>
+              </div>
+              {htmlImportMode === 'flat' && (
+                <div>
+                  <label className="block text-sm mb-1">群組名稱</label>
+                  <input
+                    className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                    value={htmlImportFlatName}
+                    onChange={(e) => setHtmlImportFlatName(e.target.value)}
+                    placeholder="Imported"
+                  />
+                </div>
+              )}
+              <label className="inline-flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={htmlImportDedup} onChange={(e)=>setHtmlImportDedup(e.currentTarget.checked)} />
+                <span>略過集合內已存在的相同 URL</span>
+              </label>
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
               <button
@@ -358,7 +405,7 @@ const HomeInner: React.FC = () => {
                   try {
                     const text = await htmlImportFile.text();
                     const { importNetscapeHtmlAsNewCategory } = await import('../background/importers/html');
-                    const res = await importNetscapeHtmlAsNewCategory(text, { name: htmlImportName.trim() || undefined });
+                    const res = await importNetscapeHtmlAsNewCategory(text, { name: htmlImportName.trim() || undefined, mode: htmlImportMode, flatGroupName: htmlImportFlatName.trim() || undefined, dedupSkip: htmlImportDedup });
                     try { await pagesActions.load(); } catch {}
                     try { await catActions?.reload?.(); } catch {}
                     try { setCurrentCategory(res.categoryId); } catch {}
@@ -371,6 +418,7 @@ const HomeInner: React.FC = () => {
                     setLoading(false);
                     setHtmlImportFile(null);
                     setHtmlImportName('');
+                    setHtmlPreview(null);
                   }
                 }}
               >

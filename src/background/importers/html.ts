@@ -191,13 +191,19 @@ export async function importNetscapeHtmlIntoGroup(
 
 export async function importNetscapeHtmlIntoCategory(
   categoryId: string,
-  html: string
+  html: string,
+  opts?: { dedupSkip?: boolean }
 ): Promise<{ pagesCreated: number; groupsCreated: number }> {
   const groups = parseNetscapeGroups(html);
   // Load existing groups in this category
   const existing = (await getAll('subcategories' as any).catch(() => [])) as any[];
   const byCat = existing.filter((x) => x.categoryId === categoryId);
   const lowerToGroup = new Map<string, any>(byCat.map((g) => [String(g.name || '').toLowerCase(), g]));
+  // For dedup within this category
+  const allPages = (await getAll('webpages').catch(() => [])) as any[];
+  const knownUrls = new Set<string>(
+    (allPages || []).filter((p) => p.category === categoryId).map((p) => String(p.url || ''))
+  );
   const toCreate: any[] = [];
   const ensureGroup = (name: string) => {
     const key = String(name || 'Imported').toLowerCase();
@@ -238,6 +244,7 @@ export async function importNetscapeHtmlIntoCategory(
       try {
         url = new URL(a.url).toString();
       } catch { continue; }
+      if (opts?.dedupSkip && knownUrls.has(url)) continue;
       const id = genId();
       pages.push({
         id,
@@ -251,6 +258,7 @@ export async function importNetscapeHtmlIntoCategory(
         createdAt: now,
         updatedAt: now,
       });
+      knownUrls.add(url);
       idsInOrder.push(id);
     }
     if (pages.length) {
@@ -273,7 +281,7 @@ export async function importNetscapeHtmlIntoCategory(
 
 export async function importNetscapeHtmlAsNewCategory(
   html: string,
-  opts?: { name?: string; color?: string }
+  opts?: { name?: string; color?: string; dedupSkip?: boolean; mode?: 'multi' | 'flat'; flatGroupName?: string }
 ): Promise<{ categoryId: string; categoryName: string; pagesCreated: number; groupsCreated: number }> {
   // Determine base name
   const groups = parseNetscapeGroups(html);
@@ -291,6 +299,35 @@ export async function importNetscapeHtmlAsNewCategory(
   await tx('categories', 'readwrite', async (t) => {
     t.objectStore('categories').put({ id, name, color, order });
   });
-  const res = await importNetscapeHtmlIntoCategory(id, html);
-  return { categoryId: id, categoryName: name, pagesCreated: res.pagesCreated, groupsCreated: res.groupsCreated };
+  if (opts?.mode === 'flat') {
+    // Create single group and flatten all anchors
+    const flatName = (opts.flatGroupName || 'Imported').trim() || 'Imported';
+    const now = Date.now();
+    const g = { id: 'g_' + Math.random().toString(36).slice(2, 9), categoryId: id, name: flatName, order: 0, createdAt: now, updatedAt: now };
+    await tx(['subcategories' as any], 'readwrite', async (t) => {
+      t.objectStore('subcategories' as any).put(g);
+    });
+    // Build a flat sequence
+    const seq: Array<{ url: string; title: string; desc?: string }> = [];
+    for (const arr of groups.values()) for (const it of arr) seq.push(it);
+    // Dedup within this new category if needed
+    const known = new Set<string>();
+    const ids: string[] = [];
+    const pages: WebpageData[] = [];
+    for (const a of seq) {
+      let url: string;
+      try { url = new URL(a.url).toString(); } catch { continue; }
+      if (opts?.dedupSkip && known.has(url)) continue;
+      const idw = genId();
+      pages.push({ id: idw, title: cleanTitle(a.title, url), url, favicon: guessFavicon(url), note: a.desc || '', category: id, subcategoryId: g.id, meta: undefined, createdAt: nowIso(), updatedAt: nowIso() });
+      ids.push(idw);
+      known.add(url);
+    }
+    if (pages.length) await putAll('webpages', pages as any);
+    try { await setMeta(`order.subcat.${g.id}`, ids); } catch {}
+    return { categoryId: id, categoryName: name, pagesCreated: pages.length, groupsCreated: 1 };
+  } else {
+    const res = await importNetscapeHtmlIntoCategory(id, html, { dedupSkip: opts?.dedupSkip });
+    return { categoryId: id, categoryName: name, pagesCreated: res.pagesCreated, groupsCreated: res.groupsCreated };
+  }
 }

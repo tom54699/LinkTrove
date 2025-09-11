@@ -180,7 +180,8 @@ export async function importTobyV3(json: string): Promise<TobyImportResult> {
 export async function importTobyV3IntoGroup(
   groupId: string,
   categoryId: string,
-  json: string
+  json: string,
+  opts?: { dedupSkip?: boolean }
 ): Promise<{ pagesCreated: number }> {
   let parsed: any;
   try {
@@ -201,12 +202,17 @@ export async function importTobyV3IntoGroup(
   const subcats = await getAll('subcategories' as any).catch(() => []) as any[];
   const target = subcats.find((s) => s.id === groupId);
   if (!target || target.categoryId !== categoryId) throw new Error('Invalid target group');
-
+  // For dedup within this category (skip existing URLs)
+  const allPages = (await getAll('webpages').catch(() => [])) as any[];
+  const knownUrls = new Set<string>(
+    (allPages || []).filter((p) => p.category === categoryId).map((p) => String(p.url || ''))
+  );
   const webpagesToPut: WebpageData[] = [];
   const newIds: string[] = [];
   for (const card of cards) {
     const url = normalizeUrl(card.url);
     if (!url) continue;
+    if (opts?.dedupSkip && knownUrls.has(url)) continue;
     const id = genId('w');
     webpagesToPut.push({
       id,
@@ -221,6 +227,7 @@ export async function importTobyV3IntoGroup(
       updatedAt: nowIso(),
     });
     newIds.push(id);
+    knownUrls.add(url);
   }
   if (webpagesToPut.length) await putAll('webpages', webpagesToPut);
   // Append to group order
