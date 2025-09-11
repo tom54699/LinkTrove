@@ -47,6 +47,16 @@ function cleanTitle(t: string, fallbackUrl: string): string {
   }
 }
 
+function guessFavicon(u: string): string {
+  try {
+    const url = new URL(u);
+    const host = url.hostname;
+    return `https://icons.duckduckgo.com/ip3/${host}.ico`;
+  } catch {
+    return '';
+  }
+}
+
 export async function importNetscapeHtmlIntoGroup(
   groupId: string,
   categoryId: string,
@@ -69,7 +79,7 @@ export async function importNetscapeHtmlIntoGroup(
       id,
       title: cleanTitle(a.title, url),
       url,
-      favicon: '',
+      favicon: guessFavicon(url),
       note: a.desc || '',
       category: categoryId,
       subcategoryId: groupId,
@@ -92,4 +102,3 @@ export async function importNetscapeHtmlIntoGroup(
   } catch {}
   return { pagesCreated: pages.length };
 }
-
