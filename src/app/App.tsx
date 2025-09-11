@@ -153,9 +153,6 @@ const HomeInner: React.FC = () => {
                 <div className="subtext">{viewItems.length} collections</div>
               </div>
               <div className="toby-board-actions">
-                <button className="link" title="Drag and Drop">
-                  DRAG &amp; DROP
-                </button>
                 <div className="inline-block align-middle mr-2">
                   <SearchBox />
                 </div>
@@ -237,15 +234,33 @@ const HomeInner: React.FC = () => {
                 {/* Single view only: density control removed */}
                 <button
                   className="link muted"
-                  title="Expand"
-                  onClick={() => setCollapsed(false)}
+                  title="Expand all groups in this collection"
+                  onClick={() => {
+                    try {
+                      window.dispatchEvent(
+                        new CustomEvent('groups:collapse-all', {
+                          detail: { categoryId: selectedId, collapsed: false },
+                        }) as any
+                      );
+                    } catch {}
+                    setCollapsed(false);
+                  }}
                 >
                   EXPAND
                 </button>
                 <button
                   className="link muted"
-                  title="Collapse"
-                  onClick={() => setCollapsed(true)}
+                  title="Collapse all groups in this collection"
+                  onClick={() => {
+                    try {
+                      window.dispatchEvent(
+                        new CustomEvent('groups:collapse-all', {
+                          detail: { categoryId: selectedId, collapsed: true },
+                        }) as any
+                      );
+                    } catch {}
+                    setCollapsed(true);
+                  }}
                 >
                   COLLAPSE
                 </button>

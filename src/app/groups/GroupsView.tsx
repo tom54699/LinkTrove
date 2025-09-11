@@ -51,10 +51,23 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     load();
     const onChanged = () => { load(); };
     try { window.addEventListener('groups:changed', onChanged as any); } catch {}
+    // Expand/Collapse all listener
+    const onCollapseAll = (ev: any) => {
+      try {
+        const det = ev?.detail || {};
+        if (!det || det.categoryId !== categoryId) return;
+        const doCollapse = !!det.collapsed;
+        const next: Record<string, boolean> = {};
+        for (const g of groups) next[g.id] = doCollapse;
+        void persistCollapsed(next);
+      } catch {}
+    };
+    try { window.addEventListener('groups:collapse-all', onCollapseAll as any); } catch {}
     return () => {
       try { window.removeEventListener('groups:changed', onChanged as any); } catch {}
+      try { window.removeEventListener('groups:collapse-all', onCollapseAll as any); } catch {}
     };
-  }, [load]);
+  }, [load, groups, categoryId, persistCollapsed]);
 
   React.useEffect(() => {
     (async () => {
