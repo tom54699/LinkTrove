@@ -47,6 +47,14 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     } catch {}
   }, [svc, categoryId]);
 
+  const persistCollapsed = React.useCallback(async (next: Record<string, boolean>) => {
+    setCollapsed(next);
+    try {
+      const key = `ui.groupsCollapsed.${categoryId}`;
+      chrome.storage?.local?.set?.({ [key]: next });
+    } catch {}
+  }, [categoryId]);
+
   React.useEffect(() => {
     load();
     const onChanged = () => { load(); };
@@ -82,13 +90,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     })();
   }, [categoryId]);
 
-  const persistCollapsed = React.useCallback(async (next: Record<string, boolean>) => {
-    setCollapsed(next);
-    try {
-      const key = `ui.groupsCollapsed.${categoryId}`;
-      chrome.storage?.local?.set?.({ [key]: next });
-    } catch {}
-  }, [categoryId]);
+  
 
   const rename = async (id: string, name: string) => {
     try {
