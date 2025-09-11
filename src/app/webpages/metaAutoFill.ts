@@ -37,14 +37,14 @@ export function computeAutoMeta(
       if ((meta[k] ?? '').trim()) return;
       meta[k] = v;
     };
-    ['title', 'name', 'pageTitle'].forEach((k) => title && maybeSet(k, title));
-    ['url', 'link', 'href'].forEach((k) => maybeSet(k, u.toString()));
-    ['host', 'hostname', 'domain', 'site'].forEach((k) =>
-      maybeSet(k, hostname)
+    ['title', 'name', 'pageTitle'].forEach((key) => title && maybeSet(key, title));
+    ['url', 'link', 'href'].forEach((key) => maybeSet(key, u.toString()));
+    ['host', 'hostname', 'domain', 'site'].forEach((key) =>
+      maybeSet(key, hostname)
     );
-    ['origin'].forEach((k) => maybeSet(k, origin));
-    ['path', 'pathname'].forEach((k) => maybeSet(k, pathname));
-    ['favicon'].forEach((k) => favicon && maybeSet(k, favicon));
+    ['origin'].forEach((key) => maybeSet(key, origin));
+    ['path', 'pathname'].forEach((key) => maybeSet(key, pathname));
+    ['favicon'].forEach((key) => favicon && maybeSet(key, favicon));
   } catch {
     // ignore
   }

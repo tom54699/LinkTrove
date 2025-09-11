@@ -635,7 +635,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
                 onClick={() => {
                   const ids = Object.entries(selected)
                     .filter(([, v]) => v)
-                    .map(([k]) => k);
+                    .map(([key]) => key);
                   setConfirming(false);
                   clearSelection();
                   onDeleteMany?.(ids);
