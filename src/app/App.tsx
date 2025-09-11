@@ -137,6 +137,15 @@ const HomeInner: React.FC = () => {
   const [htmlPreview, setHtmlPreview] = React.useState<{ groups: number; links: number } | null>(null);
   const [htmlProgress, setHtmlProgress] = React.useState<{ total: number; processed: number } | null>(null);
   const htmlAbortRef = React.useRef<AbortController | null>(null);
+  // Toby (new collection) wizard state
+  const [tobyFile, setTobyFile] = React.useState<File | null>(null);
+  const [tobyOpen, setTobyOpen] = React.useState(false);
+  const [tobyName, setTobyName] = React.useState('');
+  const [tobyMode, setTobyMode] = React.useState<'multi' | 'flat'>('multi');
+  const [tobyFlatName, setTobyFlatName] = React.useState('Imported');
+  const [tobyPreview, setTobyPreview] = React.useState<{ lists: number; links: number } | null>(null);
+  const [tobyProgress, setTobyProgress] = React.useState<{ total: number; processed: number } | null>(null);
+  const tobyAbortRef = React.useRef<AbortController | null>(null);
   const viewItems = React.useMemo(
     () => items.filter((it: any) => it.category === selectedId),
     [items, selectedId]
@@ -194,6 +203,39 @@ const HomeInner: React.FC = () => {
                   }}
                 >
                   匯入 HTML（新集合）
+                </button>
+                {/* Toby new collection import */}
+                <input
+                  id="toby-cat-file"
+                  type="file"
+                  accept="application/json,.json"
+                  aria-label="Import Toby JSON to new collection"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.currentTarget.files?.[0];
+                    e.currentTarget.value = '';
+                    if (!f) return;
+                    setTobyFile(f);
+                    setTobyName(''); setTobyFlatName('Imported'); setTobyMode('multi');
+                    // preview: count lists/cards
+                    try {
+                      const text = await f.text();
+                      const obj = JSON.parse(text);
+                      let lists = 0; let links = 0;
+                      if (Array.isArray(obj?.lists)) { lists = obj.lists.length; for (const l of obj.lists) if (Array.isArray(l?.cards)) links += l.cards.length; }
+                      if (Array.isArray(obj?.groups)) { for (const g of obj.groups) if (Array.isArray(g?.lists)) { lists += g.lists.length; for (const l of g.lists) if (Array.isArray(l?.cards)) links += l.cards.length; } }
+                      setTobyPreview({ lists, links });
+                    } catch { setTobyPreview(null); }
+                    setTobyOpen(true);
+                  }}
+                />
+                <button
+                  className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
+                  title="匯入 Toby JSON 至新集合（lists → 群組）"
+                  aria-label="匯入 Toby（新集合）"
+                  onClick={() => { try { document.getElementById('toby-cat-file')?.click(); } catch {} }}
+                >
+                  匯入 Toby（新集合）
                 </button>
                 <button
                   className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
@@ -454,6 +496,68 @@ const HomeInner: React.FC = () => {
                 開始匯入
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {tobyOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60" onClick={() => setTobyOpen(false)}>
+          <div className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[420px] max-w-[90vw]" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Import Toby to new Collection">
+            <div className="text-lg font-medium mb-3">匯入 Toby（新集合）</div>
+            <div className="space-y-3">
+              <div className="text-sm opacity-80">檔案：{tobyFile?.name}</div>
+              {tobyPreview && (<div className="text-xs opacity-80">預覽：lists {tobyPreview.lists}、連結 {tobyPreview.links}</div>)}
+              <div>
+                <label className="block text-sm mb-1">集合名稱（可留空自動命名）</label>
+                <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={tobyName} onChange={(e)=>setTobyName(e.target.value)} placeholder="Imported" />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">匯入模式</label>
+                <div className="flex items-center gap-4 text-sm">
+                  <label className="inline-flex items-center gap-1"><input type="radio" name="toby-mode" checked={tobyMode==='multi'} onChange={()=>setTobyMode('multi')} /><span>lists → 多群組</span></label>
+                  <label className="inline-flex items-center gap-1"><input type="radio" name="toby-mode" checked={tobyMode==='flat'} onChange={()=>setTobyMode('flat')} /><span>扁平至單一群組</span></label>
+                </div>
+              </div>
+              {tobyMode==='flat' && (
+                <div>
+                  <label className="block text-sm mb-1">群組名稱</label>
+                  <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={tobyFlatName} onChange={(e)=>setTobyFlatName(e.target.value)} placeholder="Imported" />
+                </div>
+              )}
+            </div>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>setTobyOpen(false)}>取消</button>
+              <button className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30" onClick={async ()=>{
+                if (!tobyFile) { setTobyOpen(false); return; }
+                setTobyOpen(false); setLoading(true);
+                try {
+                  const text = await tobyFile.text();
+                  const { importTobyAsNewCategory } = await import('../background/importers/toby');
+                  const ctrl = new AbortController();
+                  tobyAbortRef.current = ctrl;
+                  setTobyProgress({ total: tobyPreview?.links || 0, processed: 0 });
+                  const res = await importTobyAsNewCategory(text, { name: tobyName.trim() || undefined, mode: tobyMode, flatGroupName: tobyFlatName.trim() || undefined, signal: ctrl.signal, onProgress: ({ total, processed }) => setTobyProgress({ total, processed }) });
+                  try { await pagesActions.load(); } catch {}
+                  try { await catActions?.reload?.(); } catch {}
+                  try { setCurrentCategory(res.categoryId); } catch {}
+                  try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
+                  showToast(`已匯入 Toby 至新集合「${res.categoryName}」：新增 ${res.pagesCreated} 筆，群組 ${res.groupsCreated}`, 'success');
+                } catch (err: any) {
+                  showToast(err?.message || '匯入失敗', 'error');
+                } finally {
+                  setLoading(false); setTobyFile(null); setTobyPreview(null); setTobyProgress(null); tobyAbortRef.current = null;
+                }
+              }}>開始匯入</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {tobyProgress && (
+        <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3">
+          <div className="rounded border border-slate-700 bg-[var(--panel)] w-[420px] max-w-[90vw] p-5">
+            <div className="text-lg font-semibold">匯入中…</div>
+            <div className="mt-3 text-sm">{tobyProgress.processed}/{tobyProgress.total}</div>
+            <div className="mt-2 h-2 w-full bg-slate-800 rounded"><div className="h-2 bg-emerald-600 rounded" style={{ width: `${tobyProgress.total ? Math.min(100, Math.floor((tobyProgress.processed/tobyProgress.total)*100)) : 0}%` }} /></div>
+            <div className="mt-3 flex items-center justify-end gap-2"><button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>{ try{ tobyAbortRef.current?.abort(); } catch{} }}>取消</button></div>
           </div>
         </div>
       )}
