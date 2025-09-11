@@ -318,12 +318,12 @@ export const WebpagesProvider: React.FC<{
               }
               const wantKeys = ['siteName', 'author'] as const;
               const fields = (tpl.fields || []) as any[];
-              const hasField = (k: string) => fields.some((f) => f.key === k);
+              const hasField = (key: string) => fields.some((f) => f.key === key);
               const merged: Record<string, string> = { ...nextMeta };
-              for (const k of wantKeys) {
-                const cur = (merged[k] ?? '').trim();
-                const val = (cached as any)?.[k] as string | undefined;
-                if (!cur && val && hasField(k)) merged[k] = val;
+              for (const key of wantKeys) {
+                const cur = (merged[key] ?? '').trim();
+                const val = (cached as any)?.[key] as string | undefined;
+                if (!cur && val && hasField(key)) merged[key] = val;
               }
               nextMeta = merged;
             }
