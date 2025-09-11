@@ -79,6 +79,41 @@ export function parseNetscapeGroups(html: string): Map<string, Array<{ url: stri
       }
     }
     walkDL(firstDl, undefined);
+    // If nothing captured (some variants nest differently), use anchor-wise fallback
+    let total = 0;
+    groups.forEach((arr) => (total += (arr?.length || 0)));
+    if (total === 0) {
+      const all = Array.from(doc.querySelectorAll('a[href]')) as HTMLAnchorElement[];
+      const norm = (s?: string) => (s || '').trim();
+      const getGroupFor = (a: Element): string => {
+        // Prefer nearest preceding H3 under same DL list
+        const dt = a.closest('dt');
+        let cur: Element | null = dt || a.parentElement;
+        while (cur) {
+          // scan previous siblings to find H3
+          let sib: Element | null = cur.previousElementSibling as Element | null;
+          while (sib) {
+            const h3 = sib.tagName.toLowerCase() === 'dt' ? (sib.querySelector('h3') as HTMLElement | null) : null;
+            if (h3 && norm(h3.textContent)) return norm(h3.textContent) || 'Imported';
+            sib = sib.previousElementSibling as Element | null;
+          }
+          // ascend to parent; stop at BODY/HTML
+          cur = cur.parentElement;
+          if (!cur || /^(html|body)$/i.test(cur.tagName)) break;
+        }
+        return 'Imported';
+      };
+      for (const a of all) {
+        const href = norm(a.getAttribute('href') || '');
+        if (!href) continue;
+        const title = norm((a.textContent || '').replace(/<[^>]+>/g, ''));
+        const dd = (a.closest('dt')?.nextElementSibling as HTMLElement | null);
+        const descTxt = dd && dd.tagName.toLowerCase() === 'dd' ? norm(dd.textContent || '') : undefined;
+        const gname = getGroupFor(a);
+        if (!groups.has(gname)) groups.set(gname, []);
+        (groups.get(gname) as any[]).push({ url: href, title, desc: descTxt });
+      }
+    }
   } catch {
     // Fallback: flat anchors
     const arr = parseNetscapeAnchors(html);
@@ -234,4 +269,28 @@ export async function importNetscapeHtmlIntoCategory(
     }
   }
   return { pagesCreated, groupsCreated: lowerToGroup.size - byCat.length };
+}
+
+export async function importNetscapeHtmlAsNewCategory(
+  html: string,
+  opts?: { name?: string; color?: string }
+): Promise<{ categoryId: string; categoryName: string; pagesCreated: number; groupsCreated: number }> {
+  // Determine base name
+  const groups = parseNetscapeGroups(html);
+  const firstGroup = Array.from(groups.keys())[0] || 'Imported';
+  const base = (opts?.name || firstGroup || 'Imported').trim() || 'Imported';
+  const color = opts?.color || '#64748b';
+  // Create unique category name
+  const cats = await getAll('categories');
+  const lower = new Set((cats as any[]).map((c: any) => String(c.name || '').toLowerCase()));
+  let name = base;
+  let i = 2;
+  while (lower.has(name.toLowerCase())) name = `${base} ${i++}`;
+  const id = 'c_' + Math.random().toString(36).slice(2, 9);
+  const order = (cats as any[]).length;
+  await tx('categories', 'readwrite', async (t) => {
+    t.objectStore('categories').put({ id, name, color, order });
+  });
+  const res = await importNetscapeHtmlIntoCategory(id, html);
+  return { categoryId: id, categoryName: name, pagesCreated: res.pagesCreated, groupsCreated: res.groupsCreated };
 }

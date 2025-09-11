@@ -114,7 +114,7 @@ export const AppLayout: React.FC = () => {
 export const Home: React.FC = () => <HomeInner />;
 
 const HomeInner: React.FC = () => {
-  const { items } = useWebpages();
+  const { items, actions: pagesActions } = useWebpages();
   const {
     selectedId,
     actions: catActions,
@@ -122,11 +122,15 @@ const HomeInner: React.FC = () => {
   } = useCategories();
   // Simplify to a single view; remove density switching
   const [_collapsed, setCollapsed] = React.useState(false);
-  const { showToast } = useFeedback();
+  const { showToast, setLoading } = useFeedback();
   const [creatingGroup, setCreatingGroup] = React.useState(false);
   const [showAddCat, setShowAddCat] = React.useState(false);
   const [newCatName, setNewCatName] = React.useState('');
   const [newCatColor, setNewCatColor] = React.useState('#64748b');
+  // HTML import (new collection) modal state
+  const [htmlImportFile, setHtmlImportFile] = React.useState<File | null>(null);
+  const [htmlImportOpen, setHtmlImportOpen] = React.useState(false);
+  const [htmlImportName, setHtmlImportName] = React.useState('');
   const viewItems = React.useMemo(
     () => items.filter((it: any) => it.category === selectedId),
     [items, selectedId]
@@ -149,7 +153,7 @@ const HomeInner: React.FC = () => {
                 <div className="inline-block align-middle mr-2">
                   <SearchBox />
                 </div>
-                {/* Category-level HTML import (multi-group by H3) */}
+                {/* Category-level HTML import (create a NEW collection; multi-group by H3) */}
                 <input
                   id="html-cat-file"
                   type="file"
@@ -160,26 +164,21 @@ const HomeInner: React.FC = () => {
                     const f = e.currentTarget.files?.[0];
                     e.currentTarget.value = '';
                     if (!f) return;
-                    try {
-                      const text = await f.text();
-                      const { importNetscapeHtmlIntoCategory } = await import('../background/importers/html');
-                      const res = await importNetscapeHtmlIntoCategory(selectedId, text);
-                      try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
-                      showToast(`已匯入 HTML：新增 ${res.pagesCreated} 筆，群組 ${res.groupsCreated}`, 'success');
-                    } catch (err: any) {
-                      showToast(err?.message || '匯入失敗', 'error');
-                    }
+                    // Open pretty modal to capture optional collection name
+                    setHtmlImportFile(f);
+                    setHtmlImportName('');
+                    setHtmlImportOpen(true);
                   }}
                 />
                 <button
                   className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
-                  title="匯入 HTML 書籤（依資料夾建立群組）"
-                  aria-label="匯入 HTML 書籤（集合）"
+                  title="匯入 HTML 書籤至新集合（依資料夾建立群組）"
+                  aria-label="匯入 HTML 書籤（新集合）"
                   onClick={() => {
                     try { document.getElementById('html-cat-file')?.click(); } catch {}
                   }}
                 >
-                  匯入 HTML（集合）
+                  匯入 HTML（新集合）
                 </button>
                 <button
                   className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
@@ -314,6 +313,68 @@ const HomeInner: React.FC = () => {
                 }}
               >
                 Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {htmlImportOpen && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60"
+          onClick={() => setHtmlImportOpen(false)}
+        >
+          <div
+            className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[420px] max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Import HTML to new Collection"
+          >
+            <div className="text-lg font-medium mb-3">匯入 HTML（新集合）</div>
+            <div className="space-y-3">
+              <div className="text-sm opacity-80">檔案：{htmlImportFile?.name}</div>
+              <div>
+                <label className="block text-sm mb-1">集合名稱（可留空自動命名）</label>
+                <input
+                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                  value={htmlImportName}
+                  onChange={(e) => setHtmlImportName(e.target.value)}
+                  placeholder="Imported"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                onClick={() => setHtmlImportOpen(false)}
+              >
+                取消
+              </button>
+              <button
+                className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50"
+                onClick={async () => {
+                  if (!htmlImportFile) { setHtmlImportOpen(false); return; }
+                  setHtmlImportOpen(false);
+                  setLoading(true);
+                  try {
+                    const text = await htmlImportFile.text();
+                    const { importNetscapeHtmlAsNewCategory } = await import('../background/importers/html');
+                    const res = await importNetscapeHtmlAsNewCategory(text, { name: htmlImportName.trim() || undefined });
+                    try { await pagesActions.load(); } catch {}
+                    try { await catActions?.reload?.(); } catch {}
+                    try { setCurrentCategory(res.categoryId); } catch {}
+                    try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
+                    showToast(`已匯入 HTML 至新集合「${res.categoryName}」：新增 ${res.pagesCreated} 筆，群組 ${res.groupsCreated}`, 'success');
+                  } catch (err: any) {
+                    const msg = (err && (err.message || String(err))) || '匯入失敗';
+                    showToast(msg, 'error');
+                  } finally {
+                    setLoading(false);
+                    setHtmlImportFile(null);
+                    setHtmlImportName('');
+                  }
+                }}
+              >
+                開始匯入
               </button>
             </div>
           </div>
