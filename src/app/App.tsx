@@ -149,6 +149,38 @@ const HomeInner: React.FC = () => {
                 <div className="inline-block align-middle mr-2">
                   <SearchBox />
                 </div>
+                {/* Category-level HTML import (multi-group by H3) */}
+                <input
+                  id="html-cat-file"
+                  type="file"
+                  accept="text/html,.html"
+                  aria-label="Import HTML bookmarks to collection"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.currentTarget.files?.[0];
+                    e.currentTarget.value = '';
+                    if (!f) return;
+                    try {
+                      const text = await f.text();
+                      const { importNetscapeHtmlIntoCategory } = await import('../background/importers/html');
+                      const res = await importNetscapeHtmlIntoCategory(selectedId, text);
+                      try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
+                      showToast(`已匯入 HTML：新增 ${res.pagesCreated} 筆，群組 ${res.groupsCreated}`, 'success');
+                    } catch (err: any) {
+                      showToast(err?.message || '匯入失敗', 'error');
+                    }
+                  }}
+                />
+                <button
+                  className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
+                  title="匯入 HTML 書籤（依資料夾建立群組）"
+                  aria-label="匯入 HTML 書籤（集合）"
+                  onClick={() => {
+                    try { document.getElementById('html-cat-file')?.click(); } catch {}
+                  }}
+                >
+                  匯入 HTML（集合）
+                </button>
                 <button
                   className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
                   title="新增 group"
