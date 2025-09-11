@@ -9,6 +9,7 @@ export default defineConfig({
   build: {
     target: 'es2019',
     sourcemap: true,
+    minify: false,
     cssCodeSplit: true,
     rollupOptions: {
       input: {
