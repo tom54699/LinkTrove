@@ -197,6 +197,35 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
               )}
             </div>
             <div className="flex items-center gap-2">
+              {/* HTML import into this group */}
+              <input
+                id={`html-file-${g.id}`}
+                type="file"
+                accept="text/html,.html"
+                aria-label="Import HTML bookmarks file"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.currentTarget.files?.[0];
+                  e.currentTarget.value = '';
+                  if (!f) return;
+                  try {
+                    const text = await f.text();
+                    const { importNetscapeHtmlIntoGroup } = await import('../../background/importers/html');
+                    const res = await importNetscapeHtmlIntoGroup(g.id, g.categoryId, text);
+                    await actions.load();
+                    showToast(`已匯入 HTML：新增 ${res.pagesCreated} 筆`, 'success');
+                  } catch (err: any) {
+                    showToast(err?.message || '匯入失敗', 'error');
+                  }
+                }}
+              />
+              <button
+                className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:bg-slate-800"
+                onClick={() => { try { document.getElementById(`html-file-${g.id}`)?.click(); } catch {} }}
+                title="匯入 HTML 書籤到此 group"
+              >
+                匯入 HTML
+              </button>
               <input
                 id={`toby-file-${g.id}`}
                 type="file"
