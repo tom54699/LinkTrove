@@ -47,7 +47,16 @@ Open Tabs（右側）
 其他
 
 - Toast 與 Loading：操作成功/失敗有提示；長作業會顯示 Loading。
-- 匯出/匯入：在「Settings」頁可以匯出/匯入 JSON（匯入會合併分類與卡片資料）。
+- 專案備份/還原（Settings）：
+  - 匯出 JSON：下載含 `webpages/categories/subcategories/templates` 與每群組順序（orders）的檔案。
+  - 匯入 JSON（取代）：以檔案匯入，取代現有資料（建議先匯出備份）。
+- 第三方匯入（M2）：
+  - Toby（群組層）：在 Home → 每個 group 標題列「匯入 Toby」，選擇 Toby v3 JSON（lists 或 cards 皆可），以向導（Wizard）匯入到該 group，保留順序。
+  - HTML（集合層）：在 Home 工具列「匯入 HTML（新集合）」：選檔後彈窗可命名新集合、選擇模式：
+    - 依資料夾（H3）建立多群組（預設）
+    - 扁平模式：匯入到單一群組（可命名）
+  - 進度與取消：大檔會分批寫入（預設每批約 300 筆），顯示進度條並可取消。
+  - 縮圖：匯入時嘗試 DDG ip3 取得 favicon，若載入失敗 UI 會自動回退為預設圖示。
 
 小撇步
 
@@ -85,6 +94,16 @@ Open Tabs（右側）
   - `tabs`：讀取目前分頁清單與事件，同步右側 Open Tabs 面板
   - `storage`：儲存資料（卡片、分類、群組標籤）
   - `host_permissions: <all_urls>`：擷取分頁標題/網址/網站圖示（favicon）
+
+測試
+
+- 單元與整合測試：
+  - `npm test`
+  - 重要測試：
+    - 匯出/匯入順序保持：`src/background/__tests__/export-import.orders.test.ts`
+    - 每群組排序/跨群組移動：`src/background/__tests__/order.pergroup.intragroup.multigroups.test.ts`
+    - Toby 匯入（lists/cards → group）：`src/background/__tests__/import.toby.intoGroup.cards.test.ts`
+    - HTML 匯入（群組層/集合層、多群組/扁平）：`src/background/__tests__/import.html.*.test.ts`
 
 打包（可選）
 

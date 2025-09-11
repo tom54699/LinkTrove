@@ -135,6 +135,8 @@ const HomeInner: React.FC = () => {
   const [htmlImportFlatName, setHtmlImportFlatName] = React.useState('Imported');
   const [htmlImportDedup, setHtmlImportDedup] = React.useState(true);
   const [htmlPreview, setHtmlPreview] = React.useState<{ groups: number; links: number } | null>(null);
+  const [htmlProgress, setHtmlProgress] = React.useState<{ total: number; processed: number } | null>(null);
+  const htmlAbortRef = React.useRef<AbortController | null>(null);
   const viewItems = React.useMemo(
     () => items.filter((it: any) => it.category === selectedId),
     [items, selectedId]
@@ -396,8 +398,8 @@ const HomeInner: React.FC = () => {
               >
                 取消
               </button>
-              <button
-                className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50"
+                <button
+                  className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50"
                 onClick={async () => {
                   if (!htmlImportFile) { setHtmlImportOpen(false); return; }
                   setHtmlImportOpen(false);
@@ -405,7 +407,17 @@ const HomeInner: React.FC = () => {
                   try {
                     const text = await htmlImportFile.text();
                     const { importNetscapeHtmlAsNewCategory } = await import('../background/importers/html');
-                    const res = await importNetscapeHtmlAsNewCategory(text, { name: htmlImportName.trim() || undefined, mode: htmlImportMode, flatGroupName: htmlImportFlatName.trim() || undefined, dedupSkip: htmlImportDedup });
+                    const ctrl = new AbortController();
+                    htmlAbortRef.current = ctrl;
+                    setHtmlProgress({ total: htmlPreview?.links || 0, processed: 0 });
+                    const res = await importNetscapeHtmlAsNewCategory(text, {
+                      name: htmlImportName.trim() || undefined,
+                      mode: htmlImportMode,
+                      flatGroupName: htmlImportFlatName.trim() || undefined,
+                      dedupSkip: htmlImportDedup,
+                      signal: ctrl.signal,
+                      onProgress: ({ total, processed }) => setHtmlProgress({ total, processed }),
+                    });
                     try { await pagesActions.load(); } catch {}
                     try { await catActions?.reload?.(); } catch {}
                     try { setCurrentCategory(res.categoryId); } catch {}
@@ -419,11 +431,27 @@ const HomeInner: React.FC = () => {
                     setHtmlImportFile(null);
                     setHtmlImportName('');
                     setHtmlPreview(null);
+                    setHtmlProgress(null);
+                    htmlAbortRef.current = null;
                   }
                 }}
               >
                 開始匯入
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {htmlProgress && (
+        <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3">
+          <div className="rounded border border-slate-700 bg-[var(--panel)] w-[420px] max-w-[90vw] p-5">
+            <div className="text-lg font-semibold">匯入中…</div>
+            <div className="mt-3 text-sm">{htmlProgress.processed}/{htmlProgress.total}</div>
+            <div className="mt-2 h-2 w-full bg-slate-800 rounded">
+              <div className="h-2 bg-emerald-600 rounded" style={{ width: `${htmlProgress.total ? Math.min(100, Math.floor((htmlProgress.processed/htmlProgress.total)*100)) : 0}%` }} />
+            </div>
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => { try { htmlAbortRef.current?.abort(); } catch {} }}>取消</button>
             </div>
           </div>
         </div>

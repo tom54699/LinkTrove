@@ -26,6 +26,8 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
   const [tobyOpenFor, setTobyOpenFor] = React.useState<string | null>(null);
   const [tobyFile, setTobyFile] = React.useState<File | null>(null);
   const [tobyPreview, setTobyPreview] = React.useState<{ links: number } | null>(null);
+  const [tobyProgress, setTobyProgress] = React.useState<{ total: number; processed: number } | null>(null);
+  const tobyAbortRef = React.useRef<AbortController | null>(null);
 
   const svc = React.useMemo(() => {
     const hasChrome =
@@ -390,7 +392,10 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                     const text = await f.text();
                     const { importTobyV3IntoGroup } = await import('../../background/importers/toby');
                     const g = groups.find((x)=>x.id===gid);
-                    const res = await importTobyV3IntoGroup(gid, g?.categoryId || categoryId, text);
+                    const ctrl = new AbortController();
+                    tobyAbortRef.current = ctrl;
+                    setTobyProgress({ total: tobyPreview?.links || 0, processed: 0 });
+                    const res = await importTobyV3IntoGroup(gid, g?.categoryId || categoryId, text, { signal: ctrl.signal, onProgress: ({ total, processed }) => setTobyProgress({ total, processed }) });
                     await actions.load();
                     showToast(`已匯入 Toby：新增 ${res.pagesCreated} 筆`, 'success');
                   } catch (err: any) {
@@ -398,11 +403,27 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   } finally {
                     setTobyFile(null);
                     setTobyPreview(null);
+                    setTobyProgress(null);
+                    tobyAbortRef.current = null;
                   }
                 }}
               >
                 開始匯入
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {tobyProgress && (
+        <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3">
+          <div className="rounded border border-slate-700 bg-[var(--bg)] w-[420px] max-w-[90vw] p-5">
+            <div className="text-lg font-semibold">匯入中…</div>
+            <div className="mt-3 text-sm">{tobyProgress.processed}/{tobyProgress.total}</div>
+            <div className="mt-2 h-2 w-full bg-slate-800 rounded">
+              <div className="h-2 bg-emerald-600 rounded" style={{ width: `${tobyProgress.total ? Math.min(100, Math.floor((tobyProgress.processed/tobyProgress.total)*100)) : 0}%` }} />
+            </div>
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => { try { tobyAbortRef.current?.abort(); } catch {} }}>取消</button>
             </div>
           </div>
         </div>

@@ -181,7 +181,12 @@ export async function importTobyV3IntoGroup(
   groupId: string,
   categoryId: string,
   json: string,
-  opts?: { dedupSkip?: boolean }
+  opts?: {
+    dedupSkip?: boolean;
+    batchSize?: number;
+    signal?: AbortSignal;
+    onProgress?: (p: { total: number; processed: number }) => void;
+  }
 ): Promise<{ pagesCreated: number }> {
   let parsed: any;
   try {
@@ -209,6 +214,8 @@ export async function importTobyV3IntoGroup(
   );
   const webpagesToPut: WebpageData[] = [];
   const newIds: string[] = [];
+  const total = cards.length;
+  let processed = 0;
   for (const card of cards) {
     const url = normalizeUrl(card.url);
     if (!url) continue;
@@ -229,7 +236,16 @@ export async function importTobyV3IntoGroup(
     newIds.push(id);
     knownUrls.add(url);
   }
-  if (webpagesToPut.length) await putAll('webpages', webpagesToPut);
+  if (webpagesToPut.length) {
+    const bs = Math.max(1, opts?.batchSize ?? 300);
+    for (let i = 0; i < webpagesToPut.length; i += bs) {
+      if (opts?.signal?.aborted) throw new Error('Aborted');
+      const chunk = webpagesToPut.slice(i, i + bs);
+      await putAll('webpages', chunk as any);
+      processed += chunk.length;
+      opts?.onProgress?.({ total, processed });
+    }
+  }
   // Append to group order
   try {
     const key = `order.subcat.${groupId}`;

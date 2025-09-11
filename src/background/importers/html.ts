@@ -192,9 +192,19 @@ export async function importNetscapeHtmlIntoGroup(
 export async function importNetscapeHtmlIntoCategory(
   categoryId: string,
   html: string,
-  opts?: { dedupSkip?: boolean }
+  opts?: {
+    dedupSkip?: boolean;
+    batchSize?: number;
+    signal?: AbortSignal;
+    onProgress?: (p: { total: number; processed: number; group?: string }) => void;
+  }
 ): Promise<{ pagesCreated: number; groupsCreated: number }> {
   const groups = parseNetscapeGroups(html);
+  // compute total items
+  let total = 0;
+  groups.forEach((arr) => (total += (arr?.length || 0)));
+  const onProg = opts?.onProgress;
+  let processed = 0;
   // Load existing groups in this category
   const existing = (await getAll('subcategories' as any).catch(() => [])) as any[];
   const byCat = existing.filter((x) => x.categoryId === categoryId);
@@ -262,8 +272,16 @@ export async function importNetscapeHtmlIntoCategory(
       idsInOrder.push(id);
     }
     if (pages.length) {
-      await putAll('webpages', pages as any);
-      pagesCreated += pages.length;
+      // batched writes
+      const bs = Math.max(1, opts?.batchSize ?? 300);
+      for (let i = 0; i < pages.length; i += bs) {
+        if (opts?.signal?.aborted) throw new Error('Aborted');
+        const chunk = pages.slice(i, i + bs);
+        await putAll('webpages', chunk as any);
+        processed += chunk.length;
+        pagesCreated += chunk.length;
+        onProg?.({ total, processed, group: g.name });
+      }
       // Append order
       try {
         const key = `order.subcat.${g.id}`;
@@ -281,10 +299,22 @@ export async function importNetscapeHtmlIntoCategory(
 
 export async function importNetscapeHtmlAsNewCategory(
   html: string,
-  opts?: { name?: string; color?: string; dedupSkip?: boolean; mode?: 'multi' | 'flat'; flatGroupName?: string }
+  opts?: {
+    name?: string;
+    color?: string;
+    dedupSkip?: boolean;
+    mode?: 'multi' | 'flat';
+    flatGroupName?: string;
+    batchSize?: number;
+    signal?: AbortSignal;
+    onProgress?: (p: { total: number; processed: number; group?: string }) => void;
+  }
 ): Promise<{ categoryId: string; categoryName: string; pagesCreated: number; groupsCreated: number }> {
   // Determine base name
   const groups = parseNetscapeGroups(html);
+  let total = 0; groups.forEach((arr) => (total += (arr?.length || 0)));
+  const onProg = opts?.onProgress;
+  let processed = 0;
   const firstGroup = Array.from(groups.keys())[0] || 'Imported';
   const base = (opts?.name || firstGroup || 'Imported').trim() || 'Imported';
   const color = opts?.color || '#64748b';
@@ -323,11 +353,20 @@ export async function importNetscapeHtmlAsNewCategory(
       ids.push(idw);
       known.add(url);
     }
-    if (pages.length) await putAll('webpages', pages as any);
+    if (pages.length) {
+      const bs = Math.max(1, opts?.batchSize ?? 300);
+      for (let i = 0; i < pages.length; i += bs) {
+        if (opts?.signal?.aborted) throw new Error('Aborted');
+        const chunk = pages.slice(i, i + bs);
+        await putAll('webpages', chunk as any);
+        processed += chunk.length;
+        onProg?.({ total, processed, group: g.name });
+      }
+    }
     try { await setMeta(`order.subcat.${g.id}`, ids); } catch {}
     return { categoryId: id, categoryName: name, pagesCreated: pages.length, groupsCreated: 1 };
   } else {
-    const res = await importNetscapeHtmlIntoCategory(id, html, { dedupSkip: opts?.dedupSkip });
+    const res = await importNetscapeHtmlIntoCategory(id, html, { dedupSkip: opts?.dedupSkip, batchSize: opts?.batchSize, signal: opts?.signal, onProgress: opts?.onProgress });
     return { categoryId: id, categoryName: name, pagesCreated: res.pagesCreated, groupsCreated: res.groupsCreated };
   }
 }
