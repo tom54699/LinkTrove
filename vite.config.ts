@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     target: 'es2019',
-    sourcemap: false,
+    sourcemap: true,
     cssCodeSplit: true,
     rollupOptions: {
       input: {
