@@ -35,10 +35,7 @@ export const Sidebar: React.FC = () => {
           aria-label="collection setting"
           onClick={() => { try { window.dispatchEvent(new CustomEvent('collections:open-manage')); } catch {} }}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4" aria-hidden>
-            <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82l.02.07a2 2 0 1 1-3.38 0l.02-.07A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82-.33l-.06.03a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33l-.07.02a2 2 0 1 1 0-3.38l.07.02A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.6-1L3.94 7.9a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6c.35 0 .69.12.98.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c.21.29.33.63.33.98 0 .35.12.69.33.98l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.29.21-.63.33-.98.33-.35 0-.69.12-.98.33Z" />
-          </svg>
+          <span aria-hidden>⚙︎</span>
         </button>
       </div>
       <div className="text-[11px] uppercase text-[var(--muted)] mb-2">
@@ -304,7 +301,11 @@ export const Sidebar: React.FC = () => {
 
 const SidebarBottomActions: React.FC = () => {
   const [manageOpen, setManageOpen] = React.useState(false);
-
+  React.useEffect(() => {
+    const open = () => setManageOpen(true);
+    try { window.addEventListener('collections:open-manage', open as any); } catch {}
+    return () => { try { window.removeEventListener('collections:open-manage', open as any); } catch {} };
+  }, []);
   return (
     <div className="mt-auto pt-3 border-t border-slate-700">
       <div className="flex items-center justify-end gap-2">
@@ -325,11 +326,8 @@ const SidebarBottomActions: React.FC = () => {
             aria-label="Open App Settings"
             onClick={() => { try { window.dispatchEvent(new CustomEvent('app:open-settings')); } catch {} }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5" aria-hidden>
-              <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82l.02.07a2 2 0 1 1-3.38 0l.02-.07A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82-.33l-.06.03a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33l-.07.02a2 2 0 1 1 0-3.38l.07.02A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.6-1L3.94 7.9a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6c.35 0 .69.12.98.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c.21.29.33.63.33.98 0 .35.12.69.33.98l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.29.21-.63.33-.98.33-.35 0-.69.12-.98.33Z" />
-            </svg>
-          </button>
+          <span aria-hidden>⚙︎</span>
+        </button>
           <button
             className="px-1.5 py-1 rounded hover:bg-slate-800 inline-flex items-center justify-center"
             title="Toggle Theme"
