@@ -43,7 +43,7 @@ export const AppLayout: React.FC = () => {
                             isActive
                               ? 'bg-slate-800 text-white'
                               : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                          } focus:outline-none focus:ring-2 focus:ring-emerald-600/60`
+                          } focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/60`
                         }
                         aria-label="Home"
                       >
@@ -56,7 +56,7 @@ export const AppLayout: React.FC = () => {
                             isActive
                               ? 'bg-slate-800 text-white'
                               : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                          } focus:outline-none focus:ring-2 focus:ring-emerald-600/60`
+                          } focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/60`
                         }
                         aria-label="Settings"
                       >
@@ -354,7 +354,7 @@ const HomeInner: React.FC = () => {
                 Cancel
               </button>
               <button
-                className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50"
+                className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
                 disabled={!newCatName.trim()}
                 onClick={async () => {
                   const cat = await catActions.addCategory(
@@ -441,7 +441,7 @@ const HomeInner: React.FC = () => {
                 取消
               </button>
                 <button
-                  className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50"
+                  className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
                 onClick={async () => {
                   if (!htmlImportFile) { setHtmlImportOpen(false); return; }
                   setHtmlImportOpen(false);
@@ -511,7 +511,7 @@ const HomeInner: React.FC = () => {
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
               <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>setTobyOpen(false)}>取消</button>
-              <button className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30" onClick={async ()=>{
+              <button className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]" onClick={async ()=>{
                 if (!tobyFile) { setTobyOpen(false); return; }
                 setTobyOpen(false); setLoading(true);
                 try {
@@ -541,7 +541,7 @@ const HomeInner: React.FC = () => {
           <div className="rounded border border-slate-700 bg-[var(--panel)] w-[420px] max-w-[90vw] p-5">
             <div className="text-lg font-semibold">匯入中…</div>
             <div className="mt-3 text-sm">{tobyProgress.processed}/{tobyProgress.total}</div>
-            <div className="mt-2 h-2 w-full bg-slate-800 rounded"><div className="h-2 bg-emerald-600 rounded" style={{ width: `${tobyProgress.total ? Math.min(100, Math.floor((tobyProgress.processed/tobyProgress.total)*100)) : 0}%` }} /></div>
+            <div className="mt-2 h-2 w-full bg-slate-800 rounded"><div className="h-2 bg-[var(--accent)] rounded" style={{ width: `${tobyProgress.total ? Math.min(100, Math.floor((tobyProgress.processed/tobyProgress.total)*100)) : 0}%` }} /></div>
             <div className="mt-3 flex items-center justify-end gap-2"><button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>{ try{ tobyAbortRef.current?.abort(); } catch{} }}>取消</button></div>
           </div>
         </div>
@@ -552,7 +552,7 @@ const HomeInner: React.FC = () => {
             <div className="text-lg font-semibold">匯入中…</div>
             <div className="mt-3 text-sm">{htmlProgress.processed}/{htmlProgress.total}</div>
             <div className="mt-2 h-2 w-full bg-slate-800 rounded">
-              <div className="h-2 bg-emerald-600 rounded" style={{ width: `${htmlProgress.total ? Math.min(100, Math.floor((htmlProgress.processed/htmlProgress.total)*100)) : 0}%` }} />
+              <div className="h-2 bg-[var(--accent)] rounded" style={{ width: `${htmlProgress.total ? Math.min(100, Math.floor((htmlProgress.processed/htmlProgress.total)*100)) : 0}%` }} />
             </div>
             <div className="mt-3 flex items-center justify-end gap-2">
               <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => { try { htmlAbortRef.current?.abort(); } catch {} }}>取消</button>
@@ -683,7 +683,7 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
             <div className="border-t border-slate-700 pt-4">
               <div className="text-sm font-medium mb-2">還原（取代現有資料）</div>
               <div
-                className="rounded border-2 border-dashed border-slate-600 hover:border-emerald-600/70 hover:bg-emerald-950/10 p-3 text-sm"
+                className="rounded border-2 border-dashed border-slate-600 hover:border-[var(--accent)] hover:bg-[var(--accent-hover)] p-3 text-sm"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={async (e) => {
                   e.preventDefault();
@@ -726,7 +726,7 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
                     </div>
                   )}
                   <button
-                    className="ml-auto text-sm px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50"
+                    className="ml-auto text-sm px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
                     disabled={!file}
                     onClick={() => {
                       if (!file) return showToast('請選擇 JSON 檔案', 'error');
@@ -748,7 +748,7 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
             <div
               className={`mt-3 text-sm px-3 py-2 rounded border ${
                 inlineMsg.kind === 'success'
-                  ? 'bg-emerald-900/30 border-emerald-700'
+                  ? 'bg-[var(--accent-hover)] border-[var(--accent)]/60'
                   : 'bg-red-900/30 border-red-700'
               }`}
             >
@@ -779,7 +779,7 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
                     取消
                   </button>
                   <button
-                    className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30"
+                    className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]"
                     onClick={performImport}
                   >
                     確認匯入

@@ -411,7 +411,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
             <div className="mt-4 flex items-center justify-end gap-2">
               <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => { setTobyOpenFor(null); setTobyFile(null); setTobyPreview(null); }}>取消</button>
               <button
-                className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50"
+                className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
                 onClick={async () => {
                   const gid = tobyOpenFor;
                   const f = tobyFile;
@@ -449,7 +449,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
             <div className="text-lg font-semibold">匯入中…</div>
             <div className="mt-3 text-sm">{tobyProgress.processed}/{tobyProgress.total}</div>
             <div className="mt-2 h-2 w-full bg-slate-800 rounded">
-              <div className="h-2 bg-emerald-600 rounded" style={{ width: `${tobyProgress.total ? Math.min(100, Math.floor((tobyProgress.processed/tobyProgress.total)*100)) : 0}%` }} />
+              <div className="h-2 bg-[var(--accent)] rounded" style={{ width: `${tobyProgress.total ? Math.min(100, Math.floor((tobyProgress.processed/tobyProgress.total)*100)) : 0}%` }} />
             </div>
             <div className="mt-3 flex items-center justify-end gap-2">
               <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => { try { tobyAbortRef.current?.abort(); } catch {} }}>取消</button>

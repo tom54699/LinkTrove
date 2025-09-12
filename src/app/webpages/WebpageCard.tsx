@@ -364,7 +364,7 @@ export const WebpageCard: React.FC<{
                 Cancel
               </button>
               <button
-                className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50"
+                className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
                 disabled={!!urlError}
                 onClick={() => {
                   const normalized = validateUrl(urlValue);

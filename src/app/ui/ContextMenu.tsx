@@ -29,7 +29,7 @@ export const ContextMenu: React.FC<{
         <button
           key={it.key}
           role="menuitem"
-          className="block w-full text-left px-3 py-2 hover:bg-slate-800"
+          className="block w-full text-left px-3 py-2 hover:bg-[var(--accent-hover)] hover:text-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/60"
           onClick={() => {
             it.onSelect();
           }}

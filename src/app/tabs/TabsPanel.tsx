@@ -36,7 +36,7 @@ export const TabsPanel: React.FC = () => {
         {groups.map((g) => (
           <div key={g.id} className="border border-slate-700 rounded">
             <div
-              className={`w-full flex items-center justify-between px-2 py-1 text-left bg-[var(--card)] ${activeWindowId === g.id ? 'ring-1 ring-emerald-600' : ''}`}
+              className={`w-full flex items-center justify-between px-2 py-1 text-left bg-[var(--card)] ${activeWindowId === g.id ? 'ring-1 ring-[var(--accent)]' : ''}`}
             >
               <div className="flex items-center gap-2">
                 <button

@@ -361,7 +361,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
                 Cancel
               </button>
               <button
-                className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30"
+                className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]"
                 onClick={() => {
                   const patch: any = {
                     title: titleValue.trim(),

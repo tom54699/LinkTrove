@@ -37,7 +37,7 @@ export const TemplatesManager: React.FC = () => {
             onChange={(e) => setName(e.target.value)}
           />
           <button
-            className="text-sm px-2 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30"
+            className="text-sm px-2 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]"
             onClick={async () => {
               if (!name.trim()) return;
               await actions.add(name.trim());
@@ -382,7 +382,7 @@ export const TemplatesManager: React.FC = () => {
                     </div>
                     <div>
                       <button
-                        className="text-xs px-2 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30"
+                        className="text-xs px-2 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]"
                         onClick={async () => {
                           const nf = newField[t.id] || {
                             key: '',
