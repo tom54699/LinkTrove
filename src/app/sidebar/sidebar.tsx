@@ -323,7 +323,7 @@ const SidebarBottomActions: React.FC = () => {
           </svg>
           <span>collection setting</span>
         </button>
-        <div className="flex items-center gap-2">
+        <div className="hidden">
           <button
             className="px-2 py-1 rounded hover:bg-slate-800"
             title="App Settings"

@@ -58,6 +58,44 @@ export const AppLayout: React.FC = () => {
   );
 };
 
+const AppRail: React.FC = () => {
+  return (
+    <div className="h-full flex flex-col items-center justify-between py-2">
+      <div className="flex flex-col items-center gap-2">
+        <button
+          className="w-8 h-8 rounded hover:bg-slate-800 inline-flex items-center justify-center"
+          title="App Settings"
+          aria-label="Open App Settings"
+          onClick={() => { try { window.dispatchEvent(new CustomEvent('app:open-settings')); } catch {} }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5" aria-hidden>
+            <circle cx="12" cy="12" r="2.2" />
+            <path d="M12 3.8v1.4M12 18.8v1.4M4.75 6.35l.99.99M18.26 19.86l.99.99M3.8 12h1.4M18.8 12h1.4M4.75 17.65l.99-.99M18.26 4.14l.99-.99" />
+          </svg>
+        </button>
+      </div>
+      <div className="flex flex-col items-center gap-2">
+        <button
+          className="w-8 h-8 rounded hover:bg-slate-800 inline-flex items-center justify-center"
+          title="Toggle Theme"
+          aria-label="Toggle Theme"
+          onClick={() => { try { window.dispatchEvent(new CustomEvent('app:toggle-theme')); } catch {} }}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="w-5 h-5 text-violet-300"
+            aria-hidden="true"
+          >
+            <path d="M21 12.79A9 9 0 1111.21 3c.03 0 .06 0 .09 0a7 7 0 109.7 9.7c0 .03 0 .06 0 .09z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export const Home: React.FC = () => <HomeInner />;
 
 const HomeInner: React.FC = () => {
@@ -114,6 +152,7 @@ const HomeInner: React.FC = () => {
   return (
     <div className="h-full min-h-0">
       <ThreeColumnLayout
+        rail={<AppRail />}
         sidebar={<Sidebar />}
         content={
           <div>
