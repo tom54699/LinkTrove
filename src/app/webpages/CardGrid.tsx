@@ -449,6 +449,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
                   node.type === 'card' ? (node.item as any).id : `ghost-${idx}`
                 }
                 className="toby-card-flex relative"
+                id={node.type === 'card' ? `card-${(node.item as any).id}` : undefined}
                 data-card-id={node.type === 'card' ? (node.item as any).id : undefined}
                 data-hidden={
                   node.type === 'card' && hiddenCardId === (node.item as any).id
