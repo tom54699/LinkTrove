@@ -135,7 +135,7 @@ export const Sidebar: React.FC = () => {
       {/* Add new collection: centered below the list */}
       <div className="mt-2 flex justify-center">
         <button
-          className="px-2 py-1 text-[var(--accent)] hover:bg-[var(--accent-hover)] rounded"
+          className="px-3 py-1.5 text-[16px] text-[var(--accent)] hover:bg-[var(--accent-hover)] rounded"
           onClick={() => { try { window.dispatchEvent(new CustomEvent('collections:add-new')); } catch {} }}
           aria-label="Add new collection"
           title="Add collection"
