@@ -31,11 +31,15 @@ export const Sidebar: React.FC = () => {
         <span>Collections</span>
         <button
           className="px-1.5 py-1 rounded hover:bg-slate-800"
-          title="collection setting"
-          aria-label="collection setting"
+          title="Collection settings"
+          aria-label="Collection settings"
           onClick={() => { try { window.dispatchEvent(new CustomEvent('collections:open-manage')); } catch {} }}
         >
-          <span aria-hidden>⚙︎</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5" aria-hidden>
+            <path d="M3 7h5.5c.4 0 .8.16 1.06.44L11 9h10v9.5A1.5 1.5 0 0 1 19.5 20h-15A1.5 1.5 0 0 1 3 18.5V7z" />
+            <circle cx="17.5" cy="6.5" r="1.2" />
+            <path d="M17.5 4.6v.8M17.5 7.6v.8M15.6 6.5h.8M18.6 6.5h.8M16.25 5.25l.57.57M18.18 7.18l.57.57M18.75 5.25l-.57.57M16.82 7.18l-.57.57" />
+          </svg>
         </button>
       </div>
       <div className="text-[11px] uppercase text-[var(--muted)] mb-2">
@@ -321,15 +325,18 @@ const SidebarBottomActions: React.FC = () => {
         </button>
         <div className="flex items-center gap-2">
           <button
-            className="px-1.5 py-1 rounded hover:bg-slate-800"
+            className="px-2 py-1 rounded hover:bg-slate-800"
             title="App Settings"
             aria-label="Open App Settings"
             onClick={() => { try { window.dispatchEvent(new CustomEvent('app:open-settings')); } catch {} }}
           >
-          <span aria-hidden>⚙︎</span>
-        </button>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6" aria-hidden>
+              <circle cx="12" cy="12" r="2.2" />
+              <path d="M12 3.8v1.4M12 18.8v1.4M4.75 6.35l.99.99M18.26 19.86l.99.99M3.8 12h1.4M18.8 12h1.4M4.75 17.65l.99-.99M18.26 4.14l.99-.99" />
+            </svg>
+          </button>
           <button
-            className="px-1.5 py-1 rounded hover:bg-slate-800 inline-flex items-center justify-center"
+            className="px-2 py-1 rounded hover:bg-slate-800 inline-flex items-center justify-center"
             title="Toggle Theme"
             aria-label="Toggle Theme"
             onClick={() => { try { window.dispatchEvent(new CustomEvent('app:toggle-theme')); } catch {} }}
