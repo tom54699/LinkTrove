@@ -26,7 +26,7 @@ export const Sidebar: React.FC = () => {
   const { actions } = useWebpages();
 
   return (
-    <div className="text-[13px]">
+    <div className="text-[13px] h-full flex flex-col">
       <div className="mb-4 text-lg font-semibold">Collections</div>
       <div className="text-[11px] uppercase text-[var(--muted)] mb-2">
         Spaces
@@ -132,6 +132,19 @@ export const Sidebar: React.FC = () => {
           );
         })}
       </nav>
+      {/* Add new collection: centered below the list */}
+      <div className="mt-2 flex justify-center">
+        <button
+          className="px-2 py-1 text-[var(--accent)] hover:bg-[var(--accent-hover)] rounded"
+          onClick={() => { try { window.dispatchEvent(new CustomEvent('collections:add-new')); } catch {} }}
+          aria-label="Add new collection"
+          title="Add collection"
+        >
+          <span aria-hidden>+</span>
+        </button>
+      </div>
+      {/* 底部工具：新增 + 管理彈窗 */}
+      <SidebarBottomActions />
       {editing && (
         <div
           className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
@@ -268,6 +281,60 @@ export const Sidebar: React.FC = () => {
                   Save
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SidebarBottomActions: React.FC = () => {
+  const [manageOpen, setManageOpen] = React.useState(false);
+
+  return (
+    <div className="mt-auto pt-3 border-t border-slate-700">
+      <div className="flex justify-start">
+        <button
+          className="px-3 py-2 rounded border border-slate-600 hover:bg-slate-800 inline-flex items-center gap-2"
+          onClick={() => setManageOpen(true)}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4" aria-hidden>
+            <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82l.02.07a2 2 0 1 1-3.38 0l.02-.07A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82-.33l-.06.03a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33l-.07.02a2 2 0 1 1 0-3.38l.07.02A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.6-1L3.94 7.9a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6c.35 0 .69-.12.98-.33A1.65 1.65 0 0 0 11 2.45l-.02-.07a2 2 0 1 1 3.38 0l-.02.07A1.65 1.65 0 0 0 15 4.6c.35 0 .69.12.98.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c.21.29.33.63.33.98 0 .35.12.69.33.98l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.29.21-.63.33-.98.33-.35 0-.69.12-.98.33Z" />
+          </svg>
+          <span>collection setting</span>
+        </button>
+      </div>
+
+      {manageOpen && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
+          onClick={() => setManageOpen(false)}
+        >
+          <div
+            className="rounded border border-slate-700 bg-[var(--panel)] w-[420px] max-w-[95vw] p-5"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Manage Collections"
+          >
+            <div className="text-lg font-semibold mb-3">集合管理</div>
+            <div className="space-y-2">
+              <button
+                className="w-full text-left px-3 py-2 rounded border border-slate-600 hover:bg-slate-800"
+                onClick={() => { setManageOpen(false); try { window.dispatchEvent(new CustomEvent('collections:import-html-new')); } catch {} }}
+              >
+                Import HTML (new)…
+              </button>
+              <button
+                className="w-full text-left px-3 py-2 rounded border border-slate-600 hover:bg-slate-800"
+                onClick={() => { setManageOpen(false); try { window.dispatchEvent(new CustomEvent('collections:import-toby-new')); } catch {} }}
+              >
+                Import Toby (new)…
+              </button>
+            </div>
+            <div className="mt-3 flex items-center justify-end">
+              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => setManageOpen(false)}>關閉</button>
             </div>
           </div>
         </div>

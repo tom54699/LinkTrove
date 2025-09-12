@@ -13,6 +13,9 @@
   --panel: #343746;
   --card: #51566e;
   --muted: #6272a4;
+  --accent: #ff507a;
+  --accent-contrast: #ffffff;
+  --accent-hover: #ff507a1a; /* ~10% */
 }
 
 /* Dracula theme */
@@ -22,6 +25,9 @@ html.theme-dracula {
   --panel: #343746;
   --card: #51566e;
   --muted: #6272a4;
+  --accent: #ff507a;
+  --accent-contrast: #ffffff;
+  --accent-hover: #ff507a1a;
 }
 
 /* Gruvbox (Dark) theme */
@@ -31,6 +37,9 @@ html.theme-gruvbox {
   --panel: #3c3836;
   --card: #504945;
   --muted: #a89984;
+  --accent: #ff507a;
+  --accent-contrast: #282828;
+  --accent-hover: #ff507a1a;
 }
 body {
   background: var(--bg);

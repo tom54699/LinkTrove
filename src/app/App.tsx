@@ -150,6 +150,20 @@ const HomeInner: React.FC = () => {
     () => items.filter((it: any) => it.category === selectedId),
     [items, selectedId]
   );
+  // Global triggers from Sidebar for collection-level actions
+  React.useEffect(() => {
+    const onHtml = () => { try { document.getElementById('html-cat-file')?.click(); } catch {} };
+    const onToby = () => { try { document.getElementById('toby-cat-file')?.click(); } catch {} };
+    const onAdd = () => { setNewCatName(''); setNewCatColor('#64748b'); setShowAddCat(true); };
+    try { window.addEventListener('collections:import-html-new', onHtml as any); } catch {}
+    try { window.addEventListener('collections:import-toby-new', onToby as any); } catch {}
+    try { window.addEventListener('collections:add-new', onAdd as any); } catch {}
+    return () => {
+      try { window.removeEventListener('collections:import-html-new', onHtml as any); } catch {}
+      try { window.removeEventListener('collections:import-toby-new', onToby as any); } catch {}
+      try { window.removeEventListener('collections:add-new', onAdd as any); } catch {}
+    };
+  }, []);
   return (
     <div className="h-full min-h-0">
       <ThreeColumnLayout
@@ -194,16 +208,6 @@ const HomeInner: React.FC = () => {
                     setHtmlImportOpen(true);
                   }}
                 />
-                <button
-                  className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
-                  title="匯入 HTML 書籤至新集合（依資料夾建立群組）"
-                  aria-label="匯入 HTML 書籤（新集合）"
-                  onClick={() => {
-                    try { document.getElementById('html-cat-file')?.click(); } catch {}
-                  }}
-                >
-                  匯入 HTML（新集合）
-                </button>
                 {/* Toby new collection import */}
                 <input
                   id="toby-cat-file"
@@ -229,14 +233,6 @@ const HomeInner: React.FC = () => {
                     setTobyOpen(true);
                   }}
                 />
-                <button
-                  className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
-                  title="匯入 Toby JSON 至新集合（lists → 群組）"
-                  aria-label="匯入 Toby（新集合）"
-                  onClick={() => { try { document.getElementById('toby-cat-file')?.click(); } catch {} }}
-                >
-                  匯入 Toby（新集合）
-                </button>
                 <button
                   className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
                   title="新增 group"
@@ -305,17 +301,6 @@ const HomeInner: React.FC = () => {
                   }}
                 >
                   COLLAPSE
-                </button>
-                <button
-                  className="primary"
-                  title="Add Collection"
-                  onClick={() => {
-                    setNewCatName('');
-                    setNewCatColor('#64748b');
-                    setShowAddCat(true);
-                  }}
-                >
-                  + ADD COLLECTION
                 </button>
               </div>
             </div>

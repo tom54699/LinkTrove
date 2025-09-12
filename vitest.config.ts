@@ -7,6 +7,14 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     css: true,
-    pool: 'vmThreads',
+    // Use lighter threading model to reduce resource usage in CI/sandbox
+    pool: 'threads',
+    minWorkers: 1,
+    maxWorkers: 1,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary', 'lcov', 'html'],
+      reportsDirectory: './coverage',
+    },
   },
 });

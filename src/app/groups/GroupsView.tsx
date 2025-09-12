@@ -6,6 +6,7 @@ import { CardGrid } from '../webpages/CardGrid';
 import { broadcastGhostActive } from '../dnd/dragContext';
 import type { TabItemData } from '../tabs/types';
 import { dbg } from '../../utils/debug';
+import { ContextMenu } from '../ui/ContextMenu';
 
 interface GroupItem {
   id: string;
@@ -22,6 +23,8 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
   const [renaming, setRenaming] = React.useState<string | null>(null);
   const [renameText, setRenameText] = React.useState<string>('');
   const [confirmDeleteGroup, setConfirmDeleteGroup] = React.useState<string | null>(null);
+  // Compact actions menu per-group
+  const [menuFor, setMenuFor] = React.useState<null | { id: string; x: number; y: number }>(null);
   // Toby import wizard state
   const [tobyOpenFor, setTobyOpenFor] = React.useState<string | null>(null);
   const [tobyFile, setTobyFile] = React.useState<File | null>(null);
@@ -218,7 +221,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
               )}
             </div>
             <div className="flex items-center gap-2">
-              {/* HTML import into this group */}
+              {/* Hidden inputs for import actions */}
               <input
                 id={`html-file-${g.id}`}
                 type="file"
@@ -240,13 +243,6 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   }
                 }}
               />
-              <button
-                className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:bg-slate-800"
-                onClick={() => { try { document.getElementById(`html-file-${g.id}`)?.click(); } catch {} }}
-                title="匯入 HTML 書籤到此 group"
-              >
-                匯入 HTML
-              </button>
               <input
                 id={`toby-file-${g.id}`}
                 type="file"
@@ -275,19 +271,37 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   } catch { setTobyPreview(null); }
                 }}
               />
+              {/* Kebab menu trigger */}
               <button
-                className="text-xs px-1.5 py-0.5 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30"
-                onClick={() => { try { document.getElementById(`toby-file-${g.id}`)?.click(); } catch {} }}
-                title="匯入 Toby JSON 至此 group"
+                className="text-xs px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                aria-label="更多操作"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
+                  const x = Math.max(8, Math.min(vw - 200, e.clientX - 20));
+                  setMenuFor({ id: g.id, x, y: e.clientY + 6 });
+                }}
               >
-                匯入 Toby
+                ⋯
               </button>
-              <button className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:bg-slate-800" onClick={() => { setRenaming(g.id); setRenameText(g.name); }}>重新命名</button>
-              <button className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:bg-slate-800" onClick={() => move(g.id, -1)} aria-label="上移">↑</button>
-              <button className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:bg-slate-800" onClick={() => move(g.id, 1)} aria-label="下移">↓</button>
-              <button className="text-xs px-1.5 py-0.5 rounded border border-rose-700 text-rose-300 hover:bg-rose-950/30" onClick={() => setConfirmDeleteGroup(g.id)}>刪除</button>
             </div>
           </header>
+          {/* Context menu for this group */}
+          {menuFor?.id === g.id && (
+            <ContextMenu
+              x={menuFor.x}
+              y={menuFor.y}
+              onClose={() => setMenuFor(null)}
+              items={[
+                { key: 'import-html', label: '匯入 HTML', onSelect: () => { setMenuFor(null); try { document.getElementById(`html-file-${g.id}`)?.click(); } catch {} } },
+                { key: 'import-toby', label: '匯入 Toby', onSelect: () => { setMenuFor(null); try { document.getElementById(`toby-file-${g.id}`)?.click(); } catch {} } },
+                { key: 'rename', label: '重新命名', onSelect: () => { setMenuFor(null); setRenaming(g.id); setRenameText(g.name); } },
+                { key: 'move-up', label: '上移', onSelect: () => { setMenuFor(null); void move(g.id, -1); } },
+                { key: 'move-down', label: '下移', onSelect: () => { setMenuFor(null); void move(g.id, 1); } },
+                { key: 'delete', label: '刪除', onSelect: () => { setMenuFor(null); setConfirmDeleteGroup(g.id); } },
+              ]}
+            />
+          )}
           {!collapsed[g.id] && (
             <div className="p-3">
               <CardGrid
