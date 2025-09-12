@@ -24,6 +24,16 @@ import { SettingsModal } from './ui/SettingsModal';
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  React.useEffect(() => {
+    const open = () => setSettingsOpen(true);
+    const toggleTheme = () => setTheme(theme === 'dracula' ? 'gruvbox' : 'dracula');
+    try { window.addEventListener('app:open-settings', open as any); } catch {}
+    try { window.addEventListener('app:toggle-theme', toggleTheme as any); } catch {}
+    return () => {
+      try { window.removeEventListener('app:open-settings', open as any); } catch {}
+      try { window.removeEventListener('app:toggle-theme', toggleTheme as any); } catch {}
+    };
+  }, [theme, setTheme]);
   return (
     <FeedbackProvider>
       <ErrorBoundary>
@@ -32,56 +42,6 @@ export const AppLayout: React.FC = () => {
             <TemplatesProvider>
               <WebpagesProvider>
                 <div className="toby-mode h-screen flex flex-col bg-[var(--bg)] text-[var(--fg)]">
-                  <header className="p-4 flex items-center justify-between border-b border-slate-700 flex-shrink-0">
-                    <div />
-                    <div className="flex items-center gap-2">
-                    <button
-                      className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 inline-flex items-center justify-center"
-                      onClick={() => setSettingsOpen(true)}
-                      aria-label="Open Settings"
-                      title="Settings"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5" aria-hidden>
-                        <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82l.02.07a2 2 0 1 1-3.38 0l.02-.07A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82-.33l-.06.03a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33l-.07.02a2 2 0 1 1 0-3.38l.07.02A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.6-1L3.94 7.9a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6c.35 0 .69-.12.98-.33A1.65 1.65 0 0 0 11 2.45l-.02-.07a2 2 0 1 1 3.38 0l-.02.07A1.65 1.65 0 0 0 15 4.6c.35 0 .69.12.98.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c.21.29.33.63.33.98 0 .35.12.69.33.98l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.29.21-.63.33-.98.33-.35 0-.69.12-.98.33Z" />
-                      </svg>
-                    </button>
-                    <button
-                      className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 inline-flex items-center justify-center"
-                      onClick={() =>
-                        setTheme(theme === 'dracula' ? 'gruvbox' : 'dracula')
-                      }
-                      aria-label={`Switch to ${theme === 'dracula' ? 'gruvbox' : 'dracula'} theme`}
-                      title={`Theme: ${theme} — click to switch`}
-                    >
-                      {theme === 'dracula' ? (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className="w-5 h-5 text-violet-300"
-                          aria-hidden="true"
-                        >
-                          <path d="M21 12.79A9 9 0 1111.21 3c.03 0 .06 0 .09 0a7 7 0 109.7 9.7c0 .03 0 .06 0 .09z" />
-                        </svg>
-                      ) : (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          className="w-5 h-5 text-amber-300"
-                          aria-hidden="true"
-                        >
-                          <circle cx="12" cy="12" r="4" />
-                          <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-                        </svg>
-                      )}
-                      <span className="sr-only">Toggle theme</span>
-                    </button>
-                    </div>
-                  </header>
           <main className="p-6 flex-1 overflow-auto min-h-0">
             <Outlet />
           </main>

@@ -294,7 +294,7 @@ const SidebarBottomActions: React.FC = () => {
 
   return (
     <div className="mt-auto pt-3 border-t border-slate-700">
-      <div className="flex justify-start">
+      <div className="flex items-center justify-between gap-2">
         <button
           className="px-3 py-2 rounded border border-slate-600 hover:bg-slate-800 inline-flex items-center gap-2"
           onClick={() => setManageOpen(true)}
@@ -305,6 +305,27 @@ const SidebarBottomActions: React.FC = () => {
           </svg>
           <span>collection setting</span>
         </button>
+        <div className="flex items-center gap-2">
+          <button
+            className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
+            title="App Settings"
+            aria-label="Open App Settings"
+            onClick={() => { try { window.dispatchEvent(new CustomEvent('app:open-settings')); } catch {} }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4" aria-hidden>
+              <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82l.02.07a2 2 0 1 1-3.38 0l.02-.07A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82-.33l-.06.03a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33l-.07.02a2 2 0 1 1 0-3.38l.07.02A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.6-1L3.94 7.9a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6c.35 0 .69.12.98.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c.21.29.33.63.33.98 0 .35.12.69.33.98l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.29.21-.63.33-.98.33-.35 0-.69.12-.98.33Z" />
+            </svg>
+          </button>
+          <button
+            className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
+            title="Toggle Theme"
+            aria-label="Toggle Theme"
+            onClick={() => { try { window.dispatchEvent(new CustomEvent('app:toggle-theme')); } catch {} }}
+          >
+            🌓
+          </button>
+        </div>
       </div>
 
       {manageOpen && (
