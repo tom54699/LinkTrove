@@ -204,20 +204,22 @@ export function createIdbStorageService(): StorageService {
   }
 
   async function exportData(): Promise<string> {
-    const [webpages, categories, templates, subcategories] = await Promise.all([
+    const [webpages, categories, templates, subcategories, organizations] = await Promise.all([
       getAll('webpages'),
       getAll('categories'),
       getAll('templates'),
       getAll('subcategories' as any).catch(() => []),
+      getAll('organizations' as any).catch(() => []),
     ]);
     // Include minimal settings (theme, selectedCategoryId)
     let theme: any = undefined;
     let selectedCategoryId: any = undefined;
+    let selectedOrganizationId: any = undefined;
     try {
       const got: any = await new Promise((resolve) => {
         try {
           chrome.storage?.local?.get?.(
-            { theme: undefined, selectedCategoryId: undefined },
+            { theme: undefined, selectedCategoryId: undefined, selectedOrganizationId: undefined },
             resolve
           );
         } catch {
@@ -226,6 +228,7 @@ export function createIdbStorageService(): StorageService {
       });
       theme = got?.theme;
       selectedCategoryId = got?.selectedCategoryId;
+      selectedOrganizationId = got?.selectedOrganizationId;
     } catch {}
     if (theme === undefined) {
       try {
@@ -241,10 +244,19 @@ export function createIdbStorageService(): StorageService {
         selectedCategoryId = undefined;
       }
     }
+    if (selectedOrganizationId === undefined) {
+      try {
+        selectedOrganizationId = await getMeta('settings.selectedOrganizationId');
+      } catch {
+        selectedOrganizationId = undefined;
+      }
+    }
     const settings: any = {};
     if (theme !== undefined) settings.theme = theme;
     if (selectedCategoryId !== undefined)
       settings.selectedCategoryId = selectedCategoryId;
+    if (selectedOrganizationId !== undefined)
+      settings.selectedOrganizationId = selectedOrganizationId;
     // Export per-group orders
     const orders: { subcategories: Record<string, string[]> } = { subcategories: {} };
     try {
@@ -263,6 +275,7 @@ export function createIdbStorageService(): StorageService {
       categories,
       templates,
       subcategories,
+      organizations,
       settings,
       orders,
     } as any;
@@ -288,6 +301,9 @@ export function createIdbStorageService(): StorageService {
     const subcats: any[] = Array.isArray(parsed?.subcategories)
       ? parsed.subcategories
       : [];
+    const orgs: any[] = Array.isArray(parsed?.organizations)
+      ? parsed.organizations
+      : [];
     const ordersObj: any = parsed?.orders;
     const ordersSubcats: Record<string, string[]> =
       ordersObj && ordersObj.subcategories && typeof ordersObj.subcategories === 'object'
@@ -301,8 +317,24 @@ export function createIdbStorageService(): StorageService {
     await clearStore('categories');
     await clearStore('templates');
     await clearStore('subcategories' as any);
+    await clearStore('organizations' as any);
     await clearStore('webpages');
-    if (cats.length) await putAll('categories', cats);
+    if (orgs.length) await putAll('organizations' as any, orgs);
+    if (!orgs.length) {
+      // Ensure default organization exists
+      try {
+        await tx('organizations' as any, 'readwrite', async (t) => {
+          const s = t.objectStore('organizations' as any);
+          const def = { id: 'o_default', name: 'Personal', color: '#64748b', order: 0 } as any;
+          s.put(def);
+        });
+      } catch {}
+    }
+    // Backfill missing category.organizationId when absent
+    const catsNormalized = (cats as any[]).map((c: any) =>
+      ('organizationId' in c && c.organizationId) ? c : { ...c, organizationId: 'o_default' }
+    );
+    if (catsNormalized.length) await putAll('categories', catsNormalized as any);
     if (tmpls.length) await putAll('templates', tmpls);
     if (subcats.length) await putAll('subcategories' as any, subcats);
     if (pages.length) await putAll('webpages', pages);
