@@ -1,5 +1,11 @@
 # Repository Guidelines
 
+## Agent 行為設定
+
+- 回覆語言：預設使用「繁體中文」進行所有溝通與文件撰寫（除非使用者明確要求其他語言）。
+- 測試執行：不得自行執行任何測試命令（例如：`npm test`、`npm test --silent`）。如需測試，請先通知並提供指令給使用者，由使用者決定是否執行。
+- 輸出節制：避免一次輸出過多內容或完整長檔案；優先提供摘要與必要段落，若需要大量內容，先徵詢使用者同意。
+
 ## Project Structure & Module Organization
 
 - Root: `manifest.json`, `vite.config.ts`, `package.json`.
