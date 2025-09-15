@@ -6,6 +6,7 @@ import { OpenTabsProvider } from './tabs/OpenTabsProvider';
 import { TemplatesProvider } from './templates/TemplatesProvider';
 import { TabsPanel } from './tabs/TabsPanel';
 import { CategoriesProvider, useCategories } from './sidebar/categories';
+import { OrganizationsProvider } from './sidebar/organizations';
 import { Sidebar } from './sidebar/sidebar';
 import { FeedbackProvider, ErrorBoundary } from './ui/feedback';
 import { SearchBox } from './ui/SearchBox';
@@ -38,6 +39,7 @@ export const AppLayout: React.FC = () => {
     <FeedbackProvider>
       <ErrorBoundary>
         <OpenTabsProvider>
+          <OrganizationsProvider>
           <CategoriesProvider>
             <TemplatesProvider>
               <WebpagesProvider>
@@ -52,6 +54,7 @@ export const AppLayout: React.FC = () => {
               </WebpagesProvider>
             </TemplatesProvider>
           </CategoriesProvider>
+          </OrganizationsProvider>
         </OpenTabsProvider>
       </ErrorBoundary>
     </FeedbackProvider>

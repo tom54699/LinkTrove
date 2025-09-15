@@ -1,5 +1,6 @@
 import React from 'react';
 import { useCategories } from './categories';
+import { useOrganizations } from './organizations';
 import { useTemplates } from '../templates/TemplatesProvider';
 import { useWebpages } from '../webpages/WebpagesProvider';
 
@@ -10,6 +11,7 @@ export const Sidebar: React.FC = () => {
     setCurrentCategory,
     actions: catActions,
   } = useCategories() as any;
+  const { organizations, selectedOrgId, setCurrentOrganization } = useOrganizations();
   const { templates } = useTemplates();
   const [editing, setEditing] = React.useState<any | null>(null);
   const [editName, setEditName] = React.useState('');
@@ -27,6 +29,20 @@ export const Sidebar: React.FC = () => {
 
   return (
     <div className="text-[13px] h-full flex flex-col">
+      {/* Organization switcher (minimal) */}
+      <div className="mb-3">
+        <label className="block text-[11px] uppercase text-[var(--muted)] mb-1">Organization</label>
+        <select
+          className="w-full rounded bg-slate-900 border border-slate-700 p-1.5 text-sm"
+          value={selectedOrgId}
+          onChange={(e) => setCurrentOrganization(e.target.value)}
+          aria-label="Select organization"
+        >
+          {organizations.map((o) => (
+            <option key={o.id} value={o.id}>{o.name}</option>
+          ))}
+        </select>
+      </div>
       <div className="mb-4 text-lg font-semibold flex items-center justify-between">
         <span>Collections</span>
         <button
