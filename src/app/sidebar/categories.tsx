@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { createStorageService } from '../../background/storageService';
-import { setMeta } from '../../background/idb/db';
+import { setMeta, tx } from '../../background/idb/db';
+import { useOrganizations } from './organizations';
 
 export interface Category {
   id: string;
@@ -35,6 +36,7 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [selectedId, setSelectedId] = useState<string>('default');
+  const { selectedOrgId } = useOrganizations();
 
   const svc = React.useMemo(() => {
     const hasChrome =
@@ -46,80 +48,52 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
   React.useEffect(() => {
     (async () => {
       if (!svc) return; // tests fallback keeps default
-      // Load both sync and local, then合併（以 sync 先、local 補缺）
-      const syncCats = await svc.loadFromSync();
-      let localCats: Category[] = [];
-      try {
-        const got: any = await new Promise((resolve) => {
-          try {
-            chrome.storage?.local?.get?.({ categories: [] }, resolve);
-          } catch {
-            resolve({});
-          }
-        });
-        localCats = Array.isArray(got?.categories)
-          ? (got.categories as any)
-          : [];
-      } catch {}
-      let merged: Category[] = [];
-      if (syncCats.length === 0 && localCats.length === 0) {
-        merged = DEFAULT_CATEGORIES;
-      } else {
-        const byId = new Set<string>();
-        for (const c of syncCats as any as Category[]) {
-          if (!byId.has(c.id)) {
-            merged.push(c);
-            byId.add(c.id);
-          }
+      // Load categories scoped by selected organization
+      const list = await tx('categories', 'readonly', async (t) => {
+        const s = t.objectStore('categories');
+        try {
+          const idx = s.index('by_organizationId_order');
+          const range = IDBKeyRange.bound([selectedOrgId, -Infinity], [selectedOrgId, Infinity]);
+          const rows: any[] = await new Promise((resolve, reject) => {
+            const req = idx.getAll(range);
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+          });
+          return rows as any[];
+        } catch {
+          const rows: any[] = await new Promise((resolve, reject) => {
+            const req = s.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+          });
+          return rows.filter((c: any) => c.organizationId === selectedOrgId);
         }
-        for (const c of localCats as any as Category[]) {
-          if (!byId.has(c.id)) {
-            merged.push(c);
-            byId.add(c.id);
-          }
-        }
-        if (merged.length === 0) merged = DEFAULT_CATEGORIES;
-      }
-      // sort by order for stable left-panel order
-      merged.sort(
-        (a, b) =>
-          (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name)
-      );
-      setCategories(merged);
-      // Persist back to both storages to保持一致
+      });
+      const ordered = (list as any[]).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.name || '').localeCompare(String(b.name || '')));
+      setCategories(ordered as any);
+      try { chrome.storage?.local?.set?.({ categories: ordered }); } catch {}
+      // Ensure each category in this org has at least one default group
       try {
-        await svc.saveToSync(merged as any);
-      } catch {}
-      try {
-        chrome.storage?.local?.set?.({ categories: merged });
-      } catch {}
-      // Ensure each category has at least one default group ("group")
-      try {
-        for (const c of merged) {
-          const list = (((await (svc as any).listSubcategories?.(c.id)) as any[]) || []);
-          if (!Array.isArray(list) || list.length === 0) {
-            await (svc as any).createSubcategory?.(c.id, 'group');
-          }
+        for (const c of ordered as any) {
+          const arr = (((await (svc as any).listSubcategories?.(c.id)) as any[]) || []);
+          if (!Array.isArray(arr) || arr.length === 0) await (svc as any).createSubcategory?.(c.id, 'group');
         }
         try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
       } catch {}
-      // Restore last selected category if it exists
+      // Keep selectedId within current org
       try {
-        const gotSel: any = await new Promise((resolve) => {
-          try {
-            chrome.storage?.local?.get?.({ selectedCategoryId: '' }, resolve);
-          } catch {
-            resolve({});
-          }
-        });
-        const sel = gotSel?.selectedCategoryId || '';
-        if (sel && merged.some((c) => c.id === sel)) setSelectedId(sel);
-        else if (merged.length > 0) setSelectedId(merged[0].id);
-      } catch {
-        if (merged.length > 0) setSelectedId(merged[0].id);
-      }
+        if (selectedId && (ordered as any[]).some((c) => c.id === selectedId)) {
+          // keep
+        } else if ((ordered as any[]).length > 0) {
+          setSelectedId((ordered as any[])[0].id);
+          chrome.storage?.local?.set?.({ selectedCategoryId: (ordered as any[])[0].id });
+        } else {
+          setSelectedId('');
+          chrome.storage?.local?.set?.({ selectedCategoryId: '' });
+        }
+      } catch {}
     })();
-  }, [svc]);
+  }, [svc, selectedOrgId]);
 
   function genId() {
     return 'c_' + Math.random().toString(36).slice(2, 9);
@@ -196,44 +170,37 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         return next;
       },
       async renameCategory(id: string, name: string) {
-        const list = categories.map((c) =>
-          c.id === id ? { ...c, name: name.trim() || c.name } : c
-        );
+        const list = categories.map((c) => (c.id === id ? { ...c, name: name.trim() || c.name } : c));
         setCategories(list);
         try {
-          await svc?.saveToSync(list as any);
+          await tx('categories', 'readwrite', async (t) => {
+            const s = t.objectStore('categories');
+            const cur = await new Promise<any>((resolve, reject) => { const req = s.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
+            if (!cur) return; cur.name = name.trim() || cur.name; s.put(cur);
+          });
         } catch {}
-        try {
-          chrome.storage?.local?.set?.({ categories: list });
-        } catch {}
+        try { chrome.storage?.local?.set?.({ categories: list }); } catch {}
       },
       async updateColor(id: string, color: string) {
-        const list = categories.map((c) =>
-          c.id === id ? { ...c, color: color || c.color } : c
-        );
+        const list = categories.map((c) => (c.id === id ? { ...c, color: color || c.color } : c));
         setCategories(list);
         try {
-          await svc?.saveToSync(list as any);
+          await tx('categories', 'readwrite', async (t) => {
+            const s = t.objectStore('categories');
+            const cur = await new Promise<any>((resolve, reject) => { const req = s.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
+            if (!cur) return; cur.color = color || cur.color; s.put(cur);
+          });
         } catch {}
-        try {
-          chrome.storage?.local?.set?.({ categories: list });
-        } catch {}
+        try { chrome.storage?.local?.set?.({ categories: list }); } catch {}
       },
       async deleteCategory(id: string) {
-        const list = categories.filter((c) => c.id !== id);
-        const next = list.length ? list : DEFAULT_CATEGORIES;
+        const next = categories.filter((c) => c.id !== id);
         setCategories(next);
-        try {
-          await svc?.saveToSync(next as any);
-        } catch {}
-        try {
-          chrome.storage?.local?.set?.({ categories: next });
-        } catch {}
+        try { chrome.storage?.local?.set?.({ categories: next }); } catch {}
         if (selectedId === id) {
-          setSelectedId(next[0].id);
-          try {
-            chrome.storage?.local?.set?.({ selectedCategoryId: next[0].id });
-          } catch {}
+          const fallback = next[0]?.id || '';
+          setSelectedId(fallback);
+          try { chrome.storage?.local?.set?.({ selectedCategoryId: fallback }); } catch {}
         }
         // Also delete webpages under this category
         try {
@@ -246,6 +213,12 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         // Also delete all groups under this category
         try {
           await (svc as any)?.deleteSubcategoriesByCategory?.(id);
+        } catch {}
+        // Delete category row from IDB
+        try {
+          await tx('categories', 'readwrite', async (t) => {
+            t.objectStore('categories').delete(id);
+          });
         } catch {}
       },
       async setDefaultTemplate(id: string, templateId?: string) {
@@ -266,28 +239,22 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         } catch {}
       },
       async reorderCategories(orderIds: string[]) {
-        // Build new ordered list based on provided id order
+        // Only reorder within current organization scope
         const byId = new Map(categories.map((c) => [c.id, c]));
         const newList: Category[] = [];
         let i = 0;
         for (const id of orderIds) {
-          const c = byId.get(id);
-          if (!c) continue;
+          const c = byId.get(id); if (!c) continue;
           newList.push({ ...c, order: i++ });
           byId.delete(id);
         }
-        // Append any categories not present in orderIds (safety)
         for (const c of byId.values()) newList.push({ ...c, order: i++ });
         setCategories(newList);
-        try {
-          await svc?.saveToSync(newList as any);
-        } catch {}
-        try {
-          chrome.storage?.local?.set?.({ categories: newList });
-        } catch {}
+        try { await (svc as any).reorderCategories?.(orderIds, selectedOrgId); } catch {}
+        try { chrome.storage?.local?.set?.({ categories: newList }); } catch {}
       },
     }),
-    [categories, svc, selectedId]
+    [categories, svc, selectedId, selectedOrgId]
   );
 
   const setCurrentCategory = (id: string) => {
@@ -299,10 +266,7 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
       setMeta('settings.selectedCategoryId', id);
     } catch {}
   };
-  const value = useMemo(
-    () => ({ categories, selectedId, setCurrentCategory, actions }),
-    [categories, selectedId, actions]
-  );
+  const value = useMemo(() => ({ categories, selectedId, setCurrentCategory, actions }), [categories, selectedId, actions]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 };
 

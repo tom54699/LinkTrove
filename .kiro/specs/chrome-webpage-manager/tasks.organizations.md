@@ -104,6 +104,8 @@
 
 - [x] 14.1 IDB v3 + organizations store + 遷移
 - [x] 14.2 StorageService 組織 API + 同步/本地載入（先完成 API 與測試；同步策略將於 14.6 併同調整）
+- [x] 14.3 OrganizationsProvider + UI 切換器（最小化：側欄 Select 切換）
+- [x] 14.4 CategoriesProvider 串 org + 新增/排序/刪除調整（以 org 範圍載入與操作；新增預設落在當前 org）
 - [ ] 14.3 OrganizationsProvider + UI 切換器（最小化）
 - [ ] 14.4 CategoriesProvider 串 org + 新增/排序/刪除調整
 - [ ] 14.5 Toby v4 importer（with organizations）+ UI 匯入模式
