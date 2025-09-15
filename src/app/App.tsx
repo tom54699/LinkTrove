@@ -94,6 +94,7 @@ const HomeInner: React.FC = () => {
   const [tobyMode, setTobyMode] = React.useState<'multi' | 'flat'>('multi');
   const [tobyFlatName, setTobyFlatName] = React.useState('Imported');
   const [tobyPreview, setTobyPreview] = React.useState<{ lists: number; links: number } | null>(null);
+  const [tobyHasOrgs, setTobyHasOrgs] = React.useState(false);
   const [tobyProgress, setTobyProgress] = React.useState<{ total: number; processed: number } | null>(null);
   const tobyAbortRef = React.useRef<AbortController | null>(null);
   const viewItems = React.useMemo(
@@ -171,15 +172,25 @@ const HomeInner: React.FC = () => {
                     if (!f) return;
                     setTobyFile(f);
                     setTobyName(''); setTobyFlatName('Imported'); setTobyMode('multi');
-                    // preview: count lists/cards
+                    // preview: count lists/cards; detect v4 organizations
                     try {
                       const text = await f.text();
                       const obj = JSON.parse(text);
-                      let lists = 0; let links = 0;
+                      let lists = 0; let links = 0; let hasOrgs = false;
                       if (Array.isArray(obj?.lists)) { lists = obj.lists.length; for (const l of obj.lists) if (Array.isArray(l?.cards)) links += l.cards.length; }
                       if (Array.isArray(obj?.groups)) { for (const g of obj.groups) if (Array.isArray(g?.lists)) { lists += g.lists.length; for (const l of g.lists) if (Array.isArray(l?.cards)) links += l.cards.length; } }
+                      if (Array.isArray(obj?.organizations)) {
+                        hasOrgs = true;
+                        for (const o of obj.organizations) if (Array.isArray(o?.groups)) {
+                          for (const g of o.groups) if (Array.isArray(g?.lists)) {
+                            lists += g.lists.length;
+                            for (const l of g.lists) if (Array.isArray(l?.cards)) links += l.cards.length;
+                          }
+                        }
+                      }
                       setTobyPreview({ lists, links });
-                    } catch { setTobyPreview(null); }
+                      setTobyHasOrgs(hasOrgs);
+                    } catch { setTobyPreview(null); setTobyHasOrgs(false); }
                     setTobyOpen(true);
                   }}
                 />
@@ -466,16 +477,24 @@ const HomeInner: React.FC = () => {
                 setTobyOpen(false); setLoading(true);
                 try {
                   const text = await tobyFile.text();
-                  const { importTobyAsNewCategory } = await import('../background/importers/toby');
+                  const { importTobyAsNewCategory, importTobyV4WithOrganizations } = await import('../background/importers/toby');
                   const ctrl = new AbortController();
                   tobyAbortRef.current = ctrl;
                   setTobyProgress({ total: tobyPreview?.links || 0, processed: 0 });
-                  const res = await importTobyAsNewCategory(text, { name: tobyName.trim() || undefined, mode: tobyMode, flatGroupName: tobyFlatName.trim() || undefined, signal: ctrl.signal, onProgress: ({ total, processed }) => setTobyProgress({ total, processed }) });
-                  try { await pagesActions.load(); } catch {}
-                  try { await catActions?.reload?.(); } catch {}
-                  try { setCurrentCategory(res.categoryId); } catch {}
-                  try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
-                  showToast(`已匯入 Toby 至新集合「${res.categoryName}」：新增 ${res.pagesCreated} 筆，群組 ${res.groupsCreated}`, 'success');
+                  if (tobyHasOrgs) {
+                    const res = await importTobyV4WithOrganizations(text, { createOrganizations: true, signal: ctrl.signal, onProgress: ({ total, processed }) => setTobyProgress({ total, processed }) });
+                    try { await pagesActions.load(); } catch {}
+                    try { await catActions?.reload?.(); } catch {}
+                    try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
+                    showToast(`已匯入 Toby v4：建立 org ${res.orgsCreated}、集合 ${res.categoriesCreated}、群組 ${res.groupsCreated}、卡片 ${res.pagesCreated}`, 'success');
+                  } else {
+                    const res = await importTobyAsNewCategory(text, { name: tobyName.trim() || undefined, mode: tobyMode, flatGroupName: tobyFlatName.trim() || undefined, signal: ctrl.signal, onProgress: ({ total, processed }) => setTobyProgress({ total, processed }) });
+                    try { await pagesActions.load(); } catch {}
+                    try { await catActions?.reload?.(); } catch {}
+                    try { setCurrentCategory(res.categoryId); } catch {}
+                    try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
+                    showToast(`已匯入 Toby 至新集合「${res.categoryName}」：新增 ${res.pagesCreated} 筆，群組 ${res.groupsCreated}`, 'success');
+                  }
                 } catch (err: any) {
                   showToast(err?.message || '匯入失敗', 'error');
                 } finally {

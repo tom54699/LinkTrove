@@ -26,6 +26,15 @@ export interface TobyImportResult {
   pagesCreated: number;
 }
 
+// V4 with organizations (minimal shape we support)
+export interface TobyV4OrgList { title?: string; cards?: TobyCard[] }
+export interface TobyV4OrgGroup { name?: string; lists?: TobyV4OrgList[] }
+export interface TobyV4Organization { name?: string; color?: string; groups?: TobyV4OrgGroup[] }
+export interface TobyExportV4 {
+  organizations?: TobyV4Organization[];
+  groups?: TobyV4OrgGroup[]; // when no organizations
+}
+
 function nowIso() {
   return new Date().toISOString();
 }
@@ -388,4 +397,120 @@ export async function importTobyAsNewCategory(
     }
   }
   return { categoryId: catId, categoryName: name, pagesCreated, groupsCreated };
+}
+
+/**
+ * Import Toby v4 JSON with organizations support.
+ * - When `organizations` present: create organizations, then collections per group, then lists -> groups, cards -> webpages.
+ * - When only `groups` present: treat as a single organization. If `opts.targetOrganizationId` is provided, import into it; otherwise create
+ *   a new organization named `Imported` (unless `createOrganizations === false`, then require a target).
+ */
+export async function importTobyV4WithOrganizations(
+  json: string,
+  opts?: {
+    createOrganizations?: boolean; // default true
+    targetOrganizationId?: string; // when createOrganizations is false or groups-only payload
+    dedupSkip?: boolean;
+    signal?: AbortSignal;
+    onProgress?: (p: { total: number; processed: number }) => void;
+  }
+): Promise<{ orgsCreated: number; categoriesCreated: number; groupsCreated: number; pagesCreated: number; organizationIds: string[] }> {
+  let parsed: TobyExportV4 & TobyExportV3;
+  try { parsed = JSON.parse(json); } catch { throw new Error('Invalid JSON'); }
+  const createOrgs = opts?.createOrganizations !== false;
+
+  const orgs: TobyV4Organization[] = Array.isArray((parsed as any)?.organizations)
+    ? ((parsed as any).organizations as TobyV4Organization[])
+    : [];
+  const rootGroups: TobyV4OrgGroup[] = Array.isArray((parsed as any)?.groups)
+    ? ((parsed as any).groups as TobyV4OrgGroup[])
+    : [];
+  // Also accept v3 lists-only input by converting into a single group
+  if (orgs.length === 0 && rootGroups.length === 0 && Array.isArray((parsed as any)?.lists)) {
+    rootGroups.push({ name: (parsed as any)?.name || 'Imported', lists: (parsed as any).lists as any });
+  }
+  if (orgs.length === 0 && rootGroups.length === 0) {
+    throw new Error('Unsupported Toby format');
+  }
+
+  let orgsCreated = 0;
+  let categoriesCreated = 0;
+  let groupsCreated = 0;
+  let pagesCreated = 0;
+  const organizationIds: string[] = [];
+
+  function gen(prefix: string) { return `${prefix}_${Math.random().toString(36).slice(2, 10)}`; }
+
+  // Helper: create organization row and return its id
+  async function ensureOrganization(name: string, color?: string): Promise<string> {
+    if (!createOrgs) {
+      const t = (opts?.targetOrganizationId || '').trim();
+      if (!t) throw new Error('Target organization required when createOrganizations is false');
+      return t;
+    }
+    const id = gen('o');
+    const row = { id, name: (name || 'Imported').trim() || 'Imported', color: color || '#64748b', order: 0 } as any;
+    // order will be normalized by UI/migration later; assign 0 for now or append based on existing length
+    const list = await getAll('organizations' as any).catch(() => []);
+    const max = (list as any[]).reduce((m, o: any) => Math.max(m, o?.order ?? 0), -1);
+    row.order = max + 1;
+    await tx('organizations' as any, 'readwrite', async (t) => { t.objectStore('organizations' as any).put(row); });
+    orgsCreated++;
+    organizationIds.push(id);
+    return id;
+  }
+
+  async function importGroupAsCategory(orgId: string, group: TobyV4OrgGroup) {
+    const catId = gen('c');
+    const cat = { id: catId, name: group?.name || 'Imported', color: '#64748b', order: 0, organizationId: orgId } as any;
+    await tx('categories', 'readwrite', async (t) => t.objectStore('categories').put(cat));
+    categoriesCreated++;
+    // For each list in this group, create a subcategory and its cards
+    const lists = Array.isArray(group?.lists) ? (group!.lists as TobyV4OrgList[]) : [];
+    for (const l of lists) {
+      const gid = gen('g');
+      const now = Date.now();
+      const sc = { id: gid, categoryId: catId, name: l?.title || 'group', order: 0, createdAt: now, updatedAt: now } as any;
+      await tx('subcategories' as any, 'readwrite', async (t) => t.objectStore('subcategories' as any).put(sc));
+      groupsCreated++;
+      const idsInOrder: string[] = [];
+      const cards = Array.isArray(l?.cards) ? (l.cards as TobyCard[]) : [];
+      for (const card of cards) {
+        const url = normalizeUrl(card.url || '');
+        if (!url) continue;
+        const id = gen('w');
+        const page: WebpageData = {
+          id,
+          title: normalizeTitle(card),
+          url,
+          favicon: (card.favIconUrl || '').trim() || guessFavicon(url),
+          note: (card.customDescription || '').trim(),
+          category: catId,
+          subcategoryId: gid,
+          meta: undefined,
+          createdAt: nowIso(),
+          updatedAt: nowIso(),
+        };
+        await tx('webpages', 'readwrite', async (t) => t.objectStore('webpages').put(page as any));
+        idsInOrder.push(id);
+        pagesCreated++;
+        if (opts?.signal?.aborted) throw new Error('Aborted');
+      }
+      try { await setMeta(`order.subcat.${gid}`, idsInOrder); } catch {}
+    }
+  }
+
+  if (orgs.length > 0) {
+    for (const o of orgs) {
+      const orgId = await ensureOrganization(o?.name || 'Imported', o?.color as any);
+      const groups = Array.isArray(o?.groups) ? (o.groups as TobyV4OrgGroup[]) : [];
+      for (const g of groups) await importGroupAsCategory(orgId, g);
+    }
+  } else {
+    // groups-only payload
+    const orgId = await ensureOrganization('Imported');
+    for (const g of rootGroups) await importGroupAsCategory(orgId, g);
+  }
+
+  return { orgsCreated, categoriesCreated, groupsCreated, pagesCreated, organizationIds };
 }
