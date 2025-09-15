@@ -6,6 +6,7 @@ LinkTrove — 使用與安裝說明
   - 左：Collections（分類）
   - 中：已儲存的網頁卡片（可拖曳重排、編輯、刪除）
   - 右：Open Tabs（目前瀏覽器分頁，支援多視窗分組）
+  - 額外：支援 Organizations 層級，可在側欄最上方切換不同 Organization 以分隔多個集合空間
 
 基本操作
 
@@ -20,9 +21,10 @@ LinkTrove — 使用與安裝說明
 - 重排卡片：按住卡片拖曳，即可重排順序；拖曳時會出現「插入線」提示，順序會持久化。
 - 批次刪除：點「Select」進入選取模式，勾選卡片後點「Delete Selected」。
 
-分類（Collections）
+Organizations 與 Collections（分類）
 
-- 新增分類：右上「+ ADD COLLECTION」→ 輸入名稱與顏色 → Create。
+- 切換 Organization：側欄最上方下拉選單（預設 Personal）
+- 新增分類：右上「+ ADD COLLECTION」→ 輸入名稱與顏色 → Create（新增於目前 Organization）
 - 切換分類：在左側 Sidebar 點擊分類即可切換，中間只會顯示該分類的卡片。
 - 變更卡片分類：在卡片「編輯彈窗」的 Category 下拉即可切換。
 
@@ -48,10 +50,11 @@ Open Tabs（右側）
 
 - Toast 與 Loading：操作成功/失敗有提示；長作業會顯示 Loading。
 - 專案備份/還原（Settings）：
-  - 匯出 JSON：下載含 `webpages/categories/subcategories/templates` 與每群組順序（orders）的檔案。
-  - 匯入 JSON（取代）：以檔案匯入，取代現有資料（建議先匯出備份）。
+  - 匯出 JSON：下載含 `organizations/categories/subcategories/webpages/templates` 與每群組順序（orders）的檔案；並含 `settings.selectedOrganizationId`、`settings.selectedCategoryId`（若存在）。
+  - 匯入 JSON（取代）：以檔案匯入，取代現有資料（建議先匯出備份）。若匯入檔未包含 `organizations`，系統會自動建立 `o_default` 並為 categories 補上 `organizationId`。
 - 第三方匯入（M2）：
   - Toby（群組層）：在 Home → 每個 group 標題列「匯入 Toby」，選擇 Toby v3 JSON（lists 或 cards 皆可），以向導（Wizard）匯入到該 group，保留順序。
+  - Toby v4（含 Organizations）：在 Home 工具列「匯入 Toby（新集合）」：若偵測到 v4 `organizations`，會自動建立對應的 Organizations 與 Collections，並將 lists → groups、cards → cards（保留每 group 內順序）。
   - HTML（集合層）：在 Home 工具列「匯入 HTML（新集合）」：選檔後彈窗可命名新集合、選擇模式：
     - 依資料夾（H3）建立多群組（預設）
     - 扁平模式：匯入到單一群組（可命名）
