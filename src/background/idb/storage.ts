@@ -51,6 +51,7 @@ async function migrateOnce(): Promise<void> {
 export function createIdbStorageService(): StorageService {
   // ensure migration runs once per session
   void migrateOnce();
+  void migrateOrganizationsOnce();
   void migrateSubcategoriesOnce();
 
   async function listSubcategoriesImpl(categoryId: string): Promise<any[]> {
@@ -88,6 +89,60 @@ export function createIdbStorageService(): StorageService {
         .filter((x) => x.categoryId === categoryId)
         .sort((a, b) => a.order - b.order);
     });
+  }
+
+  async function migrateOrganizationsOnce(): Promise<void> {
+    // Ensure a default organization exists and attach missing organizationId to categories
+    try {
+      const done = await getMeta<boolean>('migratedOrganizationsV1');
+      if (done) return;
+    } catch {}
+    try {
+      // Create default organization if missing
+      const orgId = 'o_default';
+      await tx('organizations' as any, 'readwrite', async (t) => {
+        const s = t.objectStore('organizations' as any);
+        try {
+          const existing: any[] = await new Promise((resolve, reject) => {
+            const req = s.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+          });
+          const hasDefault = (existing || []).some((o: any) => o.id === orgId);
+          if (!hasDefault) s.put({ id: orgId, name: 'Personal', color: '#64748b', order: 0 });
+        } catch {
+          try { s.put({ id: orgId, name: 'Personal', color: '#64748b', order: 0 }); } catch {}
+        }
+      });
+
+      // Load categories, attach missing organizationId, and normalize order within each org
+      const categories = (await getAll('categories')) as CategoryData[];
+      if (categories.length) {
+        // Attach missing org id
+        const next = categories.map((c) =>
+          (!('organizationId' in c) || !(c as any).organizationId)
+            ? ({ ...(c as any), organizationId: 'o_default' } as any)
+            : (c as any)
+        );
+        // Reorder categories per organization to be contiguous
+        const byOrg: Record<string, any[]> = {};
+        for (const c of next as any[]) {
+          const oid = (c as any).organizationId || 'o_default';
+          if (!byOrg[oid]) byOrg[oid] = [];
+          byOrg[oid].push(c);
+        }
+        for (const [oid, list] of Object.entries(byOrg)) {
+          list.sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0) || String(a.name || '').localeCompare(String(b.name || '')));
+          let i = 0;
+          for (const c of list) c.order = i++;
+        }
+        // Persist back
+        await putAll('categories', next as any);
+      }
+    } catch {
+      // best-effort; ignore errors
+    }
+    try { await setMeta('migratedOrganizationsV1', true); } catch {}
   }
 
   async function migrateSubcategoriesOnce(): Promise<void> {
@@ -473,6 +528,195 @@ export function createIdbStorageService(): StorageService {
           });
           for (const it of all) if (it.categoryId === categoryId) s.delete(it.id);
         }
+      });
+    },
+
+    // Organizations API
+    listOrganizations: async () => {
+      const list = (await getAll('organizations' as any).catch(() => [])) as any[];
+      const arr = Array.isArray(list) ? list.slice() : [];
+      arr.sort(
+        (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0) || String(a.name || '').localeCompare(String(b.name || ''))
+      );
+      return arr as any;
+    },
+    createOrganization: async (name: string, color?: string) => {
+      const existing = (await getAll('organizations' as any).catch(() => [])) as any[];
+      const order = existing.length ? Math.max(...existing.map((o: any) => o.order ?? 0)) + 1 : 0;
+      const org = { id: 'o_' + Math.random().toString(36).slice(2, 9), name: (name || 'Org').trim() || 'Org', color, order } as any;
+      await tx('organizations' as any, 'readwrite', async (t) => {
+        t.objectStore('organizations' as any).put(org);
+      });
+      return org as any;
+    },
+    renameOrganization: async (id: string, name: string) => {
+      await tx('organizations' as any, 'readwrite', async (t) => {
+        const s = t.objectStore('organizations' as any);
+        const cur = await new Promise<any>((resolve, reject) => {
+          const req = s.get(id);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        if (!cur) return;
+        cur.name = (name || '').trim() || cur.name;
+        s.put(cur);
+      });
+    },
+    deleteOrganization: async (id: string, options?: { reassignTo?: string }) => {
+      await tx(['organizations' as any, 'categories'], 'readwrite', async (t) => {
+        const os = t.objectStore('organizations' as any);
+        const cs = t.objectStore('categories');
+        // Ensure a target organization exists
+        let targetId = options?.reassignTo || 'o_default';
+        // Create default if missing or if target equals deleted id
+        const orgs = await new Promise<any[]>((resolve, reject) => {
+          const req = os.getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => reject(req.error);
+        });
+        if (!orgs.some((o) => o.id === targetId) || targetId === id) {
+          // pick first other org
+          const alt = orgs.find((o) => o.id !== id);
+          if (alt) targetId = alt.id;
+          else {
+            const def = { id: 'o_default', name: 'Personal', color: '#64748b', order: 0 } as any;
+            os.put(def);
+            targetId = def.id;
+          }
+        }
+        // Reassign categories to target
+        const cats = await new Promise<any[]>((resolve, reject) => {
+          const req = cs.getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => reject(req.error);
+        });
+        // Determine next order base in target org
+        let base = 0;
+        for (const c of cats) if ((c as any).organizationId === targetId) base = Math.max(base, (c as any).order ?? 0);
+        for (const c of cats) {
+          if ((c as any).organizationId === id) {
+            (c as any).organizationId = targetId;
+            (c as any).order = ++base;
+            cs.put(c);
+          }
+        }
+        // Delete org
+        os.delete(id);
+      });
+    },
+    reorderOrganizations: async (orderedIds: string[]) => {
+      await tx('organizations' as any, 'readwrite', async (t) => {
+        const s = t.objectStore('organizations' as any);
+        const byId = new Map<string, any>();
+        try {
+          const all: any[] = await new Promise((resolve, reject) => {
+            const req = s.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+          });
+          for (const o of all) byId.set(o.id, o);
+        } catch {}
+        let i = 0;
+        for (const id of orderedIds) {
+          const o = byId.get(id);
+          if (!o) continue;
+          o.order = i++;
+          s.put(o);
+          byId.delete(id);
+        }
+        for (const o of byId.values()) {
+          o.order = i++;
+          s.put(o);
+        }
+      });
+    },
+
+    // Categories helpers scoped by organization
+    addCategory: async (name: string, color?: string, organizationId?: string) => {
+      const orgId = organizationId || 'o_default';
+      const id = 'c_' + Math.random().toString(36).slice(2, 9);
+      // compute next order within org
+      let nextOrder = 0;
+      try {
+        await tx('categories', 'readonly', async (t) => {
+          const s = t.objectStore('categories');
+          try {
+            const idx = s.index('by_organizationId_order');
+            const range = IDBKeyRange.bound([orgId, -Infinity], [orgId, Infinity]);
+            const list: any[] = await new Promise((resolve, reject) => {
+              const req = idx.getAll(range);
+              req.onsuccess = () => resolve(req.result || []);
+              req.onerror = () => reject(req.error);
+            });
+            nextOrder = list.length ? Math.max(...list.map((c: any) => c.order ?? 0)) + 1 : 0;
+          } catch {
+            const list: any[] = await new Promise((resolve, reject) => {
+              const rq = s.getAll();
+              rq.onsuccess = () => resolve(rq.result || []);
+              rq.onerror = () => reject(rq.error);
+            });
+            nextOrder = list.filter((c: any) => c.organizationId === orgId).length;
+          }
+        });
+      } catch {}
+      const cat = {
+        id,
+        name: (name || 'Collection').trim() || 'Collection',
+        color: color || '#64748b',
+        order: nextOrder,
+        organizationId: orgId,
+      } as any;
+      await tx('categories', 'readwrite', async (t) => {
+        t.objectStore('categories').put(cat);
+      });
+      return cat as any;
+    },
+    reorderCategories: async (categoryIds: string[], organizationId: string) => {
+      await tx('categories', 'readwrite', async (t) => {
+        const s = t.objectStore('categories');
+        const all: any[] = await new Promise((resolve, reject) => {
+          const req = s.getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => reject(req.error);
+        });
+        const byId = new Map<string, any>(all.filter((c: any) => c.organizationId === organizationId).map((c: any) => [c.id, c]));
+        let i = 0;
+        for (const id of categoryIds) {
+          const c = byId.get(id);
+          if (!c) continue;
+          c.order = i++;
+          s.put(c);
+          byId.delete(id);
+        }
+        // Append remaining in previous relative order
+        for (const c of byId.values()) {
+          c.order = i++;
+          s.put(c);
+        }
+      });
+    },
+    updateCategoryOrganization: async (categoryId: string, toOrganizationId: string) => {
+      await tx('categories', 'readwrite', async (t) => {
+        const s = t.objectStore('categories');
+        const cur = await new Promise<any>((resolve, reject) => {
+          const req = s.get(categoryId);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        if (!cur) return;
+        // compute next order in target org
+        let nextOrder = 0;
+        try {
+          const all: any[] = await new Promise((resolve, reject) => {
+            const rq = s.getAll();
+            rq.onsuccess = () => resolve(rq.result || []);
+            rq.onerror = () => reject(rq.error);
+          });
+          nextOrder = all.filter((c: any) => c.organizationId === toOrganizationId).length;
+        } catch {}
+        cur.organizationId = toOrganizationId;
+        cur.order = nextOrder;
+        s.put(cur);
       });
     },
   };

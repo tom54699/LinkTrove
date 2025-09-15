@@ -3,14 +3,15 @@ export type StoreName =
   | 'categories'
   | 'templates'
   | 'meta'
-  | 'subcategories';
+  | 'subcategories'
+  | 'organizations';
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
 export function openDb(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
-    const req = indexedDB.open('linktrove', 2);
+    const req = indexedDB.open('linktrove', 3);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains('webpages')) {
@@ -35,6 +36,16 @@ export function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains('categories')) {
         const s = db.createObjectStore('categories', { keyPath: 'id' });
         s.createIndex('order', 'order');
+        try { s.createIndex('by_organizationId', 'organizationId'); } catch {}
+        try { s.createIndex('by_organizationId_order', ['organizationId', 'order']); } catch {}
+      }
+      // If upgrading, ensure new indexes on categories exist
+      if (db.objectStoreNames.contains('categories')) {
+        const s = req.transaction?.objectStore('categories');
+        try { if (s && !s.indexNames.contains('by_organizationId')) s.createIndex('by_organizationId', 'organizationId'); } catch {}
+        try {
+          if (s && !s.indexNames.contains('by_organizationId_order')) s.createIndex('by_organizationId_order', ['organizationId', 'order']);
+        } catch {}
       }
       if (!db.objectStoreNames.contains('templates')) {
         db.createObjectStore('templates', { keyPath: 'id' });
@@ -46,6 +57,10 @@ export function openDb(): Promise<IDBDatabase> {
         const s = db.createObjectStore('subcategories', { keyPath: 'id' });
         try { s.createIndex('by_categoryId', 'categoryId'); } catch {}
         try { s.createIndex('by_categoryId_order', ['categoryId', 'order']); } catch {}
+      }
+      if (!db.objectStoreNames.contains('organizations')) {
+        const s = db.createObjectStore('organizations', { keyPath: 'id' });
+        try { s.createIndex('order', 'order'); } catch {}
       }
     };
     req.onsuccess = () => resolve(req.result);

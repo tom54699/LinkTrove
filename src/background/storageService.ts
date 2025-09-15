@@ -18,6 +18,8 @@ export interface CategoryData {
   color: string;
   order: number;
   defaultTemplateId?: string;
+  // Organization scoping (optional during migration)
+  organizationId?: string;
 }
 
 export interface SubcategoryData {
@@ -44,6 +46,13 @@ export interface TemplateData {
   fields: TemplateField[];
 }
 
+export interface OrganizationData {
+  id: string;
+  name: string;
+  color?: string;
+  order: number;
+}
+
 export interface StorageService {
   saveToLocal: (data: WebpageData[]) => Promise<void>;
   loadFromLocal: () => Promise<WebpageData[]>;
@@ -63,6 +72,31 @@ export interface StorageService {
   reorderSubcategories?: (categoryId: string, orderedIds: string[]) => Promise<void>;
   updateCardSubcategory?: (cardId: string, subcategoryId: string) => Promise<void>;
   deleteSubcategoriesByCategory?: (categoryId: string) => Promise<void>;
+
+  // Organizations CRUD / order
+  listOrganizations?: () => Promise<OrganizationData[]>;
+  createOrganization?: (name: string, color?: string) => Promise<OrganizationData>;
+  renameOrganization?: (id: string, name: string) => Promise<void>;
+  deleteOrganization?: (
+    id: string,
+    options?: { reassignTo?: string }
+  ) => Promise<void>;
+  reorderOrganizations?: (orderedIds: string[]) => Promise<void>;
+
+  // Categories helpers scoped by organization
+  addCategory?: (
+    name: string,
+    color?: string,
+    organizationId?: string
+  ) => Promise<CategoryData>;
+  reorderCategories?: (
+    categoryIds: string[],
+    organizationId: string
+  ) => Promise<void>;
+  updateCategoryOrganization?: (
+    categoryId: string,
+    toOrganizationId: string
+  ) => Promise<void>;
 }
 
 import { createIdbStorageService } from './idb/storage';
