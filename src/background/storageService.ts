@@ -73,6 +73,9 @@ export interface StorageService {
   updateCardSubcategory?: (cardId: string, subcategoryId: string) => Promise<void>;
   deleteSubcategoriesByCategory?: (categoryId: string) => Promise<void>;
 
+  // Maintenance/cleanup functions
+  cleanupOrphanedOrderMeta?: () => Promise<{ cleanedCount: number; totalOrderKeys: number }>;
+
   // Organizations CRUD / order
   listOrganizations?: () => Promise<OrganizationData[]>;
   createOrganization?: (name: string, color?: string) => Promise<OrganizationData>;

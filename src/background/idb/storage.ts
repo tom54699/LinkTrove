@@ -580,6 +580,48 @@ export function createIdbStorageService(): StorageService {
       }
     },
 
+    // Cleanup orphaned meta records
+    cleanupOrphanedOrderMeta: async () => {
+      const subcategories = (await getAll('subcategories' as any).catch(() => [])) as any[];
+      const validGroupIds = new Set(subcategories.map((sc: any) => sc.id));
+
+      // Get all meta keys that start with 'order.subcat.'
+      const metaKeys = await tx('meta', 'readonly', async (t) => {
+        const s = t.objectStore('meta');
+        const allKeys: string[] = [];
+        return new Promise<string[]>((resolve) => {
+          const req = s.openCursor();
+          req.onsuccess = (event) => {
+            const cursor = (event.target as any).result;
+            if (cursor) {
+              const key = cursor.key as string;
+              if (key.startsWith('order.subcat.')) {
+                allKeys.push(key);
+              }
+              cursor.continue();
+            } else {
+              resolve(allKeys);
+            }
+          };
+          req.onerror = () => resolve([]);
+        });
+      });
+
+      // Clean up orphaned order meta records
+      let cleanedCount = 0;
+      for (const key of metaKeys) {
+        const groupId = key.replace('order.subcat.', '');
+        if (!validGroupIds.has(groupId)) {
+          try {
+            await setMeta(key, []);
+            cleanedCount++;
+          } catch {}
+        }
+      }
+
+      return { cleanedCount, totalOrderKeys: metaKeys.length };
+    },
+
     // Organizations API
     listOrganizations: async () => {
       const list = (await getAll('organizations' as any).catch(() => [])) as any[];
