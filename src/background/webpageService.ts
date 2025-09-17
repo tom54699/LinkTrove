@@ -98,17 +98,39 @@ export function createWebpageService(deps?: {
       const posMap = new Map<string, Map<string, number>>(
         groupIds.map((g, i) => [g, new Map(orders[i].map((id, j) => [id, j]))])
       );
-      return [...list].sort((a: any, b: any) => {
+
+      // Build group order mapping for inter-group sorting
+      const groupOrderMap = new Map<string, number>();
+      groupIds.forEach((gid, idx) => groupOrderMap.set(gid, idx));
+
+      const sorted = [...list].sort((a: any, b: any) => {
         const ga = a.subcategoryId;
         const gb = b.subcategoryId;
+
         if (ga && gb && ga === gb) {
+          // Same group: use intra-group ordering
           const pm = posMap.get(ga);
           const ia = pm?.get(a.id) ?? Number.MAX_SAFE_INTEGER;
           const ib = pm?.get(b.id) ?? Number.MAX_SAFE_INTEGER;
-          if (ia !== ib) return ia - ib;
+          if (ia !== ib) {
+            return ia - ib;
+          }
+        } else if (ga && gb) {
+          // Different groups: use group order
+          const groupOrderA = groupOrderMap.get(ga) ?? Number.MAX_SAFE_INTEGER;
+          const groupOrderB = groupOrderMap.get(gb) ?? Number.MAX_SAFE_INTEGER;
+          if (groupOrderA !== groupOrderB) {
+            return groupOrderA - groupOrderB;
+          }
         }
-        return (index.get(a.id) ?? 0) - (index.get(b.id) ?? 0);
+
+        // Fallback to original storage order
+        const fallbackA = index.get(a.id) ?? 0;
+        const fallbackB = index.get(b.id) ?? 0;
+        return fallbackA - fallbackB;
       });
+
+      return sorted;
     } catch {
       return list;
     }
@@ -189,24 +211,67 @@ export function createWebpageService(deps?: {
   async function reorderWebpages(fromId: string, toId: string) {
     // Only require toId to exist; fromId might be moving across groups
     const list = await storage.loadFromLocal();
+    const from = list.find((w) => w.id === fromId) as any;
     const to = list.find((w) => w.id === toId) as any;
     if (!to) return await loadWebpages();
-    const gid = to.subcategoryId as string | undefined;
-    if (!gid) return await loadWebpages();
-    // Build baseline from current storage order merged with existing
-    const currentIds = (list as any[])
-      .filter((w: any) => w.subcategoryId === gid)
-      .map((w: any) => w.id);
-    const existing = await getGroupOrder(gid);
-    const seen = new Set<string>();
-    const base: string[] = [];
-    for (const id of existing) if (currentIds.includes(id) && !seen.has(id)) { seen.add(id); base.push(id); }
-    for (const id of currentIds) if (!seen.has(id)) { seen.add(id); base.push(id); }
-    const filtered = base.filter((x) => x !== fromId);
-    const idx = filtered.indexOf(toId);
-    const insertAt = idx === -1 ? filtered.length : idx;
-    filtered.splice(insertAt, 0, fromId);
-    await setGroupOrder(gid, filtered);
+
+    const targetGid = to.subcategoryId as string | undefined;
+    if (!targetGid) return await loadWebpages();
+
+    // Check if this is a cross-group move
+    const sourceGid = from?.subcategoryId as string | undefined;
+    const isCrossGroupMove = sourceGid && sourceGid !== targetGid;
+
+    // If cross-group move, first update the card's group and remove from source group order
+    if (isCrossGroupMove) {
+      // Update card's subcategoryId
+      const updated = list.map((w: any) =>
+        w.id === fromId ? { ...w, subcategoryId: targetGid } : w
+      );
+      await saveWebpages(updated);
+
+      // Remove from source group order
+      const sourceOrder = await getGroupOrder(sourceGid!);
+      const pruned = sourceOrder.filter((x) => x !== fromId);
+      if (pruned.length !== sourceOrder.length) {
+        await setGroupOrder(sourceGid!, pruned);
+      }
+
+      // Reload list with updated subcategoryId
+      const freshList = await storage.loadFromLocal();
+      const currentIds = freshList
+        .filter((w: any) => w.subcategoryId === targetGid && w.id !== fromId)
+        .map((w: any) => w.id);
+
+      // Build target group order and insert fromId
+      const existing = await getGroupOrder(targetGid);
+      const seen = new Set<string>();
+      const base: string[] = [];
+      for (const id of existing) if (currentIds.includes(id) && !seen.has(id)) { seen.add(id); base.push(id); }
+      for (const id of currentIds) if (!seen.has(id)) { seen.add(id); base.push(id); }
+
+      const filtered = base.filter((x) => x !== fromId);
+      const idx = filtered.indexOf(toId);
+      const insertAt = idx === -1 ? filtered.length : idx;
+      filtered.splice(insertAt, 0, fromId);
+      await setGroupOrder(targetGid, filtered);
+    } else {
+      // Same-group reorder (existing logic)
+      const currentIds = (list as any[])
+        .filter((w: any) => w.subcategoryId === targetGid)
+        .map((w: any) => w.id);
+      const existing = await getGroupOrder(targetGid);
+      const seen = new Set<string>();
+      const base: string[] = [];
+      for (const id of existing) if (currentIds.includes(id) && !seen.has(id)) { seen.add(id); base.push(id); }
+      for (const id of currentIds) if (!seen.has(id)) { seen.add(id); base.push(id); }
+      const filtered = base.filter((x) => x !== fromId);
+      const idx = filtered.indexOf(toId);
+      const insertAt = idx === -1 ? filtered.length : idx;
+      filtered.splice(insertAt, 0, fromId);
+      await setGroupOrder(targetGid, filtered);
+    }
+
     return await loadWebpages();
   }
 
