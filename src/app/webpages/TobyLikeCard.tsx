@@ -214,7 +214,6 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
 
         <button
           className="delete-btn"
-          style={{ opacity: 1, visibility: 'visible' }}
           title="刪除"
           onClick={(e) => {
             e.stopPropagation();
@@ -235,7 +234,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
           </svg>
         </button>
 
-        <div className="actions" onClick={(e) => e.stopPropagation()} style={{ opacity: 1, visibility: 'visible' }}>
+        <div className="actions" onClick={(e) => e.stopPropagation()}>
           <button
             className="action-btn"
             title="編輯"

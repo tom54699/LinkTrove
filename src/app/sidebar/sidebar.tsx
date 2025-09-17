@@ -62,20 +62,6 @@ export const Sidebar: React.FC = () => {
         Spaces
       </div>
       <nav aria-label="Categories" className="space-y-1">
-        {/* All (virtual) */}
-        <div
-          className={`w-full px-2 py-1 rounded border border-slate-700 transition-colors flex items-center gap-2 ${selectedId === 'all' ? 'bg-[var(--card)]' : 'hover:bg-slate-800/40'}`}
-          data-active={selectedId === 'all' ? 'true' : undefined}
-        >
-          <button
-            type="button"
-            className="flex-1 text-left"
-            data-active={selectedId === 'all' ? 'true' : undefined}
-            onClick={() => setCurrentCategory('all')}
-          >
-            All
-          </button>
-        </div>
         {categories.map((c, _idx) => {
           const active = selectedId === c.id;
           return (

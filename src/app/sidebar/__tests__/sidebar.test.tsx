@@ -18,19 +18,13 @@ describe('Sidebar (task 7.1)', () => {
       </CategoriesProvider>
     );
 
-    // Default entries: All + Default
-    expect(screen.getByRole('button', { name: /All/i })).toBeInTheDocument();
+    // Default entries: Default only (All removed)
     expect(
       screen.getByRole('button', { name: /Default/i })
     ).toBeInTheDocument();
 
-    // Initially All is selected
-    const all = screen.getByRole('button', { name: /All/i });
-    expect(all.getAttribute('data-active')).toBe('true');
-
-    // Click Default selects it
+    // Initially Default is selected
     const def = screen.getByRole('button', { name: /Default/i });
-    fireEvent.click(def);
     expect(def.getAttribute('data-active')).toBe('true');
   });
 
@@ -41,11 +35,9 @@ describe('Sidebar (task 7.1)', () => {
       </CategoriesProvider>
     );
 
-    // Initially shows All
-    expect(screen.getByTestId('content-probe').textContent).toContain('all');
-    fireEvent.click(screen.getByRole('button', { name: /Default/i }));
-    expect(screen.getByTestId('content-probe').textContent).toContain(
-      'default'
-    );
+    // Initially shows Default (All removed)
+    expect(screen.getByTestId('content-probe').textContent).toContain('default');
+    // Since there's only one category now, the test just verifies it shows Default
+    expect(screen.getByRole('button', { name: /Default/i })).toBeInTheDocument();
   });
 });

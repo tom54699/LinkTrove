@@ -363,7 +363,10 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 onDeleteOne={async (id) => { await actions.deleteOne(id); showToast('Deleted', 'success'); }}
                 onEditDescription={async (id, description) => { await actions.updateDescription(id, description); showToast('Saved note', 'success'); }}
                 onSave={async (id, patch) => { await actions.updateCard(id, patch); showToast('Saved', 'success'); }}
-                onReorder={(fromId, toId) => actions.reorder(fromId, toId)}
+                onReorder={async (fromId, toId) => {
+                  await actions.reorder(fromId, toId);
+                  await actions.load();
+                }}
                 onUpdateTitle={(id, title) => actions.updateTitle(id, title)}
                 onUpdateUrl={(id, url) => actions.updateUrl(id, url)}
                 onUpdateCategory={(id, cat) => actions.updateCategory(id, cat)}

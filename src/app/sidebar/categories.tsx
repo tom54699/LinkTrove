@@ -35,7 +35,7 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
-  const [selectedId, setSelectedId] = useState<string>('all');
+  const [selectedId, setSelectedId] = useState<string>('default');
   const { selectedOrgId } = useOrganizations();
   const orgCtx = React.useContext(OrgsCtx);
   const hasOrgProvider = !!orgCtx;
@@ -167,12 +167,12 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         const listInOrg = ordered as any[];
         const has = (id?: string) => !!id && listInOrg.some((c) => c.id === id);
-        // 預設使用 'all'（虛擬集合）
+        // 預設使用第一個可用的分類或 default
         const want = has(persisted)
           ? persisted!
-          : has(selectedId) && selectedId !== 'all'
+          : has(selectedId)
             ? selectedId
-            : 'all';
+            : listInOrg[0]?.id || 'default';
         setSelectedId(want);
         try { chrome.storage?.local?.set?.({ selectedCategoryId: want }); } catch {}
       } catch {}
@@ -180,9 +180,6 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
     })();
   }, [svc, selectedOrgId]);
 
-  function genId() {
-    return 'c_' + Math.random().toString(36).slice(2, 9);
-  }
 
   const actions = React.useMemo(
     () => ({
