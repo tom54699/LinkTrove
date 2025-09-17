@@ -21,6 +21,7 @@ export type DragWebpage = {
   title?: string;
   url?: string;
   favicon?: string;
+  description?: string;
 };
 
 let currentWebpage: DragWebpage | null = null;

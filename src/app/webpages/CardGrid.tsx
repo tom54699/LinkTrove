@@ -233,6 +233,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
             title: meta.title,
             url: meta.url,
             favIconUrl: meta.favicon,
+            description: meta.description,
           } as any);
         } else {
           setGhostTab(null);
@@ -252,7 +253,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
         const meta = (() => { try { return getDragWebpage(); } catch { return null; } })();
         if (meta) {
           try { broadcastGhostActive((meta as any).id || null); } catch {}
-          setGhostTab({ id: -1, title: meta.title, url: meta.url, favIconUrl: meta.favicon } as any);
+          setGhostTab({ id: -1, title: meta.title, url: meta.url, favIconUrl: meta.favicon, description: meta.description } as any);
         } else setGhostTab(null);
         const gi = computeGhostIndex(e.clientX, e.clientY, e.target);
         setGhostIndex(gi);
@@ -501,11 +502,11 @@ export const CardGrid: React.FC<CardGridProps> = ({
                         try {
                           e.dataTransfer.setData(
                             'application/x-linktrove-webpage-meta',
-                            JSON.stringify({ id: it.id, title: it.title, url: it.url, favicon: it.favicon })
+                            JSON.stringify({ id: it.id, title: it.title, url: it.url, favicon: it.favicon, description: it.description })
                           );
                         } catch {}
                         e.dataTransfer.effectAllowed = 'move';
-                        try { setDragWebpage({ id: it.id, title: it.title, url: it.url, favicon: it.favicon }); } catch {}
+                        try { setDragWebpage({ id: it.id, title: it.title, url: it.url, favicon: it.favicon, description: it.description }); } catch {}
                         (e.currentTarget as HTMLElement).setAttribute(
                           'data-dragging',
                           'true'
@@ -570,7 +571,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
                 {node.type === 'ghost' ? (
                   <TobyLikeCard
                     title={(ghostTab?.title || (ghostTab as any)?.url || (ghostType === 'card' ? 'Moving' : 'New'))}
-                    description={''}
+                    description={(ghostTab as any)?.description || ''}
                     faviconText={
                       ((ghostTab?.url || '')
                         .replace(/^https?:\/\//, '')
