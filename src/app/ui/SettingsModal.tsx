@@ -191,40 +191,6 @@ const DataPanel: React.FC = () => {
         )}
       </div>
 
-      <div className="border-t border-slate-700 pt-6">
-        <div className="mb-2 text-lg font-semibold">數據維護</div>
-        <div className="text-sm opacity-80 mb-4">
-          清理系統中的無效數據記錄。
-        </div>
-        <div>
-          <div className="text-sm font-medium mb-2">清理孤立的排序記錄</div>
-          <div className="text-xs opacity-70 mb-2">
-            清理已刪除 group 留下的排序資料 (order.subcat.*)
-          </div>
-          <button
-            className="text-sm px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
-            onClick={async () => {
-              setLoading(true);
-              try {
-                const storage = createStorageService();
-                const result = await (storage as any).cleanupOrphanedOrderMeta();
-                const msg = `清理完成：已處理 ${result.cleanedCount} 個孤立記錄 (總計 ${result.totalOrderKeys} 個排序記錄)`;
-                showToast(msg, 'success');
-                setInlineMsg({ kind: 'success', text: msg });
-              } catch (e: any) {
-                const msg = `清理失敗：${e?.message || 'Unknown error'}`;
-                showToast(msg, 'error');
-                setInlineMsg({ kind: 'error', text: msg });
-              } finally {
-                setLoading(false);
-              }
-            }}
-          >
-            清理孤立記錄
-          </button>
-        </div>
-      </div>
-
       {confirmOpen && (
         <div className="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-3" onClick={() => setConfirmOpen(false)}>
           <div className="rounded border border-slate-700 bg-[var(--panel)] w-[520px] max-w-[95vw]" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Confirm Import">
