@@ -343,18 +343,28 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 }}
                 onDropExistingCard={async (cardId, beforeId) => {
                   try {
-                    await actions.updateCategory(cardId, g.categoryId);
-                    await (svc as any).updateCardSubcategory?.(cardId, g.id);
-                    // Adjust ordering relative to target position if provided
-                    if (beforeId && beforeId !== '__END__') {
-                      await actions.reorder(cardId, beforeId);
-                    } else if (beforeId === '__END__') {
-                      await (actions as any).moveToEnd(cardId);
+                    // Create atomic cross-group move by using a special service method
+                    if ((svc as any).moveCardToGroup) {
+                      // Use dedicated atomic operation if available
+                      await (svc as any).moveCardToGroup(cardId, g.categoryId, g.id, beforeId);
+                    } else {
+                      // Fallback: sequential operations with careful error handling
+                      await actions.updateCategory(cardId, g.categoryId);
+
+                      if (!beforeId || beforeId === '__END__') {
+                        await (svc as any).updateCardSubcategory?.(cardId, g.id);
+                        await (actions as any).moveToEnd(cardId);
+                      } else {
+                        // Use reorder which now handles cross-group atomically
+                        await actions.reorder(cardId, beforeId);
+                      }
                     }
+
                     await actions.load();
                     try { broadcastGhostActive(null); } catch {}
                     showToast('已移動到 group', 'success');
-                  } catch {
+                  } catch (error) {
+                    console.error('Move card error:', error);
                     try { broadcastGhostActive(null); } catch {}
                     showToast('移動失敗', 'error');
                   }

@@ -295,6 +295,75 @@ export function createWebpageService(deps?: {
     return await loadWebpages();
   }
 
+  async function moveCardToGroup(
+    cardId: string,
+    targetCategoryId: string,
+    targetGroupId: string,
+    beforeId?: string
+  ) {
+    const list = await storage.loadFromLocal();
+    const card = list.find((w) => w.id === cardId) as any;
+    if (!card) return await loadWebpages();
+
+    const originalCategory = card.category;
+    const originalGroupId = card.subcategoryId;
+
+    // Atomic update: category + subcategory + reordering
+    try {
+      // Update card's category and subcategoryId
+      const updated = list.map((w: any) =>
+        w.id === cardId
+          ? { ...w, category: targetCategoryId, subcategoryId: targetGroupId }
+          : w
+      );
+      await saveWebpages(updated);
+
+      // Remove from original group order if moving between groups
+      if (originalGroupId && originalGroupId !== targetGroupId) {
+        const sourceOrder = await getGroupOrder(originalGroupId);
+        const pruned = sourceOrder.filter((x) => x !== cardId);
+        if (pruned.length !== sourceOrder.length) {
+          await setGroupOrder(originalGroupId, pruned);
+        }
+      }
+
+      // Add to target group order
+      const targetOrder = await getGroupOrder(targetGroupId);
+      const currentIds = updated
+        .filter((w: any) => w.subcategoryId === targetGroupId && w.id !== cardId)
+        .map((w: any) => w.id);
+
+      // Build new order
+      const seen = new Set<string>();
+      const base: string[] = [];
+      for (const id of targetOrder) if (currentIds.includes(id) && !seen.has(id)) { seen.add(id); base.push(id); }
+      for (const id of currentIds) if (!seen.has(id)) { seen.add(id); base.push(id); }
+
+      // Insert at target position
+      if (!beforeId || beforeId === '__END__') {
+        base.push(cardId);
+      } else {
+        const idx = base.indexOf(beforeId);
+        const insertAt = idx === -1 ? base.length : idx;
+        base.splice(insertAt, 0, cardId);
+      }
+
+      await setGroupOrder(targetGroupId, base);
+      return await loadWebpages();
+    } catch (error) {
+      // Rollback on error - restore original state
+      try {
+        const rollback = list.map((w: any) =>
+          w.id === cardId
+            ? { ...w, category: originalCategory, subcategoryId: originalGroupId }
+            : w
+        );
+        await saveWebpages(rollback);
+      } catch {}
+      throw error;
+    }
+  }
+
   return {
     addWebpageFromTab,
     updateWebpage,
@@ -302,5 +371,6 @@ export function createWebpageService(deps?: {
     loadWebpages,
     reorderWebpages,
     moveWebpageToEnd,
+    moveCardToGroup,
   };
 }
