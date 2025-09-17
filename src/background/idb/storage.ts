@@ -460,6 +460,8 @@ export function createIdbStorageService(): StorageService {
         // Delete the subcategory
         ss.delete(id);
       });
+      // Clean up order metadata for the deleted group
+      try { await setMeta(`order.subcat.${id}`, []); } catch {}
     },
     // Delete the subcategory and all webpages referencing it in one transaction
     deleteSubcategoryAndPages: async (id: string) => {
@@ -541,6 +543,7 @@ export function createIdbStorageService(): StorageService {
       });
     },
     deleteSubcategoriesByCategory: async (categoryId: string) => {
+      let deletedIds: string[] = [];
       await tx(['subcategories' as any], 'readwrite', async (t) => {
         const s = t.objectStore('subcategories' as any);
         try {
@@ -552,7 +555,10 @@ export function createIdbStorageService(): StorageService {
             req.onsuccess = () => resolve(req.result || []);
             req.onerror = () => reject(req.error);
           });
-          for (const it of list) s.delete(it.id);
+          for (const it of list) {
+            s.delete(it.id);
+            deletedIds.push(it.id);
+          }
         } catch {
           // Fallback: getAll then filter
           const all: any[] = await new Promise((resolve, reject) => {
@@ -560,9 +566,18 @@ export function createIdbStorageService(): StorageService {
             req.onsuccess = () => resolve(req.result || []);
             req.onerror = () => reject(req.error);
           });
-          for (const it of all) if (it.categoryId === categoryId) s.delete(it.id);
+          for (const it of all) {
+            if (it.categoryId === categoryId) {
+              s.delete(it.id);
+              deletedIds.push(it.id);
+            }
+          }
         }
       });
+      // Clean up order metadata for all deleted groups
+      for (const id of deletedIds) {
+        try { await setMeta(`order.subcat.${id}`, []); } catch {}
+      }
     },
 
     // Organizations API
