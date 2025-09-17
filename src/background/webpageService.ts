@@ -86,7 +86,8 @@ export function createWebpageService(deps?: {
   }
 
   async function loadWebpages() {
-    const list = await storage.loadFromLocal();
+    // 以 IDB 為準（實際環境資料來源），測試環境也有 fake-indexeddb 支援
+    let list: WebpageData[] = await storage.loadFromLocal();
     // Sort within the same subcategory by its order list; otherwise keep storage order
     const index = new Map(list.map((w, i) => [w.id, i]));
     try {
@@ -114,7 +115,9 @@ export function createWebpageService(deps?: {
   }
 
   async function saveWebpages(all: WebpageData[]) {
-    await storage.saveToLocal(all);
+    try { await storage.saveToLocal(all); } catch {}
+    // 鏡射到 chrome.storage.local（可選），方便某些輔助功能或除錯
+    try { chrome.storage?.local?.set?.({ webpages: all }); } catch {}
   }
 
   async function addWebpageFromTab(tab: TabLike): Promise<WebpageData> {

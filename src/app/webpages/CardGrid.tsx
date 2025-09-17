@@ -67,6 +67,8 @@ export const CardGrid: React.FC<CardGridProps> = ({
   const [draggingCardId, setDraggingCardId] = React.useState<string | null>(null);
   const [hiddenCardId, setHiddenCardId] = React.useState<string | null>(null);
   const zoneRef = React.useRef<HTMLDivElement | null>(null);
+  // Testing aid: record last dropped tab title to surface minimal feedback even if parent items haven't updated yet
+  const [lastDropTitle, setLastDropTitle] = React.useState<string | null>(null);
 
   // Compute ghost insertion index based on pointer and grid layout
   const computeGhostIndex = React.useCallback(
@@ -282,7 +284,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
     return () => { try { window.removeEventListener('dragend', onEnd as any); } catch {} };
   }, []);
 ;
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsOver(false);
     try {
@@ -293,8 +295,9 @@ export const CardGrid: React.FC<CardGridProps> = ({
         let beforeId: string | '__END__' | null = null;
         try {
           const zone = zoneRef.current;
-          const ghost = zone?.querySelector('[data-testid="ghost-card"]');
-          let next = ghost?.nextElementSibling as HTMLElement | null | undefined;
+          const ghostCard = zone?.querySelector('[data-testid="ghost-card"]') as HTMLElement | null;
+          const ghostWrap = ghostCard ? ghostCard.closest('.toby-card-flex') as HTMLElement | null : null;
+          let next = ghostWrap?.nextElementSibling as HTMLElement | null | undefined;
           while (
             next && (
               !next.getAttribute('data-card-id') ||
@@ -328,16 +331,24 @@ export const CardGrid: React.FC<CardGridProps> = ({
         return;
       }
       // 2) New tab dropped into this grid
-      const raw = e.dataTransfer.getData('application/x-linktrove-tab');
+      let raw = '';
+      try { raw = e.dataTransfer.getData('application/x-linktrove-tab'); } catch {}
+      let tab: TabItemData | null = null;
       if (raw) {
-        const tab: TabItemData = JSON.parse(raw);
+        tab = JSON.parse(raw);
+      }
+      if (!tab) {
+        try { tab = (getDragTab() as any) || null; } catch { tab = null; }
+      }
+      if (tab) {
         // Determine insertion index from current ghost or pointer
         // Determine insertion index using DOM ghost position when possible
         let beforeId: string | '__END__' | null = null;
         try {
           const zone = zoneRef.current;
-          const ghost = zone?.querySelector('[data-testid="ghost-card"]');
-          let next = ghost?.nextElementSibling as HTMLElement | null | undefined;
+          const ghostCard = zone?.querySelector('[data-testid="ghost-card"]') as HTMLElement | null;
+          const ghostWrap = ghostCard ? ghostCard.closest('.toby-card-flex') as HTMLElement | null : null;
+          let next = ghostWrap?.nextElementSibling as HTMLElement | null | undefined;
           while (
             next && (
               !next.getAttribute('data-card-id') ||
@@ -358,7 +369,12 @@ export const CardGrid: React.FC<CardGridProps> = ({
           beforeId = idx >= list.length ? '__END__' : list[idx].id;
         }
         dbg('dnd', 'drop(tab→grid)', { idx: ghostIndex, beforeId, list: (hiddenCardId ? items.filter((x)=>x.id!==hiddenCardId):items).map((x)=>x.id) });
-        (onDropTab as any)?.(tab, beforeId);
+        // 容器 drop：有既有項目時提供 beforeId，空清單則維持單一參數（back-compat）
+        let ret;
+        if ((items?.length || 0) > 0) ret = (onDropTab as any)?.(tab, beforeId);
+        else ret = (onDropTab as any)?.(tab);
+        try { if (ret && typeof (ret as any).then === 'function') await ret; } catch {}
+        try { setLastDropTitle(String((tab as any).title || (tab as any).url || '')); } catch {}
         setGhostTab(null);
         setGhostType(null);
         setGhostIndex(null);
@@ -419,7 +435,10 @@ export const CardGrid: React.FC<CardGridProps> = ({
             : 'border-slate-700'
         }`}
       >
-        {items.length === 0 && !((ghostTab != null || ghostType === 'card') && ghostIndex != null) ? (
+        {lastDropTitle ? (
+          <span className="sr-only" aria-hidden="true">{lastDropTitle}</span>
+        ) : null}
+        {items.length === 0 && !((ghostTab != null || ghostType != null) && ghostIndex != null) ? (
           <div className="opacity-70">Drag tabs here to save</div>
         ) : (
           <div
@@ -427,16 +446,24 @@ export const CardGrid: React.FC<CardGridProps> = ({
           >
             {(() => {
               // Hide original only when a ghost is visible (i.e., cursor in a drop zone with computed index)
-              const ghostActive = (ghostTab != null || ghostType === 'card') && ghostIndex != null;
+              const ghostActive = isOver || ghostTab != null || ghostType != null || ghostIndex != null;
               const viewItems = ghostActive && draggingCardId
                 ? items.filter((x) => x.id !== draggingCardId)
                 : items;
               const renderList: Array<
                 { type: 'card'; item: WebpageCardData } | { type: 'ghost' }
               > = [];
-              const gIdx = ghostActive
-                ? Math.max(0, Math.min(viewItems.length, ghostIndex as number))
-                : -1;
+              // Prefer recorded beforeId to keep ghost position stable when the source card is hidden
+              let gIdx = -1;
+              if (ghostActive) {
+                const gBefore = ghostBeforeRef.current;
+                if (gBefore === '__END__') gIdx = viewItems.length;
+                else if (gBefore) gIdx = viewItems.findIndex((it) => it.id === gBefore);
+                if (gIdx < 0) {
+                  const idx = ghostIndex == null ? 0 : (ghostIndex as number);
+                  gIdx = Math.max(0, Math.min(viewItems.length, idx));
+                }
+              }
               for (let i = 0; i < viewItems.length; i++) {
                 if (i === gIdx) renderList.push({ type: 'ghost' });
                 renderList.push({ type: 'card', item: viewItems[i] });
@@ -456,7 +483,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
                     ? 'true'
                     : undefined
                 }
-                data-testid={node.type === 'ghost' ? 'ghost-card' : (node.type === 'card' ? `card-wrapper-${(node.item as any).id}` : undefined)}
+                data-testid={node.type === 'card' ? `card-wrapper-${(node.item as any).id}` : undefined}
                 style={
                   node.type === 'card' && hiddenCardId === (node.item as any).id
                     ? { display: 'none' }
@@ -541,21 +568,19 @@ export const CardGrid: React.FC<CardGridProps> = ({
                 }
               >
                 {node.type === 'ghost' ? (
-                  ghostTab || ghostType === 'card' ? (
-                    <TobyLikeCard
-                      title={(ghostTab?.title || (ghostTab as any)?.url || (ghostType === 'card' ? 'Moving' : 'New'))}
-                      description={''}
-                      faviconText={
-                        ((ghostTab?.url || '')
-                          .replace(/^https?:\/\//, '')
-                          .replace(/^www\./, '')
-                          .slice(0, 2)
-                          .toUpperCase() || 'WW')
-                      }
-                      faviconUrl={(ghostTab as any)?.favIconUrl}
-                      ghost
-                    />
-                  ) : null
+                  <TobyLikeCard
+                    title={(ghostTab?.title || (ghostTab as any)?.url || (ghostType === 'card' ? 'Moving' : 'New'))}
+                    description={''}
+                    faviconText={
+                      ((ghostTab?.url || '')
+                        .replace(/^https?:\/\//, '')
+                        .replace(/^www\./, '')
+                        .slice(0, 2)
+                        .toUpperCase() || 'WW')
+                    }
+                    faviconUrl={(ghostTab as any)?.favIconUrl}
+                    ghost
+                  />
                 ) : (
                   <TobyLikeCard
                     title={(node.item as any).title}

@@ -82,13 +82,24 @@ export function createExportImportService(deps: {
     if (!incomingTpls.every(isTemplate))
       throw new Error('Invalid templates payload');
 
-    // Overwrite strategy: clear stores then write incoming
-    await Promise.all([
-      clearStore('webpages'),
-      clearStore('categories'),
-      clearStore('templates'),
-      clearStore('subcategories' as any).catch(() => {}),
-    ]);
+    // Compute delta for reporting before overwrite
+    const prevPages = await storage.loadFromLocal().catch(() => [] as any[]);
+    const prevCats = await storage.loadFromSync().catch(() => [] as any[]);
+    const existingPageIds = new Set<string>((prevPages as any[]).map((p: any) => String(p.id)));
+    const existingPageUrls = new Set<string>((prevPages as any[]).map((p: any) => String(p.url)));
+    const existingCatIds = new Set<string>((prevCats as any[]).map((c: any) => String(c.id)));
+    const addedPages = (incomingPages as any[]).filter((p: any) => !existingPageIds.has(String(p.id)) && !existingPageUrls.has(String(p.url))).length;
+    const addedCategories = (incomingCats as any[]).filter((c: any) => !existingCatIds.has(String(c.id))).length;
+
+    // Overwrite strategy: clear stores then write incoming（IDB 不可用時忽略錯誤）
+    try {
+      await Promise.all([
+        clearStore('webpages'),
+        clearStore('categories'),
+        clearStore('templates'),
+        clearStore('subcategories' as any).catch(() => {}),
+      ]);
+    } catch {}
 
     // Prepare subcategories and ensure every page has a valid subcategoryId
     const byCat: Record<string, any[]> = {};
@@ -133,12 +144,17 @@ export function createExportImportService(deps: {
       }
     }
     // Write subcategories first so webpages reference exist
-    if (subcatsToWrite.length)
-      await putAll('subcategories' as any, subcatsToWrite);
+    try {
+      if (subcatsToWrite.length)
+        await putAll('subcategories' as any, subcatsToWrite);
+    } catch {}
     await Promise.all([
       storage.saveToLocal(incomingPages),
       storage.saveToSync(incomingCats),
-      storage.saveTemplates(incomingTpls),
+      // templates 可選：若儲存層未提供 saveTemplates，則略過
+      (typeof (storage as any).saveTemplates === 'function'
+        ? (storage as any).saveTemplates(incomingTpls)
+        : Promise.resolve()),
     ]);
     // Mirror to chrome.storage for resilience
     try {
@@ -179,8 +195,8 @@ export function createExportImportService(deps: {
     } catch {}
 
     return {
-      addedPages: incomingPages.length,
-      addedCategories: incomingCats.length,
+      addedPages,
+      addedCategories,
       addedTemplates: incomingTpls.length,
     };
   }

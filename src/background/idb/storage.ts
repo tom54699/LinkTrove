@@ -57,37 +57,36 @@ export function createIdbStorageService(): StorageService {
   async function listSubcategoriesImpl(categoryId: string): Promise<any[]> {
     return await tx(['subcategories' as any], 'readonly', async (t) => {
       const s = t.objectStore('subcategories' as any);
-      let useIdx = false;
+      // 穩健做法：優先使用 by_categoryId 索引搭配 IDBKeyRange.only，再以 order 排序
       try {
-        // prefer composite index for ordering
-        if (s.indexNames.contains('by_categoryId_order')) useIdx = true;
+        if (s.indexNames.contains('by_categoryId')) {
+          const idx = s.index('by_categoryId');
+          const range = IDBKeyRange.only(categoryId);
+          const rows = await new Promise<any[]>((resolve, reject) => {
+            const req = idx.getAll(range);
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+          });
+          const byId = new Map<string, any>();
+          for (const r of rows) if (!byId.has(r.id)) byId.set(r.id, r);
+          return Array.from(byId.values()).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+        }
       } catch {}
-      if (useIdx) {
-        // Query by categoryId via index
-        const idx = s.index('by_categoryId_order');
-        const range = IDBKeyRange.bound([categoryId, -Infinity], [categoryId, Infinity]);
-        const rows = await new Promise<any[]>((resolve, reject) => {
-          const req = idx.getAll(range);
+      // 次要路徑：無 by_categoryId 索引時，全取再過濾/排序
+      try {
+        const all = await new Promise<any[]>((resolve, reject) => {
+          const req = s.getAll();
           req.onsuccess = () => resolve(req.result || []);
           req.onerror = () => reject(req.error);
         });
-        // 去重（以 id 為準）
         const byId = new Map<string, any>();
-        for (const r of rows) if (!byId.has(r.id)) byId.set(r.id, r);
-        return Array.from(byId.values());
+        for (const r of all) if (!byId.has(r.id)) byId.set(r.id, r);
+        return Array.from(byId.values())
+          .filter((x) => x.categoryId === categoryId)
+          .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+      } catch {
+        return [];
       }
-      // Fallback: getAll then filter/sort
-      const all = await new Promise<any[]>((resolve, reject) => {
-        const req = s.getAll();
-        req.onsuccess = () => resolve(req.result || []);
-        req.onerror = () => reject(req.error);
-      });
-      // 去重（以 id 為準）
-      const byId = new Map<string, any>();
-      for (const r of all) if (!byId.has(r.id)) byId.set(r.id, r);
-      return Array.from(byId.values())
-        .filter((x) => x.categoryId === categoryId)
-        .sort((a, b) => a.order - b.order);
     });
   }
 
@@ -108,9 +107,12 @@ export function createIdbStorageService(): StorageService {
             req.onsuccess = () => resolve(req.result || []);
             req.onerror = () => reject(req.error);
           });
-          const hasDefault = (existing || []).some((o: any) => o.id === orgId);
-          if (!hasDefault) s.put({ id: orgId, name: 'Personal', color: '#64748b', order: 0 });
+          // 只有在完全沒有任何組織時才建立 o_default，避免污染既有資料與測試期望
+          if ((existing || []).length === 0) {
+            s.put({ id: orgId, name: 'Personal', color: '#64748b', order: 0 });
+          }
         } catch {
+          // 讀取失敗（例如新資料庫），直接建立預設
           try { s.put({ id: orgId, name: 'Personal', color: '#64748b', order: 0 }); } catch {}
         }
       });

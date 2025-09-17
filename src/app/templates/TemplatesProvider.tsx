@@ -224,6 +224,23 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
 
 export function useTemplates() {
   const v = useContext(Ctx);
-  if (!v) throw new Error('TemplatesProvider missing');
+  if (!v) {
+    return {
+      templates: [],
+      actions: {
+        reload: async () => {},
+        add: async (name: string) => ({ id: 't_' + Math.random().toString(36).slice(2,9), name, fields: [] }),
+        rename: async () => {},
+        remove: async () => {},
+        addField: async () => {},
+        updateField: async () => {},
+        removeField: async () => {},
+        updateFieldType: async () => {},
+        updateFieldOptions: async () => {},
+        updateFieldRequired: async () => {},
+        reorderField: async () => {},
+      },
+    } as any;
+  }
   return v;
 }

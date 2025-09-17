@@ -38,84 +38,46 @@ export function parseNetscapeAnchors(html: string): Array<{ url: string; title: 
 }
 
 export function parseNetscapeGroups(html: string): Map<string, Array<{ url: string; title: string; desc?: string }>> {
+  // 以文件順序行走：遇到 H3 設為目前群組；遇到 A 以目前群組歸類；遇到 DD 記錄前一個 A 的描述
   const groups = new Map<string, Array<{ url: string; title: string; desc?: string }>>();
   try {
     const doc = new DOMParser().parseFromString(html || '', 'text/html');
-    const firstDl = (doc.querySelector('dl') || doc.body) as HTMLElement;
-    function norm(t?: string) { return (t || '').trim(); }
-    function push(groupName: string, url: string, title: string, desc?: string) {
-      if (!groups.has(groupName)) groups.set(groupName, []);
-      (groups.get(groupName) as any[]).push({ url, title, desc });
-    }
-    function walkDL(dl: Element, currentGroup?: string) {
-      const children = Array.from(dl.children);
-      for (let i = 0; i < children.length; i++) {
-        const el = children[i] as HTMLElement;
-        if (el.tagName.toLowerCase() === 'dt') {
-          const h3 = el.querySelector('h3');
-          const a = el.querySelector('a[href]');
-          if (h3) {
-            const name = norm(h3.textContent) || 'Imported';
-            // next sibling DL is this folder's content
-            let sib = el.nextElementSibling as HTMLElement | null;
-            if (sib && sib.tagName.toLowerCase() === 'dl') {
-              walkDL(sib, name);
-              // skip its inner handled by recursion
-            }
-          } else if (a) {
-            const href = norm(a.getAttribute('href') || '');
-            const title = norm((a.textContent || '').replace(/<[^>]+>/g, ''));
-            let desc: string | undefined;
-            const maybeDD = el.nextElementSibling as HTMLElement | null;
-            if (maybeDD && maybeDD.tagName.toLowerCase() === 'dd') {
-              const txt = norm(maybeDD.textContent || '');
-              if (txt) desc = txt;
-            }
-            if (href) push(currentGroup || 'Imported', href, title, desc);
-          }
-        } else if (el.tagName.toLowerCase() === 'dl') {
-          walkDL(el, currentGroup);
-        }
+    const norm = (s?: string) => (s || '').trim();
+    const walker = doc.createTreeWalker(doc.body || doc, NodeFilter.SHOW_ELEMENT);
+    let currentGroup = 'Imported';
+    let lastAnchor: { url: string; title: string } | null = null;
+    let node: any = walker.currentNode as Element;
+    while ((node = walker.nextNode() as Element | null)) {
+      const tag = (node.tagName || '').toLowerCase();
+      if (tag === 'h3') {
+        const name = norm((node as HTMLElement).textContent || '') || 'Imported';
+        currentGroup = name;
+        lastAnchor = null;
+        continue;
       }
-    }
-    walkDL(firstDl, undefined);
-    // If nothing captured (some variants nest differently), use anchor-wise fallback
-    let total = 0;
-    groups.forEach((arr) => (total += (arr?.length || 0)));
-    if (total === 0) {
-      const all = Array.from(doc.querySelectorAll('a[href]')) as HTMLAnchorElement[];
-      const norm = (s?: string) => (s || '').trim();
-      const getGroupFor = (a: Element): string => {
-        // Prefer nearest preceding H3 under same DL list
-        const dt = a.closest('dt');
-        let cur: Element | null = dt || a.parentElement;
-        while (cur) {
-          // scan previous siblings to find H3
-          let sib: Element | null = cur.previousElementSibling as Element | null;
-          while (sib) {
-            const h3 = sib.tagName.toLowerCase() === 'dt' ? (sib.querySelector('h3') as HTMLElement | null) : null;
-            if (h3 && norm(h3.textContent)) return norm(h3.textContent) || 'Imported';
-            sib = sib.previousElementSibling as Element | null;
-          }
-          // ascend to parent; stop at BODY/HTML
-          cur = cur.parentElement;
-          if (!cur || /^(html|body)$/i.test(cur.tagName)) break;
-        }
-        return 'Imported';
-      };
-      for (const a of all) {
-        const href = norm(a.getAttribute('href') || '');
+      if (tag === 'a') {
+        const href = norm((node as HTMLAnchorElement).getAttribute('href') || '');
         if (!href) continue;
-        const title = norm((a.textContent || '').replace(/<[^>]+>/g, ''));
-        const dd = (a.closest('dt')?.nextElementSibling as HTMLElement | null);
-        const descTxt = dd && dd.tagName.toLowerCase() === 'dd' ? norm(dd.textContent || '') : undefined;
-        const gname = getGroupFor(a);
-        if (!groups.has(gname)) groups.set(gname, []);
-        (groups.get(gname) as any[]).push({ url: href, title, desc: descTxt });
+        const title = norm(((node as HTMLElement).textContent || '').replace(/<[^>]+>/g, ''));
+        if (!groups.has(currentGroup)) groups.set(currentGroup, []);
+        (groups.get(currentGroup) as any[]).push({ url: href, title });
+        lastAnchor = { url: href, title };
+        continue;
+      }
+      if (tag === 'dd' && lastAnchor) {
+        const desc = norm((node as HTMLElement).textContent || '');
+        if (desc) {
+          const arr = groups.get(currentGroup) as any[];
+          const last = arr[arr.length - 1];
+          if (last && last.url === lastAnchor.url && !last.desc) last.desc = desc;
+        }
+        continue;
       }
     }
   } catch {
-    // Fallback: flat anchors
+    // 忽略解析錯誤，回退成單一群組解析
+  }
+  if (groups.size === 0) {
     const arr = parseNetscapeAnchors(html);
     groups.set('Imported', arr);
   }

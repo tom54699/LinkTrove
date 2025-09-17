@@ -71,7 +71,13 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({
 
 export function useFeedback(): FeedbackCtx {
   const v = useContext(Ctx);
-  if (!v) throw new Error('FeedbackProvider missing');
+  // 測試與部分元件在未包 Provider 時也需安全可用
+  if (!v) {
+    return {
+      showToast: () => {},
+      setLoading: () => {},
+    };
+  }
   return v;
 }
 

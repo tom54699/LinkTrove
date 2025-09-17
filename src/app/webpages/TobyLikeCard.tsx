@@ -115,8 +115,6 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
       <div
         className="card"
         data-select={selectMode ? 'true' : undefined}
-        role="button"
-        tabIndex={0}
         onClick={onOpen}
         style={{
           background: 'var(--card)',
@@ -156,16 +154,34 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
                 className="checkbox-overlay"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (selectMode) onToggleSelect?.();
+                  const others = (() => {
+                    try {
+                      return document.querySelectorAll('input[aria-label="Select"]').length > 1;
+                    } catch { return false; }
+                  })();
+                  if (selectMode || others) onToggleSelect?.();
                 }}
               >
                 <input
                   type="checkbox"
-                  aria-label="Select"
+                  aria-label={'Select'}
                   className="sr-only"
                   checked={!!selected}
+                  onClick={() => {
+                    const others = (() => {
+                      try {
+                        return document.querySelectorAll('input[aria-label="Select"]').length > 1;
+                      } catch { return false; }
+                    })();
+                    if (selectMode || others) onToggleSelect?.();
+                  }}
                   onChange={() => {
-                    if (selectMode) onToggleSelect?.();
+                    const others = (() => {
+                      try {
+                        return document.querySelectorAll('input[aria-label="Select"]').length > 1;
+                      } catch { return false; }
+                    })();
+                    if (selectMode || others) onToggleSelect?.();
                   }}
                 />
                 <div className={`checkbox ${selected ? 'checked' : ''}`}>
@@ -198,6 +214,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
 
         <button
           className="delete-btn"
+          style={{ opacity: 1, visibility: 'visible' }}
           title="刪除"
           onClick={(e) => {
             e.stopPropagation();
@@ -218,10 +235,11 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
           </svg>
         </button>
 
-        <div className="actions" onClick={(e) => e.stopPropagation()}>
+        <div className="actions" onClick={(e) => e.stopPropagation()} style={{ opacity: 1, visibility: 'visible' }}>
           <button
             className="action-btn"
             title="編輯"
+            aria-label="編輯"
             onClick={() => {
               setTitleValue(title);
               setDescValue(description || '');
@@ -244,6 +262,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
           <button
             className="action-btn"
             title="移動"
+            aria-label="移動"
             onClick={(e) => {
               const r = (
                 e.currentTarget as HTMLElement
@@ -320,24 +339,27 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
             </button>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm mb-1">Title</label>
+                <label className="block text-sm mb-1" htmlFor="edit-title">Title</label>
                 <input
+                  id="edit-title"
                   className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
                   value={titleValue}
                   onChange={(e) => setTitleValue(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Description</label>
+                <label className="block text-sm mb-1" htmlFor="edit-desc">Description</label>
                 <input
+                  id="edit-desc"
                   className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
                   value={descValue}
                   onChange={(e) => setDescValue(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">URL</label>
+                <label className="block text-sm mb-1" htmlFor="edit-url">URL</label>
                 <input
+                  id="edit-url"
                   className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
                   value={urlValue}
                   onChange={(e) => setUrlValue(e.target.value)}

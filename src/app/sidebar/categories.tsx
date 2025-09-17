@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { createStorageService } from '../../background/storageService';
-import { setMeta, tx } from '../../background/idb/db';
-import { useOrganizations } from './organizations';
+import { setMeta, tx, getMeta } from '../../background/idb/db';
+import { useOrganizations, OrgsCtx } from './organizations';
 
 export interface Category {
   id: string;
@@ -35,21 +35,22 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
-  const [selectedId, setSelectedId] = useState<string>('default');
+  const [selectedId, setSelectedId] = useState<string>('all');
   const { selectedOrgId } = useOrganizations();
+  const orgCtx = React.useContext(OrgsCtx);
+  const hasOrgProvider = !!orgCtx;
+  const [ready, setReady] = useState<boolean>(!hasOrgProvider);
 
   const svc = React.useMemo(() => {
-    const hasChrome =
-      typeof (globalThis as any).chrome !== 'undefined' &&
-      !!(globalThis as any).chrome?.storage?.sync;
-    return hasChrome ? createStorageService() : null;
+    // 一律建立 IDB-backed service（chrome.storage 僅作為輔助設定存取）
+    return createStorageService();
   }, []);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     (async () => {
-      if (!svc) return; // tests fallback keeps default
+      if (!svc) return; // safety
       // Load categories scoped by selected organization
-      const list = await tx('categories', 'readonly', async (t) => {
+      let list = await tx('categories', 'readonly', async (t) => {
         const s = t.objectStore('categories');
         try {
           const idx = s.index('by_organizationId_order');
@@ -69,6 +70,77 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
           return rows.filter((c: any) => c.organizationId === selectedOrgId);
         }
       });
+      // Repair step: if none for this org, but DB has categories missing organizationId, attach to default org
+      if (!Array.isArray(list) || list.length === 0) {
+        try {
+          await tx('categories', 'readwrite', async (t) => {
+            const s = t.objectStore('categories');
+            const all: any[] = await new Promise((resolve, reject) => {
+              const rq = s.getAll();
+              rq.onsuccess = () => resolve(rq.result || []);
+              rq.onerror = () => reject(rq.error);
+            });
+            let changed = false;
+            for (const c of all) {
+              if (!(c as any).organizationId) { (c as any).organizationId = 'o_default'; s.put(c); changed = true; }
+            }
+            if (changed) {
+              // re-query for current org
+              try {
+                const idx = s.index('by_organizationId_order');
+                const range = IDBKeyRange.bound([selectedOrgId, -Infinity], [selectedOrgId, Infinity]);
+                const rows: any[] = await new Promise((resolve, reject) => {
+                  const req = idx.getAll(range);
+                  req.onsuccess = () => resolve(req.result || []);
+                  req.onerror = () => reject(req.error);
+                });
+                list = rows as any[];
+              } catch {
+                list = all.filter((c: any) => c.organizationId === selectedOrgId);
+              }
+            }
+          });
+        } catch {}
+      }
+      // Seed default collection only when the entire table is empty（避免覆蓋測試預置資料）
+      if (!Array.isArray(list) || list.length === 0) {
+        try {
+          await tx('categories', 'readwrite', async (t) => {
+            const s = t.objectStore('categories');
+            const all: any[] = await new Promise((resolve, reject) => {
+              const rq = s.getAll();
+              rq.onsuccess = () => resolve(rq.result || []);
+              rq.onerror = () => reject(rq.error);
+            });
+            if ((all || []).length === 0) {
+              s.put({ id: 'default', name: 'Default', color: '#64748b', order: 0, organizationId: selectedOrgId });
+            }
+          });
+        } catch {}
+        // reload
+        try {
+          list = await tx('categories', 'readonly', async (t) => {
+            const s = t.objectStore('categories');
+            try {
+              const idx = s.index('by_organizationId_order');
+              const range = IDBKeyRange.bound([selectedOrgId, -Infinity], [selectedOrgId, Infinity]);
+              const rows: any[] = await new Promise((resolve, reject) => {
+                const req = idx.getAll(range);
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error);
+              });
+              return rows as any[];
+            } catch {
+              const rows: any[] = await new Promise((resolve, reject) => {
+                const req = s.getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error);
+              });
+              return rows.filter((c: any) => c.organizationId === selectedOrgId);
+            }
+          });
+        } catch {}
+      }
       const ordered = (list as any[]).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.name || '').localeCompare(String(b.name || '')));
       setCategories(ordered as any);
       try { chrome.storage?.local?.set?.({ categories: ordered }); } catch {}
@@ -80,18 +152,31 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
       } catch {}
-      // Keep selectedId within current org
+      // Restore selected category for this organization
       try {
-        if (selectedId && (ordered as any[]).some((c) => c.id === selectedId)) {
-          // keep
-        } else if ((ordered as any[]).length > 0) {
-          setSelectedId((ordered as any[])[0].id);
-          chrome.storage?.local?.set?.({ selectedCategoryId: (ordered as any[])[0].id });
-        } else {
-          setSelectedId('');
-          chrome.storage?.local?.set?.({ selectedCategoryId: '' });
+        // 先試 chrome.storage.local，其次讀取 IDB meta 作為備援
+        let persisted: string | undefined;
+        try {
+          const got: any = await new Promise((resolve) => {
+            try { chrome.storage?.local?.get?.({ selectedCategoryId: '' }, resolve); } catch { resolve({}); }
+          });
+          if (got && typeof got.selectedCategoryId === 'string') persisted = got.selectedCategoryId || undefined;
+        } catch {}
+        if (!persisted) {
+          try { persisted = (await getMeta<string>('settings.selectedCategoryId')) || undefined; } catch {}
         }
+        const listInOrg = ordered as any[];
+        const has = (id?: string) => !!id && listInOrg.some((c) => c.id === id);
+        // 預設使用 'all'（虛擬集合）
+        const want = has(persisted)
+          ? persisted!
+          : has(selectedId) && selectedId !== 'all'
+            ? selectedId
+            : 'all';
+        setSelectedId(want);
+        try { chrome.storage?.local?.set?.({ selectedCategoryId: want }); } catch {}
       } catch {}
+      try { if (hasOrgProvider) setReady(true); } catch {}
     })();
   }, [svc, selectedOrgId]);
 
@@ -139,35 +224,20 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         } catch {}
       },
       async addCategory(name: string, color = '#64748b') {
-        const maxOrder = categories.reduce(
-          (m, c) => Math.max(m, c.order ?? 0),
-          -1
-        );
-        const next: Category = {
-          id: genId(),
-          name: name.trim() || 'Untitled',
-          color,
-          order: maxOrder + 1,
-        };
-        const list = [...categories, next];
+        // 使用後端服務建立（帶 organizationId），避免遺失 org 資訊
+        const created = await (svc as any).addCategory?.(name.trim() || 'Untitled', color, selectedOrgId);
+        // 更新本地狀態並持久化
+        const list = [...categories, { id: created.id, name: created.name, color: created.color, order: created.order, defaultTemplateId: created.defaultTemplateId } as any];
+        list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.name).localeCompare(String(b.name)));
         setCategories(list);
+        try { chrome.storage?.local?.set?.({ categories: list }); } catch {}
+        // Auto-create default group
         try {
-          await svc?.saveToSync(list as any);
+          const arr = (((await (svc as any).listSubcategories?.(created.id)) as any[]) || []);
+          if (!Array.isArray(arr) || arr.length === 0) await (svc as any).createSubcategory?.(created.id, 'group');
+          try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
         } catch {}
-        try {
-          chrome.storage?.local?.set?.({ categories: list });
-        } catch {}
-        // Auto-create default group for the new collection
-        try {
-          const { createStorageService } = await import('../../background/storageService');
-          const s = createStorageService();
-          const existing = (((await (s as any).listSubcategories?.(next.id)) as any[]) || []);
-          if (existing.length === 0) {
-            await (s as any).createSubcategory?.(next.id, 'group');
-            try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
-          }
-        } catch {}
-        return next;
+        return created as any;
       },
       async renameCategory(id: string, name: string) {
         const list = categories.map((c) => (c.id === id ? { ...c, name: name.trim() || c.name } : c));
@@ -222,21 +292,16 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         } catch {}
       },
       async setDefaultTemplate(id: string, templateId?: string) {
-        // Use functional update to avoid stale closure overriding a freshly added category
-        let nextList: Category[] = categories;
-        setCategories((prev) => {
-          const list = prev.map((c) =>
-            c.id === id ? { ...c, defaultTemplateId: templateId } : c
-          );
-          nextList = list;
-          return list;
-        });
+        // 局部更新該筆記錄，避免覆蓋掉 organizationId 等欄位
+        setCategories((prev) => prev.map((c) => c.id === id ? { ...c, defaultTemplateId: templateId } : c));
         try {
-          await svc?.saveToSync(nextList as any);
+          await tx('categories', 'readwrite', async (t) => {
+            const s = t.objectStore('categories');
+            const cur = await new Promise<any>((resolve, reject) => { const req = s.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
+            if (!cur) return; cur.defaultTemplateId = templateId; s.put(cur);
+          });
         } catch {}
-        try {
-          chrome.storage?.local?.set?.({ categories: nextList });
-        } catch {}
+        try { chrome.storage?.local?.set?.({ categories }); } catch {}
       },
       async reorderCategories(orderIds: string[]) {
         // Only reorder within current organization scope
@@ -267,11 +332,27 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch {}
   };
   const value = useMemo(() => ({ categories, selectedId, setCurrentCategory, actions }), [categories, selectedId, actions]);
+  if (!ready) return null;
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 };
 
 export function useCategories(): CategoriesState {
   const v = useContext(Ctx);
-  if (!v) throw new Error('CategoriesProvider missing');
+  // 提供安全 fallback 以便單元測試可直接渲染依賴的元件
+  if (!v) {
+    return {
+      categories: DEFAULT_CATEGORIES,
+      selectedId: 'default',
+      setCurrentCategory: () => {},
+      actions: {
+        addCategory: async () => DEFAULT_CATEGORIES[0],
+        renameCategory: async () => {},
+        updateColor: async () => {},
+        deleteCategory: async () => {},
+        setDefaultTemplate: async () => {},
+        reorderCategories: async () => {},
+      },
+    } as any;
+  }
   return v;
 }

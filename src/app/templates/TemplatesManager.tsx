@@ -28,6 +28,45 @@ export const TemplatesManager: React.FC = () => {
   return (
     <div className="space-y-6">
       <section>
+        {/* 類別的預設模板設定：保留不存在的模板選項（missing）*/}
+        <h2 className="text-lg font-semibold mb-2">Category Defaults</h2>
+        <ul className="space-y-2">
+          {categories.map((c: any) => {
+            const has = templates.some(
+              (t) => t.id === (c.defaultTemplateId || '')
+            );
+            return (
+              <li key={c.id} className="flex items-center gap-2">
+                <span className="min-w-[120px] inline-block">{c.name}</span>
+                <select
+                  className="text-xs rounded bg-slate-900 border border-slate-700 px-2 py-1"
+                  value={c.defaultTemplateId || ''}
+                  onChange={(e) =>
+                    catActions.setDefaultTemplate(
+                      c.id,
+                      e.target.value || undefined
+                    )
+                  }
+                >
+                  <option value="">None</option>
+                  {!has && c.defaultTemplateId && (
+                    <option
+                      value={c.defaultTemplateId}
+                    >{`(missing) ${c.defaultTemplateId}`}</option>
+                  )}
+                  {templates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <section>
         <h2 className="text-lg font-semibold mb-2">Templates</h2>
         <div className="flex items-center gap-2 mb-3">
           <input
@@ -91,22 +130,37 @@ export const TemplatesManager: React.FC = () => {
                     <option value="siteName">站名 (siteName)</option>
                     <option value="author">作者 (author)</option>
                   </select>
-                  <label className="text-xs flex items-center gap-1">
-                    <input
-                      type="checkbox"
-                      checked={!!commonAdd[t.id]?.required}
-                      onChange={(e) =>
-                        setCommonAdd((m) => ({
-                          ...m,
-                          [t.id]: {
-                            key: m[t.id]?.key || 'siteName',
-                            required: e.target.checked,
-                          },
-                        }))
-                      }
-                    />
-                    required
-                  </label>
+                  {(() => {
+                    const nf = newField[t.id];
+                    const composerActive = !!(
+                      nf && (
+                        nf.key ||
+                        nf.label ||
+                        nf.def ||
+                        nf.options ||
+                        (nf.type && nf.type !== 'text') ||
+                        nf.required
+                      )
+                    );
+                    return composerActive ? null : (
+                      <label className="text-xs flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          checked={!!commonAdd[t.id]?.required}
+                          onChange={(e) =>
+                            setCommonAdd((m) => ({
+                              ...m,
+                              [t.id]: {
+                                key: m[t.id]?.key || 'siteName',
+                                required: e.target.checked,
+                              },
+                            }))
+                          }
+                        />
+                        required
+                      </label>
+                    );
+                  })()}
                   <button
                     className="text-xs px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
                     title="新增常用欄位"
@@ -272,6 +326,20 @@ export const TemplatesManager: React.FC = () => {
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="flex-1 grid grid-cols-5 gap-2">
+                      {(() => {
+                        const nf = newField[t.id];
+                        var composerActive = !!(
+                          nf && (
+                            nf.key ||
+                            nf.label ||
+                            nf.def ||
+                            nf.options ||
+                            (nf.type && nf.type !== 'text') ||
+                            nf.required
+                          )
+                        );
+                        return null;
+                      })()}
                       <input
                         className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm"
                         placeholder="key (e.g. author)"
@@ -359,26 +427,42 @@ export const TemplatesManager: React.FC = () => {
                           }
                         />
                       )}
-                      <label className="text-xs flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          checked={!!newField[t.id]?.required}
-                          onChange={(e) =>
-                            setNewField({
-                              ...newField,
-                              [t.id]: {
-                                ...(newField[t.id] || {
-                                  key: '',
-                                  label: '',
-                                  def: '',
-                                }),
-                                required: e.target.checked,
-                              },
-                            })
-                          }
-                        />{' '}
-                        required
-                      </label>
+                      {(() => {
+                        const nf = newField[t.id];
+                        const composerActive = !!(
+                          nf && (
+                            nf.key ||
+                            nf.label ||
+                            nf.def ||
+                            nf.options ||
+                            (nf.type && nf.type !== 'text') ||
+                            nf.required
+                          )
+                        );
+                        if (!composerActive) return null;
+                        return (
+                          <label className="text-xs flex items-center gap-1">
+                            <input
+                              type="checkbox"
+                              checked={!!newField[t.id]?.required}
+                              onChange={(e) =>
+                                setNewField({
+                                  ...newField,
+                                  [t.id]: {
+                                    ...(newField[t.id] || {
+                                      key: '',
+                                      label: '',
+                                      def: '',
+                                    }),
+                                    required: e.target.checked,
+                                  },
+                                })
+                              }
+                            />{' '}
+                            required
+                          </label>
+                        );
+                      })()}
                     </div>
                     <div>
                       <button
@@ -457,44 +541,6 @@ export const TemplatesManager: React.FC = () => {
             <div className="opacity-70 text-sm">No templates yet.</div>
           )}
         </div>
-      </section>
-      <section>
-        {/* 類別的預設模板設定：保留不存在的模板選項（missing）*/}
-        <h2 className="text-lg font-semibold mb-2">Category Defaults</h2>
-        <ul className="space-y-2">
-          {categories.map((c: any) => {
-            const has = templates.some(
-              (t) => t.id === (c.defaultTemplateId || '')
-            );
-            return (
-              <li key={c.id} className="flex items-center gap-2">
-                <span className="min-w-[120px] inline-block">{c.name}</span>
-                <select
-                  className="text-xs rounded bg-slate-900 border border-slate-700 px-2 py-1"
-                  value={c.defaultTemplateId || ''}
-                  onChange={(e) =>
-                    catActions.setDefaultTemplate(
-                      c.id,
-                      e.target.value || undefined
-                    )
-                  }
-                >
-                  <option value="">None</option>
-                  {!has && c.defaultTemplateId && (
-                    <option
-                      value={c.defaultTemplateId}
-                    >{`(missing) ${c.defaultTemplateId}`}</option>
-                  )}
-                  {templates.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </li>
-            );
-          })}
-        </ul>
       </section>
     </div>
   );

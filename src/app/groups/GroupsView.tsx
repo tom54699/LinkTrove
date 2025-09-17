@@ -3,7 +3,7 @@ import { createStorageService } from '../../background/storageService';
 import { useFeedback } from '../ui/feedback';
 import { useWebpages } from '../webpages/WebpagesProvider';
 import { CardGrid } from '../webpages/CardGrid';
-import { broadcastGhostActive } from '../dnd/dragContext';
+import { broadcastGhostActive, getDragTab } from '../dnd/dragContext';
 import type { TabItemData } from '../tabs/types';
 import { dbg } from '../../utils/debug';
 import { ContextMenu } from '../ui/ContextMenu';
@@ -33,10 +33,8 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
   const tobyAbortRef = React.useRef<AbortController | null>(null);
 
   const svc = React.useMemo(() => {
-    const hasChrome =
-      typeof (globalThis as any).chrome !== 'undefined' &&
-      !!(globalThis as any).chrome?.storage?.local;
-    return hasChrome ? createStorageService() : null;
+    // 直接使用 IndexedDB 版本的 storage service；在非擴充環境亦可運作
+    return createStorageService();
   }, []);
 
   const load = React.useCallback(async () => {
@@ -173,6 +171,8 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
               const fromId = e.dataTransfer.getData('application/x-linktrove-webpage');
               if (fromId) {
                 try {
+                  // 先更新 category 到此 collection，再移到目標 group
+                  await actions.updateCategory(fromId, g.categoryId);
                   await (svc as any).updateCardSubcategory?.(fromId, g.id);
                   await actions.load();
                   showToast('已移動到 group', 'success');
@@ -182,11 +182,26 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 }
               }
               // New tab dropped on header → create then assign
-              const rawTab = e.dataTransfer.getData('application/x-linktrove-tab');
-              if (rawTab) {
+              let tab: TabItemData | null = null;
+              try {
+                const raw = e.dataTransfer.getData('application/x-linktrove-tab');
+                if (raw) tab = JSON.parse(raw);
+              } catch {}
+              if (!tab) {
+                try { tab = (getDragTab() as any) || null; } catch { tab = null; }
+              }
+              // 最後後備：允許 text/uri-list 或 text/plain 建立
+              if (!tab) {
                 try {
-                  const tab: TabItemData = JSON.parse(rawTab);
+                  const uri = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
+                  if (uri) tab = { id: Date.now(), title: uri, url: uri } as any;
+                } catch {}
+              }
+              if (tab) {
+                try {
                   const createdId = (await actions.addFromTab(tab as any)) as any as string;
+                  // 強制設為此 collection，避免 addFromTab 取用目前 selectedId 導致落在其他 collection
+                  await actions.updateCategory(createdId, g.categoryId);
                   await (svc as any).updateCardSubcategory?.(createdId, g.id);
                   await actions.load();
                   showToast('已從分頁建立並加入 group', 'success');
@@ -309,6 +324,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 onDropTab={async (tab: any, beforeId?: string) => {
                   try {
                     const createdId = (await actions.addFromTab(tab as any)) as any as string;
+                    await actions.updateCategory(createdId, g.categoryId);
                     await (svc as any).updateCardSubcategory?.(createdId, g.id);
                     // Adjust ordering relative to target position if provided
                     if (beforeId && beforeId !== '__END__') {
@@ -327,6 +343,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 }}
                 onDropExistingCard={async (cardId, beforeId) => {
                   try {
+                    await actions.updateCategory(cardId, g.categoryId);
                     await (svc as any).updateCardSubcategory?.(cardId, g.id);
                     // Adjust ordering relative to target position if provided
                     if (beforeId && beforeId !== '__END__') {

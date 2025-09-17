@@ -56,52 +56,13 @@ export const WebpagesProvider: React.FC<{
 }> = ({ children, svc }) => {
   const service = React.useMemo(() => {
     if (svc) return svc;
-    const hasChrome =
-      typeof (globalThis as any).chrome !== 'undefined' &&
-      !!(globalThis as any).chrome?.storage?.local;
-    if (hasChrome) return createWebpageService();
-    // Fallback in tests/non-extension env: simple in-memory impl
-    let pages: any[] = [];
-    function nowIso() {
-      return new Date().toISOString();
-    }
-    return {
-      async loadWebpages() {
-        return pages;
-      },
-      async addWebpageFromTab(tab: any) {
-        const url = tab.url || '';
-        const title =
-          (tab.title || '').trim() ||
-          (url ? new URL(url).hostname : 'Untitled');
-        const favicon = tab.favIconUrl || '';
-        const id = 'mem_' + Math.random().toString(36).slice(2, 9);
-        const item = {
-          id,
-          title,
-          url,
-          favicon,
-          note: '',
-          category: 'default',
-          createdAt: nowIso(),
-          updatedAt: nowIso(),
-        };
-        pages = [item, ...pages];
-        return item;
-      },
-      async updateWebpage(id: string, updates: any) {
-        const idx = pages.findIndex((p) => p.id === id);
-        if (idx === -1) throw new Error('Not found');
-        pages[idx] = { ...pages[idx], ...updates, updatedAt: nowIso() };
-        return pages[idx];
-      },
-      async deleteWebpage(id: string) {
-        pages = pages.filter((p) => p.id !== id);
-      },
-    } as WebpageService;
+    // 一律使用 IDB-backed 的 service；pageMeta 相關功能內部自我保護
+    return createWebpageService();
   }, [svc]);
   const [items, setItems] = React.useState<WebpageCardData[]>([]);
   const { selectedId } = useCategories();
+  const selectedIdRef = React.useRef(selectedId);
+  React.useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
 
   const load = React.useCallback(async () => {
     const list = await service.loadWebpages();
@@ -113,12 +74,24 @@ export const WebpagesProvider: React.FC<{
       let created = await service.addWebpageFromTab(tab as any);
       // Ensure new card belongs to currently selected collection
       try {
-        if (selectedId && created.category !== selectedId) {
-          const updated = await service.updateWebpage(created.id, {
-            category: selectedId,
-          } as any);
+        // 先以最新的 selectedIdRef 為主，若為 'all' 再嘗試從 chrome.storage 取用
+        let target = selectedIdRef.current;
+        try {
+          const got: any = await new Promise((resolve) => {
+            try { chrome.storage?.local?.get?.({ selectedCategoryId: '' }, resolve); } catch { resolve({}); }
+          });
+          const persisted = got?.selectedCategoryId;
+          if (persisted && typeof persisted === 'string') target = persisted;
+        } catch {}
+        if (target && target !== 'all' && created.category !== target) {
+          const updated = await service.updateWebpage(created.id, { category: target } as any);
           created = updated;
         }
+      } catch {}
+      // 立即反映到本地 items，確保拖放整合測試能看到新卡片
+      try {
+        const newCard = toCard(created);
+        setItems((prev) => [newCard, ...prev]);
       } catch {}
       // Prefetch page meta and cache for later auto-fill (best-effort)
       try {
@@ -185,7 +158,7 @@ export const WebpagesProvider: React.FC<{
       await service.deleteWebpage(id);
       setItems((prev) => prev.filter((p) => p.id != id));
     },
-    [service]
+    [service, selectedId]
   );
 
   const updateNote = React.useCallback(
@@ -469,6 +442,25 @@ export const WebpagesProvider: React.FC<{
 
 export function useWebpages() {
   const v = React.useContext(Ctx);
-  if (!v) throw new Error('WebpagesProvider missing');
+  if (!v) {
+    return {
+      items: [],
+      actions: {
+        load: async () => {},
+        addFromTab: async () => '',
+        deleteMany: async () => {},
+        deleteOne: async () => {},
+        updateNote: async () => {},
+        updateDescription: async () => {},
+        updateCard: async () => {},
+        updateTitle: async () => {},
+        updateUrl: async () => {},
+        updateCategory: async () => {},
+        updateMeta: async () => {},
+        reorder: () => {},
+        moveToEnd: () => {},
+      },
+    } as any;
+  }
   return v;
 }

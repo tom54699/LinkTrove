@@ -8,10 +8,55 @@ export type StoreName =
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
+// Ensure subcategory defaults for pages missing subcategoryId.
+async function ensureSubcategoriesMigrated(): Promise<void> {
+  try {
+    const done = await getMeta<boolean>('migratedSubcategoriesV1');
+    if (done) return;
+  } catch {}
+  try {
+    await tx(['categories', 'subcategories' as any, 'webpages', 'meta'], 'readwrite', async (t) => {
+      const metaS = t.objectStore('meta');
+      // recheck inside tx
+      const curFlag: any = await new Promise((resolve, reject) => {
+        const rq = metaS.get('migratedSubcategoriesV1');
+        rq.onsuccess = () => resolve(rq.result?.value);
+        rq.onerror = () => reject(rq.error);
+      });
+      if (curFlag) return;
+      const catS = t.objectStore('categories');
+      const subS = t.objectStore('subcategories' as any);
+      const pageS = t.objectStore('webpages');
+      const cats: any[] = await new Promise((res, rej) => { const rq = catS.getAll(); rq.onsuccess = () => res(rq.result || []); rq.onerror = () => rej(rq.error); });
+      const subs: any[] = await new Promise((res, rej) => { try { const rq = subS.getAll(); rq.onsuccess = () => res(rq.result || []); rq.onerror = () => rej(rq.error); } catch { res([]); } });
+      const pages: any[] = await new Promise((res, rej) => { const rq = pageS.getAll(); rq.onsuccess = () => res(rq.result || []); rq.onerror = () => rej(rq.error); });
+      const hasAnySubByCat: Record<string, boolean> = {}; for (const s of subs) hasAnySubByCat[s.categoryId] = true;
+      const need = new Set<string>(); for (const p of pages) if (p.category && !p.subcategoryId) need.add(p.category);
+      const now = Date.now(); const defaults: Record<string, any> = {};
+      for (const cid of need) {
+        if (!hasAnySubByCat[cid] && cats.some((c) => c.id === cid)) {
+          const id = `g_default_${cid}`;
+          const sc = { id, categoryId: cid, name: 'group', order: 0, createdAt: now, updatedAt: now } as any;
+          subS.put(sc); defaults[cid] = sc;
+        }
+      }
+      for (const p of pages) {
+        if (!p.subcategoryId && p.category && defaults[p.category]) {
+          p.subcategoryId = defaults[p.category].id; pageS.put(p);
+        }
+      }
+      try { metaS.put({ key: 'migratedSubcategoriesV1', value: true }); } catch {}
+    });
+  } catch {}
+}
+
 export function openDb(): Promise<IDBDatabase> {
-  if (dbPromise) return dbPromise;
-  dbPromise = new Promise((resolve, reject) => {
+  // 不緩存連線，避免測試期間 deleteDatabase 被鎖住
+  return new Promise((resolve, reject) => {
     const req = indexedDB.open('linktrove', 3);
+    req.onblocked = () => {
+      try { /* if blocked during upgrade/delete, there might be another open connection; nothing to do here */ } catch {}
+    };
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains('webpages')) {
@@ -58,15 +103,25 @@ export function openDb(): Promise<IDBDatabase> {
         try { s.createIndex('by_categoryId', 'categoryId'); } catch {}
         try { s.createIndex('by_categoryId_order', ['categoryId', 'order']); } catch {}
       }
+      // If upgrading, ensure new indexes on subcategories exist
+      if (db.objectStoreNames.contains('subcategories')) {
+        const s = req.transaction?.objectStore('subcategories');
+        try { if (s && !s.indexNames.contains('by_categoryId')) s.createIndex('by_categoryId', 'categoryId'); } catch {}
+        try { if (s && !s.indexNames.contains('by_categoryId_order')) s.createIndex('by_categoryId_order', ['categoryId', 'order']); } catch {}
+      }
       if (!db.objectStoreNames.contains('organizations')) {
         const s = db.createObjectStore('organizations', { keyPath: 'id' });
         try { s.createIndex('order', 'order'); } catch {}
       }
     };
-    req.onsuccess = () => resolve(req.result);
+    req.onsuccess = () => {
+      const db = req.result;
+      // 允許外部 deleteDatabase 時自動關閉，避免 blocked 導致測試 timeout
+      try { db.onversionchange = () => { try { db.close(); } catch {} }; } catch {}
+      resolve(db);
+    };
     req.onerror = () => reject(req.error);
   });
-  return dbPromise;
 }
 
 export async function tx<T>(
@@ -95,6 +150,9 @@ export async function putAll(store: StoreName, items: any[]): Promise<void> {
 }
 
 export async function getAll(store: StoreName): Promise<any[]> {
+  if (store === 'subcategories') {
+    try { await ensureSubcategoriesMigrated(); } catch {}
+  }
   return tx(store, 'readonly', async (t) => {
     const s = t.objectStore(store);
     return await new Promise<any[]>((resolve, reject) => {
