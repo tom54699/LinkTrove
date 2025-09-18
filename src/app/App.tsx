@@ -1,13 +1,14 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { useApp } from './AppContext';
-import { ThreeColumnLayout } from './layout/ThreeColumn';
+import { FourColumnLayout } from './layout/FourColumnLayout';
 import { OpenTabsProvider } from './tabs/OpenTabsProvider';
 import { TemplatesProvider } from './templates/TemplatesProvider';
 import { TabsPanel } from './tabs/TabsPanel';
 import { CategoriesProvider, useCategories } from './sidebar/categories';
-import { OrganizationsProvider } from './sidebar/organizations';
+import { OrganizationsProvider, useOrganizations } from './sidebar/organizations';
 import { Sidebar } from './sidebar/sidebar';
+import { OrganizationNav } from './sidebar/OrganizationNav';
 import { FeedbackProvider, ErrorBoundary } from './ui/feedback';
 import { SearchBox } from './ui/SearchBox';
 import {
@@ -72,6 +73,7 @@ const HomeInner: React.FC = () => {
     actions: catActions,
     setCurrentCategory,
   } = useCategories();
+  const { actions: orgActions, setCurrentOrganization, selectedOrgId } = useOrganizations();
   // Simplify to a single view; remove density switching
   const [_collapsed, setCollapsed] = React.useState(false);
   const { showToast, setLoading } = useFeedback();
@@ -79,6 +81,10 @@ const HomeInner: React.FC = () => {
   const [showAddCat, setShowAddCat] = React.useState(false);
   const [newCatName, setNewCatName] = React.useState('');
   const [newCatColor, setNewCatColor] = React.useState('#64748b');
+  // Organization creation modal state
+  const [showAddOrg, setShowAddOrg] = React.useState(false);
+  const [newOrgName, setNewOrgName] = React.useState('');
+  const [newOrgColor, setNewOrgColor] = React.useState('#64748b');
   // HTML import (new collection) modal state
   const [htmlImportFile, setHtmlImportFile] = React.useState<File | null>(null);
   const [htmlImportOpen, setHtmlImportOpen] = React.useState(false);
@@ -108,18 +114,22 @@ const HomeInner: React.FC = () => {
     const onHtml = () => { try { document.getElementById('html-cat-file')?.click(); } catch {} };
     const onToby = () => { try { document.getElementById('toby-cat-file')?.click(); } catch {} };
     const onAdd = () => { setNewCatName(''); setNewCatColor('#64748b'); setShowAddCat(true); };
+    const onAddOrg = () => { setNewOrgName(''); setNewOrgColor('#64748b'); setShowAddOrg(true); };
     try { window.addEventListener('collections:import-html-new', onHtml as any); } catch {}
     try { window.addEventListener('collections:import-toby-new', onToby as any); } catch {}
     try { window.addEventListener('collections:add-new', onAdd as any); } catch {}
+    try { window.addEventListener('organizations:add-new', onAddOrg as any); } catch {}
     return () => {
       try { window.removeEventListener('collections:import-html-new', onHtml as any); } catch {}
       try { window.removeEventListener('collections:import-toby-new', onToby as any); } catch {}
       try { window.removeEventListener('collections:add-new', onAdd as any); } catch {}
+      try { window.removeEventListener('organizations:add-new', onAddOrg as any); } catch {}
     };
   }, []);
   return (
     <div className="h-full min-h-0">
-      <ThreeColumnLayout
+      <FourColumnLayout
+        organizationNav={<OrganizationNav />}
         sidebar={<Sidebar />}
         content={
           <div>
@@ -129,9 +139,6 @@ const HomeInner: React.FC = () => {
                 <div className="subtext">{viewItems.length} collections</div>
               </div>
               <div className="toby-board-actions">
-                <div className="inline-block align-middle mr-2">
-                  <SearchBox />
-                </div>
                 {/* Category-level HTML import (create a NEW collection; multi-group by H3) */}
                 <input
                   id="html-cat-file"
@@ -180,7 +187,10 @@ const HomeInner: React.FC = () => {
                       const obj = JSON.parse(text);
                       let lists = 0; let links = 0; let hasOrgs = false;
                       if (Array.isArray(obj?.lists)) { lists = obj.lists.length; for (const l of obj.lists) if (Array.isArray(l?.cards)) links += l.cards.length; }
-                      if (Array.isArray(obj?.groups)) { for (const g of obj.groups) if (Array.isArray(g?.lists)) { lists += g.lists.length; for (const l of g.lists) if (Array.isArray(l?.cards)) links += l.cards.length; } }
+                      if (Array.isArray(obj?.groups)) {
+                        hasOrgs = true; // v4 groups should use Organization structure
+                        for (const g of obj.groups) if (Array.isArray(g?.lists)) { lists += g.lists.length; for (const l of g.lists) if (Array.isArray(l?.cards)) links += l.cards.length; }
+                      }
                       if (Array.isArray(obj?.organizations)) {
                         hasOrgs = true;
                         for (const o of obj.organizations) if (Array.isArray(o?.groups)) {
@@ -334,6 +344,61 @@ const HomeInner: React.FC = () => {
           </div>
         </div>
       )}
+      {showAddOrg && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60"
+          onClick={() => setShowAddOrg(false)}
+        >
+          <div
+            className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[420px] max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Add Organization"
+          >
+            <div className="text-lg font-medium mb-3">New Organization</div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm mb-1">Name</label>
+                <input
+                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                  value={newOrgName}
+                  onChange={(e) => setNewOrgName(e.target.value)}
+                  placeholder="My Organization"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Color</label>
+                <input
+                  type="color"
+                  className="rounded border border-slate-700 bg-slate-900 p-1"
+                  value={newOrgColor}
+                  onChange={(e) => setNewOrgColor(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                onClick={() => setShowAddOrg(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                disabled={!newOrgName.trim()}
+                onClick={async () => {
+                  const org = await orgActions.add(newOrgName.trim(), newOrgColor);
+                  setCurrentOrganization(org.id);
+                  setShowAddOrg(false);
+                  showToast(`Created organization "${org.name}"`, 'success');
+                }}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {htmlImportOpen && (
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60"
@@ -410,6 +475,7 @@ const HomeInner: React.FC = () => {
                     setHtmlProgress({ total: htmlPreview?.links || 0, processed: 0 });
                     const res = await importNetscapeHtmlAsNewCategory(text, {
                       name: htmlImportName.trim() || undefined,
+                      organizationId: selectedOrgId,
                       mode: htmlImportMode,
                       flatGroupName: htmlImportFlatName.trim() || undefined,
                       dedupSkip: htmlImportDedup,
@@ -442,27 +508,33 @@ const HomeInner: React.FC = () => {
       )}
       {tobyOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60" onClick={() => setTobyOpen(false)}>
-          <div className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[420px] max-w-[90vw]" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Import Toby to new Collection">
-            <div className="text-lg font-medium mb-3">匯入 Toby（新集合）</div>
+          <div className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[420px] max-w-[90vw]" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Import Toby to new Organization">
+            <div className="text-lg font-medium mb-3">匯入 Toby（新 Organization）</div>
             <div className="space-y-3">
               <div className="text-sm opacity-80">檔案：{tobyFile?.name}</div>
               {tobyPreview && (<div className="text-xs opacity-80">預覽：lists {tobyPreview.lists}、連結 {tobyPreview.links}</div>)}
               <div>
-                <label className="block text-sm mb-1">集合名稱（可留空自動命名）</label>
+                <label className="block text-sm mb-1">
+                  {tobyHasOrgs ? 'Organization 名稱（可留空自動命名）' : '集合名稱（可留空自動命名）'}
+                </label>
                 <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={tobyName} onChange={(e)=>setTobyName(e.target.value)} placeholder="Imported" />
               </div>
-              <div>
-                <label className="block text-sm mb-1">匯入模式</label>
-                <div className="flex items-center gap-4 text-sm">
-                  <label className="inline-flex items-center gap-1"><input type="radio" name="toby-mode" checked={tobyMode==='multi'} onChange={()=>setTobyMode('multi')} /><span>lists → 多群組</span></label>
-                  <label className="inline-flex items-center gap-1"><input type="radio" name="toby-mode" checked={tobyMode==='flat'} onChange={()=>setTobyMode('flat')} /><span>扁平至單一群組</span></label>
-                </div>
-              </div>
-              {tobyMode==='flat' && (
-                <div>
-                  <label className="block text-sm mb-1">群組名稱</label>
-                  <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={tobyFlatName} onChange={(e)=>setTobyFlatName(e.target.value)} placeholder="Imported" />
-                </div>
+              {!tobyHasOrgs && (
+                <>
+                  <div>
+                    <label className="block text-sm mb-1">匯入模式</label>
+                    <div className="flex items-center gap-4 text-sm">
+                      <label className="inline-flex items-center gap-1"><input type="radio" name="toby-mode" checked={tobyMode==='multi'} onChange={()=>setTobyMode('multi')} /><span>lists → 多群組</span></label>
+                      <label className="inline-flex items-center gap-1"><input type="radio" name="toby-mode" checked={tobyMode==='flat'} onChange={()=>setTobyMode('flat')} /><span>扁平至單一群組</span></label>
+                    </div>
+                  </div>
+                  {tobyMode==='flat' && (
+                    <div>
+                      <label className="block text-sm mb-1">群組名稱</label>
+                      <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={tobyFlatName} onChange={(e)=>setTobyFlatName(e.target.value)} placeholder="Imported" />
+                    </div>
+                  )}
+                </>
               )}
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
@@ -477,13 +549,18 @@ const HomeInner: React.FC = () => {
                   tobyAbortRef.current = ctrl;
                   setTobyProgress({ total: tobyPreview?.links || 0, processed: 0 });
                   if (tobyHasOrgs) {
-                    const res = await importTobyV4WithOrganizations(text, { createOrganizations: true, signal: ctrl.signal, onProgress: ({ total, processed }) => setTobyProgress({ total, processed }) });
+                    const res = await importTobyV4WithOrganizations(text, { createOrganizations: true, organizationName: tobyName.trim() || undefined, signal: ctrl.signal, onProgress: ({ total, processed }) => setTobyProgress({ total, processed }) });
+                    try { await orgActions?.reload?.(); } catch {}
                     try { await pagesActions.load(); } catch {}
                     try { await catActions?.reload?.(); } catch {}
+                    // Switch to the new organization if one was created
+                    if (res.organizationIds?.length > 0) {
+                      setCurrentOrganization(res.organizationIds[0]);
+                    }
                     try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
-                    showToast(`已匯入 Toby v4：建立 org ${res.orgsCreated}、集合 ${res.categoriesCreated}、群組 ${res.groupsCreated}、卡片 ${res.pagesCreated}`, 'success');
+                    showToast(`已匯入 Toby (groups→orgs)：建立 org ${res.orgsCreated}、集合 ${res.categoriesCreated}、群組 ${res.groupsCreated}、卡片 ${res.pagesCreated}`, 'success');
                   } else {
-                    const res = await importTobyAsNewCategory(text, { name: tobyName.trim() || undefined, mode: tobyMode, flatGroupName: tobyFlatName.trim() || undefined, signal: ctrl.signal, onProgress: ({ total, processed }) => setTobyProgress({ total, processed }) });
+                    const res = await importTobyAsNewCategory(text, { name: tobyName.trim() || undefined, organizationId: selectedOrgId, mode: tobyMode, flatGroupName: tobyFlatName.trim() || undefined, signal: ctrl.signal, onProgress: ({ total, processed }) => setTobyProgress({ total, processed }) });
                     try { await pagesActions.load(); } catch {}
                     try { await catActions?.reload?.(); } catch {}
                     try { setCurrentCategory(res.categoryId); } catch {}

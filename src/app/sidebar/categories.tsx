@@ -213,11 +213,13 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
               merged.push(c);
             }
           }
-          merged.sort(
+          // Filter by current organization
+          const filtered = merged.filter((c: any) => c.organizationId === selectedOrgId);
+          filtered.sort(
             (a, b) =>
               (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name)
           );
-          setCategories(merged);
+          setCategories(filtered);
         } catch {}
       },
       async addCategory(name: string, color = '#64748b') {

@@ -22,7 +22,12 @@ export const SearchBox: React.FC<{
   const results = React.useMemo(() => {
     const term = q.trim().toLowerCase();
     if (!term) return [] as any[];
+
+    // Get current organization's category IDs for filtering
+    const orgCategoryIds = new Set((categories || []).map((c: any) => c.id));
+
     const scored = items
+      .filter((it) => !it.category || orgCategoryIds.has(it.category)) // Filter by current organization
       .map((it) => {
         const hay =
           `${it.title} ${it.url} ${(it as any).description || ''}`.toLowerCase();
@@ -33,7 +38,7 @@ export const SearchBox: React.FC<{
       .filter(Boolean) as { it: any; score: number }[];
     scored.sort((a, b) => a.score - b.score);
     return scored.slice(0, 10).map((s) => s.it);
-  }, [q, items]);
+  }, [q, items, categories]);
 
   React.useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -160,7 +165,7 @@ export const SearchBox: React.FC<{
       <input
         ref={inputRef}
         aria-label="Search"
-        className="text-sm w-64 rounded bg-slate-900 border border-slate-700 px-2 py-1 outline-none focus:border-slate-500"
+        className={`text-sm rounded bg-slate-900 border border-slate-700 px-2 py-1 outline-none focus:border-slate-500 ${className?.includes('w-') ? '' : 'w-64'} ${className || ''}`}
         placeholder={placeholder}
         value={q}
         onChange={(e) => {
@@ -191,7 +196,7 @@ export const SearchBox: React.FC<{
         }}
       />
       {open && results.length > 0 && (
-        <div className="absolute z-[80] mt-1 w-[28rem] max-w-[80vw] rounded border border-slate-700 bg-[var(--bg)] shadow-lg">
+        <div className="absolute z-[9999] mt-1 w-96 left-0 rounded border border-slate-700 bg-[var(--bg)] shadow-lg">
           {results.map((it, idx) => (
             <button
               key={it.id}
@@ -230,7 +235,7 @@ export const SearchBox: React.FC<{
         </div>
       )}
       {open && q && results.length === 0 && (
-        <div className="absolute z-[80] mt-1 w-64 rounded border border-slate-700 bg-[var(--bg)] shadow-lg px-3 py-2 text-sm opacity-80">
+        <div className="absolute z-[9999] mt-1 w-96 left-0 rounded border border-slate-700 bg-[var(--bg)] shadow-lg px-3 py-2 text-sm opacity-80">
           No results
         </div>
       )}

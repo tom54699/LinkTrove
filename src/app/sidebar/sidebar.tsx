@@ -3,6 +3,7 @@ import { useCategories } from './categories';
 import { useOrganizations } from './organizations';
 import { useTemplates } from '../templates/TemplatesProvider';
 import { useWebpages } from '../webpages/WebpagesProvider';
+import { SearchBox } from '../ui/SearchBox';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -29,40 +30,38 @@ export const Sidebar: React.FC = () => {
 
   return (
     <div className="text-[13px] h-full flex flex-col">
-      {/* Organization switcher (minimal) */}
-      <div className="mb-3">
-        <label className="block text-[11px] uppercase text-[var(--muted)] mb-1">Organization</label>
-        <select
-          className="w-full rounded bg-slate-900 border border-slate-700 p-1.5 text-sm"
-          value={selectedOrgId}
-          onChange={(e) => setCurrentOrganization(e.target.value)}
-          aria-label="Select organization"
-        >
-          {organizations.map((o) => (
-            <option key={o.id} value={o.id}>{o.name}</option>
-          ))}
-        </select>
+      {/* Current Organization Name */}
+      <div className="mb-4 text-lg font-semibold">
+        {organizations.find(o => o.id === selectedOrgId)?.name || 'Organization'}
       </div>
-      <div className="mb-4 text-lg font-semibold flex items-center justify-between">
-        <span>Collections</span>
-        <button
-          className="px-1.5 py-1 rounded hover:bg-slate-800"
-          title="Collection settings"
-          aria-label="Collection settings"
-          onClick={() => { try { window.dispatchEvent(new CustomEvent('collections:open-manage')); } catch {} }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5" aria-hidden>
-            <path d="M3 7h5.5c.4 0 .8.16 1.06.44L11 9h10v9.5A1.5 1.5 0 0 1 19.5 20h-15A1.5 1.5 0 0 1 3 18.5V7z" />
-            <circle cx="17.5" cy="6.5" r="1.2" />
-            <path d="M17.5 4.6v.8M17.5 7.6v.8M15.6 6.5h.8M18.6 6.5h.8M16.25 5.25l.57.57M18.18 7.18l.57.57M18.75 5.25l-.57.57M16.82 7.18l-.57.57" />
-          </svg>
-        </button>
+
+      {/* Search */}
+      <div className="mb-6 relative overflow-visible">
+        <SearchBox
+          placeholder="Search..."
+          className="w-full"
+        />
       </div>
-      <div className="text-[11px] uppercase text-[var(--muted)] mb-2">
-        Spaces
+      {/* SPACES section header */}
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-[11px] uppercase text-[var(--muted)] font-semibold tracking-wider">
+          SPACES
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            className="text-red-400 hover:text-red-300 text-lg font-semibold"
+            title="Add new collection"
+            onClick={() => { try { window.dispatchEvent(new CustomEvent('collections:add-new')); } catch {} }}
+          >
+            +
+          </button>
+        </div>
       </div>
-      <nav aria-label="Categories" className="space-y-1">
-        {categories.map((c, _idx) => {
+
+      {/* Collections list */}
+      <div className="flex-1 overflow-hidden">
+        <nav aria-label="Categories" className="space-y-1 h-full overflow-y-auto pr-1">
+          {categories.map((c, _idx) => {
           const active = selectedId === c.id;
           return (
             <div
@@ -162,20 +161,8 @@ export const Sidebar: React.FC = () => {
             </div>
           );
         })}
-      </nav>
-      {/* Add new collection: centered below the list */}
-      <div className="mt-2 flex justify-center">
-        <button
-          className="px-3 py-1.5 text-[16px] text-[var(--accent)] hover:bg-[var(--accent-hover)] rounded"
-          onClick={() => { try { window.dispatchEvent(new CustomEvent('collections:add-new')); } catch {} }}
-          aria-label="Add new collection"
-          title="Add collection"
-        >
-          <span aria-hidden>+</span>
-        </button>
+        </nav>
       </div>
-      {/* 底部工具：新增 + 管理彈窗 */}
-      <SidebarBottomActions />
       {editing && (
         <div
           className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
@@ -320,89 +307,3 @@ export const Sidebar: React.FC = () => {
   );
 };
 
-const SidebarBottomActions: React.FC = () => {
-  const [manageOpen, setManageOpen] = React.useState(false);
-  React.useEffect(() => {
-    const open = () => setManageOpen(true);
-    try { window.addEventListener('collections:open-manage', open as any); } catch {}
-    return () => { try { window.removeEventListener('collections:open-manage', open as any); } catch {} };
-  }, []);
-  return (
-    <div className="mt-auto pt-3 border-t border-slate-700">
-      <div className="flex items-center justify-end gap-2">
-        <button
-          className="hidden"
-          onClick={() => setManageOpen(true)}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4" aria-hidden>
-            <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82l.02.07a2 2 0 1 1-3.38 0l.02-.07A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82-.33l-.06.03a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33l-.07.02a2 2 0 1 1 0-3.38l.07.02A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.6-1L3.94 7.9a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6c.35 0 .69-.12.98-.33A1.65 1.65 0 0 0 11 2.45l-.02-.07a2 2 0 1 1 3.38 0l-.02.07A1.65 1.65 0 0 0 15 4.6c.35 0 .69.12.98.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c.21.29.33.63.33.98 0 .35.12.69.33.98l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.29.21-.63.33-.98.33-.35 0-.69.12-.98.33Z" />
-          </svg>
-          <span>collection setting</span>
-        </button>
-        <div className="flex items-center gap-2">
-          <button
-            className="px-2 py-1 rounded hover:bg-slate-800"
-            title="App Settings"
-            aria-label="Open App Settings"
-            onClick={() => { try { window.dispatchEvent(new CustomEvent('app:open-settings')); } catch {} }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6" aria-hidden>
-              <circle cx="12" cy="12" r="2.2" />
-              <path d="M12 3.8v1.4M12 18.8v1.4M4.75 6.35l.99.99M18.26 19.86l.99.99M3.8 12h1.4M18.8 12h1.4M4.75 17.65l.99-.99M18.26 4.14l.99-.99" />
-            </svg>
-          </button>
-          <button
-            className="px-2 py-1 rounded hover:bg-slate-800 inline-flex items-center justify-center"
-            title="Toggle Theme"
-            aria-label="Toggle Theme"
-            onClick={() => { try { window.dispatchEvent(new CustomEvent('app:toggle-theme')); } catch {} }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="w-5 h-5 text-violet-300"
-              aria-hidden="true"
-            >
-              <path d="M21 12.79A9 9 0 1111.21 3c.03 0 .06 0 .09 0a7 7 0 109.7 9.7c0 .03 0 .06 0 .09z" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {manageOpen && (
-        <div
-          className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
-          onClick={() => setManageOpen(false)}
-        >
-          <div
-            className="rounded border border-slate-700 bg-[var(--panel)] w-[420px] max-w-[95vw] p-5"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-label="Manage Collections"
-          >
-            <div className="text-lg font-semibold mb-3">集合管理</div>
-            <div className="space-y-2">
-              <button
-                className="w-full text-left px-3 py-2 rounded border border-slate-600 hover:bg-slate-800"
-                onClick={() => { setManageOpen(false); try { window.dispatchEvent(new CustomEvent('collections:import-html-new')); } catch {} }}
-              >
-                Import HTML (new)…
-              </button>
-              <button
-                className="w-full text-left px-3 py-2 rounded border border-slate-600 hover:bg-slate-800"
-                onClick={() => { setManageOpen(false); try { window.dispatchEvent(new CustomEvent('collections:import-toby-new')); } catch {} }}
-              >
-                Import Toby (new)…
-              </button>
-            </div>
-            <div className="mt-3 flex items-center justify-end">
-              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => setManageOpen(false)}>關閉</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};

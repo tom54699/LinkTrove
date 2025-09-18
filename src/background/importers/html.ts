@@ -264,6 +264,7 @@ export async function importNetscapeHtmlAsNewCategory(
   opts?: {
     name?: string;
     color?: string;
+    organizationId?: string;
     dedupSkip?: boolean;
     mode?: 'multi' | 'flat';
     flatGroupName?: string;
@@ -289,7 +290,7 @@ export async function importNetscapeHtmlAsNewCategory(
   const id = 'c_' + Math.random().toString(36).slice(2, 9);
   const order = (cats as any[]).length;
   await tx('categories', 'readwrite', async (t) => {
-    t.objectStore('categories').put({ id, name, color, order });
+    t.objectStore('categories').put({ id, name, color, order, organizationId: opts?.organizationId });
   });
   if (opts?.mode === 'flat') {
     // Create single group and flatten all anchors

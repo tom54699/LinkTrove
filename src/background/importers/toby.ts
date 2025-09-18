@@ -289,6 +289,7 @@ export async function importTobyAsNewCategory(
   opts?: {
     name?: string;
     color?: string;
+    organizationId?: string;
     mode?: 'multi' | 'flat';
     flatGroupName?: string;
     batchSize?: number;
@@ -320,7 +321,7 @@ export async function importTobyAsNewCategory(
   const catId = 'c_' + Math.random().toString(36).slice(2, 9);
   const order = (cats as any[]).length;
   await tx('categories', 'readwrite', async (t) => {
-    t.objectStore('categories').put({ id: catId, name, color, order });
+    t.objectStore('categories').put({ id: catId, name, color, order, organizationId: opts?.organizationId });
   });
   // Build pages
   let pagesCreated = 0;
@@ -343,7 +344,7 @@ export async function importTobyAsNewCategory(
         const url = normalizeUrl(card.url || '');
         if (!url) continue;
         const id = genId(url);
-        pages.push({ id, title: normalizeTitle(card), url, favicon: (card.favIconUrl || '').trim() || '', note: (card.customDescription || '').trim(), category: catId, subcategoryId: gid, meta: undefined, createdAt: nowIso(), updatedAt: nowIso() });
+        pages.push({ id, title: normalizeTitle(card), url, favicon: (card.favIconUrl || '').trim() || guessFavicon(url), note: (card.customDescription || '').trim(), category: catId, subcategoryId: gid, meta: undefined, createdAt: nowIso(), updatedAt: nowIso() });
         idsInOrder.push(id);
       }
     }
@@ -377,7 +378,7 @@ export async function importTobyAsNewCategory(
       for (const card of (l.cards || [])) {
         const url = normalizeUrl(card.url || ''); if (!url) continue;
         const id = genId(url);
-        pages.push({ id, title: normalizeTitle(card), url, favicon: (card.favIconUrl || '').trim() || '', note: (card.customDescription || '').trim(), category: catId, subcategoryId: g.id, meta: undefined, createdAt: nowIso(), updatedAt: nowIso() });
+        pages.push({ id, title: normalizeTitle(card), url, favicon: (card.favIconUrl || '').trim() || guessFavicon(url), note: (card.customDescription || '').trim(), category: catId, subcategoryId: g.id, meta: undefined, createdAt: nowIso(), updatedAt: nowIso() });
         idsInOrder.push(id);
       }
       for (let i2 = 0; i2 < pages.length; i2 += bs) {
@@ -410,6 +411,7 @@ export async function importTobyV4WithOrganizations(
   opts?: {
     createOrganizations?: boolean; // default true
     targetOrganizationId?: string; // when createOrganizations is false or groups-only payload
+    organizationName?: string; // custom name for groups-only payload
     dedupSkip?: boolean;
     signal?: AbortSignal;
     onProgress?: (p: { total: number; processed: number }) => void;
@@ -460,19 +462,25 @@ export async function importTobyV4WithOrganizations(
     return id;
   }
 
-  async function importGroupAsCategory(orgId: string, group: TobyV4OrgGroup) {
+  async function importGroupAsCategory(group: TobyV4OrgGroup, orgId: string) {
+    // Use the provided organization ID
+
+    // Toby group → LinkTrove Category (Collection)
     const catId = gen('c');
     const cat = { id: catId, name: group?.name || 'Imported', color: '#64748b', order: 0, organizationId: orgId } as any;
     await tx('categories', 'readwrite', async (t) => t.objectStore('categories').put(cat));
     categoriesCreated++;
-    // For each list in this group, create a subcategory and its cards
+
+    // For each list in this group, create a subcategory (group)
     const lists = Array.isArray(group?.lists) ? (group!.lists as TobyV4OrgList[]) : [];
     for (const l of lists) {
+      // Toby list → LinkTrove Subcategory (Group)
       const gid = gen('g');
       const now = Date.now();
-      const sc = { id: gid, categoryId: catId, name: l?.title || 'group', order: 0, createdAt: now, updatedAt: now } as any;
+      const sc = { id: gid, categoryId: catId, name: l?.title || 'Default Group', order: 0, createdAt: now, updatedAt: now } as any;
       await tx('subcategories' as any, 'readwrite', async (t) => t.objectStore('subcategories' as any).put(sc));
       groupsCreated++;
+
       const idsInOrder: string[] = [];
       const cards = Array.isArray(l?.cards) ? (l.cards as TobyCard[]) : [];
       for (const card of cards) {
@@ -501,15 +509,61 @@ export async function importTobyV4WithOrganizations(
   }
 
   if (orgs.length > 0) {
+    // When organizations exist, each organization contains groups
     for (const o of orgs) {
       const orgId = await ensureOrganization(o?.name || 'Imported', o?.color as any);
       const groups = Array.isArray(o?.groups) ? (o.groups as TobyV4OrgGroup[]) : [];
-      for (const g of groups) await importGroupAsCategory(orgId, g);
+      // Each group becomes a category (collection) within this organization
+      for (const g of groups) {
+        // Toby group → LinkTrove Category (Collection)
+        const catId = gen('c');
+        const cat = { id: catId, name: g?.name || 'Imported', color: '#64748b', order: 0, organizationId: orgId } as any;
+        await tx('categories', 'readwrite', async (t) => t.objectStore('categories').put(cat));
+        categoriesCreated++;
+
+        const lists = Array.isArray(g?.lists) ? (g.lists as TobyV4OrgList[]) : [];
+        for (const l of lists) {
+          // Toby list → LinkTrove Subcategory (Group)
+          const gid = gen('g');
+          const now = Date.now();
+          const sc = { id: gid, categoryId: catId, name: l?.title || 'Default Group', order: 0, createdAt: now, updatedAt: now } as any;
+          await tx('subcategories' as any, 'readwrite', async (t) => t.objectStore('subcategories' as any).put(sc));
+          groupsCreated++;
+
+          const idsInOrder: string[] = [];
+          const cards = Array.isArray(l?.cards) ? (l.cards as TobyCard[]) : [];
+          for (const card of cards) {
+            const url = normalizeUrl(card.url || '');
+            if (!url) continue;
+            const id = gen('w');
+            const page: WebpageData = {
+              id,
+              title: normalizeTitle(card),
+              url,
+              favicon: (card.favIconUrl || '').trim() || guessFavicon(url),
+              note: (card.customDescription || '').trim(),
+              category: catId,
+              subcategoryId: gid,
+              meta: undefined,
+              createdAt: nowIso(),
+              updatedAt: nowIso(),
+            };
+            await tx('webpages', 'readwrite', async (t) => t.objectStore('webpages').put(page as any));
+            idsInOrder.push(id);
+            pagesCreated++;
+            if (opts?.signal?.aborted) throw new Error('Aborted');
+          }
+          try { await setMeta(`order.subcat.${gid}`, idsInOrder); } catch {}
+        }
+      }
     }
   } else {
-    // groups-only payload
-    const orgId = await ensureOrganization('Imported');
-    for (const g of rootGroups) await importGroupAsCategory(orgId, g);
+    // groups-only payload: create one organization for all groups
+    const orgName = opts?.organizationName || 'Imported';
+    const orgId = await ensureOrganization(orgName);
+
+    // Each group becomes a category (collection) within this organization
+    for (const g of rootGroups) await importGroupAsCategory(g, orgId);
   }
 
   return { orgsCreated, categoriesCreated, groupsCreated, pagesCreated, organizationIds };
