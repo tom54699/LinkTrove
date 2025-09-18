@@ -18,10 +18,9 @@ import {
 import { createStorageService } from '../background/storageService';
 import { useFeedback } from './ui/feedback';
 import { WebpagesProvider, useWebpages } from './webpages/WebpagesProvider';
-import { TemplatesManager } from './templates/TemplatesManager';
+import { SettingsModal } from './ui/SettingsModal';
 import { useTemplates } from './templates/TemplatesProvider';
 import { GroupsView } from './groups/GroupsView';
-import { SettingsModal } from './ui/SettingsModal';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
@@ -226,10 +225,22 @@ const HomeInner: React.FC = () => {
                   className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
                   title="新增 group"
                   aria-label="新增 group"
-                  disabled={creatingGroup}
+                  disabled={creatingGroup || !selectedId || !(() => {
+                    const { categories } = useCategories() as any;
+                    return categories.find((c: any) => c.id === selectedId);
+                  })()}
                   onClick={async () => {
                     try {
-                      if (creatingGroup) return;
+                      if (creatingGroup || !selectedId) return;
+
+                      // Check if selectedId belongs to current organization
+                      const { categories } = useCategories() as any;
+                      const currentCategory = categories.find((c: any) => c.id === selectedId);
+                      if (!currentCategory) {
+                        showToast('請先選擇一個 Collection', 'error');
+                        return;
+                      }
+
                       setCreatingGroup(true);
                       const { createStorageService } = await import('../background/storageService');
                       const s = createStorageService();
@@ -287,7 +298,16 @@ const HomeInner: React.FC = () => {
               </div>
             </div>
             {/* 以 group 分段呈現卡片 */}
-            <GroupsView categoryId={selectedId} />
+            {selectedId && (() => {
+              const { categories } = useCategories() as any;
+              const currentCategory = categories.find((c: any) => c.id === selectedId);
+              return currentCategory ? <GroupsView categoryId={selectedId} /> : (
+                <div className="text-center py-12 text-[var(--muted)]">
+                  <div className="text-lg mb-2">No collection selected</div>
+                  <div className="text-sm">Create a new collection or select an existing one from the sidebar</div>
+                </div>
+              );
+            })()}
           </div>
         }
         tabsPanel={<TabsPanel />}
