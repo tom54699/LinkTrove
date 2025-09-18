@@ -42,10 +42,10 @@ export const Sidebar: React.FC = () => {
           className="w-full"
         />
       </div>
-      {/* SPACES section header */}
+      {/* COLLECTIONS section header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="text-[11px] uppercase text-[var(--muted)] font-semibold tracking-wider">
-          SPACES
+          COLLECTIONS
         </div>
         <div className="flex items-center gap-1">
           <button

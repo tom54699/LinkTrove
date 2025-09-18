@@ -30,7 +30,7 @@ export const FourColumnLayout: React.FC<{
         {/* Main content */}
         <main
           aria-label="Content Area"
-          className="rounded p-4 bg-[var(--panel)] h-full min-h-0 overflow-hidden"
+          className="rounded p-4 bg-[var(--panel)] h-full min-h-0 overflow-y-auto"
         >
           {content}
         </main>
@@ -38,7 +38,7 @@ export const FourColumnLayout: React.FC<{
         {/* Tabs panel */}
         <aside
           aria-label="Tabs Panel"
-          className="rounded p-4 bg-[var(--panel)] h-full min-h-0 overflow-hidden"
+          className="rounded p-4 bg-[var(--panel)] h-full min-h-0 overflow-y-auto"
         >
           {tabsPanel}
         </aside>

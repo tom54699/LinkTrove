@@ -135,8 +135,12 @@ const HomeInner: React.FC = () => {
           <div>
             <div className="toby-board-header">
               <div className="title-group">
-                <h1>LinkTrove Home</h1>
-                <div className="subtext">{viewItems.length} collections</div>
+                <h1>{(() => {
+                  const { categories, selectedId } = useCategories() as any;
+                  const currentCategory = categories.find((c: any) => c.id === selectedId);
+                  return currentCategory?.name || 'Collection';
+                })()}</h1>
+                <div className="subtext">{viewItems.length} groups</div>
               </div>
               <div className="toby-board-actions">
                 {/* Category-level HTML import (create a NEW collection; multi-group by H3) */}
