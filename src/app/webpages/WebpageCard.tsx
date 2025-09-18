@@ -12,6 +12,8 @@ export interface WebpageCardData {
   category?: string;
   subcategoryId?: string;
   meta?: Record<string, string>;
+  templateId?: string;
+  templateData?: Record<string, any>;
 }
 
 export const WebpageCard: React.FC<{

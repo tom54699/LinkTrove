@@ -47,6 +47,8 @@ function toCard(d: any): WebpageCardData {
     category: d.category,
     subcategoryId: (d as any).subcategoryId,
     meta: d.meta,
+    templateId: d.templateId,
+    templateData: d.templateData,
   };
 }
 

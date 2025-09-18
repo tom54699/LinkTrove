@@ -23,28 +23,42 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
     const customFields = [];
     const metadata = [];
 
-    // Extract custom template fields
-    if (item.templateData && templates.length > 0) {
+    // Extract custom template fields - show all fields for consistency
+    if (templates.length > 0 && item.templateId) {
       const template = templates.find(t => t.id === item.templateId);
       if (template && template.fields) {
         for (const field of template.fields) {
-          const value = item.templateData[field.name];
-          if (value) {
-            if (field.type === 'rating') {
-              const stars = '★'.repeat(parseInt(value) || 0) + '☆'.repeat(5 - (parseInt(value) || 0));
-              customFields.push(`<div class="custom-field"><span class="field-label">${field.name}</span> <span class="rating">${stars}</span></div>`);
-            } else if (field.type === 'tags') {
+          const value = item.templateData?.[field.key];
+
+          if (field.type === 'rating') {
+            const rating = parseInt(value) || 0;
+            const stars = rating > 0
+              ? '★'.repeat(rating) + '☆'.repeat(5 - rating)
+              : '☆☆☆☆☆';
+            customFields.push(`<div class="custom-field"><span class="field-label">${field.label || field.key}</span> <span class="rating">${stars}</span></div>`);
+          } else if (field.type === 'tags') {
+            if (value && typeof value === 'string') {
               const tags = value.split(',').map(tag => tag.trim()).filter(Boolean);
               if (tags.length > 0) {
-                customFields.push(`<div class="custom-field"><span class="field-label">${field.name}</span> <div class="tags">${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div></div>`);
+                customFields.push(`<div class="custom-field"><span class="field-label">${field.label || field.key}</span> <div class="tags">${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div></div>`);
+              } else {
+                customFields.push(`<div class="custom-field"><span class="field-label">${field.label || field.key}</span> <span class="field-value empty">未設定</span></div>`);
               }
             } else {
-              customFields.push(`<div class="custom-field"><span class="field-label">${field.name}</span> <span class="field-value">${value}</span></div>`);
+              customFields.push(`<div class="custom-field"><span class="field-label">${field.label || field.key}</span> <span class="field-value empty">未設定</span></div>`);
             }
+          } else {
+            // text, select, number, date, url types
+            const displayValue = value && typeof value === 'string' && value.trim()
+              ? value.trim()
+              : '未設定';
+            const className = displayValue === '未設定' ? 'field-value empty' : 'field-value';
+            customFields.push(`<div class="custom-field"><span class="field-label">${field.label || field.key}</span> <span class="${className}">${displayValue}</span></div>`);
           }
         }
       }
     }
+
 
     // Add standard metadata if available
     if (item.meta?.author) metadata.push(`<div class="metadata-item"><span class="meta-label">作者</span> ${item.meta.author}</div>`);
@@ -262,6 +276,12 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
       color: #4a5568;
     }
 
+    .field-value.empty {
+      color: #9ca3af;
+      font-style: italic;
+      opacity: 0.7;
+    }
+
     .rating {
       color: #f6ad55;
       font-size: 0.9rem;
@@ -370,6 +390,11 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
         <div class="stat">由 LinkTrove 生成</div>
       </div>
       <div class="meta">生成時間：${formattedDate}</div>
+      <div style="margin-top: 15px;">
+        <button onclick="downloadJSON()" style="background: #4299e1; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#3182ce'" onmouseout="this.style.background='#4299e1'">
+          下載 JSON 書籤資料
+        </button>
+      </div>
     </header>
 
     <main class="content">
@@ -391,6 +416,52 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
       </div>
     </footer>
   </div>
+
+  <script>
+    // JSON 資料
+    const exportData = ${JSON.stringify({
+      schemaVersion: 1,
+      metadata: {
+        title: customTitle || group.name,
+        description: customDescription || '',
+        exportedAt: new Date().toISOString(),
+        itemCount: items.length
+      },
+      group: {
+        id: group.id,
+        name: group.name,
+        categoryId: group.categoryId
+      },
+      templates: templates.filter((t: any) =>
+        items.some((item: any) => item.templateId === t.id)
+      ),
+      items: items.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        url: item.url,
+        description: item.description,
+        favicon: item.favicon,
+        templateId: item.templateId,
+        templateData: item.templateData,
+        meta: item.meta,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt
+      }))
+    }, null, 2)};
+
+    function downloadJSON() {
+      const jsonContent = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = \`\${exportData.metadata.title.replace(/[^\\w\\s-]/g, '')}-bookmarks.json\`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  </script>
 </body>
 </html>`;
 }
@@ -597,6 +668,68 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     } catch (error) {
       console.error('Generate share file error:', error);
       showToast('生成分享檔案失敗', 'error');
+    }
+  };
+
+  const generateJsonFile = async () => {
+    if (!shareGroup) return;
+
+    try {
+      // Get group's webpages
+      const groupItems = items.filter((it: any) => it.category === categoryId && it.subcategoryId === shareGroup.id);
+
+      // Get template data for custom fields
+      const { createStorageService } = await import('../../background/storageService');
+      const storageService = createStorageService();
+      const templates = await (storageService as any).listTemplates?.() || [];
+
+      // Create JSON export structure
+      const exportData = {
+        schemaVersion: 1,
+        metadata: {
+          title: shareTitle.trim() || shareGroup.name,
+          description: shareDescription.trim() || '',
+          exportedAt: new Date().toISOString(),
+          itemCount: groupItems.length
+        },
+        group: {
+          id: shareGroup.id,
+          name: shareGroup.name,
+          categoryId: shareGroup.categoryId
+        },
+        templates: templates.filter((t: any) =>
+          groupItems.some((item: any) => item.templateId === t.id)
+        ),
+        items: groupItems.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          url: item.url,
+          description: item.description,
+          favicon: item.favicon,
+          templateId: item.templateId,
+          templateData: item.templateData,
+          meta: item.meta,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt
+        }))
+      };
+
+      // Create and download JSON file
+      const jsonContent = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${shareTitle.replace(/[^\w\s-]/g, '') || shareGroup.name.replace(/[^\w\s-]/g, '')}-bookmarks.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast(`已下載「${shareTitle}」JSON 書籤`, 'success');
+    } catch (error) {
+      console.error('Generate JSON file error:', error);
+      showToast('生成 JSON 檔案失敗', 'error');
     }
   };
 
@@ -973,7 +1106,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
               </div>
 
               <div className="text-xs text-slate-400">
-                將會生成包含 {items.filter((it: any) => it.category === categoryId && it.subcategoryId === shareGroup?.id).length} 個項目的 HTML 檔案
+                包含 {items.filter((it: any) => it.category === categoryId && it.subcategoryId === shareGroup?.id).length} 個項目 - 可生成 HTML 分享頁面或下載 JSON 格式供匯入
               </div>
             </div>
 
@@ -985,11 +1118,19 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 取消
               </button>
               <button
+                className="px-3 py-1 rounded border border-blue-600 text-blue-300 hover:bg-blue-950/30 disabled:opacity-50"
+                onClick={generateJsonFile}
+                disabled={!shareTitle.trim()}
+                title="下載 JSON 格式，可匯入其他群組"
+              >
+                下載 JSON
+              </button>
+              <button
                 className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
                 onClick={generateShareFile}
                 disabled={!shareTitle.trim()}
               >
-                生成檔案
+                生成 HTML
               </button>
             </div>
           </div>

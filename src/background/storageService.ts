@@ -8,6 +8,11 @@ export interface WebpageData {
   // Subcategory (group) id; optional in types for gradual migration
   subcategoryId?: string;
   meta?: Record<string, string>;
+  // Template support
+  templateId?: string;
+  templateData?: Record<string, any>;
+  // For backward compatibility, use note field as description
+  description?: string;
   createdAt: string; // ISO string for storage
   updatedAt: string;
 }
