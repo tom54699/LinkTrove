@@ -109,6 +109,18 @@ const HomeInner: React.FC = () => {
     () => items.filter((it: any) => it.category === selectedId),
     [items, selectedId]
   );
+
+  // Get subcategories (groups) count for current category
+  const [groupsCount, setGroupsCount] = React.useState(0);
+  React.useEffect(() => {
+    if (!selectedId) return;
+    import('../background/storageService').then(({ createStorageService }) => {
+      const svc = createStorageService();
+      (svc as any).listSubcategories?.(selectedId).then((subcats: any[]) => {
+        setGroupsCount(subcats?.length || 0);
+      }).catch(() => setGroupsCount(0));
+    });
+  }, [selectedId]);
   // Global triggers from Sidebar for collection-level actions
   React.useEffect(() => {
     const onHtml = () => { try { document.getElementById('html-cat-file')?.click(); } catch {} };
@@ -140,7 +152,7 @@ const HomeInner: React.FC = () => {
                   const currentCategory = categories.find((c: any) => c.id === selectedId);
                   return currentCategory?.name || 'Collection';
                 })()}</h1>
-                <div className="subtext">{viewItems.length} groups</div>
+                <div className="subtext">{groupsCount} groups</div>
               </div>
               <div className="toby-board-actions">
                 {/* Category-level HTML import (create a NEW collection; multi-group by H3) */}
