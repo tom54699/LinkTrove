@@ -105,14 +105,15 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
         return t;
       },
       async rename(id: string, name: string) {
+        // 使用存儲中的最新列表避免舊閉包
+        const cur = await svc.loadTemplates();
         await persist(
-          templates.map((t) =>
-            t.id === id ? { ...t, name: name.trim() || t.name } : t
-          )
+          cur.map((t) => (t.id === id ? { ...t, name: name.trim() || t.name } : t))
         );
       },
       async remove(id: string) {
-        await persist(templates.filter((t) => t.id !== id));
+        const cur = await svc.loadTemplates();
+        await persist(cur.filter((t) => t.id !== id));
       },
       async addField(
         id: string,
@@ -125,7 +126,9 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
           required?: boolean;
         }
       ) {
-        const list = templates.map((t) => {
+        // 從存儲層抓最新狀態，避免在同一輪 render 中看不到剛新增的模板
+        const latest = await svc.loadTemplates();
+        const list = latest.map((t) => {
           if (t.id !== id) return t;
           const exists = (t.fields || []).some((f) => f.key === field.key);
           if (exists) throw new Error('Field key already exists');
@@ -147,26 +150,22 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
           required?: boolean;
         }>
       ) {
-        // 以當前最新狀態進行批次新增，避免連續調用造成的閉包舊狀態問題
-        const next = ((): TemplateData[] => {
-          const byKey = new Set<string>();
-          return templates.map((t) => {
-            if (t.id !== id) return t;
-            const existingKeys = new Set((t.fields || []).map((f) => f.key));
-            const toAppend = fields
-              .filter((f) => {
-                const k = f.key;
-                if (!k || existingKeys.has(k) || byKey.has(k)) return false;
-                byKey.add(k);
-                return true;
-              })
-              .map((f) => ({ ...f, type: (f.type || 'text') as any }));
-            return {
-              ...t,
-              fields: (t.fields || []).concat(toAppend),
-            } as TemplateData;
-          });
-        })();
+        // 從存儲層抓最新狀態，確保能找到剛新增的模板
+        const latest = await svc.loadTemplates();
+        const next = latest.map((t) => {
+          if (t.id !== id) return t;
+          const existingKeys = new Set((t.fields || []).map((f) => f.key));
+          const seen = new Set<string>();
+          const toAppend = fields
+            .filter((f) => {
+              const k = f.key;
+              if (!k || existingKeys.has(k) || seen.has(k)) return false;
+              seen.add(k);
+              return true;
+            })
+            .map((f) => ({ ...f, type: (f.type || 'text') as any }));
+          return { ...t, fields: (t.fields || []).concat(toAppend) } as TemplateData;
+        });
         await persist(next);
       },
       async updateField(
@@ -174,15 +173,11 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
         key: string,
         patch: Partial<{ label: string; defaultValue: string }>
       ) {
+        const latest = await svc.loadTemplates();
         await persist(
-          templates.map((t) =>
+          latest.map((t) =>
             t.id === id
-              ? {
-                  ...t,
-                  fields: t.fields.map((f) =>
-                    f.key === key ? { ...f, ...patch } : f
-                  ),
-                }
+              ? { ...t, fields: t.fields.map((f) => (f.key === key ? { ...f, ...patch } : f)) }
               : t
           )
         );
@@ -190,51 +185,40 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
       async updateFieldType(
         id: string,
         key: string,
-        type: 'text' | 'number' | 'date' | 'url' | 'select' | 'rating'
+        type: 'text' | 'number' | 'date' | 'url' | 'select' | 'rating' | 'tags'
       ) {
+        const latest = await svc.loadTemplates();
         await persist(
-          templates.map((t) =>
+          latest.map((t) =>
             t.id === id
-              ? {
-                  ...t,
-                  fields: t.fields.map((f) =>
-                    f.key === key ? { ...f, type } : f
-                  ),
-                }
+              ? { ...t, fields: t.fields.map((f) => (f.key === key ? { ...f, type } : f)) }
               : t
           )
         );
       },
       async updateFieldOptions(id: string, key: string, options: string[]) {
+        const latest = await svc.loadTemplates();
         await persist(
-          templates.map((t) =>
+          latest.map((t) =>
             t.id === id
-              ? {
-                  ...t,
-                  fields: t.fields.map((f) =>
-                    f.key === key ? { ...f, options } : f
-                  ),
-                }
+              ? { ...t, fields: t.fields.map((f) => (f.key === key ? { ...f, options } : f)) }
               : t
           )
         );
       },
       async updateFieldRequired(id: string, key: string, required: boolean) {
+        const latest = await svc.loadTemplates();
         await persist(
-          templates.map((t) =>
+          latest.map((t) =>
             t.id === id
-              ? {
-                  ...t,
-                  fields: t.fields.map((f) =>
-                    f.key === key ? { ...f, required } : f
-                  ),
-                }
+              ? { ...t, fields: t.fields.map((f) => (f.key === key ? { ...f, required } : f)) }
               : t
           )
         );
       },
       async reorderField(id: string, fromKey: string, toKey: string) {
-        const list = templates.map((t) => {
+        const latest = await svc.loadTemplates();
+        const list = latest.map((t) => {
           if (t.id !== id) return t;
           const idxFrom = t.fields.findIndex((f) => f.key === fromKey);
           const idxTo = t.fields.findIndex((f) => f.key === toKey);
@@ -247,11 +231,10 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
         await persist(list);
       },
       async removeField(id: string, key: string) {
+        const latest = await svc.loadTemplates();
         await persist(
-          templates.map((t) =>
-            t.id === id
-              ? { ...t, fields: t.fields.filter((f) => f.key !== key) }
-              : t
+          latest.map((t) =>
+            t.id === id ? { ...t, fields: t.fields.filter((f) => f.key !== key) } : t
           )
         );
       },
