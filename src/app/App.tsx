@@ -68,6 +68,7 @@ export const Home: React.FC = () => <HomeInner />;
 const HomeInner: React.FC = () => {
   const { items, actions: pagesActions } = useWebpages();
   const {
+    categories,
     selectedId,
     actions: catActions,
     setCurrentCategory,
@@ -147,7 +148,6 @@ const HomeInner: React.FC = () => {
             <div className="toby-board-header">
               <div className="title-group">
                 <h1>{(() => {
-                  const { categories, selectedId } = useCategories() as any;
                   const currentCategory = categories.find((c: any) => c.id === selectedId);
                   return currentCategory?.name || 'Collection';
                 })()}</h1>
@@ -225,16 +225,16 @@ const HomeInner: React.FC = () => {
                   className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
                   title="新增 group"
                   aria-label="新增 group"
-                  disabled={creatingGroup || !selectedId || !(() => {
-                    const { categories } = useCategories() as any;
-                    return categories.find((c: any) => c.id === selectedId);
-                  })()}
+                  disabled={
+                    creatingGroup ||
+                    !selectedId ||
+                    !categories.find((c: any) => c.id === selectedId)
+                  }
                   onClick={async () => {
                     try {
                       if (creatingGroup || !selectedId) return;
 
                       // Check if selectedId belongs to current organization
-                      const { categories } = useCategories() as any;
                       const currentCategory = categories.find((c: any) => c.id === selectedId);
                       if (!currentCategory) {
                         showToast('請先選擇一個 Collection', 'error');
@@ -299,9 +299,10 @@ const HomeInner: React.FC = () => {
             </div>
             {/* 以 group 分段呈現卡片 */}
             {selectedId && (() => {
-              const { categories } = useCategories() as any;
               const currentCategory = categories.find((c: any) => c.id === selectedId);
-              return currentCategory ? <GroupsView categoryId={selectedId} /> : (
+              return currentCategory ? (
+                <GroupsView categoryId={selectedId} />
+              ) : (
                 <div className="text-center py-12 text-[var(--muted)]">
                   <div className="text-lg mb-2">No collection selected</div>
                   <div className="text-sm">Create a new collection or select an existing one from the sidebar</div>
