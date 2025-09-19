@@ -15,6 +15,17 @@ interface TemplatesCtx {
       id: string,
       field: { key: string; label: string; defaultValue?: string }
     ) => Promise<void>;
+    addFields: (
+      id: string,
+      fields: Array<{
+        key: string;
+        label: string;
+        defaultValue?: string;
+        type?: 'text' | 'number' | 'date' | 'url' | 'select' | 'rating' | 'tags';
+        options?: string[];
+        required?: boolean;
+      }>
+    ) => Promise<void>;
     updateField: (
       id: string,
       key: string,
@@ -109,7 +120,7 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
           key: string;
           label: string;
           defaultValue?: string;
-          type?: 'text' | 'number' | 'date' | 'url' | 'select' | 'rating';
+          type?: 'text' | 'number' | 'date' | 'url' | 'select' | 'rating' | 'tags';
           options?: string[];
           required?: boolean;
         }
@@ -124,6 +135,39 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
           return { ...t, fields: nextFields };
         });
         await persist(list);
+      },
+      async addFields(
+        id: string,
+        fields: Array<{
+          key: string;
+          label: string;
+          defaultValue?: string;
+          type?: 'text' | 'number' | 'date' | 'url' | 'select' | 'rating' | 'tags';
+          options?: string[];
+          required?: boolean;
+        }>
+      ) {
+        // 以當前最新狀態進行批次新增，避免連續調用造成的閉包舊狀態問題
+        const next = ((): TemplateData[] => {
+          const byKey = new Set<string>();
+          return templates.map((t) => {
+            if (t.id !== id) return t;
+            const existingKeys = new Set((t.fields || []).map((f) => f.key));
+            const toAppend = fields
+              .filter((f) => {
+                const k = f.key;
+                if (!k || existingKeys.has(k) || byKey.has(k)) return false;
+                byKey.add(k);
+                return true;
+              })
+              .map((f) => ({ ...f, type: (f.type || 'text') as any }));
+            return {
+              ...t,
+              fields: (t.fields || []).concat(toAppend),
+            } as TemplateData;
+          });
+        })();
+        await persist(next);
       },
       async updateField(
         id: string,
@@ -233,6 +277,7 @@ export function useTemplates() {
         rename: async () => {},
         remove: async () => {},
         addField: async () => {},
+        addFields: async () => {},
         updateField: async () => {},
         removeField: async () => {},
         updateFieldType: async () => {},

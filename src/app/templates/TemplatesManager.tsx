@@ -56,14 +56,15 @@ export const TemplatesManager: React.FC = () => {
               onClick={async () => {
                 const templateName = '書籍模板';
                 const newTemplate = await actions.add(templateName);
-                // Add predefined fields for books
                 if (newTemplate?.id) {
-                  await actions.addField(newTemplate.id, { key: 'rating', label: '評分', type: 'rating' });
-                  await actions.addField(newTemplate.id, { key: 'tags', label: '標籤', type: 'tags' });
-                  await actions.addField(newTemplate.id, { key: 'notes', label: '筆記', type: 'text' });
-                  await actions.addField(newTemplate.id, { key: 'status', label: '閱讀狀態', type: 'select', options: ['未開始', '進行中', '已完成', '暫停'] });
-                  await actions.addField(newTemplate.id, { key: 'author', label: '作者', type: 'text' });
-                  await actions.addField(newTemplate.id, { key: 'genre', label: '類型', type: 'select', options: ['小說', '非小說', '科幻', '推理', '文學', '商業', '技術', '其他'] });
+                  await actions.addFields(newTemplate.id, [
+                    { key: 'rating', label: '評分', type: 'rating' },
+                    { key: 'tags', label: '標籤', type: 'tags' },
+                    { key: 'notes', label: '筆記', type: 'text' },
+                    { key: 'status', label: '閱讀狀態', type: 'select', options: ['未開始', '進行中', '已完成', '暫停'] },
+                    { key: 'author', label: '作者', type: 'text' },
+                    { key: 'genre', label: '類型', type: 'select', options: ['小說', '非小說', '科幻', '推理', '文學', '商業', '技術', '其他'] },
+                  ]);
                 }
               }}
             >
@@ -74,13 +75,14 @@ export const TemplatesManager: React.FC = () => {
               onClick={async () => {
                 const templateName = '文章模板';
                 const newTemplate = await actions.add(templateName);
-                // Add predefined fields for articles
                 if (newTemplate?.id) {
-                  await actions.addField(newTemplate.id, { key: 'rating', label: '評分', type: 'rating' });
-                  await actions.addField(newTemplate.id, { key: 'tags', label: '標籤', type: 'tags' });
-                  await actions.addField(newTemplate.id, { key: 'summary', label: '摘要', type: 'text' });
-                  await actions.addField(newTemplate.id, { key: 'category', label: '分類', type: 'select', options: ['技術', '新聞', '觀點', '教學', '評論', '其他'] });
-                  await actions.addField(newTemplate.id, { key: 'readTime', label: '閱讀時間', type: 'select', options: ['< 5分鐘', '5-15分鐘', '15-30分鐘', '> 30分鐘'] });
+                  await actions.addFields(newTemplate.id, [
+                    { key: 'rating', label: '評分', type: 'rating' },
+                    { key: 'tags', label: '標籤', type: 'tags' },
+                    { key: 'summary', label: '摘要', type: 'text' },
+                    { key: 'category', label: '分類', type: 'select', options: ['技術', '新聞', '觀點', '教學', '評論', '其他'] },
+                    { key: 'readTime', label: '閱讀時間', type: 'select', options: ['< 5分鐘', '5-15分鐘', '15-30分鐘', '> 30分鐘'] },
+                  ]);
                 }
               }}
             >
@@ -91,14 +93,15 @@ export const TemplatesManager: React.FC = () => {
               onClick={async () => {
                 const templateName = '工具模板';
                 const newTemplate = await actions.add(templateName);
-                // Add predefined fields for tools
                 if (newTemplate?.id) {
-                  await actions.addField(newTemplate.id, { key: 'rating', label: '評分', type: 'rating' });
-                  await actions.addField(newTemplate.id, { key: 'tags', label: '標籤', type: 'tags' });
-                  await actions.addField(newTemplate.id, { key: 'description', label: '功能描述', type: 'text' });
-                  await actions.addField(newTemplate.id, { key: 'platform', label: '平台', type: 'select', options: ['Web', 'Desktop', 'Mobile', 'CLI', '跨平台'] });
-                  await actions.addField(newTemplate.id, { key: 'price', label: '價格', type: 'select', options: ['免費', '免費增值', '付費', '訂閱制'] });
-                  await actions.addField(newTemplate.id, { key: 'used', label: '使用狀態', type: 'select', options: ['在用', '試過', '想試', '不推薦'] });
+                  await actions.addFields(newTemplate.id, [
+                    { key: 'rating', label: '評分', type: 'rating' },
+                    { key: 'tags', label: '標籤', type: 'tags' },
+                    { key: 'description', label: '功能描述', type: 'text' },
+                    { key: 'platform', label: '平台', type: 'select', options: ['Web', 'Desktop', 'Mobile', 'CLI', '跨平台'] },
+                    { key: 'price', label: '價格', type: 'select', options: ['免費', '免費增值', '付費', '訂閱制'] },
+                    { key: 'used', label: '使用狀態', type: 'select', options: ['在用', '試過', '想試', '不推薦'] },
+                  ]);
                 }
               }}
             >
