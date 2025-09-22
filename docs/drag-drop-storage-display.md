@@ -24,7 +24,9 @@
 
 ## 目前拖曳流程（高層描述）
 
-### A) 拖到群組標題列 header（建立新卡→指派 collection→指派 group）
+> 註：自 2025-09 起，已移除「拖到群組標題列 header」的拖放功能，僅保留內容區 CardGrid 拖放。以下保留過去行為供參考。
+
+（已移除）A) 拖到群組標題列 header（建立新卡→指派 collection→指派 group）
 1. `actions.addFromTab(tab)` 建卡（category 預設為 `default`，`note=''`），並先行插入 UI state 以提升回饋（src/app/webpages/WebpagesProvider.tsx:100, 145, 161）。
 2. `actions.updateCategory(id, group.categoryId)`：
    - 依目標 collection 的 template 欄位計算 `meta` 預設值（`computeAutoMeta`），並嘗試合併 cache 的常見欄位（siteName/author）（src/app/webpages/WebpagesProvider.tsx:219 之後）。
@@ -95,4 +97,3 @@ UI 行為：
 ---
 
 以上為現況與方案整理；未更動任何程式邏輯。後續若要採用原子 API，建議先以旗標導入並補測試案例（拖入 header vs grid、同 URL 重覆拖入、meta 擷取延後補強）。
-
