@@ -741,55 +741,6 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
         <section key={g.id} className="rounded border border-slate-700 bg-[var(--panel)]">
           <header
             className="flex items-center justify-between px-3 py-2 border-b border-slate-700"
-            onDragOver={(e) => {
-              e.preventDefault();
-              try { e.dataTransfer.dropEffect = 'move'; } catch {}
-            }}
-            onDrop={async (e) => {
-              e.preventDefault();
-              // Existing card moved into this group
-              const fromId = e.dataTransfer.getData('application/x-linktrove-webpage');
-              if (fromId) {
-                try {
-                  // 先更新 category 到此 collection，再移到目標 group
-                  await actions.updateCategory(fromId, g.categoryId);
-                  await (svc as any).updateCardSubcategory?.(fromId, g.id);
-                  await actions.load();
-                  showToast('已移動到 group', 'success');
-                  return;
-                } catch {
-                  showToast('移動失敗', 'error');
-                }
-              }
-              // New tab dropped on header → create then assign
-              let tab: TabItemData | null = null;
-              try {
-                const raw = e.dataTransfer.getData('application/x-linktrove-tab');
-                if (raw) tab = JSON.parse(raw);
-              } catch {}
-              if (!tab) {
-                try { tab = (getDragTab() as any) || null; } catch { tab = null; }
-              }
-              // 最後後備：允許 text/uri-list 或 text/plain 建立
-              if (!tab) {
-                try {
-                  const uri = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
-                  if (uri) tab = { id: Date.now(), title: uri, url: uri } as any;
-                } catch {}
-              }
-              if (tab) {
-                try {
-                  const createdId = (await actions.addFromTab(tab as any)) as any as string;
-                  // 強制設為此 collection，避免 addFromTab 取用目前 selectedId 導致落在其他 collection
-                  await actions.updateCategory(createdId, g.categoryId);
-                  await (svc as any).updateCardSubcategory?.(createdId, g.id);
-                  await actions.load();
-                  showToast('已從分頁建立並加入 group', 'success');
-                } catch {
-                  showToast('建立失敗', 'error');
-                }
-              }
-            }}
           >
             <div className="flex items-center gap-2">
               <button
