@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(claude --version)",
-      "Bash(claude update)"
+      "Bash(claude update)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
