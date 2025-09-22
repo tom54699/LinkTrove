@@ -108,27 +108,8 @@ export const Sidebar: React.FC = () => {
                       void catActions.reorderCategories(arr);
                     }
                   } else {
-                    const id = e.dataTransfer.getData(
-                      'application/x-linktrove-webpage'
-                    );
-                    if (id) {
-                      actions.updateCategory(id, c.id);
-                    } else {
-                      const rawTab = e.dataTransfer.getData(
-                        'application/x-linktrove-tab'
-                      );
-                      if (rawTab) {
-                        const tab = JSON.parse(rawTab);
-                        void actions
-                          .addFromTab(tab)
-                          .then((newId: any) =>
-                            actions.updateCategory(String(newId), c.id)
-                          )
-                          .catch(() => {
-                            /* ignore */
-                          });
-                      }
-                    }
+                    // 停用：不再支援將卡片/分頁拖到 Sidebar 的 Collection 以移動/新增
+                    // 僅保留類別拖曳重新排序
                   }
                 } catch {}
                 (e.currentTarget as HTMLElement).removeAttribute('data-drop');
@@ -306,4 +287,3 @@ export const Sidebar: React.FC = () => {
     </div>
   );
 };
-

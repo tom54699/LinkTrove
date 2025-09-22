@@ -484,6 +484,63 @@ export function createWebpageService(deps?: {
       base.splice(insertAt, 0, item.id);
     }
     await setGroupOrder(targetGroupId, base);
+    // 非阻塞 enrich：若有 tab.id，嘗試補齊 note 與常見欄位（僅在空值時）
+    try {
+      const tid = (tab as any)?.id;
+      if (typeof tid === 'number') {
+        void (async () => {
+          try {
+            const { waitForTabComplete, extractMetaForTab } = await import('./pageMeta');
+            try { await waitForTabComplete(tid); } catch {}
+            const live = await extractMetaForTab(tid);
+            // 1) note（description）補齊（僅在目前為空時）
+            try {
+              const fresh = await storage.loadFromLocal();
+              const cur = fresh.find((w) => w.id === item.id);
+              if (cur && (!cur.note || !String(cur.note).trim())) {
+                const desc = (live?.description || '').trim();
+                if (desc) {
+                  await updateWebpage(item.id, { note: desc } as any);
+                }
+              }
+            } catch {}
+
+            // 2) siteName/author 補齊（需模板含對應欄位，且當前為空）
+            try {
+              const [cats2, tmpls2] = await Promise.all([
+                storage.loadFromSync(),
+                storage.loadTemplates(),
+              ]);
+              const cat2 = (cats2 as any[]).find((c) => c.id === targetCategoryId);
+              const tpl2 = cat2?.defaultTemplateId
+                ? (tmpls2 as any[]).find((t) => t.id === cat2.defaultTemplateId)
+                : null;
+              const fields = (tpl2?.fields || []) as any[];
+              const hasField = (k: string) => fields.some((f) => f.key === k);
+              if (fields.length) {
+                const fresh = await storage.loadFromLocal();
+                const cur = fresh.find((w) => w.id === item.id) as any;
+                const curMeta: Record<string, string> = { ...(cur?.meta || {}) };
+                let changed = false;
+                if (hasField('siteName')) {
+                  const curVal = (curMeta.siteName || '').trim();
+                  const val = (live?.siteName || '').trim();
+                  if (!curVal && val) { curMeta.siteName = val; changed = true; }
+                }
+                if (hasField('author')) {
+                  const curVal = (curMeta.author || '').trim();
+                  const val = (live?.author || '').trim();
+                  if (!curVal && val) { curMeta.author = val; changed = true; }
+                }
+                if (changed) {
+                  await updateWebpage(item.id, { meta: curMeta } as any);
+                }
+              }
+            } catch {}
+          } catch {}
+        })();
+      }
+    } catch {}
 
     return item;
   }
