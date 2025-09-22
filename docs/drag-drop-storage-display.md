@@ -34,6 +34,8 @@
 4. `actions.load()` 重新載入顯示（src/app/groups/GroupsView.tsx:916）。
 5. 若為真實 Chrome 分頁（有 tab.id），背景會等待分頁完成並萃取 meta，若 `note` 仍為空會以 `meta.description` 回填（src/app/webpages/WebpagesProvider.tsx:104-160）。
 
+> 註：自 2025-09 起，已移除「拖到 Sidebar 的 Collection」以新增/移動卡片的功能；僅保留「拖曳類別以重新排序」。新卡片的拖放入口統一集中於各 Group 的內容區 CardGrid。
+
 ### B) 拖到群組內的卡片格網（建立新卡→指派 collection/group→依位置插入）
 - 同 A)，但根據 ghost 位置在同 group 內做 `reorder` 或 `moveToEnd`（src/app/groups/GroupsView.tsx:903-969）。
 
