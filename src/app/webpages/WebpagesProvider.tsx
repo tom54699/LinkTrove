@@ -402,6 +402,32 @@ export const WebpagesProvider: React.FC<{
     });
   }, [load]);
 
+  // Listen to background updates (e.g., enrich writes note/meta via saveWebpages/updateWebpage)
+  // When chrome.storage.local 'webpages' changes, debounce a reload to reflect latest data.
+  React.useEffect(() => {
+    let t: any = null;
+    const onChanged = (changes: any, areaName: string) => {
+      try {
+        if (areaName !== 'local') return;
+        if (!changes || typeof changes !== 'object') return;
+        if (!('webpages' in changes)) return;
+        if (t) clearTimeout(t);
+        t = setTimeout(() => {
+          load().catch(() => {});
+        }, 200);
+      } catch {}
+    };
+    try {
+      (chrome as any)?.storage?.onChanged?.addListener?.(onChanged);
+    } catch {}
+    return () => {
+      try {
+        (chrome as any)?.storage?.onChanged?.removeListener?.(onChanged);
+      } catch {}
+      if (t) clearTimeout(t);
+    };
+  }, [load]);
+
   const value = React.useMemo<CtxValue>(
     () => ({
       items,
