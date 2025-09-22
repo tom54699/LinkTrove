@@ -58,35 +58,20 @@ export const TemplatesManager: React.FC = () => {
                 const newTemplate = await actions.add(templateName);
                 if (newTemplate?.id) {
                   await actions.addFields(newTemplate.id, [
-                    { key: 'rating', label: '評分', type: 'rating' },
-                    { key: 'tags', label: '標籤', type: 'tags' },
-                    { key: 'notes', label: '筆記', type: 'text' },
-                    { key: 'status', label: '閱讀狀態', type: 'select', options: ['未開始', '進行中', '已完成', '暫停'] },
+                    // 依序：書名 作者 連載狀態 類型 字數 評分 站名 最後更新時間
+                    { key: 'bookTitle', label: '書名', type: 'text' },
                     { key: 'author', label: '作者', type: 'text' },
-                    { key: 'genre', label: '類型', type: 'select', options: ['小說', '非小說', '科幻', '推理', '文學', '商業', '技術', '其他'] },
+                    { key: 'serialStatus', label: '連載狀態', type: 'select', options: ['連載中', '已完結', '暫停'] },
+                    { key: 'genre', label: '類型', type: 'select', options: ['奇幻', '科幻', '都市', '武俠', '推理', '言情', '歷史', '其他'] },
+                    { key: 'wordCount', label: '字數', type: 'number' },
+                    { key: 'rating', label: '評分', type: 'rating' },
+                    { key: 'siteName', label: '站名', type: 'text' },
+                    { key: 'lastUpdate', label: '最後更新時間', type: 'date' },
                   ]);
                 }
               }}
             >
               📚 書籍模板
-            </button>
-            <button
-              className="text-xs px-2 py-1 rounded border border-green-600 text-green-300 hover:bg-green-950/30"
-              onClick={async () => {
-                const templateName = '文章模板';
-                const newTemplate = await actions.add(templateName);
-                if (newTemplate?.id) {
-                  await actions.addFields(newTemplate.id, [
-                    { key: 'rating', label: '評分', type: 'rating' },
-                    { key: 'tags', label: '標籤', type: 'tags' },
-                    { key: 'summary', label: '摘要', type: 'text' },
-                    { key: 'category', label: '分類', type: 'select', options: ['技術', '新聞', '觀點', '教學', '評論', '其他'] },
-                    { key: 'readTime', label: '閱讀時間', type: 'select', options: ['< 5分鐘', '5-15分鐘', '15-30分鐘', '> 30分鐘'] },
-                  ]);
-                }
-              }}
-            >
-              📰 文章模板
             </button>
             <button
               className="text-xs px-2 py-1 rounded border border-purple-600 text-purple-300 hover:bg-purple-950/30"
