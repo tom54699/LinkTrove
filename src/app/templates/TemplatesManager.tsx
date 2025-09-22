@@ -61,8 +61,8 @@ export const TemplatesManager: React.FC = () => {
                     // 依序：書名 作者 連載狀態 類型 字數 評分 站名 最後更新時間
                     { key: 'bookTitle', label: '書名', type: 'text' },
                     { key: 'author', label: '作者', type: 'text' },
-                    { key: 'serialStatus', label: '連載狀態', type: 'select', options: ['連載中', '已完結', '暫停'] },
-                    { key: 'genre', label: '類型', type: 'select', options: ['奇幻', '科幻', '都市', '武俠', '推理', '言情', '歷史', '其他'] },
+                    { key: 'serialStatus', label: '連載狀態', type: 'select', options: ['連載中', '已完結', '太監'] },
+                    { key: 'genre', label: '類型', type: 'text' },
                     { key: 'wordCount', label: '字數', type: 'number' },
                     { key: 'rating', label: '評分', type: 'rating' },
                     { key: 'siteName', label: '站名', type: 'text' },
