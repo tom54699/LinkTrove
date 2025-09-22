@@ -277,7 +277,7 @@ export const WebpageCard: React.FC<{
           onClick={() => setShowModal(false)}
         >
           <div
-            className="rounded border border-slate-700 bg-[var(--panel)] w-[520px] max-w-[90vw] max-h-[90vh] flex flex-col"
+            className="rounded border border-slate-700 bg-[var(--panel)] w-[520px] max-w-[90vw] max-h-[90vh] overflow-y-auto hide-scrollbar p-5"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label="Edit Card"
@@ -300,63 +300,59 @@ export const WebpageCard: React.FC<{
               }
             }}
           >
-            <div className="flex-shrink-0 p-5 pb-3">
-              <div className="flex items-center gap-3">
-                {data.favicon ? (
-                  <img src={data.favicon} alt="" className="w-6 h-6" draggable={false} />
-                ) : (
-                  <div className="w-6 h-6 bg-slate-600 rounded" />
-                )}
-                <div className="text-sm opacity-80 truncate">{data.url}</div>
-              </div>
+            <div className="flex items-center gap-3 mb-4">
+              {data.favicon ? (
+                <img src={data.favicon} alt="" className="w-6 h-6" draggable={false} />
+              ) : (
+                <div className="w-6 h-6 bg-slate-600 rounded" />
+              )}
+              <div className="text-sm opacity-80 truncate">{data.url}</div>
             </div>
-            <div className="flex-1 overflow-y-auto px-5">
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm mb-1">Title</label>
-                  <input
-                    className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                    value={titleValue}
-                    onChange={(e) => setTitleValue(e.target.value)}
-                  />
-                </div>
-                {/* Category selection removed; use Move action or drag to sidebar to change category */}
-                <TemplateFields
-                  categoryId={categoryValue}
-                  meta={metaValue}
-                  onChange={setMetaValue}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm mb-1">Title</label>
+                <input
+                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                  value={titleValue}
+                  onChange={(e) => setTitleValue(e.target.value)}
                 />
-                <div>
-                  <label className="block text-sm mb-1">URL</label>
-                  <input
-                    className={`w-full rounded bg-slate-900 border p-2 text-sm ${urlError ? 'border-red-600' : 'border-slate-700'}`}
-                    value={urlValue}
-                    onChange={(e) => {
-                      setUrlValue(e.target.value);
-                      if (urlError) setUrlError('');
-                    }}
-                    onBlur={() => {
-                      const normalized = validateUrl(urlValue);
-                      if (normalized.error) setUrlError(normalized.error);
-                      else if (normalized.value) setUrlValue(normalized.value);
-                    }}
-                    placeholder="https://example.com"
-                  />
-                  {urlError && (
-                    <div className="mt-1 text-xs text-red-400">{urlError}</div>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm mb-1">Description</label>
-                  <input
-                    className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                    value={descValue}
-                    onChange={(e) => setDescValue(e.target.value)}
-                  />
-                </div>
+              </div>
+              {/* Category selection removed; use Move action or drag to sidebar to change category */}
+              <TemplateFields
+                categoryId={categoryValue}
+                meta={metaValue}
+                onChange={setMetaValue}
+              />
+              <div>
+                <label className="block text-sm mb-1">URL</label>
+                <input
+                  className={`w-full rounded bg-slate-900 border p-2 text-sm ${urlError ? 'border-red-600' : 'border-slate-700'}`}
+                  value={urlValue}
+                  onChange={(e) => {
+                    setUrlValue(e.target.value);
+                    if (urlError) setUrlError('');
+                  }}
+                  onBlur={() => {
+                    const normalized = validateUrl(urlValue);
+                    if (normalized.error) setUrlError(normalized.error);
+                    else if (normalized.value) setUrlValue(normalized.value);
+                  }}
+                  placeholder="https://example.com"
+                />
+                {urlError && (
+                  <div className="mt-1 text-xs text-red-400">{urlError}</div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Description</label>
+                <input
+                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                  value={descValue}
+                  onChange={(e) => setDescValue(e.target.value)}
+                />
               </div>
             </div>
-            <div className="flex-shrink-0 p-5 pt-3 border-t border-slate-700 flex items-center justify-end gap-2">
+            <div className="mt-4 flex items-center justify-end gap-2">
               <button
                 className="px-3 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30"
                 onClick={() => setConfirming(true)}

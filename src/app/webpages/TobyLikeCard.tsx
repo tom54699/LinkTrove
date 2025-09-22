@@ -321,62 +321,58 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
       {showModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4">
           <div
-            className="relative rounded border border-slate-700 bg-[var(--panel)] w-[560px] max-w-[95vw] max-h-[90vh] flex flex-col"
+            className="relative rounded border border-slate-700 bg-[var(--panel)] w-[560px] max-w-[95vw] max-h-[90vh] overflow-y-auto hide-scrollbar p-5"
             role="dialog"
             aria-label="Edit Card"
           >
-            <div className="flex-shrink-0 p-5 pb-3">
-              <button
-                aria-label="Close"
-                title="Close"
-                className="absolute right-2 top-2 text-slate-300 hover:text-white z-10"
-                onClick={() => {
-                  setShowModal(false);
-                  onModalOpenChange?.(false);
-                }}
-              >
-                ✕
-              </button>
-              <h3 className="text-lg font-medium pr-6">編輯卡片</h3>
-            </div>
-            <div className="flex-1 overflow-y-auto px-5">
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm mb-1" htmlFor="edit-title">Title</label>
-                  <input
-                    id="edit-title"
-                    className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                    value={titleValue}
-                    onChange={(e) => setTitleValue(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm mb-1" htmlFor="edit-desc">Description</label>
-                  <input
-                    id="edit-desc"
-                    className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                    value={descValue}
-                    onChange={(e) => setDescValue(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm mb-1" htmlFor="edit-url">URL</label>
-                  <input
-                    id="edit-url"
-                    className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                    value={urlValue}
-                    onChange={(e) => setUrlValue(e.target.value)}
-                    placeholder="https://example.com"
-                  />
-                </div>
-                <TemplateFields
-                  categoryId={categoryId || 'default'}
-                  meta={metaValue}
-                  onChange={setMetaValue}
+            <button
+              aria-label="Close"
+              title="Close"
+              className="absolute right-2 top-2 text-slate-300 hover:text-white z-10"
+              onClick={() => {
+                setShowModal(false);
+                onModalOpenChange?.(false);
+              }}
+            >
+              ✕
+            </button>
+            <h3 className="text-lg font-medium pr-6 mb-4">編輯卡片</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm mb-1" htmlFor="edit-title">Title</label>
+                <input
+                  id="edit-title"
+                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                  value={titleValue}
+                  onChange={(e) => setTitleValue(e.target.value)}
                 />
               </div>
+              <div>
+                <label className="block text-sm mb-1" htmlFor="edit-desc">Description</label>
+                <input
+                  id="edit-desc"
+                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                  value={descValue}
+                  onChange={(e) => setDescValue(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1" htmlFor="edit-url">URL</label>
+                <input
+                  id="edit-url"
+                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                  value={urlValue}
+                  onChange={(e) => setUrlValue(e.target.value)}
+                  placeholder="https://example.com"
+                />
+              </div>
+              <TemplateFields
+                categoryId={categoryId || 'default'}
+                meta={metaValue}
+                onChange={setMetaValue}
+              />
             </div>
-            <div className="flex-shrink-0 p-5 pt-3 border-t border-slate-700 flex items-center justify-end gap-2">
+            <div className="mt-4 flex items-center justify-end gap-2">
               <button
                 className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
                 onClick={() => {
