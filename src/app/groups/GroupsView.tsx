@@ -805,6 +805,9 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
   const [shareGroup, setShareGroup] = React.useState<GroupItem | null>(null);
   const [shareTitle, setShareTitle] = React.useState('');
   const [shareDescription, setShareDescription] = React.useState('');
+  // GitHub token state
+  const [showTokenDialog, setShowTokenDialog] = React.useState(false);
+  const [githubToken, setGithubToken] = React.useState('');
 
   const svc = React.useMemo(() => {
     // 直接使用 IndexedDB 版本的 storage service；在非擴充環境亦可運作
@@ -945,6 +948,100 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     } catch (error) {
       console.error('Open share dialog error:', error);
       showToast('開啟分享對話框失敗', 'error');
+    }
+  };
+
+  const publishToGist = async () => {
+    if (!shareGroup) return;
+
+    try {
+      // Get group's webpages
+      const groupItems = items.filter((it: any) => it.category === categoryId && it.subcategoryId === shareGroup.id);
+
+      // Get template data for custom fields
+      const { createStorageService } = await import('../../background/storageService');
+      const storageService = createStorageService();
+      const templates = await (storageService as any).listTemplates?.() || [];
+
+      // Generate HTML content using the same function
+      const htmlContent = generateBooklistHTML(
+        shareGroup,
+        groupItems,
+        templates,
+        shareTitle.trim() || shareGroup.name,
+        shareDescription.trim()
+      );
+
+      // Create GitHub Gist
+      let GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
+
+      // 如果環境變數沒有設定，使用用戶輸入的token
+      if (!GITHUB_TOKEN || GITHUB_TOKEN === 'your_github_token_here') {
+        // 嘗試從localStorage獲取
+        const savedToken = localStorage.getItem('linktrove_github_token');
+        if (savedToken) {
+          GITHUB_TOKEN = savedToken;
+        } else {
+          // 顯示設定token的對話框
+          setShowTokenDialog(true);
+          return;
+        }
+      }
+
+      const gistData = {
+        description: `LinkTrove 分享：${shareTitle.trim() || shareGroup.name}`,
+        public: true,
+        files: {
+          [`${(shareTitle.trim() || shareGroup.name).replace(/[^\w\s-]/g, '').replace(/\s+/g, '-')}.html`]: {
+            content: htmlContent
+          }
+        }
+      };
+
+      const response = await fetch('https://api.github.com/gists', {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(gistData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
+
+      const gist = await response.json();
+
+      // Generate shareable URL
+      const filename = Object.keys(gist.files)[0];
+      const shareUrl = `https://htmlpreview.github.io/?${gist.files[filename].raw_url}`;
+
+      // Copy to clipboard and show success message
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast(`✅ 已發布分享連結並複製到剪貼簿！\n\n🔗 ${shareUrl}`, 'success');
+      } catch {
+        // 創建一個可選擇的文字區域來幫助複製
+        const textarea = document.createElement('textarea');
+        textarea.value = shareUrl;
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          showToast(`✅ 已發布分享連結並複製到剪貼簿！\n\n🔗 ${shareUrl}`, 'success');
+        } catch {
+          showToast(`✅ 已發布分享連結：\n\n🔗 ${shareUrl}\n\n請手動複製連結`, 'success');
+        } finally {
+          document.body.removeChild(textarea);
+        }
+      }
+
+      setShareDialogOpen(false);
+    } catch (error) {
+      console.error('Publish to Gist error:', error);
+      showToast('發布分享連結失敗，請稍後重試', 'error');
     }
   };
 
@@ -1322,8 +1419,14 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 />
               </div>
 
-              <div className="text-xs text-slate-400">
-                包含 {items.filter((it: any) => it.category === categoryId && it.subcategoryId === shareGroup?.id).length} 個項目 - 可生成 HTML 分享頁面
+              <div className="text-xs text-slate-400 space-y-1">
+                <div>包含 {items.filter((it: any) => it.category === categoryId && it.subcategoryId === shareGroup?.id).length} 個項目</div>
+                <div className="flex gap-4">
+                  <span>📤 <strong>發布分享連結</strong>：自動上傳到 GitHub Gist，立即獲得網址</span>
+                </div>
+                <div className="flex gap-4">
+                  <span>💾 <strong>下載 HTML</strong>：下載檔案到本機，可手動上傳</span>
+                </div>
               </div>
             </div>
 
@@ -1335,11 +1438,88 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 取消
               </button>
               <button
+                className="px-3 py-1 rounded border border-green-600 text-green-300 hover:bg-green-950/30 disabled:opacity-50"
+                onClick={publishToGist}
+                disabled={!shareTitle.trim()}
+                title="發布到 GitHub Gist 並獲得分享連結"
+              >
+                發布分享連結
+              </button>
+              <button
                 className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
                 onClick={generateShareFile}
                 disabled={!shareTitle.trim()}
               >
-                生成 HTML
+                下載 HTML
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GitHub Token 設定對話框 */}
+      {showTokenDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[var(--modal)] border border-slate-700 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">設定 GitHub Token</h3>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-slate-300 mb-3">
+                  需要 GitHub Personal Access Token 才能發布分享連結到 Gist
+                </p>
+
+                <div className="text-xs text-slate-400 space-y-2 mb-4">
+                  <div>🔗 <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" className="text-blue-400 hover:underline">前往 GitHub 設定頁面</a></div>
+                  <div>📝 點擊「Generate new token (classic)」</div>
+                  <div>✅ 勾選「gist」權限</div>
+                  <div>💾 複製產生的 token</div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  GitHub Personal Access Token
+                </label>
+                <input
+                  type="password"
+                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                  value={githubToken}
+                  onChange={(e) => setGithubToken(e.target.value)}
+                  placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                />
+              </div>
+
+              <div className="text-xs text-slate-400">
+                Token 將安全地儲存在瀏覽器本機，不會上傳到任何伺服器
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <button
+                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                onClick={() => {
+                  setShowTokenDialog(false);
+                  setGithubToken('');
+                }}
+              >
+                取消
+              </button>
+              <button
+                className="px-3 py-1 rounded border border-green-600 text-green-300 hover:bg-green-950/30 disabled:opacity-50"
+                onClick={() => {
+                  if (githubToken.trim()) {
+                    localStorage.setItem('linktrove_github_token', githubToken.trim());
+                    setShowTokenDialog(false);
+                    setGithubToken('');
+                    showToast('GitHub Token 已儲存！現在可以發布分享連結了', 'success');
+                    // 自動重試發布
+                    setTimeout(() => publishToGist(), 500);
+                  }
+                }}
+                disabled={!githubToken.trim()}
+              >
+                儲存
               </button>
             </div>
           </div>

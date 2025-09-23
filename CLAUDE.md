@@ -12,6 +12,7 @@ LinkTrove is a Chrome browser extension for bookmark/webpage management, similar
 - Import/export with Toby v3/v4 JSON and HTML bookmarks support
 - Drag-and-drop card reordering with per-group order preservation
 - IndexedDB storage with automatic migration from chrome.storage
+- **GitHub Gist Sharing**: One-click publish sharing links via GitHub Gist
 
 ## Development Commands
 
@@ -42,6 +43,36 @@ The build creates a Chrome extension in `dist/` with:
 - Post-build script: `scripts/postbuild.mjs`
 
 After building, load the extension in Chrome from the `dist/` directory.
+
+## GitHub Gist Sharing Setup
+
+To enable one-click sharing via GitHub Gist:
+
+1. **Create GitHub Personal Access Token**:
+   - Visit [GitHub Settings > Tokens](https://github.com/settings/tokens)
+   - Click "Generate new token (classic)"
+   - Select "gist" permission
+   - Copy the generated token
+
+2. **Configure Token** (choose one method):
+
+   **Method 1: Environment Variable** (Recommended for development)
+   ```bash
+   # Create .env.local file
+   echo "VITE_GITHUB_TOKEN=your_token_here" > .env.local
+   ```
+
+   **Method 2: Runtime Setup** (For built extension)
+   - Click "發布分享連結" button
+   - Enter token in the setup dialog
+   - Token is securely stored in browser localStorage
+
+3. **Usage**:
+   - Go to any group in LinkTrove
+   - Click "分享此群組" → "發布分享連結"
+   - Get instant shareable URL copied to clipboard
+
+**Generated URLs**: `https://htmlpreview.github.io/?[gist-raw-url]`
 
 ## Architecture Overview
 
