@@ -1,9 +1,13 @@
 import React from 'react';
 import { useTemplates } from './TemplatesProvider';
+import { useFeedback } from '../ui/feedback';
+import { createStorageService } from '../../background/storageService';
 import { useCategories } from '../sidebar/categories';
 
 export const TemplatesManager: React.FC = () => {
   const { templates, actions } = useTemplates();
+  const { showToast } = useFeedback();
+  const [usageMap, setUsageMap] = React.useState<Record<string, number>>({});
   const { categories, actions: catActions } = useCategories();
   const [name, setName] = React.useState('');
   const [newField, setNewField] = React.useState<
@@ -24,6 +28,22 @@ export const TemplatesManager: React.FC = () => {
   const [commonAdd, setCommonAdd] = React.useState<
     Record<string, { key: 'siteName' | 'author'; required: boolean }>
   >({});
+
+  // Load usage count per template id (collections defaultTemplateId)
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const s = createStorageService();
+        const cats = await s.loadFromSync();
+        const count: Record<string, number> = {};
+        for (const c of cats as any[]) {
+          const tid = (c as any).defaultTemplateId;
+          if (tid) count[tid] = (count[tid] || 0) + 1;
+        }
+        setUsageMap(count);
+      } catch {}
+    })();
+  }, [templates]);
 
   return (
     <div className="space-y-6">
@@ -111,20 +131,43 @@ export const TemplatesManager: React.FC = () => {
                     {collapsed[t.id] ? '▸' : '▾'}
                   </button>
                   {collapsed[t.id] ? (
-                    <span className="text-sm">{t.name}</span>
+                    <span className="text-sm">
+                      {t.name}{' '}
+                      {usageMap[t.id] ? (
+                        <span className="ml-1 text-[10px] px-1 py-0.5 rounded bg-slate-800 border border-slate-600 text-slate-300">
+                          使用中：{usageMap[t.id]}
+                        </span>
+                      ) : null}
+                    </span>
                   ) : (
                     <input
                       className="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm"
                       value={t.name}
-                      onChange={(e) => actions.rename(t.id, e.target.value)}
+                      onChange={async (e) => {
+                        const v = e.target.value;
+                        try {
+                          await actions.rename(t.id, v);
+                        } catch {
+                          showToast('名稱已存在', 'error');
+                        }
+                      }}
                     />
                   )}
                 </div>
                 <div className="flex items-center gap-2">
                   {/* 常用欄位新增（siteName/author）已移除：改由預設書籍模板提供對齊鍵名 */}
                   <button
-                    className="text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30"
-                    onClick={() => actions.remove(t.id)}
+                    className="text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30 disabled:opacity-50"
+                    disabled={!!usageMap[t.id]}
+                    title={usageMap[t.id] ? '此模板正被 Collection 使用，無法刪除' : 'Delete'}
+                    onClick={async () => {
+                      try {
+                        await actions.remove(t.id);
+                        showToast('已刪除模板', 'success');
+                      } catch {
+                        showToast('無法刪除：此模板正在被使用', 'error');
+                      }
+                    }}
                   >
                     Delete
                   </button>

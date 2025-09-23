@@ -96,22 +96,34 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
         } catch {}
       },
       async add(name: string) {
-        const t: TemplateData = {
-          id: genId(),
-          name: name.trim() || 'Template',
-          fields: [],
-        };
+        const nn = (name || '').trim() || 'Template';
+        // 禁止相同名稱（忽略大小寫）；若已存在則回傳現有模板
+        const exist = templates.find(
+          (x) => (x.name || '').trim().toLowerCase() === nn.toLowerCase()
+        );
+        if (exist) return exist;
+        const t: TemplateData = { id: genId(), name: nn, fields: [] };
         await persist([...templates, t]);
         return t;
       },
       async rename(id: string, name: string) {
-        // 使用存儲中的最新列表避免舊閉包
+        // 使用存儲中的最新列表避免舊閉包；並禁止相同名稱
         const cur = await svc.loadTemplates();
-        await persist(
-          cur.map((t) => (t.id === id ? { ...t, name: name.trim() || t.name } : t))
+        const nn = (name || '').trim();
+        if (!nn) return; // 空名稱不變更
+        const clash = cur.find(
+          (x) => x.id !== id && (x.name || '').trim().toLowerCase() === nn.toLowerCase()
         );
+        if (clash) throw new Error('Template name already exists');
+        await persist(cur.map((t) => (t.id === id ? { ...t, name: nn } : t)));
       },
       async remove(id: string) {
+        // 禁止刪除被 Collection 使用中的模板
+        try {
+          const cats = await svc.loadFromSync();
+          const using = (cats as any[]).some((c) => (c as any).defaultTemplateId === id);
+          if (using) throw new Error('Template is in use by collections');
+        } catch {}
         const cur = await svc.loadTemplates();
         await persist(cur.filter((t) => t.id !== id));
       },

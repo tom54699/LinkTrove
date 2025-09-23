@@ -61,11 +61,18 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
 
 
     // Add standard metadata if available
+    if (item.meta?.bookTitle) metadata.push(`<div class="metadata-item"><span class="meta-label">書名</span> ${item.meta.bookTitle}</div>`);
     if (item.meta?.author) metadata.push(`<div class="metadata-item"><span class="meta-label">作者</span> ${item.meta.author}</div>`);
+    if (item.meta?.genre) metadata.push(`<div class="metadata-item"><span class="meta-label">類型</span> ${item.meta.genre}</div>`);
     if (item.meta?.siteName) metadata.push(`<div class="metadata-item"><span class="meta-label">來源</span> ${item.meta.siteName}</div>`);
+    if (item.meta?.latestChapter) metadata.push(`<div class="metadata-item"><span class="meta-label">最新章節</span> ${item.meta.latestChapter}</div>`);
+    if (item.meta?.lastUpdate) {
+      const date = new Date(item.meta.lastUpdate).toLocaleDateString('zh-TW');
+      metadata.push(`<div class="metadata-item"><span class="meta-label">最後更新</span> ${date}</div>`);
+    }
     if (item.updatedAt) {
       const date = new Date(item.updatedAt).toLocaleDateString('zh-TW');
-      metadata.push(`<div class="metadata-item"><span class="meta-label">更新</span> ${date}</div>`);
+      metadata.push(`<div class="metadata-item"><span class="meta-label">收藏時間</span> ${date}</div>`);
     }
 
     // Shorten URL for display
@@ -74,8 +81,10 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
     return `
       <div class="book-card">
         <div class="book-cover">
-          ${item.favicon
-            ? `<img src="${item.favicon}" alt="Cover" onerror="this.style.display='none'">`
+          ${item.meta?.coverImage
+            ? `<img src="${item.meta.coverImage}" alt="Cover" class="cover-image" onerror="this.src='${item.favicon || ''}'; this.className='favicon-fallback'">`
+            : item.favicon
+            ? `<img src="${item.favicon}" alt="Icon" class="favicon-fallback">`
             : '<div class="default-cover">🔗</div>'
           }
         </div>
@@ -195,6 +204,18 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
       width: 100%;
       height: 100%;
       object-fit: cover;
+    }
+
+    .book-cover .cover-image {
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .book-cover .favicon-fallback {
+      object-fit: contain;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 4px;
     }
 
     .default-cover {

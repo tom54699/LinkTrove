@@ -39,11 +39,18 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
     }
 
     // Add standard metadata if available
+    if (item.meta?.bookTitle) metadata.push(`<div class="metadata-item"><span class="meta-label">書名</span> ${item.meta.bookTitle}</div>`);
     if (item.meta?.author) metadata.push(`<div class="metadata-item"><span class="meta-label">作者</span> ${item.meta.author}</div>`);
+    if (item.meta?.genre) metadata.push(`<div class="metadata-item"><span class="meta-label">類型</span> ${item.meta.genre}</div>`);
     if (item.meta?.siteName) metadata.push(`<div class="metadata-item"><span class="meta-label">來源</span> ${item.meta.siteName}</div>`);
+    if (item.meta?.latestChapter) metadata.push(`<div class="metadata-item"><span class="meta-label">最新章節</span> ${item.meta.latestChapter}</div>`);
+    if (item.meta?.lastUpdate) {
+      const date = new Date(item.meta.lastUpdate).toLocaleDateString('zh-TW');
+      metadata.push(`<div class="metadata-item"><span class="meta-label">最後更新</span> ${date}</div>`);
+    }
     if (item.updatedAt) {
       const date = new Date(item.updatedAt).toLocaleDateString('zh-TW');
-      metadata.push(`<div class="metadata-item"><span class="meta-label">更新</span> ${date}</div>`);
+      metadata.push(`<div class="metadata-item"><span class="meta-label">收藏時間</span> ${date}</div>`);
     }
 
     // Shorten URL for display
@@ -127,8 +134,13 @@ describe('HTML Share Generation', () => {
           notes: 'Great book!'
         },
         meta: {
+          bookTitle: 'Test Book Title',
           author: 'Test Author',
-          siteName: 'Test Site'
+          genre: '玄幻小說',
+          siteName: 'Test Site',
+          latestChapter: '第100章 大結局',
+          lastUpdate: '2023-12-01T00:00:00.000Z',
+          coverImage: 'https://example.com/cover.jpg'
         }
       }
     ];
@@ -146,8 +158,11 @@ describe('HTML Share Generation', () => {
     expect(html).toContain('Great book!');
 
     // Verify metadata is displayed
+    expect(html).toContain('Test Book Title');
     expect(html).toContain('Test Author');
+    expect(html).toContain('玄幻小說');
     expect(html).toContain('Test Site');
+    expect(html).toContain('第100章 大結局');
 
     console.log('Generated HTML preview:');
     console.log(html.substring(0, 1000) + '...');
