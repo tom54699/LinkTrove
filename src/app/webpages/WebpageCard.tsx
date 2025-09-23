@@ -490,12 +490,25 @@ const TemplateFields: React.FC<{
                 onChange={(e) => set(e.target.value)}
               />
             ) : f.type === 'date' ? (
-              <input
-                className={baseCls}
-                type="date"
-                value={val}
-                onChange={(e) => set(e.target.value)}
-              />
+              (() => {
+                const toDateInput = (s: string) => {
+                  if (!s) return '';
+                  // If s is ISO or other parseable, format to YYYY-MM-DD for date input
+                  const d = new Date(s);
+                  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+                  // If already YYYY-MM-DD keep it; otherwise empty to avoid invalid
+                  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+                };
+                const dateVal = toDateInput(String(val || ''));
+                return (
+                  <input
+                    className={baseCls}
+                    type="date"
+                    value={dateVal}
+                    onChange={(e) => set(e.target.value)}
+                  />
+                );
+              })()
             ) : f.type === 'url' ? (
               <input
                 className={baseCls}

@@ -244,24 +244,41 @@ export const TemplatesManager: React.FC = () => {
                               })
                             }
                           />
-                          <select
-                            className="text-sm rounded bg-slate-900 border border-slate-700 px-2 py-1"
-                            value={(f as any).type || 'text'}
-                            onChange={(e) =>
-                              actions.updateFieldType(
-                                t.id,
-                                f.key,
-                                e.target.value as any
-                              )
-                            }
-                          >
-                            <option value="text">text</option>
-                            <option value="number">number</option>
-                            <option value="date">date</option>
-                            <option value="url">url</option>
-                            <option value="select">select</option>
-                            <option value="rating">rating (1-5)</option>
-                          </select>
+                          {(() => {
+                            const LOCKED = new Set([
+                              'bookTitle',
+                              'author',
+                              'serialStatus',
+                              'genre',
+                              'wordCount',
+                              'rating',
+                              'siteName',
+                              'lastUpdate',
+                            ]);
+                            const disabled = LOCKED.has((f as any).key);
+                            return (
+                              <select
+                                className="text-sm rounded bg-slate-900 border border-slate-700 px-2 py-1"
+                                value={(f as any).type || 'text'}
+                                onChange={(e) =>
+                                  actions.updateFieldType(
+                                    t.id,
+                                    (f as any).key,
+                                    e.target.value as any
+                                  )
+                                }
+                                disabled={disabled}
+                                title={disabled ? '固定欄位型別已鎖定' : undefined}
+                              >
+                                <option value="text">text</option>
+                                <option value="number">number</option>
+                                <option value="date">date</option>
+                                <option value="url">url</option>
+                                <option value="select">select</option>
+                                <option value="rating">rating (1-5)</option>
+                              </select>
+                            );
+                          })()}
                           <label className="text-xs flex items-center gap-1">
                             <input
                               type="checkbox"
