@@ -46,33 +46,28 @@ After building, load the extension in Chrome from the `dist/` directory.
 
 ## GitHub Gist Sharing Setup
 
-To enable one-click sharing via GitHub Gist:
+LinkTrove supports one-click sharing via GitHub Gist. Users need their own GitHub Personal Access Token:
 
-1. **Create GitHub Personal Access Token**:
+### For Users:
+1. **Get GitHub Personal Access Token**:
    - Visit [GitHub Settings > Tokens](https://github.com/settings/tokens)
    - Click "Generate new token (classic)"
-   - Select "gist" permission
+   - Select **"gist"** permission only
    - Copy the generated token
 
-2. **Configure Token** (choose one method):
-
-   **Method 1: Environment Variable** (Recommended for development)
-   ```bash
-   # Create .env.local file
-   echo "VITE_GITHUB_TOKEN=your_token_here" > .env.local
-   ```
-
-   **Method 2: Runtime Setup** (For built extension)
-   - Click "發布分享連結" button
-   - Enter token in the setup dialog
+2. **First-time Setup**:
+   - Click "分享此群組" → "發布分享連結"
+   - Enter your token in the setup dialog
    - Token is securely stored in browser localStorage
 
 3. **Usage**:
-   - Go to any group in LinkTrove
-   - Click "分享此群組" → "發布分享連結"
-   - Get instant shareable URL copied to clipboard
+   - After setup, sharing is one-click
+   - Get instant shareable URL: `https://htmlpreview.github.io/?[gist-raw-url]`
+   - All shared Gists appear in your GitHub account
 
-**Generated URLs**: `https://htmlpreview.github.io/?[gist-raw-url]`
+### For Developers:
+- Set `VITE_GITHUB_TOKEN=your_token_here` in `.env.local` for development
+- Users will use their own tokens in production
 
 ## Architecture Overview
 
