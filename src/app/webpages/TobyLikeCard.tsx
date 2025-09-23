@@ -89,26 +89,27 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
       setTitleValue(title);
       setDescValue(description || '');
       setUrlValue(url || '');
+      // 同步最新的 meta（修正初次掛載時為空，導致打開編輯看不到值）
+      setMetaValue({ ...(meta || {}) });
       (async () => {
         try {
           if (!url) return;
           const mod = await import('../../background/pageMeta');
           const cached = await mod.getCachedMeta(url);
           if (cached) {
-            const next = { ...metaValue };
-            if (
-              !((next as any).siteName || '').trim() &&
-              (cached as any).siteName
-            )
+            const next = { ...(meta || {}), ...(metaValue || {}) } as any;
+            if (!String(next.siteName || '').trim() && (cached as any).siteName) {
               next.siteName = String((cached as any).siteName);
-            if (!((next as any).author || '').trim() && (cached as any).author)
+            }
+            if (!String(next.author || '').trim() && (cached as any).author) {
               next.author = String((cached as any).author);
+            }
             setMetaValue(next);
           }
         } catch {}
       })();
     }
-  }, [showModal]);
+  }, [showModal, title, description, url, meta]);
 
   return (
     <div className="tobylike">

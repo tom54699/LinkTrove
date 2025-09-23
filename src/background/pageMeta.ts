@@ -8,7 +8,16 @@ export type PageMeta = Partial<{
   author: string;
   url: string;
   collectedAt: string;
-}>;
+  // Book-specific canonical fields (optional when present)
+  bookTitle: string;
+  serialStatus: string; // 連載中 / 已完結 / 太監
+  genre: string;
+  wordCount: string; // store as string; numeric parsing由服務層負責
+  latestChapter: string;
+  coverImage: string;
+  bookUrl: string;
+  lastUpdate: string; // ISO 或原字串
+}>; 
 
 const CACHE_KEY = 'pageMetaCache';
 const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -255,7 +264,68 @@ function pageExtractor() {
     }
   }
   const meta = { title, description, siteName, author, url: location.href };
-  return meta as any;
+  // Book/Novel specific extractions
+  const novelBookName = get('og:novel:book_name');
+  const novelAuthor = get('og:novel:author');
+  const novelCategory = get('og:novel:category');
+  const novelStatus = get('og:novel:status');
+  const novelWordCount = get('og:novel:word_count');
+  const novelLatestChapter = get('og:novel:latest_chapter_name');
+  const novelUpdateTime = get('og:novel:update_time');
+  const coverImage = get('og:image');
+  const bookUrl = get('og:url');
+
+  function normalizeStatus(s?: string): string | undefined {
+    const v = (s || '').trim().toLowerCase();
+    if (!v) return undefined;
+    if (['連載', '連載中', 'serialize', 'serializing', 'ongoing'].some((k) => v.includes(k))) return '連載中';
+    if (['完結', '完本', '已完結', '已完本', 'completed', 'finished', '完'].some((k) => v.includes(k))) return '已完結';
+    if (['太監', '斷更', '停更', '棄坑', 'dropped'].some((k) => v.includes(k))) return '太監';
+    return undefined;
+  }
+
+  function normalizeWordCount(s?: string): string | undefined {
+    const v = (s || '').trim();
+    if (!v) return undefined;
+    // 支援帶逗號、中文單位「萬」
+    let numStr = v.replace(/[,，]/g, '');
+    const wan = /([0-9]+(?:\.[0-9]+)?)\s*萬/.exec(numStr);
+    if (wan) {
+      const n = parseFloat(wan[1]);
+      if (!isNaN(n)) return String(Math.round(n * 10000));
+    }
+    const digits = numStr.match(/\d+/);
+    return digits ? digits[0] : undefined;
+  }
+
+  function normalizeDate(s?: string): string | undefined {
+    const v = (s || '').trim();
+    if (!v) return undefined;
+    const ts = Date.parse(v);
+    if (!isNaN(ts)) return new Date(ts).toISOString();
+    return v; // keep original
+  }
+
+  const bookTitle = (novelBookName || title || undefined);
+  const author2 = (novelAuthor || author || undefined);
+  const serialStatus = normalizeStatus(novelStatus);
+  const genre = novelCategory || undefined;
+  const wordCount = normalizeWordCount(novelWordCount);
+  const latestChapter = novelLatestChapter || undefined;
+  const lastUpdate = normalizeDate(novelUpdateTime);
+
+  const extra: any = {
+    bookTitle,
+    author: author2,
+    serialStatus,
+    genre,
+    wordCount,
+    latestChapter,
+    coverImage: coverImage || undefined,
+    bookUrl: bookUrl || undefined,
+    lastUpdate,
+  };
+  return { ...meta, ...extra } as any;
 }
 
 export async function extractMetaForTab(

@@ -537,6 +537,33 @@ export function createWebpageService(deps?: {
                 }
               }
             } catch {}
+
+            // 3) 書籍固定鍵名補齊（與模板無關；僅填空避免覆蓋）
+            try {
+              const fresh2 = await storage.loadFromLocal();
+              const cur2 = fresh2.find((w) => w.id === item.id) as any;
+              const curMeta2: Record<string, string> = { ...(cur2?.meta || {}) };
+              let changed2 = false;
+              const setIfEmpty = (key: string, val?: any) => {
+                const v = (val ?? '').toString().trim();
+                if (!v) return;
+                if (!((curMeta2 as any)[key] || '').toString().trim()) {
+                  (curMeta2 as any)[key] = v;
+                  changed2 = true;
+                }
+              };
+              setIfEmpty('bookTitle', (live as any)?.bookTitle);
+              setIfEmpty('serialStatus', (live as any)?.serialStatus);
+              setIfEmpty('genre', (live as any)?.genre);
+              setIfEmpty('wordCount', (live as any)?.wordCount);
+              setIfEmpty('latestChapter', (live as any)?.latestChapter);
+              setIfEmpty('coverImage', (live as any)?.coverImage);
+              setIfEmpty('bookUrl', (live as any)?.bookUrl);
+              setIfEmpty('lastUpdate', (live as any)?.lastUpdate);
+              if (changed2) {
+                await updateWebpage(item.id, { meta: curMeta2 } as any);
+              }
+            } catch {}
           } catch {}
         })();
       }
