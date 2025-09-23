@@ -975,14 +975,17 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       // Create GitHub Gist
       let GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
 
-      // 如果環境變數沒有設定，使用用戶輸入的token
+      // 如果環境變數沒有設定，使用用戶選擇的服務
       if (!GITHUB_TOKEN || GITHUB_TOKEN === 'your_github_token_here') {
         // 嘗試從localStorage獲取
         const savedToken = localStorage.getItem('linktrove_github_token');
-        if (savedToken) {
+        if (savedToken === 'default_service') {
+          // 使用預設服務 token
+          GITHUB_TOKEN = import.meta.env.VITE_DEFAULT_GITHUB_TOKEN || 'ghp_your_default_service_token_here';
+        } else if (savedToken) {
           GITHUB_TOKEN = savedToken;
         } else {
-          // 顯示設定token的對話框
+          // 顯示選擇服務的對話框
           setShowTokenDialog(true);
           return;
         }
@@ -1459,39 +1462,73 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
 
       {/* GitHub Token 設定對話框 */}
       {showTokenDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--modal)] border border-slate-700 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">設定 GitHub Token</h3>
+        <div
+          className="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-3"
+          onClick={() => {
+            setShowTokenDialog(false);
+            setGithubToken('');
+          }}
+        >
+          <div
+            className="rounded border border-slate-700 bg-[var(--bg)] w-full max-w-md p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4">選擇分享方式</h3>
 
             <div className="space-y-4">
-              <div>
-                <p className="text-sm text-slate-300 mb-3">
-                  需要 GitHub Personal Access Token 才能發布分享連結到 Gist
-                </p>
-
-                <div className="text-xs text-slate-400 space-y-2 mb-4">
-                  <div>🔗 <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" className="text-blue-400 hover:underline">前往 GitHub 設定頁面</a></div>
-                  <div>📝 點擊「Generate new token (classic)」</div>
-                  <div>✅ 勾選「gist」權限</div>
-                  <div>💾 複製產生的 token</div>
+              <div className="space-y-3">
+                <div className="border border-slate-600 rounded-lg p-4 bg-slate-700/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-green-300">🚀 使用預設服務 (推薦)</h4>
+                  </div>
+                  <p className="text-sm text-slate-400 mb-3">
+                    使用 LinkTrove 提供的預設服務，無需設定即可使用
+                  </p>
+                  <button
+                    className="w-full px-3 py-2 rounded border border-green-600 text-green-300 hover:bg-green-950/30"
+                    onClick={() => {
+                      localStorage.setItem('linktrove_github_token', 'default_service');
+                      setShowTokenDialog(false);
+                      showToast('已啟用預設分享服務！', 'success');
+                      setTimeout(() => publishToGist(), 500);
+                    }}
+                  >
+                    使用預設服務
+                  </button>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  GitHub Personal Access Token
-                </label>
-                <input
-                  type="password"
-                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                  value={githubToken}
-                  onChange={(e) => setGithubToken(e.target.value)}
-                  placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                />
-              </div>
+                <div className="border border-slate-600 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">🔧 使用自己的 GitHub Token</h4>
+                  </div>
+                  <p className="text-sm text-slate-400 mb-3">
+                    使用您自己的 GitHub 帳戶，所有分享的 Gist 都會出現在您的帳戶下
+                  </p>
 
-              <div className="text-xs text-slate-400">
-                Token 將安全地儲存在瀏覽器本機，不會上傳到任何伺服器
+                  <div className="text-xs text-slate-400 space-y-2 mb-4">
+                    <div>🔗 <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" className="text-blue-400 hover:underline">前往 GitHub 設定頁面</a></div>
+                    <div>📝 點擊「Generate new token (classic)」</div>
+                    <div>✅ 勾選「gist」權限</div>
+                    <div>💾 複製產生的 token</div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      GitHub Personal Access Token
+                    </label>
+                    <input
+                      type="password"
+                      className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                      value={githubToken}
+                      onChange={(e) => setGithubToken(e.target.value)}
+                      placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                    />
+                  </div>
+
+                  <div className="text-xs text-slate-400">
+                    Token 將安全地儲存在瀏覽器本機，不會上傳到任何伺服器
+                  </div>
+                </div>
               </div>
             </div>
 
