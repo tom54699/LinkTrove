@@ -8,6 +8,8 @@ export const TemplatesManager: React.FC = () => {
   const { templates, actions } = useTemplates();
   const { showToast } = useFeedback();
   const [usageMap, setUsageMap] = React.useState<Record<string, number>>({});
+  const [usageDetails, setUsageDetails] = React.useState<Record<string, string[]>>({});
+  const [modal, setModal] = React.useState<null | { title: string; content: React.ReactNode }>(null);
   const { categories, actions: catActions } = useCategories();
   const [name, setName] = React.useState('');
   const [newField, setNewField] = React.useState<
@@ -34,13 +36,18 @@ export const TemplatesManager: React.FC = () => {
     (async () => {
       try {
         const s = createStorageService();
-        const cats = await s.loadFromSync();
+        const cats = (await s.loadFromSync()) as any[];
         const count: Record<string, number> = {};
-        for (const c of cats as any[]) {
+        const detail: Record<string, string[]> = {};
+        for (const c of cats || []) {
           const tid = (c as any).defaultTemplateId;
-          if (tid) count[tid] = (count[tid] || 0) + 1;
+          if (!tid) continue;
+          count[tid] = (count[tid] || 0) + 1;
+          if (!detail[tid]) detail[tid] = [];
+          detail[tid].push((c as any).name || c.id);
         }
         setUsageMap(count);
+        setUsageDetails(detail);
       } catch {}
     })();
   }, [templates]);
@@ -60,8 +67,14 @@ export const TemplatesManager: React.FC = () => {
             <button
               className="text-sm px-2 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]"
               onClick={async () => {
-                if (!name.trim()) return;
-                await actions.add(name.trim());
+                const nn = (name || '').trim();
+                if (!nn) return;
+                const dup = templates.find((t) => (t.name || '').trim().toLowerCase() === nn.toLowerCase());
+                if (dup) {
+                  setModal({ title: '名稱已存在', content: <div>已存在同名模板「{nn}」，請改用其他名稱。</div> });
+                  return;
+                }
+                await actions.add(nn);
                 setName('');
               }}
             >
@@ -75,6 +88,12 @@ export const TemplatesManager: React.FC = () => {
               className="text-xs px-2 py-1 rounded border border-blue-600 text-blue-300 hover:bg-blue-950/30"
               onClick={async () => {
                 const templateName = '書籍模板';
+                const nn = templateName.trim();
+                const dup = templates.find((t) => (t.name || '').trim().toLowerCase() === nn.toLowerCase());
+                if (dup) {
+                  setModal({ title: '名稱已存在', content: <div>已存在同名模板「{nn}」。如需另建，請先改名稱避免混淆。</div> });
+                  return;
+                }
                 const newTemplate = await actions.add(templateName);
                 if (newTemplate?.id) {
                   await actions.addFields(newTemplate.id, [
@@ -157,15 +176,30 @@ export const TemplatesManager: React.FC = () => {
                 <div className="flex items-center gap-2">
                   {/* 常用欄位新增（siteName/author）已移除：改由預設書籍模板提供對齊鍵名 */}
                   <button
-                    className="text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30 disabled:opacity-50"
-                    disabled={!!usageMap[t.id]}
-                    title={usageMap[t.id] ? '此模板正被 Collection 使用，無法刪除' : 'Delete'}
+                    className="text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30"
                     onClick={async () => {
+                      if (usageMap[t.id]) {
+                        const list = usageDetails[t.id] || [];
+                        setModal({
+                          title: '無法刪除模板',
+                          content: (
+                            <div>
+                              <div className="mb-2">此模板正被以下 Collections 使用：</div>
+                              <ul className="list-disc pl-5 mb-2">
+                                {list.map((n) => (
+                                  <li key={n}>{n}</li>
+                                ))}
+                              </ul>
+                              <div>請先將這些 Collections 切換到其他模板後，再進行刪除。</div>
+                            </div>
+                          ),
+                        });
+                        return;
+                      }
                       try {
                         await actions.remove(t.id);
-                        showToast('已刪除模板', 'success');
                       } catch {
-                        showToast('無法刪除：此模板正在被使用', 'error');
+                        setModal({ title: '無法刪除模板', content: <div>此模板正在被使用。</div> });
                       }
                     }}
                   >
@@ -561,6 +595,33 @@ export const TemplatesManager: React.FC = () => {
           )}
         </div>
       </section>
+      {modal && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
+          onClick={() => setModal(null)}
+        >
+          <div
+            className="rounded border border-slate-700 bg-[var(--panel)] w-[420px] max-w-[95vw] p-5"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label={modal.title}
+          >
+            <div className="text-lg font-semibold mb-3">{modal.title}</div>
+            <div className="text-sm mb-4">{modal.content}</div>
+            <div className="flex items-center justify-end">
+              <button
+                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                onClick={() => setModal(null)}
+              >
+                知道了
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+// Modal inline（簡易版本，避免依賴外部元件）
+// 放在 TemplatesManager 檔尾或上層容器內直接渲染
