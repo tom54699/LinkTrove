@@ -70,6 +70,9 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
     ...(meta || {}),
   });
 
+  // Debounced auto-save function
+  const autoSaveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
   function validateUrl(raw: string): { value?: string; error?: string } {
     const v = (raw || '').trim();
     if (!v) return { error: 'URL is required' };
@@ -82,6 +85,50 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
       return { error: 'Invalid URL' };
     }
   }
+
+  const performAutoSave = React.useCallback(() => {
+    if (!showModal) return;
+
+    const patch: any = {
+      title: titleValue.trim(),
+      description: descValue,
+    };
+
+    const norm = urlValue.trim() ? validateUrl(urlValue) : undefined;
+    if (norm?.error) return; // Skip auto-save if URL is invalid
+
+    if (norm?.value) patch.url = norm.value;
+    patch.meta = metaValue;
+
+    // Call the save functions
+    if (onSave) {
+      onSave(patch);
+    } else {
+      // Fallback to individual update functions
+      if (onUpdateTitle) onUpdateTitle(patch.title);
+      if (patch.url && onUpdateUrl) onUpdateUrl(patch.url);
+      if (onUpdateDescription) onUpdateDescription(patch.description);
+      if (onUpdateMeta) onUpdateMeta(patch.meta);
+    }
+  }, [showModal, titleValue, descValue, urlValue, metaValue, onSave, onUpdateTitle, onUpdateUrl, onUpdateDescription, onUpdateMeta]);
+
+  const triggerAutoSave = React.useCallback(() => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      performAutoSave();
+    }, 500); // 500ms debounce
+  }, [performAutoSave]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // When opening edit modal, sync fields and try to hydrate siteName/author from cached meta
   React.useEffect(() => {
@@ -320,11 +367,18 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4">
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
+          onClick={() => {
+            setShowModal(false);
+            onModalOpenChange?.(false);
+          }}
+        >
           <div
             className="relative rounded border border-slate-700 bg-[var(--panel)] w-[560px] max-w-[95vw] max-h-[90vh] overflow-y-auto hide-scrollbar p-5"
             role="dialog"
             aria-label="Edit Card"
+            onClick={(e) => e.stopPropagation()}
           >
             <button
               aria-label="Close"
@@ -345,7 +399,10 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
                   id="edit-title"
                   className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
                   value={titleValue}
-                  onChange={(e) => setTitleValue(e.target.value)}
+                  onChange={(e) => {
+                    setTitleValue(e.target.value);
+                    triggerAutoSave();
+                  }}
                 />
               </div>
               <div>
@@ -354,7 +411,10 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
                   id="edit-desc"
                   className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
                   value={descValue}
-                  onChange={(e) => setDescValue(e.target.value)}
+                  onChange={(e) => {
+                    setDescValue(e.target.value);
+                    triggerAutoSave();
+                  }}
                 />
               </div>
               <div>
@@ -363,14 +423,20 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
                   id="edit-url"
                   className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
                   value={urlValue}
-                  onChange={(e) => setUrlValue(e.target.value)}
+                  onChange={(e) => {
+                    setUrlValue(e.target.value);
+                    triggerAutoSave();
+                  }}
                   placeholder="https://example.com"
                 />
               </div>
               <TemplateFields
                 categoryId={categoryId || 'default'}
                 meta={metaValue}
-                onChange={setMetaValue}
+                onChange={(newMeta) => {
+                  setMetaValue(newMeta);
+                  triggerAutoSave();
+                }}
               />
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
