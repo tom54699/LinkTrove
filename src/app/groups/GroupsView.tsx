@@ -64,6 +64,11 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
     if (item.meta?.bookTitle) metadata.push(`<div class="metadata-item"><span class="meta-label">書名</span> ${item.meta.bookTitle}</div>`);
     if (item.meta?.author) metadata.push(`<div class="metadata-item"><span class="meta-label">作者</span> ${item.meta.author}</div>`);
     if (item.meta?.genre) metadata.push(`<div class="metadata-item"><span class="meta-label">類型</span> ${item.meta.genre}</div>`);
+    if (item.meta?.rating) {
+      const rating = parseInt(item.meta.rating) || 0;
+      const stars = rating > 0 ? '★'.repeat(rating) + '☆'.repeat(5 - rating) : '未評分';
+      metadata.push(`<div class="metadata-item"><span class="meta-label">評分</span> <span class="rating">${stars}</span></div>`);
+    }
     if (item.meta?.siteName) metadata.push(`<div class="metadata-item"><span class="meta-label">來源</span> ${item.meta.siteName}</div>`);
     if (item.meta?.latestChapter) metadata.push(`<div class="metadata-item"><span class="meta-label">最新章節</span> ${item.meta.latestChapter}</div>`);
     if (item.meta?.lastUpdate) {
@@ -80,26 +85,32 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
 
     return `
       <div class="book-card">
-        <div class="book-cover">
-          ${item.meta?.coverImage
-            ? `<img src="${item.meta.coverImage}" alt="Cover" class="cover-image" onerror="this.src='${item.favicon || ''}'; this.className='favicon-fallback'">`
-            : item.favicon
-            ? `<img src="${item.favicon}" alt="Icon" class="favicon-fallback">`
-            : '<div class="default-cover">🔗</div>'
-          }
+        <div class="book-left">
+          <div class="book-cover">
+            ${item.meta?.coverImage
+              ? `<img src="${item.meta.coverImage}" alt="Cover" class="cover-image" onerror="this.src='${item.favicon || ''}'; this.className='favicon-fallback'">`
+              : item.favicon
+              ? `<img src="${item.favicon}" alt="Icon" class="favicon-fallback">`
+              : '<div class="default-cover">🔗</div>'
+            }
+          </div>
+          <div class="book-basic-info">
+            <h3 class="book-title">
+              <a href="${item.url}" target="_blank" rel="noopener">${item.title || 'Untitled'}</a>
+            </h3>
+            ${metadata.length > 0 ? `<div class="metadata">${metadata.join('')}</div>` : ''}
+            ${customFields.length > 0 ? `<div class="custom-fields">${customFields.join('')}</div>` : ''}
+            <div class="book-url">
+              <a href="${item.url}" target="_blank" rel="noopener" title="${item.url}">${displayUrl}</a>
+            </div>
+          </div>
         </div>
-        <div class="book-info">
-          <h3 class="book-title">
-            <a href="${item.url}" target="_blank" rel="noopener">${item.title || 'Untitled'}</a>
-          </h3>
-          ${item.description ? `<p class="book-description">${item.description}</p>` : ''}
-
-          ${metadata.length > 0 ? `<div class="metadata">${metadata.join('')}</div>` : ''}
-
-          ${customFields.length > 0 ? `<div class="custom-fields">${customFields.join('')}</div>` : ''}
-
-          <div class="book-url">
-            <a href="${item.url}" target="_blank" rel="noopener" title="${item.url}">${displayUrl}</a>
+        <div class="book-right">
+          <div class="description-section">
+            <h4 class="description-title">內容描述</h4>
+            <p class="book-description">
+              ${item.description || '暫無描述...'}
+            </p>
           </div>
         </div>
       </div>
@@ -167,37 +178,56 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
 
     .books-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
+      grid-template-columns: 1fr;
+      gap: 20px;
       margin-top: 30px;
     }
 
     .book-card {
       border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 20px;
-      background: #f8fafc;
+      border-radius: 16px;
+      background: white;
       transition: all 0.3s ease;
       display: flex;
-      gap: 16px;
+      min-height: 180px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     }
 
     .book-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-      border-color: #cbd5e0;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+      border-color: #667eea;
+    }
+
+    .book-left {
+      flex: 0 0 40%;
+      padding: 24px;
+      display: flex;
+      gap: 16px;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-right: 2px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .book-right {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      background: white;
     }
 
     .book-cover {
       flex-shrink: 0;
-      width: 60px;
-      height: 60px;
-      border-radius: 8px;
+      width: 80px;
+      height: 120px;
+      border-radius: 12px;
       overflow: hidden;
-      background: #e2e8f0;
+      background: #f1f5f9;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
     }
 
     .book-cover img {
@@ -223,9 +253,35 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
       color: #64748b;
     }
 
-    .book-info {
+    .book-basic-info {
       flex: 1;
       min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .description-section {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .description-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #667eea;
+      margin: 0 0 12px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .description-title::before {
+      content: "📖";
+      font-size: 1.1rem;
     }
 
     .book-title {
@@ -247,14 +303,15 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
     }
 
     .book-description {
-      font-size: 0.9rem;
-      color: #4a5568;
-      margin-bottom: 12px;
-      line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      font-size: 1rem;
+      color: #2d3748;
+      line-height: 1.6;
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 8px;
+      text-align: justify;
+      font-weight: 400;
+      margin: 0;
     }
 
     .metadata {
@@ -371,6 +428,40 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
       border-radius: 20px;
     }
 
+    /* 分組內卡片的特殊佈局 */
+    .group-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .group-grid .book-card {
+      min-height: 140px;
+    }
+
+    .group-grid .book-left {
+      flex: 0 0 35%;
+      padding: 16px;
+    }
+
+    .group-grid .book-right {
+      padding: 16px;
+    }
+
+    .group-grid .book-cover {
+      width: 60px;
+      height: 80px;
+    }
+
+    .group-grid .description-title {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .group-grid .book-description {
+      font-size: 0.9rem;
+    }
+
     @media (max-width: 768px) {
       .header {
         padding: 30px 20px;
@@ -384,19 +475,98 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
         padding: 30px 20px;
       }
 
-      .books-grid {
-        grid-template-columns: 1fr;
-      }
-
       .book-card {
         flex-direction: column;
-        text-align: center;
+        min-height: auto;
+      }
+
+      .book-left {
+        flex: none;
+        padding: 16px;
+        border-right: none;
+        border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+      }
+
+      .book-right {
+        padding: 16px;
       }
 
       .book-cover {
-        align-self: center;
-        width: 80px;
+        width: 60px;
         height: 80px;
+      }
+
+      .group-grid .book-card {
+        min-height: auto;
+      }
+    }
+
+    /* 分組顯示樣式 */
+    .grouped-container {
+      display: block;
+    }
+
+    .group-section {
+      margin-bottom: 40px;
+      background: rgba(102, 126, 234, 0.02);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .group-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #2d3748;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .group-badge {
+      background: #667eea;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .empty-group {
+      text-align: center;
+      padding: 40px 20px;
+      color: #9ca3af;
+      font-style: italic;
+    }
+
+    /* 評分分組特殊樣式 */
+    .rating-5 .group-title { color: #ffd700; }
+    .rating-4 .group-title { color: #ffb347; }
+    .rating-3 .group-title { color: #87ceeb; }
+    .rating-2 .group-title { color: #dda0dd; }
+    .rating-1 .group-title { color: #f0a0a0; }
+    .rating-0 .group-title { color: #9ca3af; }
+
+    @media (max-width: 768px) {
+      .group-section {
+        padding: 16px;
+        margin-bottom: 24px;
+      }
+
+      .group-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
       }
     }
   </style>
@@ -411,17 +581,26 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
         <div class="stat">由 LinkTrove 生成</div>
       </div>
       <div class="meta">生成時間：${formattedDate}</div>
-      <div style="margin-top: 15px;">
-        <button onclick="downloadJSON()" style="background: #4299e1; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#3182ce'" onmouseout="this.style.background='#4299e1'">
-          下載 JSON 書籤資料
+      <div class="group-controls" style="margin-top: 15px;">
+        <label for="groupSelect" style="color: white; margin-right: 10px;">分組方式：</label>
+        <select id="groupSelect" onchange="groupItems(this.value)" style="background: #2d3748; color: white; border: 1px solid #4a5568; padding: 8px 12px; border-radius: 6px; font-size: 14px; margin-right: 15px;">
+          <option value="">不分組</option>
+          <option value="genre">按類型分組</option>
+          <option value="rating">按評分分組</option>
+        </select>
+        <button onclick="downloadJSON()" style="background: #4299e1; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#3182ce'" onmouseout="this.style.background='#4299e1'">
+          下載 JSON
         </button>
       </div>
     </header>
 
     <main class="content">
       ${items.length > 0 ? `
-        <div class="books-grid">
+        <div id="defaultView" class="books-grid">
           ${items.map(createBookCard).join('')}
+        </div>
+        <div id="groupedView" class="grouped-container" style="display: none;">
+          <!-- 分組內容將由JavaScript動態生成 -->
         </div>
       ` : `
         <div style="text-align: center; padding: 60px 20px; color: #718096;">
@@ -481,6 +660,117 @@ function generateBooklistHTML(group: any, items: any[], templates: any[], custom
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+    }
+
+    // 分組功能
+    function groupItems(groupBy) {
+      const defaultView = document.getElementById('defaultView');
+      const groupedView = document.getElementById('groupedView');
+
+      if (!groupBy) {
+        // 顯示原始視圖
+        defaultView.style.display = 'grid';
+        groupedView.style.display = 'none';
+        return;
+      }
+
+      // 切換到分組視圖
+      defaultView.style.display = 'none';
+      groupedView.style.display = 'block';
+
+      // 收集所有卡片
+      const cards = Array.from(defaultView.children);
+
+      // 根據分組方式整理數據
+      const groups = {};
+
+      cards.forEach(card => {
+        let groupKey = '未分類';
+
+        switch (groupBy) {
+          case 'genre': {
+            const metaItems = card.querySelectorAll('.metadata-item');
+            for (const item of metaItems) {
+              if (item.textContent.includes('類型')) {
+                groupKey = item.textContent.replace('類型', '').trim() || '未知類型';
+                break;
+              }
+            }
+            break;
+          }
+
+          case 'rating': {
+            const ratingElement = card.querySelector('.rating');
+            if (ratingElement) {
+              const stars = (ratingElement.textContent.match(/★/g) || []).length;
+              if (stars === 0) {
+                groupKey = '未評分';
+              } else {
+                groupKey = \`\${stars}星評分\`;
+              }
+            } else {
+              groupKey = '未評分';
+            }
+            break;
+          }
+        }
+
+        if (!groups[groupKey]) {
+          groups[groupKey] = [];
+        }
+        groups[groupKey].push(card.cloneNode(true));
+      });
+
+      // 生成分組HTML
+      let groupedHTML = '';
+      const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
+        if (groupBy === 'rating') {
+          // 評分按星級排序（5星到未評分）
+          const getStars = (key) => {
+            if (key === '未評分') return -1;
+            const match = key.match(/(\\d+)星/);
+            return match ? parseInt(match[1]) : 0;
+          };
+          return getStars(b) - getStars(a);
+        }
+        return a.localeCompare(b, 'zh-TW');
+      });
+
+      sortedGroupKeys.forEach(groupKey => {
+        const items = groups[groupKey];
+        const ratingClass = groupBy === 'rating' && groupKey !== '未評分'
+          ? \`rating-\${groupKey.match(/(\\d+)星/) ? groupKey.match(/(\\d+)星/)[1] : '0'}\`
+          : '';
+
+        groupedHTML += \`
+          <div class="group-section \${ratingClass}">
+            <div class="group-header">
+              <h2 class="group-title">
+                \${getGroupIcon(groupBy, groupKey)} \${groupKey}
+              </h2>
+              <span class="group-badge">\${items.length} 項目</span>
+            </div>
+            <div class="group-grid">
+              \${items.map(item => item.outerHTML).join('')}
+            </div>
+          </div>
+        \`;
+      });
+
+      groupedView.innerHTML = groupedHTML;
+    }
+
+    function getGroupIcon(groupBy, groupKey) {
+      switch (groupBy) {
+        case 'genre':
+          return '📚';
+        case 'rating':
+          if (groupKey === '未評分') return '⭕';
+          const stars = groupKey.match(/(\\d+)星/);
+          return stars ? '⭐'.repeat(parseInt(stars[1])) : '📊';
+        default:
+          return '📋';
+      }
     }
   </script>
 </body>
@@ -692,67 +982,6 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     }
   };
 
-  const generateJsonFile = async () => {
-    if (!shareGroup) return;
-
-    try {
-      // Get group's webpages
-      const groupItems = items.filter((it: any) => it.category === categoryId && it.subcategoryId === shareGroup.id);
-
-      // Get template data for custom fields
-      const { createStorageService } = await import('../../background/storageService');
-      const storageService = createStorageService();
-      const templates = await (storageService as any).listTemplates?.() || [];
-
-      // Create JSON export structure
-      const exportData = {
-        schemaVersion: 1,
-        metadata: {
-          title: shareTitle.trim() || shareGroup.name,
-          description: shareDescription.trim() || '',
-          exportedAt: new Date().toISOString(),
-          itemCount: groupItems.length
-        },
-        group: {
-          id: shareGroup.id,
-          name: shareGroup.name,
-          categoryId: shareGroup.categoryId
-        },
-        templates: templates.filter((t: any) =>
-          groupItems.some((item: any) => item.templateId === t.id)
-        ),
-        items: groupItems.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          url: item.url,
-          description: item.description,
-          favicon: item.favicon,
-          templateId: item.templateId,
-          templateData: item.templateData,
-          meta: item.meta,
-          createdAt: item.createdAt,
-          updatedAt: item.updatedAt
-        }))
-      };
-
-      // Create and download JSON file
-      const jsonContent = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${shareTitle.replace(/[^\w\s-]/g, '') || shareGroup.name.replace(/[^\w\s-]/g, '')}-bookmarks.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      showToast(`已下載「${shareTitle}」JSON 書籤`, 'success');
-    } catch (error) {
-      console.error('Generate JSON file error:', error);
-      showToast('生成 JSON 檔案失敗', 'error');
-    }
-  };
 
   if (!svc) return null;
 
@@ -1094,7 +1323,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
               </div>
 
               <div className="text-xs text-slate-400">
-                包含 {items.filter((it: any) => it.category === categoryId && it.subcategoryId === shareGroup?.id).length} 個項目 - 可生成 HTML 分享頁面或下載 JSON 格式供匯入
+                包含 {items.filter((it: any) => it.category === categoryId && it.subcategoryId === shareGroup?.id).length} 個項目 - 可生成 HTML 分享頁面
               </div>
             </div>
 
@@ -1104,14 +1333,6 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 onClick={() => setShareDialogOpen(false)}
               >
                 取消
-              </button>
-              <button
-                className="px-3 py-1 rounded border border-blue-600 text-blue-300 hover:bg-blue-950/30 disabled:opacity-50"
-                onClick={generateJsonFile}
-                disabled={!shareTitle.trim()}
-                title="下載 JSON 格式，可匯入其他群組"
-              >
-                下載 JSON
               </button>
               <button
                 className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
