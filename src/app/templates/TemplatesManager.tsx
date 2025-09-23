@@ -121,75 +121,7 @@ export const TemplatesManager: React.FC = () => {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <select
-                    className="text-xs rounded bg-slate-900 border border-slate-700 px-2 py-1"
-                    value={commonAdd[t.id]?.key || 'siteName'}
-                    onChange={(e) =>
-                      setCommonAdd((m) => ({
-                        ...m,
-                        [t.id]: {
-                          key: (e.target.value as any) || 'siteName',
-                          required: m[t.id]?.required || false,
-                        },
-                      }))
-                    }
-                    title="選擇常用欄位"
-                  >
-                    <option value="siteName">站名 (siteName)</option>
-                    <option value="author">作者 (author)</option>
-                  </select>
-                  {(() => {
-                    const nf = newField[t.id];
-                    const composerActive = !!(
-                      nf && (
-                        nf.key ||
-                        nf.label ||
-                        nf.def ||
-                        nf.options ||
-                        (nf.type && nf.type !== 'text') ||
-                        nf.required
-                      )
-                    );
-                    return composerActive ? null : (
-                      <label className="text-xs flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          checked={!!commonAdd[t.id]?.required}
-                          onChange={(e) =>
-                            setCommonAdd((m) => ({
-                              ...m,
-                              [t.id]: {
-                                key: m[t.id]?.key || 'siteName',
-                                required: e.target.checked,
-                              },
-                            }))
-                          }
-                        />
-                        required
-                      </label>
-                    );
-                  })()}
-                  <button
-                    className="text-xs px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
-                    title="新增常用欄位"
-                    onClick={async () => {
-                      const sel = commonAdd[t.id]?.key || 'siteName';
-                      const label = sel === 'siteName' ? '站名' : '作者';
-                      try {
-                        await actions.addField(t.id, {
-                          key: sel,
-                          label,
-                          type: 'text',
-                        });
-                        if (commonAdd[t.id]?.required)
-                          await actions.updateFieldRequired(t.id, sel, true);
-                      } catch {
-                        // ignore duplicate errors
-                      }
-                    }}
-                  >
-                    新增
-                  </button>
+                  {/* 常用欄位新增（siteName/author）已移除：改由預設書籍模板提供對齊鍵名 */}
                   <button
                     className="text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30"
                     onClick={() => actions.remove(t.id)}
@@ -230,11 +162,30 @@ export const TemplatesManager: React.FC = () => {
                           <span className="cursor-move select-none text-slate-400">
                             ↕
                           </span>
-                          <input
-                            className="w-36 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm"
-                            value={f.key}
-                            disabled
-                          />
+                          {(() => {
+                            const LOCKED = new Set([
+                              'bookTitle',
+                              'author',
+                              'serialStatus',
+                              'genre',
+                              'wordCount',
+                              'rating',
+                              'siteName',
+                              'lastUpdate',
+                            ]);
+                            const locked = LOCKED.has((f as any).key);
+                            const cls = locked
+                              ? 'w-36 rounded bg-slate-800 text-slate-400 border border-slate-600 px-2 py-1 text-sm'
+                              : 'w-36 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm';
+                            return (
+                              <input
+                                className={cls}
+                                value={(f as any).key}
+                                disabled
+                                title={locked ? '固定欄位鍵已鎖定' : '鍵不可變更'}
+                              />
+                            );
+                          })()}
                           <input
                             className="w-40 rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm"
                             value={f.label}
@@ -258,7 +209,7 @@ export const TemplatesManager: React.FC = () => {
                             const disabled = LOCKED.has((f as any).key);
                             return (
                               <select
-                                className="text-sm rounded bg-slate-900 border border-slate-700 px-2 py-1"
+                                className={`text-sm rounded px-2 py-1 ${disabled ? 'bg-slate-800 text-slate-400 border border-slate-600' : 'bg-slate-900 border border-slate-700'}`}
                                 value={(f as any).type || 'text'}
                                 onChange={(e) =>
                                   actions.updateFieldType(

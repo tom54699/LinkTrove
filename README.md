@@ -59,7 +59,23 @@ Open Tabs（右側）
     - 依資料夾（H3）建立多群組（預設）
     - 扁平模式：匯入到單一群組（可命名）
   - 進度與取消：大檔會分批寫入（預設每批約 300 筆），顯示進度條並可取消。
-  - 縮圖：匯入時嘗試 DDG ip3 取得 favicon，若載入失敗 UI 會自動回退為預設圖示。
+ - 縮圖：匯入時嘗試 DDG ip3 取得 favicon，若載入失敗 UI 會自動回退為預設圖示。
+
+Templates 與書籍欄位對應
+
+- 固定鍵名（書籍類）— 這些 key 會對應到自動擷取或顯示的資料，請於模板中使用相同 key：
+  - bookTitle（書名，text）
+  - author（作者，text）
+  - serialStatus（連載狀態，select：連載中 / 已完結 / 太監）
+  - genre（類型，text）
+  - wordCount（字數，number）
+  - rating（評分，rating；不自動擷取）
+  - siteName（站名，text）
+  - lastUpdate（最後更新時間，date）
+  - 其餘可選：latestChapter / coverImage / bookUrl（若模板需要可自行新增同名欄位）
+
+- 擷取來源（OG）：`og:novel:*` / `og:*`，詳見 docs/book-metadata-mapping.md。
+- 注意：卡片描述 note（UI 的 description）僅在 note 為空且抓到 `og:description` 時回填；不寫入 meta。
 
 小撇步
 
