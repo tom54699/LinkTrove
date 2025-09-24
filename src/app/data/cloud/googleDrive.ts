@@ -10,8 +10,9 @@ async function getAuthToken(interactive = false): Promise<string> {
   return new Promise((resolve, reject) => {
     try {
       (chrome as any).identity.getAuthToken({ interactive }, (token: string) => {
+        const err = (chrome as any).runtime?.lastError;
         if (token) resolve(token);
-        else reject(new Error('Failed to obtain auth token'));
+        else reject(new Error(err?.message || 'Failed to obtain auth token'));
       });
     } catch (e) {
       reject(e);
@@ -39,7 +40,8 @@ async function driveFetch(path: string, init: RequestInit = {}, interactive = fa
 }
 
 export async function connect(): Promise<{ ok: boolean }> {
-  // Simply attempt to fetch about or files list to validate token
+  // Obtain/refresh token interactively on first connect
+  await getAuthToken(true);
   await driveFetch(
     `/drive/v3/files?q='appDataFolder'+in+parents&spaces=appDataFolder&fields=files(id)&pageSize=1`,
     {},
@@ -102,4 +104,3 @@ export async function disconnect(): Promise<void> {
     });
   } catch {}
 }
-
