@@ -424,63 +424,30 @@ export const TemplatesManager: React.FC = () => {
                               </div>
                             </div>
 
-                            {/* 額外設定區域 */}
-                            {((f as any).type === 'select' || (f as any).type === 'rating' || (f as any).defaultValue !== undefined) && (
+                            {/* select 選項設定區域 */}
+                            {(f as any).type === 'select' && (
                               <div className="mt-4 pt-3 border-t border-slate-700/50">
                                 <div className="grid grid-cols-12 gap-4">
                                   <div className="col-span-1"></div>
                                   <div className="col-span-11">
-                                    {(f as any).type === 'select' ? (
-                                      <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-2">選項設定（用逗號分隔）</label>
-                                        <input
-                                          className="w-full rounded-lg bg-slate-800/80 border border-slate-600 hover:border-slate-500 focus:border-[var(--accent)] focus:outline-none px-3 py-2 text-sm transition-colors"
-                                          placeholder="例如：選颅1, 選颅2, 選颅3"
-                                          defaultValue={((f as any).options || []).join(', ')}
-                                          onBlur={(e) =>
-                                            actions.updateFieldOptions(
-                                              t.id,
-                                              f.key,
-                                              e.target.value
-                                                .split(',')
-                                                .map((s) => s.trim())
-                                                .filter(Boolean)
-                                            )
-                                          }
-                                        />
-                                      </div>
-                                    ) : (f as any).type === 'rating' ? (
-                                      <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-2">預設評分 (1-5)</label>
-                                        <input
-                                          className="w-32 rounded-lg bg-slate-800/80 border border-slate-600 hover:border-slate-500 focus:border-[var(--accent)] focus:outline-none px-3 py-2 text-sm transition-colors"
-                                          type="number"
-                                          min={1}
-                                          max={5}
-                                          placeholder="1-5"
-                                          defaultValue={(f as any).defaultValue || ''}
-                                          onBlur={(e) =>
-                                            actions.updateField(t.id, f.key, {
-                                              defaultValue: e.target.value,
-                                            })
-                                          }
-                                        />
-                                      </div>
-                                    ) : (
-                                      <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-2">預設值</label>
-                                        <input
-                                          className="w-full rounded-lg bg-slate-800/80 border border-slate-600 hover:border-slate-500 focus:border-[var(--accent)] focus:outline-none px-3 py-2 text-sm transition-colors"
-                                          placeholder="輸入預設值"
-                                          defaultValue={(f as any).defaultValue || ''}
-                                          onBlur={(e) =>
-                                            actions.updateField(t.id, f.key, {
-                                              defaultValue: e.target.value,
-                                            })
-                                          }
-                                        />
-                                      </div>
-                                    )}
+                                    <div>
+                                      <label className="block text-xs font-medium text-slate-400 mb-2">選項設定（用逗號分隔）</label>
+                                      <input
+                                        className="w-full rounded-lg bg-slate-800/80 border border-slate-600 hover:border-slate-500 focus:border-[var(--accent)] focus:outline-none px-3 py-2 text-sm transition-colors"
+                                        placeholder="例如：選項1, 選項2, 選項3"
+                                        defaultValue={((f as any).options || []).join(', ')}
+                                        onBlur={(e) =>
+                                          actions.updateFieldOptions(
+                                            t.id,
+                                            f.key,
+                                            e.target.value
+                                              .split(',')
+                                              .map((s) => s.trim())
+                                              .filter(Boolean)
+                                          )
+                                        }
+                                      />
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -511,7 +478,7 @@ export const TemplatesManager: React.FC = () => {
                               setNewField({
                                 ...newField,
                                 [t.id]: {
-                                  ...(newField[t.id] || { label: '', def: '' }),
+                                  ...(newField[t.id] || { label: '',  }),
                                   key: e.target.value,
                                 },
                               })
@@ -530,7 +497,7 @@ export const TemplatesManager: React.FC = () => {
                               setNewField({
                                 ...newField,
                                 [t.id]: {
-                                  ...(newField[t.id] || { key: '', def: '' }),
+                                  ...(newField[t.id] || { key: '',  }),
                                   label: e.target.value,
                                 },
                               })
@@ -551,8 +518,7 @@ export const TemplatesManager: React.FC = () => {
                                   ...(newField[t.id] || {
                                     key: '',
                                     label: '',
-                                    def: '',
-                                  }),
+                                                                      }),
                                   type: e.target.value as any,
                                 },
                               })
@@ -583,8 +549,7 @@ export const TemplatesManager: React.FC = () => {
                                     ...(newField[t.id] || {
                                       key: '',
                                       label: '',
-                                      def: '',
-                                    }),
+                                                                          }),
                                     required: e.target.checked,
                                   },
                                 })
@@ -602,8 +567,7 @@ export const TemplatesManager: React.FC = () => {
                               const nf = newField[t.id] || {
                                 key: '',
                                 label: '',
-                                def: '',
-                                type: 'text',
+                                                                type: 'text',
                               };
                               const key = nf.key.trim();
                               const label = nf.label.trim();
@@ -618,7 +582,6 @@ export const TemplatesManager: React.FC = () => {
                                 const payload: any = {
                                   key,
                                   label,
-                                  defaultValue: nf.def,
                                   type: nf.type || 'text',
                                 };
                                 if (
@@ -637,8 +600,7 @@ export const TemplatesManager: React.FC = () => {
                                   [t.id]: {
                                     key: '',
                                     label: '',
-                                    def: '',
-                                    type: 'text',
+                                                                        type: 'text',
                                     options: '',
                                     required: false,
                                     err: '',
@@ -678,8 +640,7 @@ export const TemplatesManager: React.FC = () => {
                                   ...(newField[t.id] || {
                                     key: '',
                                     label: '',
-                                    def: '',
-                                  }),
+                                                                      }),
                                   options: e.target.value,
                                 },
                               })
@@ -688,26 +649,6 @@ export const TemplatesManager: React.FC = () => {
                         </div>
                       )}
 
-                      {/* 預設值設定 */}
-                      {newField[t.id]?.type !== 'select' && (
-                        <div className="mb-4">
-                          <label className="block text-xs font-medium text-slate-400 mb-2">預設值</label>
-                          <input
-                            className="w-full rounded-lg bg-slate-800/80 border border-slate-600 hover:border-slate-500 focus:border-[var(--accent)] focus:outline-none px-3 py-2 text-sm transition-colors"
-                            placeholder="輸入預設值"
-                            value={newField[t.id]?.def || ''}
-                            onChange={(e) =>
-                              setNewField({
-                                ...newField,
-                                [t.id]: {
-                                  ...(newField[t.id] || { key: '', label: '' }),
-                                  def: e.target.value,
-                                },
-                              })
-                            }
-                          />
-                        </div>
-                      )}
                       {/* 錯誤訊息 */}
                       {newField[t.id]?.err && (
                         <div className="p-3 rounded-lg bg-red-950/20 border border-red-500/30 text-red-300 text-sm">
