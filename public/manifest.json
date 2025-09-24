@@ -14,6 +14,12 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "permissions": ["tabs", "storage", "scripting"],
-  "host_permissions": ["<all_urls>"]
+  "permissions": ["tabs", "storage", "scripting", "identity"],
+  "host_permissions": ["<all_urls>", "https://www.googleapis.com/*"],
+  "oauth2": {
+    "client_id": "731462500420-80ko62k4mmb74jajefi7fio2jftlrc61.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.appdata"
+    ]
+  }
 }
