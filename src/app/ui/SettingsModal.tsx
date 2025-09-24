@@ -8,9 +8,11 @@ import { useCategories } from '../sidebar/categories';
 import { useTemplates } from '../templates/TemplatesProvider';
 
 type Section = 'data' | 'templates';
+// 擴充：Cloud Sync 區塊
+type SectionEx = Section | 'cloud';
 
 export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
-  const [section, setSection] = React.useState<Section>('data');
+  const [section, setSection] = React.useState<SectionEx>('data');
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
@@ -29,6 +31,10 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
                 onClick={() => setSection('data')}
               >匯出/匯入</button>
               <button
+                className={`text-left px-2 py-1 rounded ${section==='cloud' ? 'bg-slate-800' : 'hover:bg-slate-800/60'}`}
+                onClick={() => setSection('cloud')}
+              >Cloud Sync</button>
+              <button
                 className={`text-left px-2 py-1 rounded ${section==='templates' ? 'bg-slate-800' : 'hover:bg-slate-800/60'}`}
                 onClick={() => setSection('templates')}
               >Templates</button>
@@ -37,6 +43,8 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
           <main className="flex-1 p-4 overflow-auto">
             {section === 'data' ? (
               <DataPanel />
+            ) : section === 'cloud' ? (
+              <CloudSyncPanel />
             ) : (
               <TemplatesManager />
             )}
@@ -209,3 +217,89 @@ const DataPanel: React.FC = () => {
   );
 };
 
+const CloudSyncPanel: React.FC = () => {
+  const [connected, setConnected] = React.useState(false);
+  const [last, setLast] = React.useState<string | undefined>(undefined);
+  const [syncing, setSyncing] = React.useState(false);
+  const [error, setError] = React.useState<string | undefined>(undefined);
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const got: any = await new Promise((resolve) => {
+          try { chrome.storage?.local?.get?.({ 'cloudSync.status': {} }, resolve); } catch { resolve({}); }
+        });
+        const st = got?.['cloudSync.status'] || {};
+        setConnected(!!st.connected);
+        setLast(st.lastSyncedAt);
+        setSyncing(!!st.syncing);
+        setError(st.error);
+      } catch {}
+    })();
+  }, []);
+
+  async function doConnect() {
+    setError(undefined);
+    try {
+      const mod = await import('../data/syncService');
+      await mod.connect();
+      setConnected(true);
+    } catch (e: any) {
+      setError(String(e?.message || e));
+    }
+  }
+  async function doBackup() {
+    setSyncing(true); setError(undefined);
+    try {
+      const mod = await import('../data/syncService');
+      await mod.backupNow();
+      setLast(new Date().toISOString());
+    } catch (e: any) { setError(String(e?.message || e)); }
+    finally { setSyncing(false); }
+  }
+  async function doRestore() {
+    setSyncing(true); setError(undefined);
+    try {
+      const mod = await import('../data/syncService');
+      await mod.restoreNow();
+      setLast(new Date().toISOString());
+    } catch (e: any) { setError(String(e?.message || e)); }
+    finally { setSyncing(false); }
+  }
+  async function doDisconnect() {
+    setError(undefined);
+    try {
+      const mod = await import('../data/syncService');
+      await mod.disconnect();
+      setConnected(false);
+    } catch (e: any) { setError(String(e?.message || e)); }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="text-lg font-semibold mb-2">Google Drive 同步</div>
+      <div className="text-sm opacity-80">
+        使用 Google Drive appDataFolder 儲存備份檔（私有，不顯示於雲端硬碟清單）。
+      </div>
+      <div className="flex items-center gap-2">
+        {connected ? (
+          <>
+            <span className="px-2 py-0.5 text-xs rounded bg-emerald-900/40 border border-emerald-700 text-emerald-200">Connected</span>
+            <button className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={doDisconnect}>Disconnect</button>
+          </>
+        ) : (
+          <button className="text-sm px-2 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]" onClick={doConnect}>Connect Google</button>
+        )}
+        <div className="ml-auto text-xs opacity-70">{syncing ? 'Syncing…' : last ? `Last: ${new Date(last).toLocaleString()}` : 'Not synced yet'}</div>
+      </div>
+      <div className="flex items-center gap-2">
+        <button className="text-sm px-3 py-1 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50" disabled={!connected || syncing} onClick={doBackup}>Backup Now</button>
+        <button className="text-sm px-3 py-1 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50" disabled={!connected || syncing} onClick={doRestore}>Restore</button>
+      </div>
+      {error && <div className="text-xs text-red-400">{error}</div>}
+      <div className="text-xs opacity-60">
+        注意：首次使用需要登入授權；Restore 會覆蓋本機資料，建議先 Backup。
+      </div>
+    </div>
+  );
+};
