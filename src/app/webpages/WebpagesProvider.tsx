@@ -126,6 +126,65 @@ export const WebpagesProvider: React.FC<{
               ) {
                 patch.note = meta.description.trim();
               }
+
+              // Template field enrichment (siteName/author based on current category template)
+              try {
+                const [cats, tmpls] = await Promise.all([
+                  service.loadFromSync(),
+                  service.loadTemplates(),
+                ]);
+                const targetCat = target && target !== 'all' ? target : created.category;
+                const cat = (cats as any[]).find((c) => c.id === targetCat);
+                const tpl = cat?.defaultTemplateId
+                  ? (tmpls as any[]).find((t) => t.id === cat.defaultTemplateId)
+                  : null;
+                const fields = (tpl?.fields || []) as any[];
+                const hasField = (k: string) => fields.some((f) => f.key === k);
+                const curMeta: Record<string, string> = { ...(cur?.meta || {}) };
+                let metaChanged = false;
+
+                if (hasField('siteName')) {
+                  const curVal = (curMeta.siteName || '').trim();
+                  const val = (meta?.siteName || '').trim();
+                  if (!curVal && val) { curMeta.siteName = val; metaChanged = true; }
+                }
+                if (hasField('author')) {
+                  const curVal = (curMeta.author || '').trim();
+                  const val = (meta?.author || '').trim();
+                  if (!curVal && val) { curMeta.author = val; metaChanged = true; }
+                }
+
+                if (metaChanged) {
+                  patch.meta = curMeta;
+                }
+              } catch {}
+
+              // Book field enrichment (fixed keys, no template dependency)
+              try {
+                const curMeta2: Record<string, string> = { ...(patch.meta || cur?.meta || {}) };
+                let bookChanged = false;
+                const setIfEmpty = (key: string, val?: any) => {
+                  const v = (val ?? '').toString().trim();
+                  if (!v) return;
+                  if (!((curMeta2 as any)[key] || '').toString().trim()) {
+                    (curMeta2 as any)[key] = v;
+                    bookChanged = true;
+                  }
+                };
+                setIfEmpty('bookTitle', (meta as any)?.bookTitle);
+                setIfEmpty('serialStatus', (meta as any)?.serialStatus);
+                setIfEmpty('genre', (meta as any)?.genre);
+                setIfEmpty('wordCount', (meta as any)?.wordCount);
+                setIfEmpty('latestChapter', (meta as any)?.latestChapter);
+                setIfEmpty('coverImage', (meta as any)?.coverImage);
+                setIfEmpty('bookUrl', (meta as any)?.bookUrl);
+                setIfEmpty('lastUpdate', (meta as any)?.lastUpdate);
+
+                if (bookChanged) {
+                  patch.meta = curMeta2;
+                }
+              } catch {}
+
               if (Object.keys(patch).length > 0) {
                 const updated = await service.updateWebpage(created.id, patch);
                 setItems((prev) =>
