@@ -1202,35 +1202,19 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 items={items.filter((it: any) => it.category === categoryId && it.subcategoryId === g.id)}
                 onDropTab={async (tab: any, beforeId?: string) => {
                   try {
-                    // 優先使用原子 API；失敗再退回舊三段式流程
-                    let usedAtomic = false;
-                    try {
-                      if ((actions as any) && (svc as any) && (createStorageService as any)) {
-                        const ws = await import('../../background/webpageService');
-                        const service = ws.createWebpageService();
-                        if ((service as any).addTabToGroup) {
-                          const created = await (service as any).addTabToGroup(tab as any, g.categoryId, g.id, beforeId);
-                          usedAtomic = true;
-                          // Load 一次以保證畫面對齊儲存層排序
-                          await actions.load();
-                          dbg('dnd', 'onDropTab atomic add', { createdId: created.id, beforeId });
-                        }
-                      }
-                    } catch {}
-                    if (!usedAtomic) {
-                      const createdId = (await actions.addFromTab(tab as any)) as any as string;
-                      await actions.updateCategory(createdId, g.categoryId);
-                      await (svc as any).updateCardSubcategory?.(createdId, g.id);
-                      if (beforeId && beforeId !== '__END__') {
-                        dbg('dnd', 'onDropTab reorder', { createdId, beforeId });
-                        await actions.reorder(createdId, beforeId);
-                      } else if (beforeId === '__END__') {
-                        dbg('dnd', 'onDropTab moveToEnd', { createdId });
-                        await (actions as any).moveToEnd(createdId);
-                      }
-                      await actions.load();
-                      dbg('dnd', 'afterDrop load()', { groupId: g.id });
+                    // 使用舊三段式流程以確保 meta enrich（回歸既有行為）
+                    const createdId = (await actions.addFromTab(tab as any)) as any as string;
+                    await actions.updateCategory(createdId, g.categoryId);
+                    await (svc as any).updateCardSubcategory?.(createdId, g.id);
+                    if (beforeId && beforeId !== '__END__') {
+                      dbg('dnd', 'onDropTab reorder', { createdId, beforeId });
+                      await actions.reorder(createdId, beforeId);
+                    } else if (beforeId === '__END__') {
+                      dbg('dnd', 'onDropTab moveToEnd', { createdId });
+                      await (actions as any).moveToEnd(createdId);
                     }
+                    await actions.load();
+                    dbg('dnd', 'afterDrop load()', { groupId: g.id });
                     showToast('已從分頁建立並加入 group', 'success');
                   } catch {
                     showToast('建立失敗', 'error');
