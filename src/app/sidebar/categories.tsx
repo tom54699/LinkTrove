@@ -40,10 +40,25 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
   const orgCtx = React.useContext(OrgsCtx);
   const hasOrgProvider = !!orgCtx;
   const [ready, setReady] = useState<boolean>(!hasOrgProvider);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const svc = React.useMemo(() => {
     // 一律建立 IDB-backed service（chrome.storage 僅作為輔助設定存取）
     return createStorageService();
+  }, []);
+
+  React.useEffect(() => {
+    const onRestore = () => {
+      setRefreshTick((tick) => tick + 1);
+    };
+    try {
+      window.addEventListener('cloudsync:restored', onRestore as any);
+    } catch {}
+    return () => {
+      try {
+        window.removeEventListener('cloudsync:restored', onRestore as any);
+      } catch {}
+    };
   }, []);
 
   React.useLayoutEffect(() => {
@@ -178,7 +193,7 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch {}
       try { if (hasOrgProvider) setReady(true); } catch {}
     })();
-  }, [svc, selectedOrgId]);
+  }, [svc, selectedOrgId, refreshTick]);
 
 
   const actions = React.useMemo(

@@ -222,6 +222,10 @@ const CloudSyncPanel: React.FC = () => {
   const [last, setLast] = React.useState<string | undefined>(undefined);
   const [syncing, setSyncing] = React.useState(false);
   const [error, setError] = React.useState<string | undefined>(undefined);
+  const [autoEnabled, setAutoEnabled] = React.useState(false);
+  const [pendingPush, setPendingPush] = React.useState(false);
+  const [lastDownloaded, setLastDownloaded] = React.useState<string | undefined>(undefined);
+  const [lastUploaded, setLastUploaded] = React.useState<string | undefined>(undefined);
 
   React.useEffect(() => {
     (async () => {
@@ -234,6 +238,10 @@ const CloudSyncPanel: React.FC = () => {
         setLast(st.lastSyncedAt);
         setSyncing(!!st.syncing);
         setError(st.error);
+        setAutoEnabled(!!st.auto);
+        setPendingPush(!!st.pendingPush);
+        setLastDownloaded(st.lastDownloadedAt);
+        setLastUploaded(st.lastUploadedAt);
       } catch {}
     })();
   }, []);
@@ -244,6 +252,12 @@ const CloudSyncPanel: React.FC = () => {
       const mod = await import('../data/syncService');
       await mod.connect();
       setConnected(true);
+      const refreshed = mod.getStatus();
+      setLast(refreshed.lastSyncedAt);
+      setAutoEnabled(!!refreshed.auto);
+      setPendingPush(!!refreshed.pendingPush);
+      setLastDownloaded(refreshed.lastDownloadedAt);
+      setLastUploaded(refreshed.lastUploadedAt);
     } catch (e: any) {
       setError(String(e?.message || e));
     }
@@ -253,7 +267,10 @@ const CloudSyncPanel: React.FC = () => {
     try {
       const mod = await import('../data/syncService');
       await mod.backupNow();
-      setLast(new Date().toISOString());
+      const refreshed = mod.getStatus();
+      setLast(refreshed.lastSyncedAt);
+      setLastUploaded(refreshed.lastUploadedAt);
+      setPendingPush(!!refreshed.pendingPush);
     } catch (e: any) { setError(String(e?.message || e)); }
     finally { setSyncing(false); }
   }
@@ -262,7 +279,10 @@ const CloudSyncPanel: React.FC = () => {
     try {
       const mod = await import('../data/syncService');
       await mod.restoreNow();
-      setLast(new Date().toISOString());
+      const refreshed = mod.getStatus();
+      setLast(refreshed.lastSyncedAt);
+      setLastDownloaded(refreshed.lastDownloadedAt);
+      setPendingPush(!!refreshed.pendingPush);
     } catch (e: any) { setError(String(e?.message || e)); }
     finally { setSyncing(false); }
   }
@@ -272,7 +292,25 @@ const CloudSyncPanel: React.FC = () => {
       const mod = await import('../data/syncService');
       await mod.disconnect();
       setConnected(false);
+      setPendingPush(false);
+      setAutoEnabled(false);
     } catch (e: any) { setError(String(e?.message || e)); }
+  }
+
+  async function toggleAutoSync(next: boolean) {
+    setError(undefined);
+    try {
+      const mod = await import('../data/syncService');
+      await mod.setAutoSync(next);
+      setAutoEnabled(next);
+      const refreshed = mod.getStatus();
+      setPendingPush(!!refreshed.pendingPush);
+      setLastDownloaded(refreshed.lastDownloadedAt);
+      setLastUploaded(refreshed.lastUploadedAt);
+      setLast(refreshed.lastSyncedAt);
+    } catch (e: any) {
+      setError(String(e?.message || e));
+    }
   }
 
   return (
@@ -292,9 +330,29 @@ const CloudSyncPanel: React.FC = () => {
         )}
         <div className="ml-auto text-xs opacity-70">{syncing ? 'Syncing…' : last ? `Last: ${new Date(last).toLocaleString()}` : 'Not synced yet'}</div>
       </div>
+      <div className="flex items-center gap-3">
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={autoEnabled}
+            onChange={(e) => toggleAutoSync(e.target.checked)}
+            className="h-4 w-4 rounded border border-slate-600"
+          />
+          Auto Sync（測試）
+        </label>
+        {pendingPush && <span className="text-xs opacity-70">待上傳…</span>}
+      </div>
       <div className="flex items-center gap-2">
         <button className="text-sm px-3 py-1 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50" disabled={!connected || syncing} onClick={doBackup}>Backup Now</button>
         <button className="text-sm px-3 py-1 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50" disabled={!connected || syncing} onClick={doRestore}>Restore</button>
+      </div>
+      <div className="text-xs opacity-60 space-y-1">
+        {lastDownloaded && (
+          <div>最後還原：{new Date(lastDownloaded).toLocaleString()}</div>
+        )}
+        {lastUploaded && (
+          <div>最後上傳：{new Date(lastUploaded).toLocaleString()}</div>
+        )}
       </div>
       {error && <div className="text-xs text-red-400">{error}</div>}
       <div className="text-xs opacity-60">

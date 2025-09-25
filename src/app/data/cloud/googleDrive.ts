@@ -4,6 +4,7 @@
 export interface DriveFileInfo {
   fileId: string;
   modifiedTime?: string;
+  md5Checksum?: string;
 }
 
 async function getAuthToken(interactive = false): Promise<string> {
@@ -39,12 +40,13 @@ async function driveFetch(path: string, init: RequestInit = {}, interactive = fa
   return res;
 }
 
-export async function connect(): Promise<{ ok: boolean }> {
-  // Obtain/refresh token interactively on first connect
-  await getAuthToken(true);
+export async function connect(interactive = true): Promise<{ ok: boolean }> {
+  // Obtain/refresh token. When interactive=false, Chrome 可能返回快取 token 或失敗。
+  await getAuthToken(interactive);
   await driveFetch(
     `/drive/v3/files?q='appDataFolder'+in+parents&spaces=appDataFolder&fields=files(id)&pageSize=1`,
     {},
+    interactive,
   );
   return { ok: true };
 }
@@ -53,12 +55,16 @@ export async function getFile(name = 'linktrove.json'): Promise<DriveFileInfo | 
   const res = await driveFetch(
     `/drive/v3/files?q='appDataFolder'+in+parents+and+name='${encodeURIComponent(
       name,
-    )}'&spaces=appDataFolder&fields=files(id,name,modifiedTime)&pageSize=1`,
+    )}'&spaces=appDataFolder&fields=files(id,name,modifiedTime,md5Checksum)&pageSize=1`,
   );
   const data = await res.json();
   const f = (data?.files || [])[0];
   if (!f) return null;
-  return { fileId: f.id, modifiedTime: f.modifiedTime };
+  return {
+    fileId: f.id,
+    modifiedTime: f.modifiedTime,
+    md5Checksum: f.md5Checksum,
+  };
 }
 
 export async function download(fileId: string): Promise<string> {
@@ -81,7 +87,11 @@ export async function createOrUpdate(content: string, name = 'linktrove.json'): 
       body,
     });
     const data = await res.json();
-    return { fileId: data.id, modifiedTime: data.modifiedTime };
+    return {
+      fileId: data.id,
+      modifiedTime: data.modifiedTime,
+      md5Checksum: data.md5Checksum,
+    };
   } else {
     // media upload overwrite
     await driveFetch(`/upload/drive/v3/files/${existing.fileId}?uploadType=media`, {
@@ -89,7 +99,15 @@ export async function createOrUpdate(content: string, name = 'linktrove.json'): 
       headers: { 'Content-Type': 'application/json' },
       body: content,
     });
-    return existing;
+    // Fetch updated metadata to capture latest modifiedTime/md5
+    const refreshed = await getFile(name);
+    return (
+      refreshed || {
+        fileId: existing.fileId,
+        modifiedTime: existing.modifiedTime,
+        md5Checksum: existing.md5Checksum,
+      }
+    );
   }
 }
 

@@ -43,35 +43,50 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
   const svc = React.useMemo(() => createStorageService(), []);
   const [templates, setTemplates] = useState<TemplateData[]>([]);
 
-  React.useEffect(() => {
-    (async () => {
-      try {
-        // 先從 chrome.storage.local 讀（設定類），若空再讀 IDB
-        const got: any = await new Promise((resolve) => {
-          try {
-            chrome.storage?.local?.get?.({ templates: [] }, resolve);
-          } catch {
-            resolve({});
-          }
-        });
-        const localTpls: TemplateData[] = Array.isArray(got?.templates)
-          ? got.templates
-          : [];
-        if (localTpls.length > 0) {
-          setTemplates(localTpls);
-          try {
-            await svc.saveTemplates(localTpls);
-          } catch {}
-        } else {
-          const list = await svc.loadTemplates();
-          setTemplates(list);
-          try {
-            chrome.storage?.local?.set?.({ templates: list });
-          } catch {}
+  const loadTemplates = React.useCallback(async () => {
+    try {
+      const got: any = await new Promise((resolve) => {
+        try {
+          chrome.storage?.local?.get?.({ templates: [] }, resolve);
+        } catch {
+          resolve({});
         }
-      } catch {}
-    })();
+      });
+      const localTpls: TemplateData[] = Array.isArray(got?.templates)
+        ? got.templates
+        : [];
+      if (localTpls.length > 0) {
+        setTemplates(localTpls);
+        try {
+          await svc.saveTemplates(localTpls);
+        } catch {}
+      } else {
+        const list = await svc.loadTemplates();
+        setTemplates(list);
+        try {
+          chrome.storage?.local?.set?.({ templates: list });
+        } catch {}
+      }
+    } catch {}
   }, [svc]);
+
+  React.useEffect(() => {
+    void loadTemplates();
+  }, [loadTemplates]);
+
+  React.useEffect(() => {
+    const onRestore = () => {
+      void loadTemplates();
+    };
+    try {
+      window.addEventListener('cloudsync:restored', onRestore as any);
+    } catch {}
+    return () => {
+      try {
+        window.removeEventListener('cloudsync:restored', onRestore as any);
+      } catch {}
+    };
+  }, [loadTemplates]);
 
   const persist = async (list: TemplateData[]) => {
     setTemplates(list);
@@ -90,10 +105,7 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
   const actions = useMemo(
     () => ({
       async reload() {
-        try {
-          const list = await svc.loadTemplates();
-          setTemplates(list);
-        } catch {}
+        await loadTemplates();
       },
       async add(name: string) {
         const nn = (name || '').trim() || 'Template';
@@ -251,7 +263,7 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
         );
       },
     }),
-    [templates]
+    [templates, loadTemplates, svc]
   );
 
   const value = useMemo<TemplatesCtx>(

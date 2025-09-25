@@ -112,6 +112,20 @@ export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({
     },
   }), [organizations, selectedOrgId]);
 
+  React.useEffect(() => {
+    const onRestore = () => {
+      void actions.reload();
+    };
+    try {
+      window.addEventListener('cloudsync:restored', onRestore as any);
+    } catch {}
+    return () => {
+      try {
+        window.removeEventListener('cloudsync:restored', onRestore as any);
+      } catch {}
+    };
+  }, [actions]);
+
   const setCurrentOrganization = (id: string) => {
     // 立即更新 context，避免任何載入流程覆寫
     setSelectedOrgId(id);
