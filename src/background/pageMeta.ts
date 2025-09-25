@@ -215,6 +215,7 @@ function pageExtractor() {
     siteName = location.hostname.replace(/^www\./, '');
     _siteSrc = 'hostname';
   }
+
   // Author: meta[name=author] → meta[property=article:author] → meta[property=books:author] → meta[property=og:novel:author] → link[rel=author] → JSON-LD → microdata
   let _authorSrc = '';
   let author = get('author', 'name');
@@ -263,7 +264,11 @@ function pageExtractor() {
       _authorSrc = 'itemprop[author]';
     }
   }
-  const meta = { title, description, siteName, author, url: location.href };
+  // Ensure siteName is not empty string
+  const finalSiteName = siteName && siteName.trim() ? siteName.trim() : undefined;
+
+  const meta = { title, description, siteName: finalSiteName, author, url: location.href };
+
   // Book/Novel specific extractions
   const novelBookName = get('og:novel:book_name');
   const novelAuthor = get('og:novel:author');
@@ -329,40 +334,150 @@ function pageExtractor() {
 }
 
 export async function extractMetaForTab(
-  tabId: number
+  tabId: number,
+  retries = 2
 ): Promise<PageMeta | undefined> {
-  try {
-    if (!hasChrome() || !(chrome as any).scripting?.executeScript)
-      return undefined;
-    const [{ result }] = await chrome.scripting.executeScript({
-      target: { tabId },
-      func: pageExtractor,
-    } as any);
-    const meta = (result || {}) as PageMeta;
-    if (meta && meta.url) await saveMetaCache(meta.url, meta);
-    return meta;
-  } catch {
-    return undefined;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      if (!hasChrome() || !(chrome as any).scripting?.executeScript) {
+        return undefined;
+      }
+
+      // Check tab status before attempting extraction
+      const tabInfo = await new Promise<chrome.tabs.Tab | undefined>((resolve) => {
+        chrome.tabs.get(tabId, (tab) => {
+          if (chrome.runtime.lastError) {
+            resolve(undefined);
+          } else {
+            resolve(tab);
+          }
+        });
+      });
+
+      if (!tabInfo) {
+        continue;
+      }
+
+      // Skip problematic tab states
+      if ((tabInfo as any).discarded) {
+        // Try to reactivate the tab
+        try {
+          await new Promise<void>((resolve) => {
+            chrome.tabs.update(tabId, { active: true }, () => {
+              resolve();
+            });
+          });
+          // Wait a bit for reactivation
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (e) {
+          // Ignore reactivation errors
+        }
+      }
+
+      // Skip chrome:// and extension:// URLs
+      if (tabInfo.url && (tabInfo.url.startsWith('chrome://') || tabInfo.url.startsWith('chrome-extension://'))) {
+        return undefined;
+      }
+
+      // Execute script with detailed error handling
+      const [{ result }] = await chrome.scripting.executeScript({
+        target: { tabId },
+        func: pageExtractor,
+      } as any);
+
+      const meta = (result || {}) as PageMeta;
+      if (meta && meta.url) {
+        await saveMetaCache(meta.url, meta);
+      }
+      return meta;
+    } catch (error: any) {
+      const errorMsg = error?.message || String(error);
+
+      // Don't retry for certain permanent errors
+      if (errorMsg.includes('Cannot access') || errorMsg.includes('Insufficient permissions')) {
+        break;
+      }
+
+      // Wait before retry (exponential backoff)
+      if (attempt < retries) {
+        const delayMs = Math.min(1000 * Math.pow(2, attempt), 3000);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
   }
+
+  return undefined;
 }
 
-export async function waitForTabComplete(tabId: number): Promise<void> {
+export async function waitForTabComplete(
+  tabId: number,
+  timeoutMs = 10000
+): Promise<void> {
   return new Promise((resolve) => {
+    let resolved = false;
+    const safeResolve = () => {
+      if (!resolved) {
+        resolved = true;
+        resolve();
+      }
+    };
+
+    // Set timeout to avoid infinite waiting
+    const timeoutId = setTimeout(() => {
+      safeResolve();
+    }, timeoutMs);
+
     try {
-      chrome.tabs.get(tabId, (t) => {
-        if (!t || (t as any).status === 'complete') return resolve();
-        const handler = (id: number, changeInfo: any) => {
-          if (id === tabId && changeInfo?.status === 'complete') {
-            try {
-              chrome.tabs.onUpdated.removeListener(handler as any);
-            } catch {}
-            resolve();
+      chrome.tabs.get(tabId, (tab) => {
+        if (chrome.runtime.lastError) {
+          clearTimeout(timeoutId);
+          safeResolve();
+          return;
+        }
+
+        if (!tab) {
+          clearTimeout(timeoutId);
+          safeResolve();
+          return;
+        }
+
+        // Check if already complete or in a final state
+        const status = (tab as any).status;
+        if (status === 'complete' || !status) {
+          clearTimeout(timeoutId);
+          safeResolve();
+          return;
+        }
+
+        // Wait for completion with additional DOM ready check
+        const handler = (id: number, changeInfo: any, updatedTab: chrome.tabs.Tab) => {
+          if (id !== tabId) return;
+
+          const newStatus = changeInfo?.status;
+          if (newStatus === 'complete') {
+            // Wait a bit more for DOM and meta tags to be fully loaded
+            setTimeout(() => {
+              try {
+                chrome.tabs.onUpdated.removeListener(handler as any);
+              } catch {}
+              clearTimeout(timeoutId);
+              safeResolve();
+            }, 1000); // Additional 1s wait for DOM/meta ready
           }
         };
+
         chrome.tabs.onUpdated.addListener(handler as any);
+
+        // Clean up listener on timeout
+        setTimeout(() => {
+          try {
+            chrome.tabs.onUpdated.removeListener(handler as any);
+          } catch {}
+        }, timeoutMs);
       });
-    } catch {
-      resolve();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      safeResolve();
     }
   });
 }

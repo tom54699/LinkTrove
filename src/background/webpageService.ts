@@ -155,6 +155,20 @@ export function createWebpageService(deps?: {
     const title = cleanTitle(tab.title, url);
     const favicon = tab.favIconUrl ?? '';
     const now = nowIso();
+
+    // 短時窗去重（1 秒內同 URL 忽略第二次新增）
+    try {
+      const nowMs = Date.now();
+      const last = recentlyAdded.get(url) || 0;
+      if (nowMs - last < 1000) {
+        // 若在短時間內，再嘗試載入現有清單，直接回傳第一個同 URL 的項目
+        const cur = await loadWebpages();
+        const exist = cur.find((w) => w.url === url);
+        if (exist) return exist;
+      }
+      recentlyAdded.set(url, nowMs);
+    } catch {}
+
     const list = await loadWebpages();
     const item: WebpageData = {
       id: genId(url),
