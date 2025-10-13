@@ -6,6 +6,8 @@ import { TemplatesManager } from '../templates/TemplatesManager';
 import { useWebpages } from '../webpages/WebpagesProvider';
 import { useCategories } from '../sidebar/categories';
 import { useTemplates } from '../templates/TemplatesProvider';
+import { ConflictDialog } from './ConflictDialog';
+import type { ConflictInfo } from '../data/conflictDetection';
 
 type Section = 'data' | 'templates';
 // 擴充：Cloud Sync 區塊
@@ -226,6 +228,8 @@ const CloudSyncPanel: React.FC = () => {
   const [pendingPush, setPendingPush] = React.useState(false);
   const [lastDownloaded, setLastDownloaded] = React.useState<string | undefined>(undefined);
   const [lastUploaded, setLastUploaded] = React.useState<string | undefined>(undefined);
+  const [conflictInfo, setConflictInfo] = React.useState<ConflictInfo | null>(null);
+  const [conflictOperation, setConflictOperation] = React.useState<'auto-sync' | 'manual-merge' | null>(null);
 
   React.useEffect(() => {
     (async () => {
@@ -258,6 +262,43 @@ const CloudSyncPanel: React.FC = () => {
       setPendingPush(!!refreshed.pendingPush);
       setLastDownloaded(refreshed.lastDownloadedAt);
       setLastUploaded(refreshed.lastUploadedAt);
+
+      // After connect, check if Auto Sync was auto-enabled and cloud has data
+      // If so, detect conflicts before first sync
+      if (refreshed.auto) {
+        try {
+          const [storageModule, driveModule, conflictModule] = await Promise.all([
+            import('../../background/storageService'),
+            import('../data/cloud/googleDrive'),
+            import('../data/conflictDetection'),
+          ]);
+
+          const fileInfo = await driveModule.getFile();
+          if (!fileInfo) {
+            // No cloud backup, no conflict
+            return;
+          }
+
+          // Get local and remote data
+          const storage = storageModule.createStorageService();
+          const localData = await (storage as any).exportData();
+          const localPayload = JSON.parse(localData);
+          const remoteText = await driveModule.download(fileInfo.fileId);
+          const remotePayload = JSON.parse(remoteText);
+
+          // Detect conflict
+          const conflict = conflictModule.detectConflict(localPayload, remotePayload);
+
+          if (conflict.hasConflict) {
+            // Show conflict dialog
+            setConflictInfo(conflict);
+            setConflictOperation('auto-sync');
+          }
+        } catch (conflictError: any) {
+          // Ignore conflict detection errors, don't block connection
+          console.warn('Conflict detection failed:', conflictError);
+        }
+      }
     } catch (e: any) {
       setError(String(e?.message || e));
     }
@@ -275,16 +316,97 @@ const CloudSyncPanel: React.FC = () => {
     finally { setSyncing(false); }
   }
   async function doRestore(merge = true) {
+    // 完全還原模式（非合併） - 不檢測衝突，直接執行
+    if (!merge) {
+      setSyncing(true); setError(undefined);
+      try {
+        const mod = await import('../data/syncService');
+        await mod.restoreNow(undefined, false);
+        const refreshed = mod.getStatus();
+        setLast(refreshed.lastSyncedAt);
+        setLastDownloaded(refreshed.lastDownloadedAt);
+        setPendingPush(!!refreshed.pendingPush);
+      } catch (e: any) { setError(String(e?.message || e)); }
+      finally { setSyncing(false); }
+      return;
+    }
+
+    // 合併模式 - 檢測衝突
+    setError(undefined);
+    try {
+      const [storageModule, driveModule, conflictModule] = await Promise.all([
+        import('../../background/storageService'),
+        import('../data/cloud/googleDrive'),
+        import('../data/conflictDetection'),
+      ]);
+
+      // 獲取本地與雲端資料
+      const storage = storageModule.createStorageService();
+      const localData = await (storage as any).exportData();
+      const localPayload = JSON.parse(localData);
+
+      const fileInfo = await driveModule.getFile();
+      if (!fileInfo) {
+        throw new Error('雲端尚無備份');
+      }
+
+      const remoteText = await driveModule.download(fileInfo.fileId);
+      const remotePayload = JSON.parse(remoteText);
+
+      // 檢測衝突
+      const conflict = conflictModule.detectConflict(localPayload, remotePayload);
+
+      if (!conflict.hasConflict) {
+        // 無衝突，直接合併
+        setSyncing(true);
+        const mod = await import('../data/syncService');
+        await mod.restoreNow(undefined, true);
+        const refreshed = mod.getStatus();
+        setLast(refreshed.lastSyncedAt);
+        setLastDownloaded(refreshed.lastDownloadedAt);
+        setPendingPush(!!refreshed.pendingPush);
+        setSyncing(false);
+      } else {
+        // 有衝突，顯示對話框
+        setConflictInfo(conflict);
+        setConflictOperation('manual-merge');
+      }
+    } catch (e: any) {
+      setError(String(e?.message || e));
+    }
+  }
+
+  async function confirmManualMerge() {
     setSyncing(true); setError(undefined);
     try {
       const mod = await import('../data/syncService');
-      await mod.restoreNow(undefined, merge);
+      await mod.restoreNow(undefined, true);
       const refreshed = mod.getStatus();
       setLast(refreshed.lastSyncedAt);
       setLastDownloaded(refreshed.lastDownloadedAt);
       setPendingPush(!!refreshed.pendingPush);
-    } catch (e: any) { setError(String(e?.message || e)); }
-    finally { setSyncing(false); }
+      setConflictInfo(null);
+      setConflictOperation(null);
+    } catch (e: any) {
+      setError(String(e?.message || e));
+      setConflictInfo(null);
+      setConflictOperation(null);
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  async function backupAndConfirmMerge() {
+    try {
+      // 先備份
+      await doBackup();
+      // 再合併
+      await confirmManualMerge();
+    } catch (e: any) {
+      setError(String(e?.message || e));
+      setConflictInfo(null);
+      setConflictOperation(null);
+    }
   }
   async function doDisconnect() {
     setError(undefined);
@@ -299,17 +421,97 @@ const CloudSyncPanel: React.FC = () => {
 
   async function toggleAutoSync(next: boolean) {
     setError(undefined);
+
+    // 關閉 Auto Sync - 不需要檢測衝突
+    if (!next) {
+      try {
+        const mod = await import('../data/syncService');
+        await mod.setAutoSync(false);
+        setAutoEnabled(false);
+      } catch (e: any) {
+        setError(String(e?.message || e));
+      }
+      return;
+    }
+
+    // 開啟 Auto Sync - 檢測衝突
+    try {
+      const [storageModule, driveModule, conflictModule] = await Promise.all([
+        import('../../background/storageService'),
+        import('../data/cloud/googleDrive'),
+        import('../data/conflictDetection'),
+      ]);
+
+      // 獲取本地與雲端資料
+      const storage = storageModule.createStorageService();
+      const localData = await (storage as any).exportData();
+      const localPayload = JSON.parse(localData);
+
+      const fileInfo = await driveModule.getFile();
+      if (!fileInfo) {
+        // 雲端無備份，直接啟用
+        const mod = await import('../data/syncService');
+        await mod.setAutoSync(true);
+        setAutoEnabled(true);
+        const refreshed = mod.getStatus();
+        setPendingPush(!!refreshed.pendingPush);
+        setLast(refreshed.lastSyncedAt);
+        return;
+      }
+
+      const remoteText = await driveModule.download(fileInfo.fileId);
+      const remotePayload = JSON.parse(remoteText);
+
+      // 檢測衝突
+      const conflict = conflictModule.detectConflict(localPayload, remotePayload);
+
+      if (!conflict.hasConflict) {
+        // 無衝突，直接啟用
+        const mod = await import('../data/syncService');
+        await mod.setAutoSync(true);
+        setAutoEnabled(true);
+        const refreshed = mod.getStatus();
+        setPendingPush(!!refreshed.pendingPush);
+        setLast(refreshed.lastSyncedAt);
+      } else {
+        // 有衝突，顯示對話框
+        setConflictInfo(conflict);
+        setConflictOperation('auto-sync');
+      }
+    } catch (e: any) {
+      setError(String(e?.message || e));
+    }
+  }
+
+  async function confirmAutoSync() {
     try {
       const mod = await import('../data/syncService');
-      await mod.setAutoSync(next);
-      setAutoEnabled(next);
+      await mod.setAutoSync(true);
+      setAutoEnabled(true);
       const refreshed = mod.getStatus();
       setPendingPush(!!refreshed.pendingPush);
       setLastDownloaded(refreshed.lastDownloadedAt);
       setLastUploaded(refreshed.lastUploadedAt);
       setLast(refreshed.lastSyncedAt);
+      setConflictInfo(null);
+      setConflictOperation(null);
     } catch (e: any) {
       setError(String(e?.message || e));
+      setConflictInfo(null);
+      setConflictOperation(null);
+    }
+  }
+
+  async function backupAndConfirmAutoSync() {
+    try {
+      // 先備份
+      await doBackup();
+      // 再啟用 Auto Sync
+      await confirmAutoSync();
+    } catch (e: any) {
+      setError(String(e?.message || e));
+      setConflictInfo(null);
+      setConflictOperation(null);
     }
   }
 
@@ -405,6 +607,32 @@ const CloudSyncPanel: React.FC = () => {
         <div className="text-xs text-red-400 bg-red-900/20 border border-red-700/50 rounded px-3 py-2">
           錯誤：{error}
         </div>
+      )}
+
+      {/* Conflict Dialog */}
+      {conflictInfo && conflictOperation && (
+        <ConflictDialog
+          conflict={conflictInfo}
+          operation={conflictOperation}
+          onConfirm={() => {
+            if (conflictOperation === 'auto-sync') {
+              confirmAutoSync();
+            } else if (conflictOperation === 'manual-merge') {
+              confirmManualMerge();
+            }
+          }}
+          onCancel={() => {
+            setConflictInfo(null);
+            setConflictOperation(null);
+          }}
+          onBackupFirst={() => {
+            if (conflictOperation === 'auto-sync') {
+              backupAndConfirmAutoSync();
+            } else if (conflictOperation === 'manual-merge') {
+              backupAndConfirmMerge();
+            }
+          }}
+        />
       )}
     </div>
   );

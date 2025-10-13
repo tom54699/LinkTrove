@@ -178,8 +178,12 @@ export async function connect(): Promise<void> {
   await drive.connect();
   setLocalStatus({ connected: true, error: undefined });
   ensureStorageListener();
-  if (autoEnabled) {
-    await ensureRemoteFreshness();
+
+  // Auto-enable Auto Sync on first connect, but don't trigger immediate sync
+  // UI layer (SettingsModal) will handle conflict detection after connect
+  if (!autoEnabled) {
+    autoEnabled = true;
+    setLocalStatus({});
   }
 }
 
