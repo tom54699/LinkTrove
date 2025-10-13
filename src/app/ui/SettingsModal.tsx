@@ -220,6 +220,9 @@ const DataPanel: React.FC = () => {
 };
 
 const CloudSyncPanel: React.FC = () => {
+  const { actions: pagesActions } = useWebpages();
+  const { actions: catActions } = useCategories() as any;
+  const { actions: tplActions } = useTemplates();
   const [connected, setConnected] = React.useState(false);
   const [last, setLast] = React.useState<string | undefined>(undefined);
   const [syncing, setSyncing] = React.useState(false);
@@ -230,6 +233,8 @@ const CloudSyncPanel: React.FC = () => {
   const [lastUploaded, setLastUploaded] = React.useState<string | undefined>(undefined);
   const [conflictInfo, setConflictInfo] = React.useState<ConflictInfo | null>(null);
   const [conflictOperation, setConflictOperation] = React.useState<'auto-sync' | 'manual-merge' | null>(null);
+  const [snapshots, setSnapshots] = React.useState<any[]>([]);
+  const [loadingSnapshots, setLoadingSnapshots] = React.useState(false);
 
   React.useEffect(() => {
     (async () => {
@@ -247,8 +252,51 @@ const CloudSyncPanel: React.FC = () => {
         setLastDownloaded(st.lastDownloadedAt);
         setLastUploaded(st.lastUploadedAt);
       } catch {}
+
+      // Load snapshots
+      loadSnapshotsList();
     })();
   }, []);
+
+  async function loadSnapshotsList() {
+    try {
+      const snapshotModule = await import('../data/snapshotService');
+      const list = await snapshotModule.listSnapshots();
+      setSnapshots(list);
+    } catch {
+      setSnapshots([]);
+    }
+  }
+
+  async function doRestoreSnapshot(snapshotId: string) {
+    setLoadingSnapshots(true);
+    setError(undefined);
+    try {
+      const snapshotModule = await import('../data/snapshotService');
+      await snapshotModule.restoreSnapshot(snapshotId);
+
+      // Reload UI data
+      try { await pagesActions.load(); } catch {}
+      try { await catActions?.reload?.(); } catch {}
+      try { await tplActions?.reload?.(); } catch {}
+
+      await loadSnapshotsList();
+    } catch (e: any) {
+      setError(String(e?.message || e));
+    } finally {
+      setLoadingSnapshots(false);
+    }
+  }
+
+  async function doDeleteSnapshot(snapshotId: string) {
+    try {
+      const snapshotModule = await import('../data/snapshotService');
+      await snapshotModule.deleteSnapshot(snapshotId);
+      await loadSnapshotsList();
+    } catch (e: any) {
+      setError(String(e?.message || e));
+    }
+  }
 
   async function doConnect() {
     setError(undefined);
@@ -320,6 +368,15 @@ const CloudSyncPanel: React.FC = () => {
     if (!merge) {
       setSyncing(true); setError(undefined);
       try {
+        // Create snapshot before full restore
+        try {
+          const snapshotModule = await import('../data/snapshotService');
+          await snapshotModule.createSnapshot('before-restore');
+        } catch (snapshotError) {
+          console.warn('Failed to create snapshot:', snapshotError);
+          // Don't block restore operation if snapshot fails
+        }
+
         const mod = await import('../data/syncService');
         await mod.restoreNow(undefined, false);
         const refreshed = mod.getStatus();
@@ -379,6 +436,15 @@ const CloudSyncPanel: React.FC = () => {
   async function confirmManualMerge() {
     setSyncing(true); setError(undefined);
     try {
+      // Create snapshot before merge
+      try {
+        const snapshotModule = await import('../data/snapshotService');
+        await snapshotModule.createSnapshot('before-merge');
+      } catch (snapshotError) {
+        console.warn('Failed to create snapshot:', snapshotError);
+        // Don't block merge operation if snapshot fails
+      }
+
       const mod = await import('../data/syncService');
       await mod.restoreNow(undefined, true);
       const refreshed = mod.getStatus();
@@ -608,6 +674,65 @@ const CloudSyncPanel: React.FC = () => {
           錯誤：{error}
         </div>
       )}
+
+      {/* Local Snapshots */}
+      <div className="border-t border-slate-700 pt-4">
+        <div className="text-sm font-medium mb-2">本地快照</div>
+        <div className="text-xs opacity-70 mb-3">
+          在執行危險操作（完全還原/合併）前自動建立快照，可用於回復誤操作
+        </div>
+
+        {snapshots.length === 0 ? (
+          <div className="text-xs opacity-60 px-3 py-2 bg-slate-800/30 rounded border border-slate-700">
+            尚無快照
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {snapshots.map((snapshot) => (
+              <div key={snapshot.id} className="px-3 py-2 bg-slate-800/30 rounded border border-slate-700">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <div className="text-xs font-medium">
+                      {new Date(snapshot.createdAt).toLocaleString('zh-TW', { hour12: false })}
+                    </div>
+                    <div className="text-xs opacity-60 mt-1">
+                      {snapshot.reason === 'before-restore' && '完全還原前'}
+                      {snapshot.reason === 'before-merge' && '合併前'}
+                      {snapshot.reason === 'manual' && '手動建立'}
+                      {' · '}
+                      {snapshot.summary.webpages} 網頁, {snapshot.summary.categories} 分類
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      className="text-xs px-2 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                      disabled={loadingSnapshots}
+                      onClick={() => {
+                        if (window.confirm('確定要恢復此快照？當前資料將被替換。')) {
+                          doRestoreSnapshot(snapshot.id);
+                        }
+                      }}
+                    >
+                      恢復
+                    </button>
+                    <button
+                      className="text-xs px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50"
+                      disabled={loadingSnapshots}
+                      onClick={() => {
+                        if (window.confirm('確定要刪除此快照？')) {
+                          doDeleteSnapshot(snapshot.id);
+                        }
+                      }}
+                    >
+                      刪除
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Conflict Dialog */}
       {conflictInfo && conflictOperation && (
