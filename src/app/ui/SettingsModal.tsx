@@ -274,11 +274,11 @@ const CloudSyncPanel: React.FC = () => {
     } catch (e: any) { setError(String(e?.message || e)); }
     finally { setSyncing(false); }
   }
-  async function doRestore() {
+  async function doRestore(merge = true) {
     setSyncing(true); setError(undefined);
     try {
       const mod = await import('../data/syncService');
-      await mod.restoreNow();
+      await mod.restoreNow(undefined, merge);
       const refreshed = mod.getStatus();
       setLast(refreshed.lastSyncedAt);
       setLastDownloaded(refreshed.lastDownloadedAt);
@@ -347,15 +347,24 @@ const CloudSyncPanel: React.FC = () => {
               立即備份
             </button>
             <button
+              className="text-sm px-3 py-1.5 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
+              disabled={!connected || syncing}
+              onClick={() => doRestore(true)}
+              title="合併雲端資料到本地（保留兩邊較新的版本）"
+            >
+              合併雲端資料
+            </button>
+            <button
               className="text-sm px-3 py-1.5 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50"
               disabled={!connected || syncing}
-              onClick={doRestore}
+              onClick={() => doRestore(false)}
+              title="完全覆蓋本地資料（謹慎使用）"
             >
-              從雲端還原
+              完全還原
             </button>
           </div>
           <div className="text-xs opacity-60 mt-2">
-            備份：上傳本地資料到雲端（覆蓋） / 還原：下載雲端資料（覆蓋本地）
+            備份：上傳本地到雲端（覆蓋） / 合併：保留兩邊較新的版本 / 完全還原：雲端覆蓋本地
           </div>
         </div>
       )}
@@ -378,8 +387,8 @@ const CloudSyncPanel: React.FC = () => {
             </div>
           </label>
           {autoEnabled && (
-            <div className="mt-2 px-3 py-2 rounded bg-amber-900/20 border border-amber-700/50 text-xs text-amber-200">
-              ⚠️ 目前採「整檔覆蓋」策略：開啟前建議先手動備份或還原，確保資料一致
+            <div className="mt-2 px-3 py-2 rounded bg-emerald-900/20 border border-emerald-700/50 text-xs text-emerald-200">
+              ✓ 已啟用 LWW 合併：自動保留本地與雲端較新的版本，降低資料衝突風險
             </div>
           )}
         </div>

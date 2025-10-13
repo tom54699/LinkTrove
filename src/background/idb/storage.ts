@@ -280,6 +280,7 @@ export function createIdbStorageService(): StorageService {
       organizations,
       settings,
       orders,
+      exportedAt: new Date().toISOString(),
     } as any;
     return JSON.stringify(payload);
   }

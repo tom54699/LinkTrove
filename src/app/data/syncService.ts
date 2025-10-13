@@ -2,6 +2,7 @@ import { createExportImportService } from './exportImport';
 import { createStorageService } from '../../background/storageService';
 import * as drive from './cloud/googleDrive';
 import type { DriveFileInfo } from './cloud/googleDrive';
+import { mergeLWW, type ExportPayload } from './mergeService';
 
 type SyncStatus = {
   connected: boolean;
@@ -143,7 +144,8 @@ async function ensureRemoteFreshness() {
     const info = await drive.getFile();
     if (!info) return;
     if (!remoteIsNewer(info)) return;
-    await restoreNow(info);
+    // Use merge mode for auto sync to preserve local changes
+    await restoreNow(info, true);
   } catch (error) {
     const message = (error as any)?.message || String(error);
     setLocalStatus({ error: message });
@@ -212,15 +214,42 @@ export async function backupNow(): Promise<void> {
   }
 }
 
-export async function restoreNow(info?: DriveFileInfo): Promise<void> {
+export async function restoreNow(info?: DriveFileInfo, merge = false): Promise<void> {
   const storage = createStorageService();
   setLocalStatus({ syncing: true, error: undefined });
   restoring = true;
   try {
     const fileInfo = info ?? (await drive.getFile());
     if (!fileInfo) throw new Error('雲端尚無備份');
-    const text = await drive.download(fileInfo.fileId);
-    await (storage as any).importData(text);
+    const remoteText = await drive.download(fileInfo.fileId);
+
+    if (merge) {
+      // LWW merge mode
+      const [localText, remoteData] = await Promise.all([
+        (storage as any).exportData(),
+        Promise.resolve(remoteText),
+      ]);
+      const local: ExportPayload = JSON.parse(localText);
+      const remote: ExportPayload = JSON.parse(remoteData);
+      const merged = mergeLWW(local, remote);
+
+      // Write merged data back
+      const mergedPayload = {
+        schemaVersion: 1,
+        webpages: merged.webpages,
+        categories: merged.categories,
+        templates: merged.templates,
+        subcategories: merged.subcategories,
+        organizations: merged.organizations,
+        settings: merged.settings,
+        orders: merged.orders,
+        exportedAt: new Date().toISOString(),
+      };
+      await (storage as any).importData(JSON.stringify(mergedPayload));
+    } else {
+      // Full replace mode (original behavior)
+      await (storage as any).importData(remoteText);
+    }
     try {
       const [pages, cats, tmpls, orgs] = await Promise.all([
         storage.loadFromLocal().catch(() => []),
