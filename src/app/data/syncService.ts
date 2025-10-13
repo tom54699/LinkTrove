@@ -47,12 +47,15 @@ export function getStatus(): SyncStatus {
 function ensureStorageListener() {
   if (storageListenerAttached) return;
   try {
-    chrome.storage?.onChanged?.addListener?.((changes: any, areaName: string) => {
+    // Listen to IndexedDB changes via custom event (dispatched from db.ts)
+    const handleIdbChange = (e: CustomEvent) => {
       if (!autoEnabled || !status.connected) return;
       if (restoring) return;
-      if (areaName !== 'local') return;
-      if ('webpages' in changes) scheduleAutoBackup();
-    });
+      const stores = e.detail?.stores || [];
+      const dataChanged = stores.some((s: string) => ['webpages', 'categories', 'templates', 'subcategories', 'organizations'].includes(s));
+      if (dataChanged) scheduleAutoBackup();
+    };
+    window.addEventListener('idb:changed', handleIdbChange as any);
     storageListenerAttached = true;
   } catch {
     storageListenerAttached = true;

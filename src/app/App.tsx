@@ -25,6 +25,12 @@ import { GroupsView } from './groups/GroupsView';
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+
+  // Preload syncService to ensure Auto Sync listener is registered
+  React.useEffect(() => {
+    import('./data/syncService').catch(() => {});
+  }, []);
+
   React.useEffect(() => {
     const open = () => setSettingsOpen(true);
     const toggleTheme = () => setTheme(theme === 'dracula' ? 'gruvbox' : 'dracula');

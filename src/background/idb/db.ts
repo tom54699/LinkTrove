@@ -131,12 +131,19 @@ export async function tx<T>(
 ): Promise<T> {
   const db = await openDb();
   const names = Array.isArray(stores) ? stores : [stores];
+  const shouldNotify = mode === 'readwrite' && names.some((n) => n === 'webpages' || n === 'categories' || n === 'templates' || n === 'subcategories' || n === 'organizations');
   return new Promise<T>((resolve, reject) => {
     const tr = db.transaction(names, mode);
     const done = (v: T) => resolve(v);
     const fail = (e: any) => reject(e);
     Promise.resolve(fn(tr)).then(done, fail);
-    tr.oncomplete = () => {};
+    tr.oncomplete = () => {
+      if (shouldNotify) {
+        try {
+          window.dispatchEvent(new CustomEvent('idb:changed', { detail: { stores: names } }));
+        } catch {}
+      }
+    };
     tr.onerror = () => fail(tr.error);
     tr.onabort = () => fail(tr.error || new Error('tx aborted'));
   });

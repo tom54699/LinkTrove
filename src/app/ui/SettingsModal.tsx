@@ -315,49 +315,88 @@ const CloudSyncPanel: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="text-lg font-semibold mb-2">Google Drive 同步</div>
-      <div className="text-sm opacity-80">
-        使用 Google Drive appDataFolder 儲存備份檔（私有，不顯示於雲端硬碟清單）。
+      <div className="text-lg font-semibold mb-2">Google Drive 雲端同步</div>
+      <div className="text-sm opacity-80 mb-3">
+        使用 Google Drive appDataFolder 儲存備份（私有、不顯示於雲端硬碟）
       </div>
-      <div className="flex items-center gap-2">
+
+      {/* Connection Status */}
+      <div className="flex items-center gap-3">
         {connected ? (
           <>
-            <span className="px-2 py-0.5 text-xs rounded bg-emerald-900/40 border border-emerald-700 text-emerald-200">Connected</span>
-            <button className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={doDisconnect}>Disconnect</button>
+            <span className="px-2 py-0.5 text-xs rounded bg-emerald-900/40 border border-emerald-700 text-emerald-200">已連線</span>
+            <button className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={doDisconnect}>中斷連線</button>
           </>
         ) : (
-          <button className="text-sm px-2 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]" onClick={doConnect}>Connect Google</button>
+          <button className="text-sm px-3 py-1.5 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]" onClick={doConnect}>連線 Google Drive</button>
         )}
-        <div className="ml-auto text-xs opacity-70">{syncing ? 'Syncing…' : last ? `Last: ${new Date(last).toLocaleString()}` : 'Not synced yet'}</div>
+        {syncing && <span className="text-xs opacity-70 animate-pulse">同步中…</span>}
+        {pendingPush && !syncing && <span className="text-xs opacity-70">待上傳…</span>}
       </div>
-      <div className="flex items-center gap-3">
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={autoEnabled}
-            onChange={(e) => toggleAutoSync(e.target.checked)}
-            className="h-4 w-4 rounded border border-slate-600"
-          />
-          Auto Sync（測試）
-        </label>
-        {pendingPush && <span className="text-xs opacity-70">待上傳…</span>}
-      </div>
-      <div className="flex items-center gap-2">
-        <button className="text-sm px-3 py-1 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50" disabled={!connected || syncing} onClick={doBackup}>Backup Now</button>
-        <button className="text-sm px-3 py-1 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50" disabled={!connected || syncing} onClick={doRestore}>Restore</button>
-      </div>
-      <div className="text-xs opacity-60 space-y-1">
-        {lastDownloaded && (
-          <div>最後還原：{new Date(lastDownloaded).toLocaleString()}</div>
-        )}
-        {lastUploaded && (
-          <div>最後上傳：{new Date(lastUploaded).toLocaleString()}</div>
-        )}
-      </div>
-      {error && <div className="text-xs text-red-400">{error}</div>}
-      <div className="text-xs opacity-60">
-        注意：首次使用需要登入授權；Restore 會覆蓋本機資料，建議先 Backup。
-      </div>
+
+      {/* Manual Backup/Restore */}
+      {connected && (
+        <div className="border-t border-slate-700 pt-4">
+          <div className="text-sm font-medium mb-2">手動操作</div>
+          <div className="flex items-center gap-2">
+            <button
+              className="text-sm px-3 py-1.5 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50"
+              disabled={!connected || syncing}
+              onClick={doBackup}
+            >
+              立即備份
+            </button>
+            <button
+              className="text-sm px-3 py-1.5 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50"
+              disabled={!connected || syncing}
+              onClick={doRestore}
+            >
+              從雲端還原
+            </button>
+          </div>
+          <div className="text-xs opacity-60 mt-2">
+            備份：上傳本地資料到雲端（覆蓋） / 還原：下載雲端資料（覆蓋本地）
+          </div>
+        </div>
+      )}
+
+      {/* Auto Sync */}
+      {connected && (
+        <div className="border-t border-slate-700 pt-4">
+          <label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              checked={autoEnabled}
+              onChange={(e) => toggleAutoSync(e.target.checked)}
+              className="h-4 w-4 rounded border border-slate-600 mt-0.5"
+            />
+            <div className="flex-1">
+              <div className="text-sm font-medium">自動同步</div>
+              <div className="text-xs opacity-70 mt-1">
+                啟用後，本地變更會自動上傳；啟動時若雲端較新會自動下載
+              </div>
+            </div>
+          </label>
+          {autoEnabled && (
+            <div className="mt-2 px-3 py-2 rounded bg-amber-900/20 border border-amber-700/50 text-xs text-amber-200">
+              ⚠️ 目前採「整檔覆蓋」策略：開啟前建議先手動備份或還原，確保資料一致
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Status Info */}
+      {connected && last && (
+        <div className="text-xs opacity-60 border-t border-slate-700 pt-3">
+          最後同步：{new Date(last).toLocaleString('zh-TW', { hour12: false })}
+        </div>
+      )}
+
+      {error && (
+        <div className="text-xs text-red-400 bg-red-900/20 border border-red-700/50 rounded px-3 py-2">
+          錯誤：{error}
+        </div>
+      )}
     </div>
   );
 };
