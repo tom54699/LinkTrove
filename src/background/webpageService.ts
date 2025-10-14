@@ -516,9 +516,14 @@ export function createWebpageService(deps?: {
       if (typeof tid === 'number') {
         void (async () => {
           try {
-            const { waitForTabComplete, extractMetaForTab } = await import('./pageMeta');
+            const { waitForTabComplete, extractMetaForTab, queuePendingExtraction } = await import('./pageMeta');
             try { await waitForTabComplete(tid); } catch {}
             const live = await extractMetaForTab(tid);
+
+            // If extraction failed (likely due to sleeping page), queue for later
+            if (!live) {
+              queuePendingExtraction(tid, item.url, item.id);
+            }
             // 1) note（description）補齊（僅在目前為空時）
             try {
               const fresh = await storage.loadFromLocal();

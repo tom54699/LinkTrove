@@ -34,6 +34,14 @@ async function boot() {
     if (!started) {
       await tabsManager.start();
       started = true;
+
+      // Initialize pending meta extraction listeners
+      try {
+        const { initPendingExtractionListeners } = await import('./background/pageMeta');
+        initPendingExtractionListeners();
+      } catch (err) {
+        console.warn('Failed to initialize pending extraction listeners:', err);
+      }
     }
   } catch (err) {
     console.error('Failed to start tabs manager', err);

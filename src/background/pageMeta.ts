@@ -22,6 +22,17 @@ export type PageMeta = Partial<{
 const CACHE_KEY = 'pageMetaCache';
 const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+// Pending meta extraction queue for discarded/sleeping tabs
+interface PendingExtraction {
+  tabId: number;
+  url: string;
+  webpageId: string;
+  addedAt: number;
+}
+
+const pendingExtractions = new Map<number, PendingExtraction>();
+const PENDING_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
 function hasChrome() {
   return (
     typeof (globalThis as any).chrome !== 'undefined' &&
@@ -503,4 +514,87 @@ export function urlsRoughlyEqual(a: string, b: string): boolean {
   } catch {
     return a === b;
   }
+}
+
+/**
+ * Queue meta extraction for later when tab is discarded/sleeping
+ */
+export function queuePendingExtraction(tabId: number, url: string, webpageId: string): void {
+  pendingExtractions.set(tabId, {
+    tabId,
+    url,
+    webpageId,
+    addedAt: Date.now(),
+  });
+  console.log(`[pageMeta] Queued meta extraction for tab ${tabId} (sleeping page)`);
+}
+
+/**
+ * Try to extract meta for pending tabs (called when tab becomes active)
+ */
+export async function processPendingExtraction(tabId: number): Promise<void> {
+  const pending = pendingExtractions.get(tabId);
+  if (!pending) return;
+
+  // Check if expired
+  if (Date.now() - pending.addedAt > PENDING_TTL_MS) {
+    pendingExtractions.delete(tabId);
+    console.log(`[pageMeta] Pending extraction expired for tab ${tabId}`);
+    return;
+  }
+
+  console.log(`[pageMeta] Processing pending extraction for tab ${tabId}`);
+
+  try {
+    // Wait a bit for page to fully wake up
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const meta = await extractMetaForTab(tabId, 2); // Fewer retries since tab is now active
+    if (meta && meta.url) {
+      // Update webpage with extracted meta
+      const { updateWebpage } = await import('./webpageService');
+      await updateWebpage(pending.webpageId, { meta: meta as any } as any);
+      console.log(`[pageMeta] Successfully extracted meta for tab ${tabId} after wake-up`);
+    }
+    pendingExtractions.delete(tabId);
+  } catch (error) {
+    console.warn(`[pageMeta] Failed to process pending extraction for tab ${tabId}:`, error);
+    pendingExtractions.delete(tabId);
+  }
+}
+
+/**
+ * Initialize tab listeners for pending extractions
+ */
+export function initPendingExtractionListeners(): void {
+  if (!hasChrome()) return;
+
+  // Listen for tab activation
+  try {
+    chrome.tabs.onActivated.addListener(async (activeInfo) => {
+      await processPendingExtraction(activeInfo.tabId);
+    });
+
+    chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
+      // When tab becomes active or completes loading
+      if (changeInfo.status === 'complete' || changeInfo.discarded === false) {
+        await processPendingExtraction(tabId);
+      }
+    });
+
+    console.log('[pageMeta] Pending extraction listeners initialized');
+  } catch (error) {
+    console.warn('[pageMeta] Failed to initialize listeners:', error);
+  }
+
+  // Cleanup expired entries every 5 minutes
+  setInterval(() => {
+    const now = Date.now();
+    for (const [tabId, pending] of pendingExtractions.entries()) {
+      if (now - pending.addedAt > PENDING_TTL_MS) {
+        pendingExtractions.delete(tabId);
+        console.log(`[pageMeta] Cleaned up expired pending extraction for tab ${tabId}`);
+      }
+    }
+  }, 5 * 60 * 1000);
 }
