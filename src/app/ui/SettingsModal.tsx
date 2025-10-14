@@ -238,6 +238,7 @@ const CloudSyncPanel: React.FC = () => {
   const [gcStats, setGcStats] = React.useState<{ totalTombstones: number; oldestTombstone?: string } | null>(null);
   const [loadingGC, setLoadingGC] = React.useState(false);
   const [gcResult, setGcResult] = React.useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = React.useState<{ type: 'gc' | 'restore-snapshot' | 'delete-snapshot'; snapshotId?: string } | null>(null);
 
   // Helper to load sync status
   const loadSyncStatus = React.useCallback(async () => {
@@ -294,6 +295,7 @@ const CloudSyncPanel: React.FC = () => {
   async function doRestoreSnapshot(snapshotId: string) {
     setLoadingSnapshots(true);
     setError(undefined);
+    setConfirmDialog(null);
     try {
       const snapshotModule = await import('../data/snapshotService');
       await snapshotModule.restoreSnapshot(snapshotId);
@@ -312,6 +314,7 @@ const CloudSyncPanel: React.FC = () => {
   }
 
   async function doDeleteSnapshot(snapshotId: string) {
+    setConfirmDialog(null);
     try {
       const snapshotModule = await import('../data/snapshotService');
       await snapshotModule.deleteSnapshot(snapshotId);
@@ -332,13 +335,10 @@ const CloudSyncPanel: React.FC = () => {
   }
 
   async function doRunGC() {
-    if (!window.confirm('確定要清理超過 30 天的已刪除項目？此操作不可回復。')) {
-      return;
-    }
-
     setLoadingGC(true);
     setError(undefined);
     setGcResult(null);
+    setConfirmDialog(null);
 
     try {
       const gcModule = await import('../data/gcService');
@@ -762,7 +762,7 @@ const CloudSyncPanel: React.FC = () => {
         <button
           className="text-sm px-3 py-1.5 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50"
           disabled={loadingGC || (gcStats?.totalTombstones === 0)}
-          onClick={doRunGC}
+          onClick={() => setConfirmDialog({ type: 'gc' })}
         >
           {loadingGC ? '清理中…' : '執行 GC'}
         </button>
@@ -806,22 +806,14 @@ const CloudSyncPanel: React.FC = () => {
                     <button
                       className="text-xs px-2 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
                       disabled={loadingSnapshots}
-                      onClick={() => {
-                        if (window.confirm('確定要恢復此快照？當前資料將被替換。')) {
-                          doRestoreSnapshot(snapshot.id);
-                        }
-                      }}
+                      onClick={() => setConfirmDialog({ type: 'restore-snapshot', snapshotId: snapshot.id })}
                     >
                       恢復
                     </button>
                     <button
                       className="text-xs px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50"
                       disabled={loadingSnapshots}
-                      onClick={() => {
-                        if (window.confirm('確定要刪除此快照？')) {
-                          doDeleteSnapshot(snapshot.id);
-                        }
-                      }}
+                      onClick={() => setConfirmDialog({ type: 'delete-snapshot', snapshotId: snapshot.id })}
                     >
                       刪除
                     </button>
@@ -857,6 +849,56 @@ const CloudSyncPanel: React.FC = () => {
             }
           }}
         />
+      )}
+
+      {/* Confirm Dialog */}
+      {confirmDialog && (
+        <div
+          className="fixed inset-0 z-[10001] bg-black/60 flex items-center justify-center p-4"
+          onClick={() => setConfirmDialog(null)}
+        >
+          <div
+            className="rounded border border-slate-700 bg-[var(--panel)] w-[460px] max-w-[95vw]"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Confirm Action"
+          >
+            <div className="px-4 py-3 border-b border-slate-700">
+              <div className="text-base font-semibold">
+                {confirmDialog.type === 'gc' && '確認執行 GC'}
+                {confirmDialog.type === 'restore-snapshot' && '確認恢復快照'}
+                {confirmDialog.type === 'delete-snapshot' && '確認刪除快照'}
+              </div>
+            </div>
+            <div className="px-4 py-4 text-sm opacity-90">
+              {confirmDialog.type === 'gc' && '確定要清理超過 30 天的已刪除項目？此操作不可回復。'}
+              {confirmDialog.type === 'restore-snapshot' && '確定要恢復此快照？當前資料將被替換。'}
+              {confirmDialog.type === 'delete-snapshot' && '確定要刪除此快照？'}
+            </div>
+            <div className="px-4 py-3 border-t border-slate-700 flex items-center justify-end gap-2">
+              <button
+                className="px-3 py-1.5 rounded text-sm border border-slate-600 hover:bg-slate-800"
+                onClick={() => setConfirmDialog(null)}
+              >
+                取消
+              </button>
+              <button
+                className="px-3 py-1.5 rounded text-sm border border-red-600 text-red-400 hover:bg-red-900/30"
+                onClick={() => {
+                  if (confirmDialog.type === 'gc') {
+                    doRunGC();
+                  } else if (confirmDialog.type === 'restore-snapshot' && confirmDialog.snapshotId) {
+                    doRestoreSnapshot(confirmDialog.snapshotId);
+                  } else if (confirmDialog.type === 'delete-snapshot' && confirmDialog.snapshotId) {
+                    doDeleteSnapshot(confirmDialog.snapshotId);
+                  }
+                }}
+              >
+                確認
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
