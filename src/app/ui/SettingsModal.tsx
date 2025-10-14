@@ -239,30 +239,47 @@ const CloudSyncPanel: React.FC = () => {
   const [loadingGC, setLoadingGC] = React.useState(false);
   const [gcResult, setGcResult] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    (async () => {
-      try {
-        const got: any = await new Promise((resolve) => {
-          try { chrome.storage?.local?.get?.({ 'cloudSync.status': {} }, resolve); } catch { resolve({}); }
-        });
-        const st = got?.['cloudSync.status'] || {};
-        setConnected(!!st.connected);
-        setLast(st.lastSyncedAt);
-        setSyncing(!!st.syncing);
-        setError(st.error);
-        setAutoEnabled(!!st.auto);
-        setPendingPush(!!st.pendingPush);
-        setLastDownloaded(st.lastDownloadedAt);
-        setLastUploaded(st.lastUploadedAt);
-      } catch {}
-
-      // Load snapshots
-      loadSnapshotsList();
-
-      // Load GC stats
-      loadGCStats();
-    })();
+  // Helper to load sync status
+  const loadSyncStatus = React.useCallback(async () => {
+    try {
+      const got: any = await new Promise((resolve) => {
+        try { chrome.storage?.local?.get?.({ 'cloudSync.status': {} }, resolve); } catch { resolve({}); }
+      });
+      const st = got?.['cloudSync.status'] || {};
+      setConnected(!!st.connected);
+      setLast(st.lastSyncedAt);
+      setSyncing(!!st.syncing);
+      setError(st.error);
+      setAutoEnabled(!!st.auto);
+      setPendingPush(!!st.pendingPush);
+      setLastDownloaded(st.lastDownloadedAt);
+      setLastUploaded(st.lastUploadedAt);
+    } catch {}
   }, []);
+
+  React.useEffect(() => {
+    // Initial load
+    loadSyncStatus();
+    loadSnapshotsList();
+    loadGCStats();
+
+    // Listen to chrome.storage changes
+    const listener = (changes: any, areaName: string) => {
+      if (areaName === 'local' && changes['cloudSync.status']) {
+        loadSyncStatus();
+      }
+    };
+
+    try {
+      chrome.storage?.onChanged?.addListener?.(listener);
+    } catch {}
+
+    return () => {
+      try {
+        chrome.storage?.onChanged?.removeListener?.(listener);
+      } catch {}
+    };
+  }, [loadSyncStatus]);
 
   async function loadSnapshotsList() {
     try {

@@ -360,6 +360,7 @@ export async function extractMetaForTab(
 
       // Skip problematic tab states
       if ((tabInfo as any).discarded) {
+        console.log(`[pageMeta] Tab ${tabId} is discarded/sleeping, attempting to reactivate...`);
         // Try to reactivate the tab
         try {
           await new Promise<void>((resolve) => {
@@ -369,8 +370,10 @@ export async function extractMetaForTab(
           });
           // Wait a bit for reactivation
           await new Promise(resolve => setTimeout(resolve, 500));
+          console.log(`[pageMeta] Tab ${tabId} reactivated successfully`);
         } catch (e) {
-          // Ignore reactivation errors
+          console.warn(`[pageMeta] Failed to reactivate tab ${tabId}:`, e);
+          // Continue anyway, extraction might still work
         }
       }
 
@@ -393,14 +396,22 @@ export async function extractMetaForTab(
     } catch (error: any) {
       const errorMsg = error?.message || String(error);
 
+      // Log error for debugging
+      console.warn(`[pageMeta] Attempt ${attempt + 1}/${retries} failed for tab ${tabId}:`, errorMsg);
+
       // Don't retry for certain permanent errors
-      if (errorMsg.includes('Cannot access') || errorMsg.includes('Insufficient permissions')) {
+      if (errorMsg.includes('Cannot access') ||
+          errorMsg.includes('Insufficient permissions') ||
+          errorMsg.includes('Extension context invalidated') ||
+          errorMsg.includes('No tab with id')) {
+        console.log(`[pageMeta] Permanent error, skipping retries for tab ${tabId}`);
         break;
       }
 
       // Wait before retry (exponential backoff)
-      if (attempt < retries) {
+      if (attempt < retries - 1) {
         const delayMs = Math.min(1000 * Math.pow(2, attempt), 3000);
+        console.log(`[pageMeta] Retrying in ${delayMs}ms...`);
         await new Promise(resolve => setTimeout(resolve, delayMs));
       }
     }
