@@ -270,7 +270,7 @@ const CloudSyncPanel: React.FC = () => {
         if (changes['cloudSync.status']) {
           loadSyncStatus();
         }
-        if (changes['snapshots']) {
+        if (changes['cloudSync.snapshots']) {
           loadSnapshotsList();
         }
       }

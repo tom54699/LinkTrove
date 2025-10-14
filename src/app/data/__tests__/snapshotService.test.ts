@@ -13,6 +13,8 @@ const mockStorage = {
   'cloudSync.snapshots': [] as Snapshot[],
 };
 
+const storageListeners: Array<(changes: any, areaName: string) => void> = [];
+
 global.chrome = {
   storage: {
     local: {
@@ -31,11 +33,31 @@ global.chrome = {
         }, 0);
       }),
       set: vi.fn((items, callback) => {
-        Object.assign(mockStorage, items);
-        // Ensure callback is called asynchronously
+        const changes: any = {};
+        Object.keys(items).forEach((key) => {
+          const oldValue = mockStorage[key as keyof typeof mockStorage];
+          const newValue = items[key];
+          changes[key] = { oldValue, newValue };
+          Object.assign(mockStorage, items);
+        });
+        // Trigger listeners
         setTimeout(() => {
+          storageListeners.forEach((listener) => {
+            listener(changes, 'local');
+          });
           callback?.();
         }, 0);
+      }),
+    },
+    onChanged: {
+      addListener: vi.fn((listener) => {
+        storageListeners.push(listener);
+      }),
+      removeListener: vi.fn((listener) => {
+        const index = storageListeners.indexOf(listener);
+        if (index > -1) {
+          storageListeners.splice(index, 1);
+        }
       }),
     },
   },
@@ -75,6 +97,7 @@ describe('snapshotService', () => {
   beforeEach(() => {
     // Reset mock storage
     mockStorage['cloudSync.snapshots'] = [];
+    storageListeners.length = 0;
     vi.clearAllMocks();
   });
 
@@ -308,6 +331,118 @@ describe('snapshotService', () => {
     it('should accept "manual" reason', async () => {
       const snapshot = await createSnapshot('manual');
       expect(snapshot.reason).toBe('manual');
+    });
+  });
+
+  describe('chrome.storage.onChanged integration', () => {
+    it('should trigger listener when creating snapshot', async () => {
+      const listener = vi.fn();
+      chrome.storage.onChanged.addListener(listener);
+
+      await createSnapshot('manual');
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'cloudSync.snapshots': expect.objectContaining({
+            newValue: expect.arrayContaining([
+              expect.objectContaining({
+                reason: 'manual',
+              }),
+            ]),
+          }),
+        }),
+        'local'
+      );
+
+      // Verify newValue has the snapshot
+      const callArgs = listener.mock.calls[0];
+      expect(callArgs[0]['cloudSync.snapshots'].newValue).toHaveLength(1);
+      expect(callArgs[0]['cloudSync.snapshots'].newValue[0].reason).toBe('manual');
+    });
+
+    it('should trigger listener when deleting snapshot', async () => {
+      const snapshot = await createSnapshot('before-restore');
+      const listener = vi.fn();
+      chrome.storage.onChanged.addListener(listener);
+
+      await deleteSnapshot(snapshot.id);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'cloudSync.snapshots': expect.objectContaining({
+            oldValue: expect.any(Array),
+            newValue: [],
+          }),
+        }),
+        'local'
+      );
+    });
+
+    it('should trigger listener when clearing all snapshots', async () => {
+      await createSnapshot('manual');
+      await createSnapshot('before-merge');
+      const listener = vi.fn();
+      chrome.storage.onChanged.addListener(listener);
+
+      await clearAllSnapshots();
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'cloudSync.snapshots': expect.objectContaining({
+            oldValue: expect.any(Array),
+            newValue: [],
+          }),
+        }),
+        'local'
+      );
+    });
+
+    it('should verify storage key is cloudSync.snapshots not snapshots', async () => {
+      const listener = vi.fn();
+      chrome.storage.onChanged.addListener(listener);
+
+      await createSnapshot('manual');
+
+      // Verify the key name in listener callback
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'cloudSync.snapshots': expect.any(Object),
+        }),
+        'local'
+      );
+
+      // Should NOT have 'snapshots' key
+      expect(listener).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          'snapshots': expect.any(Object),
+        }),
+        'local'
+      );
+    });
+
+    it('should allow multiple listeners to receive changes', async () => {
+      const listener1 = vi.fn();
+      const listener2 = vi.fn();
+      chrome.storage.onChanged.addListener(listener1);
+      chrome.storage.onChanged.addListener(listener2);
+
+      await createSnapshot('manual');
+
+      expect(listener1).toHaveBeenCalledTimes(1);
+      expect(listener2).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not trigger removed listener', async () => {
+      const listener = vi.fn();
+      chrome.storage.onChanged.addListener(listener);
+      chrome.storage.onChanged.removeListener(listener);
+
+      await createSnapshot('manual');
+
+      expect(listener).not.toHaveBeenCalled();
     });
   });
 });
