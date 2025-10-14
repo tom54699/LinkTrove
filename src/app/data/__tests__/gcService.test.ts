@@ -107,12 +107,9 @@ describe('gcService', () => {
     await storage.loadFromLocal().catch(() => []);
   });
 
-  beforeEach(async () => {
-    await clearAllStores();
-  });
-
   describe('getGCStats', () => {
     it('should return zero tombstones when no deleted items exist', async () => {
+      await clearAllStores();
       const stats = await getGCStats();
 
       expect(stats.totalTombstones).toBe(0);
@@ -125,6 +122,7 @@ describe('gcService', () => {
     });
 
     it('should count deleted webpages', async () => {
+      await clearAllStores();
       await addWebpages([
         {
           id: 'w1',
@@ -158,6 +156,7 @@ describe('gcService', () => {
     });
 
     it('should find oldest tombstone across multiple items', async () => {
+      await clearAllStores();
       await addWebpages([
         {
           id: 'w1',
@@ -192,6 +191,7 @@ describe('gcService', () => {
     });
 
     it('should handle unix timestamp deletedAt', async () => {
+      await clearAllStores();
       const unixTime = 1704499200000; // 2024-01-06T00:00:00.000Z
       await addWebpages([
         {
@@ -217,6 +217,7 @@ describe('gcService', () => {
 
   describe('runGC', () => {
     it('should not clean tombstones newer than retention period', async () => {
+      await clearAllStores();
       const now = new Date();
       const recentDate = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000); // 10 days ago
 
@@ -246,6 +247,7 @@ describe('gcService', () => {
     });
 
     it('should clean tombstones older than retention period', async () => {
+      await clearAllStores();
       const now = new Date();
       const oldDate = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000); // 40 days ago
 
@@ -275,6 +277,7 @@ describe('gcService', () => {
     });
 
     it('should clean only old tombstones and keep recent ones', async () => {
+      await clearAllStores();
       const now = new Date();
       const oldDate = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000); // 40 days ago
       const recentDate = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000); // 10 days ago
@@ -336,6 +339,7 @@ describe('gcService', () => {
     });
 
     it('should not delete active items', async () => {
+      await clearAllStores();
       await addWebpages([
         {
           id: 'w1',
