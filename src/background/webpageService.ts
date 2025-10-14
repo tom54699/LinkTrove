@@ -216,9 +216,21 @@ export function createWebpageService(deps?: {
 
   async function deleteWebpage(id: string) {
     const list = await storage.loadFromLocal();
-    const victim = list.find((w) => w.id === id) as any;
-    const next = list.filter((w) => w.id !== id);
+    const victim = list.find((w) => w.id === id);
+    if (!victim) return;
+
+    // Soft delete: mark as deleted instead of removing
+    const now = new Date().toISOString();
+    const updated = {
+      ...victim,
+      deleted: true,
+      deletedAt: now,
+      updatedAt: now,
+    };
+
+    const next = list.map((w) => (w.id === id ? updated : w));
     await saveWebpages(next);
+
     // Remove from its group's order
     try {
       const gid = victim?.subcategoryId as string | undefined;

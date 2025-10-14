@@ -69,7 +69,9 @@ export function createIdbStorageService(): StorageService {
           });
           const byId = new Map<string, any>();
           for (const r of rows) if (!byId.has(r.id)) byId.set(r.id, r);
-          return Array.from(byId.values()).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+          return Array.from(byId.values())
+            .filter((x) => !x.deleted)
+            .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
         }
       } catch {}
       // 次要路徑：無 by_categoryId 索引時，全取再過濾/排序
@@ -82,7 +84,7 @@ export function createIdbStorageService(): StorageService {
         const byId = new Map<string, any>();
         for (const r of all) if (!byId.has(r.id)) byId.set(r.id, r);
         return Array.from(byId.values())
-          .filter((x) => x.categoryId === categoryId)
+          .filter((x) => x.categoryId === categoryId && !x.deleted)
           .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
       } catch {
         return [];
@@ -361,19 +363,31 @@ export function createIdbStorageService(): StorageService {
       await clearStore('webpages');
       await putAll('webpages', data || []);
     },
-    loadFromLocal: async () => (await getAll('webpages')) as WebpageData[],
+    loadFromLocal: async () => {
+      const all = (await getAll('webpages')) as WebpageData[];
+      // Filter out soft-deleted items
+      return all.filter((w) => !w.deleted);
+    },
     // Replace categories set to ensure deletions persist
     saveToSync: async (data: CategoryData[]) => {
       await clearStore('categories');
       await putAll('categories', data || []);
     },
-    loadFromSync: async () => (await getAll('categories')) as CategoryData[],
+    loadFromSync: async () => {
+      const all = (await getAll('categories')) as CategoryData[];
+      // Filter out soft-deleted items
+      return all.filter((c) => !c.deleted);
+    },
     // Replace templates set to ensure deletions persist
     saveTemplates: async (data: TemplateData[]) => {
       await clearStore('templates');
       await putAll('templates', data || []);
     },
-    loadTemplates: async () => (await getAll('templates')) as TemplateData[],
+    loadTemplates: async () => {
+      const all = (await getAll('templates')) as TemplateData[];
+      // Filter out soft-deleted items
+      return all.filter((t) => !t.deleted);
+    },
     exportData,
     importData,
     // Subcategories (groups)
@@ -627,10 +641,11 @@ export function createIdbStorageService(): StorageService {
     listOrganizations: async () => {
       const list = (await getAll('organizations' as any).catch(() => [])) as any[];
       const arr = Array.isArray(list) ? list.slice() : [];
-      arr.sort(
+      const filtered = arr.filter((o: any) => !o.deleted);
+      filtered.sort(
         (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0) || String(a.name || '').localeCompare(String(b.name || ''))
       );
-      return arr as any;
+      return filtered as any;
     },
     createOrganization: async (name: string, color?: string) => {
       const existing = (await getAll('organizations' as any).catch(() => [])) as any[];
