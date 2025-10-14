@@ -266,8 +266,13 @@ const CloudSyncPanel: React.FC = () => {
 
     // Listen to chrome.storage changes
     const listener = (changes: any, areaName: string) => {
-      if (areaName === 'local' && changes['cloudSync.status']) {
-        loadSyncStatus();
+      if (areaName === 'local') {
+        if (changes['cloudSync.status']) {
+          loadSyncStatus();
+        }
+        if (changes['snapshots']) {
+          loadSnapshotsList();
+        }
       }
     };
 
