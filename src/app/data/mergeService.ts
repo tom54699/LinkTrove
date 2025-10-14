@@ -54,10 +54,14 @@ export interface MergeResult {
   };
 }
 
-type HasTimestamp = { id: string; updatedAt?: number; createdAt?: number };
+type HasTimestamp = { id: string; updatedAt?: number; createdAt?: number; deleted?: boolean; deletedAt?: string | number };
 
 /**
  * Merge two arrays by ID, keeping the item with the latest timestamp
+ * Handles tombstone (soft delete) logic:
+ * - If either side is deleted, check deletedAt vs updatedAt
+ * - Deleted item wins if deletedAt is newer than the other's updatedAt
+ * - Filter out deleted items from final result
  */
 function mergeByTimestamp<T extends HasTimestamp>(
   local: T[],
@@ -91,6 +95,17 @@ function mergeByTimestamp<T extends HasTimestamp>(
     return 0;
   };
 
+  // Helper to get deletion timestamp
+  const getDeletedTime = (item: HasTimestamp): number => {
+    if (!item.deleted || !item.deletedAt) return 0;
+    if (typeof item.deletedAt === 'string') {
+      const parsed = Date.parse(item.deletedAt);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    if (typeof item.deletedAt === 'number') return item.deletedAt;
+    return 0;
+  };
+
   // Add all local items
   for (const item of local) {
     merged.set(item.id, item);
@@ -103,18 +118,53 @@ function mergeByTimestamp<T extends HasTimestamp>(
       // New item from remote
       merged.set(remoteItem.id, remoteItem);
     } else {
-      // Compare timestamps
-      const localTime = toTimestamp(localItem);
-      const remoteTime = toTimestamp(remoteItem);
-      if (remoteTime > localTime) {
-        // Remote is newer
-        merged.set(remoteItem.id, remoteItem);
+      // Both exist - handle tombstone logic
+      const localDeleted = localItem.deleted;
+      const remoteDeleted = remoteItem.deleted;
+
+      if (localDeleted && remoteDeleted) {
+        // Both deleted - keep the one with latest deletedAt
+        const localDeletedTime = getDeletedTime(localItem);
+        const remoteDeletedTime = getDeletedTime(remoteItem);
+        if (remoteDeletedTime > localDeletedTime) {
+          merged.set(remoteItem.id, remoteItem);
+        }
+        // else keep local
+      } else if (localDeleted) {
+        // Local deleted, remote not deleted
+        // Keep deleted if deletedAt > remote's updatedAt
+        const localDeletedTime = getDeletedTime(localItem);
+        const remoteTime = toTimestamp(remoteItem);
+        if (localDeletedTime > remoteTime) {
+          // Deletion is newer, keep deleted
+          merged.set(remoteItem.id, localItem);
+        } else {
+          // Remote update is newer, keep remote (un-delete)
+          merged.set(remoteItem.id, remoteItem);
+        }
+      } else if (remoteDeleted) {
+        // Remote deleted, local not deleted
+        const remoteDeletedTime = getDeletedTime(remoteItem);
+        const localTime = toTimestamp(localItem);
+        if (remoteDeletedTime > localTime) {
+          // Deletion is newer, mark as deleted
+          merged.set(remoteItem.id, remoteItem);
+        }
+        // else keep local (un-deleted)
+      } else {
+        // Neither deleted - compare timestamps normally
+        const localTime = toTimestamp(localItem);
+        const remoteTime = toTimestamp(remoteItem);
+        if (remoteTime > localTime) {
+          merged.set(remoteItem.id, remoteItem);
+        }
+        // else keep local
       }
-      // else keep local (local is newer or equal)
     }
   }
 
-  return Array.from(merged.values());
+  // Filter out deleted items from final result
+  return Array.from(merged.values()).filter(item => !item.deleted);
 }
 
 /**

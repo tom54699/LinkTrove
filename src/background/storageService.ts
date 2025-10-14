@@ -15,6 +15,9 @@ export interface WebpageData {
   description?: string;
   createdAt: string; // ISO string for storage
   updatedAt: string;
+  // Tombstone for soft delete (sync support)
+  deleted?: boolean;
+  deletedAt?: string; // ISO string
 }
 
 export interface CategoryData {
@@ -25,6 +28,10 @@ export interface CategoryData {
   defaultTemplateId?: string;
   // Organization scoping (optional during migration)
   organizationId?: string;
+  updatedAt?: string;
+  // Tombstone for soft delete (sync support)
+  deleted?: boolean;
+  deletedAt?: string;
 }
 
 export interface SubcategoryData {
@@ -34,6 +41,9 @@ export interface SubcategoryData {
   order: number;
   createdAt: number;
   updatedAt: number;
+  // Tombstone for soft delete (sync support)
+  deleted?: boolean;
+  deletedAt?: number;
 }
 
 export interface TemplateField {
@@ -49,6 +59,10 @@ export interface TemplateData {
   id: string;
   name: string;
   fields: TemplateField[];
+  updatedAt?: string;
+  // Tombstone for soft delete (sync support)
+  deleted?: boolean;
+  deletedAt?: string;
 }
 
 export interface OrganizationData {
@@ -56,6 +70,10 @@ export interface OrganizationData {
   name: string;
   color?: string;
   order: number;
+  updatedAt?: string;
+  // Tombstone for soft delete (sync support)
+  deleted?: boolean;
+  deletedAt?: string;
 }
 
 export interface StorageService {
