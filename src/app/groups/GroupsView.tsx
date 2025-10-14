@@ -835,6 +835,33 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     } catch {}
   }, [categoryId]);
 
+  // Migrate old localStorage token to chrome.storage.local on mount
+  React.useEffect(() => {
+    const migrateToken = async () => {
+      try {
+        const oldToken = localStorage.getItem('linktrove_github_token');
+        if (oldToken) {
+          // Migrate to chrome.storage.local
+          await new Promise<void>((resolve, reject) => {
+            chrome.storage?.local?.set?.({ 'github.token': oldToken }, () => {
+              if (chrome.runtime?.lastError) {
+                reject(chrome.runtime.lastError);
+              } else {
+                resolve();
+              }
+            });
+          });
+          // Remove from localStorage for security
+          localStorage.removeItem('linktrove_github_token');
+          console.log('[Security] Migrated GitHub token from localStorage to chrome.storage.local');
+        }
+      } catch (error) {
+        console.warn('[Security] Failed to migrate GitHub token:', error);
+      }
+    };
+    migrateToken();
+  }, []);
+
   React.useEffect(() => {
     load();
     const onChanged = () => { load(); };
@@ -979,12 +1006,20 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
 
       // 如果環境變數沒有設定，要求用戶提供token
       if (!GITHUB_TOKEN || GITHUB_TOKEN === 'your_github_token_here') {
-        // 嘗試從localStorage獲取用戶的token
-        const savedToken = localStorage.getItem('linktrove_github_token');
-        if (savedToken) {
-          GITHUB_TOKEN = savedToken;
-        } else {
-          // 顯示GitHub token設定對話框
+        // 嘗試從 chrome.storage.local 獲取用戶的 token（安全存儲）
+        try {
+          const result: any = await new Promise((resolve) => {
+            chrome.storage?.local?.get?.({ 'github.token': '' }, resolve);
+          });
+          const savedToken = result?.['github.token'];
+          if (savedToken) {
+            GITHUB_TOKEN = savedToken;
+          } else {
+            // 顯示GitHub token設定對話框
+            setShowTokenDialog(true);
+            return;
+          }
+        } catch {
           setShowTokenDialog(true);
           return;
         }
@@ -1449,8 +1484,12 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 <div className="text-xs text-slate-400 space-y-2 mb-4">
                   <div>🔗 <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" className="text-blue-400 hover:underline">前往 GitHub 設定頁面</a></div>
                   <div>📝 點擊「Generate new token (classic)」</div>
-                  <div>✅ 勾選「gist」權限</div>
+                  <div>✅ 勾選「gist」權限（僅需此權限）</div>
                   <div>💾 複製產生的 token</div>
+                </div>
+
+                <div className="px-3 py-2 bg-amber-900/20 border border-amber-700/50 rounded text-xs text-amber-200 mb-4">
+                  🔒 安全提示：Token 將加密儲存於瀏覽器擴充功能的安全儲存區，不會被網頁或其他擴充功能存取
                 </div>
               </div>
 
@@ -1484,14 +1523,27 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
               </button>
               <button
                 className="px-3 py-1 rounded border border-green-600 text-green-300 hover:bg-green-950/30 disabled:opacity-50"
-                onClick={() => {
+                onClick={async () => {
                   if (githubToken.trim()) {
-                    localStorage.setItem('linktrove_github_token', githubToken.trim());
-                    setShowTokenDialog(false);
-                    setGithubToken('');
-                    showToast('GitHub Token 已儲存！現在可以發布分享連結了', 'success');
-                    // 自動重試發布
-                    setTimeout(() => publishToGist(), 500);
+                    // 使用 chrome.storage.local 安全存儲 token
+                    try {
+                      await new Promise<void>((resolve, reject) => {
+                        chrome.storage?.local?.set?.({ 'github.token': githubToken.trim() }, () => {
+                          if (chrome.runtime?.lastError) {
+                            reject(chrome.runtime.lastError);
+                          } else {
+                            resolve();
+                          }
+                        });
+                      });
+                      setShowTokenDialog(false);
+                      setGithubToken('');
+                      showToast('GitHub Token 已安全儲存！現在可以發布分享連結了', 'success');
+                      // 自動重試發布
+                      setTimeout(() => publishToGist(), 500);
+                    } catch (error) {
+                      showToast('儲存 Token 失敗，請重試', 'error');
+                    }
                   }
                 }}
                 disabled={!githubToken.trim()}
