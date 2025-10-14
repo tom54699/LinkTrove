@@ -235,6 +235,9 @@ const CloudSyncPanel: React.FC = () => {
   const [conflictOperation, setConflictOperation] = React.useState<'auto-sync' | 'manual-merge' | null>(null);
   const [snapshots, setSnapshots] = React.useState<any[]>([]);
   const [loadingSnapshots, setLoadingSnapshots] = React.useState(false);
+  const [gcStats, setGcStats] = React.useState<{ totalTombstones: number; oldestTombstone?: string } | null>(null);
+  const [loadingGC, setLoadingGC] = React.useState(false);
+  const [gcResult, setGcResult] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     (async () => {
@@ -255,6 +258,9 @@ const CloudSyncPanel: React.FC = () => {
 
       // Load snapshots
       loadSnapshotsList();
+
+      // Load GC stats
+      loadGCStats();
     })();
   }, []);
 
@@ -295,6 +301,41 @@ const CloudSyncPanel: React.FC = () => {
       await loadSnapshotsList();
     } catch (e: any) {
       setError(String(e?.message || e));
+    }
+  }
+
+  async function loadGCStats() {
+    try {
+      const gcModule = await import('../data/gcService');
+      const stats = await gcModule.getGCStats();
+      setGcStats(stats);
+    } catch {
+      setGcStats(null);
+    }
+  }
+
+  async function doRunGC() {
+    if (!window.confirm('確定要清理超過 30 天的已刪除項目？此操作不可回復。')) {
+      return;
+    }
+
+    setLoadingGC(true);
+    setError(undefined);
+    setGcResult(null);
+
+    try {
+      const gcModule = await import('../data/gcService');
+      const result = await gcModule.runGC(30);
+
+      const msg = `已清理 ${result.cleaned} 個項目（網頁 ${result.categories.webpages}, 分類 ${result.categories.categories}, 子分類 ${result.categories.subcategories}, 模板 ${result.categories.templates}, 組織 ${result.categories.organizations}）`;
+      setGcResult(msg);
+
+      // Reload stats
+      await loadGCStats();
+    } catch (e: any) {
+      setError(String(e?.message || e));
+    } finally {
+      setLoadingGC(false);
     }
   }
 
@@ -674,6 +715,47 @@ const CloudSyncPanel: React.FC = () => {
           錯誤：{error}
         </div>
       )}
+
+      {/* Garbage Collection */}
+      <div className="border-t border-slate-700 pt-4">
+        <div className="text-sm font-medium mb-2">垃圾回收 (GC)</div>
+        <div className="text-xs opacity-70 mb-3">
+          清理超過 30 天的已刪除項目，減少儲存空間並提升同步效能
+        </div>
+
+        {gcStats && (
+          <div className="px-3 py-2 bg-slate-800/30 rounded border border-slate-700 mb-3">
+            <div className="text-xs">
+              <div className="flex items-center justify-between">
+                <span className="opacity-70">已刪除項目：</span>
+                <span className="font-medium">{gcStats.totalTombstones} 個</span>
+              </div>
+              {gcStats.oldestTombstone && (
+                <div className="flex items-center justify-between mt-1">
+                  <span className="opacity-70">最舊項目：</span>
+                  <span className="text-xs opacity-60">
+                    {new Date(gcStats.oldestTombstone).toLocaleDateString('zh-TW')}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <button
+          className="text-sm px-3 py-1.5 rounded border border-slate-600 hover:bg-slate-800 disabled:opacity-50"
+          disabled={loadingGC || (gcStats?.totalTombstones === 0)}
+          onClick={doRunGC}
+        >
+          {loadingGC ? '清理中…' : '執行 GC'}
+        </button>
+
+        {gcResult && (
+          <div className="mt-3 px-3 py-2 rounded bg-emerald-900/20 border border-emerald-700/50 text-xs text-emerald-200">
+            ✓ {gcResult}
+          </div>
+        )}
+      </div>
 
       {/* Local Snapshots */}
       <div className="border-t border-slate-700 pt-4">
