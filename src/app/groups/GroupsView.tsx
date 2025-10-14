@@ -808,6 +808,8 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
   // GitHub token state
   const [showTokenDialog, setShowTokenDialog] = React.useState(false);
   const [githubToken, setGithubToken] = React.useState('');
+  // Share result state
+  const [shareResultUrl, setShareResultUrl] = React.useState<string | null>(null);
 
   const svc = React.useMemo(() => {
     // 直接使用 IndexedDB 版本的 storage service；在非擴充環境亦可運作
@@ -1018,26 +1020,8 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       const filename = Object.keys(gist.files)[0];
       const shareUrl = `https://htmlpreview.github.io/?${gist.files[filename].raw_url}`;
 
-      // Copy to clipboard and show success message
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        showToast(`✅ 已發布分享連結並複製到剪貼簿！\n\n🔗 ${shareUrl}`, 'success');
-      } catch {
-        // 創建一個可選擇的文字區域來幫助複製
-        const textarea = document.createElement('textarea');
-        textarea.value = shareUrl;
-        document.body.appendChild(textarea);
-        textarea.select();
-        try {
-          document.execCommand('copy');
-          showToast(`✅ 已發布分享連結並複製到剪貼簿！\n\n🔗 ${shareUrl}`, 'success');
-        } catch {
-          showToast(`✅ 已發布分享連結：\n\n🔗 ${shareUrl}\n\n請手動複製連結`, 'success');
-        } finally {
-          document.body.removeChild(textarea);
-        }
-      }
-
+      // Show result dialog with URL
+      setShareResultUrl(shareUrl);
       setShareDialogOpen(false);
     } catch (error) {
       console.error('Publish to Gist error:', error);
@@ -1513,6 +1497,69 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 disabled={!githubToken.trim()}
               >
                 儲存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Result Dialog */}
+      {shareResultUrl && (
+        <div
+          className="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-4"
+          onClick={() => setShareResultUrl(null)}
+        >
+          <div
+            className="rounded border border-slate-700 bg-[var(--panel)] w-[560px] max-w-[95vw]"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="分享連結"
+          >
+            <div className="px-4 py-3 border-b border-slate-700">
+              <div className="text-base font-semibold">✅ 分享連結已建立</div>
+            </div>
+            <div className="px-4 py-4">
+              <div className="text-sm opacity-90 mb-3">
+                您的分享連結已成功發布到 GitHub Gist，可以複製連結分享給他人：
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={shareResultUrl}
+                  readOnly
+                  className="flex-1 px-3 py-2 rounded bg-slate-800 border border-slate-600 text-sm font-mono"
+                  onClick={(e) => e.currentTarget.select()}
+                />
+                <button
+                  className="px-3 py-2 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] whitespace-nowrap text-sm"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(shareResultUrl);
+                      showToast('已複製到剪貼簿', 'success');
+                    } catch {
+                      showToast('複製失敗，請手動選取複製', 'error');
+                    }
+                  }}
+                >
+                  複製連結
+                </button>
+              </div>
+              <div className="mt-3 text-xs opacity-70">
+                💡 提示：連結會在您的 GitHub Gist 中永久保存，可隨時在 <a href="https://gist.github.com" target="_blank" rel="noopener" className="text-blue-400 hover:underline">gist.github.com</a> 管理
+              </div>
+            </div>
+            <div className="px-4 py-3 border-t border-slate-700 flex items-center justify-end gap-2">
+              <button
+                className="px-3 py-1.5 rounded text-sm border border-slate-600 hover:bg-slate-800"
+                onClick={() => window.open(shareResultUrl, '_blank')}
+              >
+                開啟連結
+              </button>
+              <button
+                className="px-3 py-1.5 rounded text-sm border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]"
+                onClick={() => setShareResultUrl(null)}
+              >
+                關閉
               </button>
             </div>
           </div>
