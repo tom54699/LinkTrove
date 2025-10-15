@@ -12,7 +12,8 @@
       "Bash(npm install:*)",
       "Bash(chmod:*)",
       "Bash(brew list:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "WebFetch(domain:developer.chrome.com)"
     ],
     "deny": []
   }
