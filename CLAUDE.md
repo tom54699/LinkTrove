@@ -58,7 +58,7 @@ LinkTrove supports one-click sharing via GitHub Gist. Users need their own GitHu
 2. **First-time Setup**:
    - Click "分享此群組" → "發布分享連結"
    - Enter your token in the setup dialog
-   - Token is securely stored in browser localStorage
+   - Token is securely stored in chrome.storage.local (secure extension storage)
 
 3. **Usage**:
    - After setup, sharing is one-click
