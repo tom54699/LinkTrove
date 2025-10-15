@@ -1,8 +1,11 @@
 import React from 'react';
 import { useOrganizations } from './organizations';
+import { ContextMenu } from '../ui/ContextMenu';
 
 export const OrganizationNav: React.FC = () => {
   const { organizations, selectedOrgId, setCurrentOrganization } = useOrganizations();
+  const [importMenuOpen, setImportMenuOpen] = React.useState(false);
+  const [importMenuPos, setImportMenuPos] = React.useState({ x: 0, y: 0 });
 
   return (
     <div className="w-16 flex flex-col items-center py-4 h-full">
@@ -36,8 +39,50 @@ export const OrganizationNav: React.FC = () => {
         </button>
       </div>
 
-      {/* Bottom section - Settings and Theme */}
+      {/* Bottom section - Import, Settings and Theme */}
       <div className="space-y-3 mt-4">
+        {/* Import button */}
+        <button
+          className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-300 hover:bg-slate-700 transition-colors relative"
+          title="匯入 (Toby/HTML)"
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setImportMenuPos({ x: rect.right + 8, y: rect.top });
+            setImportMenuOpen(true);
+          }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+        </button>
+
+        {/* Import context menu */}
+        {importMenuOpen && (
+          <ContextMenu
+            x={importMenuPos.x}
+            y={importMenuPos.y}
+            onClose={() => setImportMenuOpen(false)}
+            items={[
+              {
+                key: 'toby',
+                label: '匯入 Toby JSON',
+                onSelect: () => {
+                  setImportMenuOpen(false);
+                  try { window.dispatchEvent(new CustomEvent('collections:import-toby-new')); } catch {}
+                }
+              },
+              {
+                key: 'html',
+                label: '匯入 HTML 書籤',
+                onSelect: () => {
+                  setImportMenuOpen(false);
+                  try { window.dispatchEvent(new CustomEvent('collections:import-html-new')); } catch {}
+                }
+              },
+            ]}
+          />
+        )}
+
         {/* App Settings */}
         <button
           className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-300 hover:bg-slate-700 transition-colors"
