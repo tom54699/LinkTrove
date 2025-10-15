@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">LinkTrove Icon</title>
+  <desc id="desc">Rounded square with accent background and a white bookmark/card glyph representing visual bookmark management</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#ff6a8d"/>
+      <stop offset="100%" stop-color="#ff507a"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="20" flood-color="#b22546" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <!-- Background with generous corner radius to remain readable at small sizes -->
+  <rect x="64" y="64" width="896" height="896" rx="220" fill="url(#bg)"/>
+
+  <!-- Center glyph: card with bookmark ribbon -->
+  <g filter="url(#softShadow)">
+    <!-- Card base -->
+    <rect x="272" y="272" width="480" height="560" rx="48" fill="#ffffff"/>
+    <!-- Bookmark ribbon (cut-in) -->
+    <path d="M 360 320 H 544 a 24 24 0 0 1 24 24 V 720 L 472 664 376 720 V 344 a 24 24 0 0 1 24 -24 z" fill="#ff507a"/>
+  </g>
+
+  <!-- Subtle highlight -->
+  <ellipse cx="512" cy="256" rx="360" ry="120" fill="#ffffff" opacity="0.08"/>
+</svg>
+
