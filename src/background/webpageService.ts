@@ -24,6 +24,12 @@ export interface WebpageService {
   loadWebpages: () => Promise<WebpageData[]>;
   reorderWebpages: (fromId: string, toId: string) => Promise<WebpageData[]>;
   moveWebpageToEnd: (id: string) => Promise<WebpageData[]>;
+  moveCardToGroup: (
+    cardId: string,
+    targetCategoryId: string,
+    targetGroupId: string,
+    beforeId?: string
+  ) => Promise<WebpageData[]>;
 }
 
 export function createWebpageService(deps?: {
@@ -474,7 +480,6 @@ export function createWebpageService(deps?: {
       favicon,
       note: '',
       category: targetCategoryId,
-      // @ts-expect-error: optional in interface during migration
       subcategoryId: targetGroupId as any,
       meta,
       createdAt: now,

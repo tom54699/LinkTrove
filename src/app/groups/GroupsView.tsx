@@ -1002,7 +1002,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       );
 
       // Create GitHub Gist
-      let GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
+      let GITHUB_TOKEN = (import.meta as any).env?.VITE_GITHUB_TOKEN;
 
       // 如果環境變數沒有設定，要求用戶提供token
       if (!GITHUB_TOKEN || GITHUB_TOKEN === 'your_github_token_here') {

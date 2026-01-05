@@ -552,8 +552,9 @@ export async function processPendingExtraction(tabId: number): Promise<void> {
     const meta = await extractMetaForTab(tabId, 2); // Fewer retries since tab is now active
     if (meta && meta.url) {
       // Update webpage with extracted meta
-      const { updateWebpage } = await import('./webpageService');
-      await updateWebpage(pending.webpageId, { meta: meta as any } as any);
+      const { createWebpageService } = await import('./webpageService');
+      const svc = createWebpageService();
+      await svc.updateWebpage(pending.webpageId, { meta: meta as any } as any);
       console.log(`[pageMeta] Successfully extracted meta for tab ${tabId} after wake-up`);
     }
     pendingExtractions.delete(tabId);

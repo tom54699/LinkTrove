@@ -20,6 +20,7 @@ import { useFeedback } from './ui/feedback';
 import { WebpagesProvider, useWebpages } from './webpages/WebpagesProvider';
 import { SettingsModal } from './ui/SettingsModal';
 import { useTemplates } from './templates/TemplatesProvider';
+import { TemplatesManager } from './templates/TemplatesManager';
 import { GroupsView } from './groups/GroupsView';
 
 export const AppLayout: React.FC = () => {
@@ -656,7 +657,7 @@ const TemplatePicker: React.FC = () => {
       className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
     >
       <option value="">None</option>
-      {templates.map((t) => (
+      {templates.map((t: any) => (
         <option key={t.id} value={t.id}>
           {t.name}
         </option>
@@ -695,6 +696,10 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
     setConfirmOpen(false);
     setLoading(true);
     setInlineMsg(null);
+    // Create a simple summary even without preview
+    let pagesCount = 0;
+    let catsCount = 0;
+    let parsedOk = false;
     try {
       const text = await (async () => {
         try {
@@ -717,10 +722,6 @@ export const Settings: React.FC<{ ei?: ExportImportService }> = ({ ei }) => {
           return content;
         }
       })();
-      // Create a simple summary even without preview
-      let pagesCount = 0;
-      let catsCount = 0;
-      let parsedOk = false;
       try {
         const parsed = JSON.parse(text);
         pagesCount = Array.isArray(parsed?.webpages) ? parsed.webpages.length : 0;

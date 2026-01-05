@@ -46,7 +46,7 @@ export async function getGCStats(): Promise<GCStats> {
   const templatesReq = tx.objectStore('templates').getAll();
   const organizationsReq = tx.objectStore('organizations').getAll();
 
-  await tx.done;
+  await (tx as any).done;
 
   const webpagesRaw = await webpagesReq;
   const categoriesRaw = await categoriesReq;
@@ -157,7 +157,7 @@ export async function runGC(retentionDays: number = 30): Promise<GCResult> {
     result.cleaned += toDelete.length;
   }
 
-  await tx.done;
+  await (tx as any).done;
 
   // Record GC time
   await recordGCTime();

@@ -276,19 +276,19 @@ export function mergeLWW(
   const remoteTime = remote.exportedAt ? Date.parse(remote.exportedAt) : 0;
 
   // Merge webpages by timestamp
-  const webpages = mergeByTimestamp(local.webpages, remote.webpages);
+  const webpages = mergeByTimestamp(local.webpages as any, remote.webpages as any) as unknown as WebpageData[];
 
   // Merge subcategories by timestamp
   const subcategories = mergeByTimestamp(
-    local.subcategories,
-    remote.subcategories
-  );
+    local.subcategories as any,
+    remote.subcategories as any
+  ) as SubcategoryData[];
 
   // Merge organizations by timestamp (they have createdAt/updatedAt)
   const organizations = mergeByTimestamp(
     local.organizations as any,
     remote.organizations as any
-  );
+  ) as unknown as OrganizationData[];
 
   // Merge categories (no timestamps, prefer remote for simplicity)
   const categories = mergeCategories(local.categories, remote.categories);

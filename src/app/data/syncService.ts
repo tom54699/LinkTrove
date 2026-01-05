@@ -134,7 +134,7 @@ function remoteIsNewer(info: DriveFileInfo): boolean {
   const lastDownload = status.lastDownloadedAt ? Date.parse(status.lastDownloadedAt) : NaN;
   const lastUpload = status.lastUploadedAt ? Date.parse(status.lastUploadedAt) : NaN;
   const newestLocal = Math.max(isFinite(lastDownload) ? lastDownload : 0, isFinite(lastUpload) ? lastUpload : 0);
-  const checksumChanged = info.md5Checksum && info.md5Checksum !== status.lastChecksum;
+  const checksumChanged = !!(info.md5Checksum && info.md5Checksum !== status.lastChecksum);
   return (isFinite(remoteTime) && remoteTime > newestLocal) || checksumChanged;
 }
 

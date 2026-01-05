@@ -17,7 +17,7 @@ async function compressString(text: string): Promise<Uint8Array> {
 }
 
 async function decompressString(data: Uint8Array): Promise<string> {
-  const blob = new Blob([data]);
+  const blob = new Blob([data as any]);
   const stream = blob.stream();
   const decompressedStream = stream.pipeThrough(new DecompressionStream('gzip'));
   const decompressedBlob = await new Response(decompressedStream).blob();
@@ -161,7 +161,7 @@ export async function createOrUpdate(content: string, name = 'linktrove.json.gz'
     await driveFetch(`/upload/drive/v3/files/${existing.fileId}?uploadType=media`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/gzip' },
-      body: compressed,
+      body: compressed as any,
     });
     // Fetch updated metadata to capture latest modifiedTime/md5
     const refreshed = await getFile(name);

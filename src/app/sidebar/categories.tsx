@@ -16,6 +16,7 @@ interface CategoriesState {
   selectedId: string; // category id
   setCurrentCategory: (id: string) => void;
   actions: {
+    reload: () => Promise<void>;
     addCategory: (name: string, color?: string) => Promise<Category>;
     renameCategory: (id: string, name: string) => Promise<void>;
     updateColor: (id: string, color: string) => Promise<void>;
@@ -359,6 +360,7 @@ export function useCategories(): CategoriesState {
       selectedId: 'default',
       setCurrentCategory: () => {},
       actions: {
+        reload: async () => {},
         addCategory: async () => DEFAULT_CATEGORIES[0],
         renameCategory: async () => {},
         updateColor: async () => {},
