@@ -13,7 +13,9 @@
       "Bash(chmod:*)",
       "Bash(brew list:*)",
       "Bash(node:*)",
-      "WebFetch(domain:developer.chrome.com)"
+      "WebFetch(domain:developer.chrome.com)",
+      "Bash(grep:*)",
+      "Bash(test:*)"
     ],
     "deny": []
   }
