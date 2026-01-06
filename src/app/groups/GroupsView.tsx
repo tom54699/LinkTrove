@@ -9,6 +9,8 @@ import { dbg } from '../../utils/debug';
 import { ContextMenu } from '../ui/ContextMenu';
 import { useGroupShare } from './share/useGroupShare';
 import { useGroupImport } from './import/useGroupImport';
+import { ShareDialog, TokenDialog, ShareResultDialog } from './share/dialogs';
+import { TobyImportDialog, TobyProgressDialog } from './import/dialogs';
 
 interface GroupItem {
   id: string;
@@ -180,6 +182,42 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       await (svc as any).reorderSubcategories?.(categoryId, next.map((x) => x.id));
       showToast('已重新排序', 'success');
     } catch {}
+  };
+
+  // Handler for saving GitHub token
+  const handleSaveToken = async () => {
+    if (githubToken.trim()) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          chrome.storage?.local?.set?.({ 'github.token': githubToken.trim() }, () => {
+            if (chrome.runtime?.lastError) {
+              reject(chrome.runtime.lastError);
+            } else {
+              resolve();
+            }
+          });
+        });
+        setShowTokenDialog(false);
+        setGithubToken('');
+        showToast('GitHub Token 已安全儲存！現在可以發布分享連結了', 'success');
+        // Auto retry publishing
+        setTimeout(() => publishToGist(), 500);
+      } catch (error) {
+        showToast('儲存 Token 失敗，請重試', 'error');
+      }
+    }
+  };
+
+  // Handler for copying share result URL
+  const handleCopyShareUrl = async () => {
+    if (shareResultUrl) {
+      try {
+        await navigator.clipboard.writeText(shareResultUrl);
+        showToast('已複製到剪貼簿', 'success');
+      } catch {
+        showToast('複製失敗，請手動選取複製', 'error');
+      }
+    }
   };
 
   if (!svc) return null;
@@ -380,278 +418,51 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
           </div>
         </div>
       )}
-      {tobyOpenFor && (
-        <div
-          className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
-          onClick={cancelTobyImport}
-        >
-          <div
-            className="rounded border border-slate-700 bg-[var(--bg)] w-[520px] max-w-[95vw] p-5"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-label="Import Toby"
-          >
-            <div className="text-lg font-semibold">匯入 Toby 到此 group</div>
-            <div className="mt-2 text-sm opacity-80">檔案：{tobyFile?.name} {tobyPreview ? `— 連結 ${tobyPreview.links}` : ''}</div>
-            {/* Dedup option removed per request */}
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={cancelTobyImport}>取消</button>
-              <button
-                className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
-                onClick={executeTobyImport}
-              >
-                開始匯入
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {tobyProgress && (
-        <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3">
-          <div className="rounded border border-slate-700 bg-[var(--bg)] w-[420px] max-w-[90vw] p-5">
-            <div className="text-lg font-semibold">匯入中…</div>
-            <div className="mt-3 text-sm">{tobyProgress.processed}/{tobyProgress.total}</div>
-            <div className="mt-2 h-2 w-full bg-slate-800 rounded">
-              <div className="h-2 bg-[var(--accent)] rounded" style={{ width: `${tobyProgress.total ? Math.min(100, Math.floor((tobyProgress.processed/tobyProgress.total)*100)) : 0}%` }} />
-            </div>
-            <div className="mt-3 flex items-center justify-end gap-2">
-              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={abortTobyImport}>取消</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <TobyImportDialog
+        isOpen={!!tobyOpenFor}
+        fileName={tobyFile?.name}
+        linkCount={tobyPreview?.links}
+        onCancel={cancelTobyImport}
+        onConfirm={executeTobyImport}
+      />
 
-      {/* Share Dialog */}
-      {shareDialogOpen && (
-        <div
-          className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
-          onClick={() => setShareDialogOpen(false)}
-        >
-          <div
-            className="rounded border border-slate-700 bg-[var(--bg)] w-[520px] max-w-[95vw] p-5"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-label="分享設定"
-          >
-            <div className="text-lg font-semibold mb-4">分享「{shareGroup?.name}」</div>
+      <TobyProgressDialog
+        isOpen={!!tobyProgress}
+        processed={tobyProgress?.processed || 0}
+        total={tobyProgress?.total || 0}
+        onCancel={abortTobyImport}
+      />
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">分享標題</label>
-                <input
-                  type="text"
-                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                  value={shareTitle}
-                  onChange={(e) => setShareTitle(e.target.value)}
-                  placeholder="自訂分享頁面的標題"
-                />
-              </div>
+      <ShareDialog
+        isOpen={shareDialogOpen}
+        groupName={shareGroup?.name || ''}
+        itemCount={items.filter((it: any) => it.category === categoryId && it.subcategoryId === shareGroup?.id).length}
+        shareTitle={shareTitle}
+        shareDescription={shareDescription}
+        onClose={() => setShareDialogOpen(false)}
+        onTitleChange={setShareTitle}
+        onDescriptionChange={setShareDescription}
+        onPublishToGist={publishToGist}
+        onDownloadHtml={generateShareFile}
+      />
 
-              <div>
-                <label className="block text-sm font-medium mb-2">分享描述</label>
-                <textarea
-                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm h-20 resize-none"
-                  value={shareDescription}
-                  onChange={(e) => setShareDescription(e.target.value)}
-                  placeholder="簡單描述這個分享的內容"
-                />
-              </div>
+      <TokenDialog
+        isOpen={showTokenDialog}
+        token={githubToken}
+        onClose={() => {
+          setShowTokenDialog(false);
+          setGithubToken('');
+        }}
+        onTokenChange={setGithubToken}
+        onSave={handleSaveToken}
+      />
 
-              <div className="text-xs text-slate-400 space-y-1">
-                <div>包含 {items.filter((it: any) => it.category === categoryId && it.subcategoryId === shareGroup?.id).length} 個項目</div>
-                <div className="flex gap-4">
-                  <span>📤 <strong>發布分享連結</strong>：需要您的 GitHub token，自動上傳到您的 Gist</span>
-                </div>
-                <div className="flex gap-4">
-                  <span>💾 <strong>下載 HTML</strong>：下載檔案到本機，可手動上傳</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex items-center justify-end gap-2">
-              <button
-                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
-                onClick={() => setShareDialogOpen(false)}
-              >
-                取消
-              </button>
-              <button
-                className="px-3 py-1 rounded border border-green-600 text-green-300 hover:bg-green-950/30 disabled:opacity-50"
-                onClick={publishToGist}
-                disabled={!shareTitle.trim()}
-                title="發布到 GitHub Gist 並獲得分享連結"
-              >
-                發布分享連結
-              </button>
-              <button
-                className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
-                onClick={generateShareFile}
-                disabled={!shareTitle.trim()}
-              >
-                下載 HTML
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* GitHub Token 設定對話框 */}
-      {showTokenDialog && (
-        <div
-          className="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-3"
-          onClick={() => {
-            setShowTokenDialog(false);
-            setGithubToken('');
-          }}
-        >
-          <div
-            className="rounded border border-slate-700 bg-[var(--bg)] w-full max-w-md p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold mb-4">設定 GitHub Token</h3>
-
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-slate-300 mb-3">
-                  需要 GitHub Personal Access Token 才能發布分享連結到 Gist
-                </p>
-
-                <div className="text-xs text-slate-400 space-y-2 mb-4">
-                  <div>🔗 <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" className="text-blue-400 hover:underline">前往 GitHub 設定頁面</a></div>
-                  <div>📝 點擊「Generate new token (classic)」</div>
-                  <div>✅ 勾選「gist」權限（僅需此權限）</div>
-                  <div>💾 複製產生的 token</div>
-                </div>
-
-                <div className="px-3 py-2 bg-amber-900/20 border border-amber-700/50 rounded text-xs text-amber-200 mb-4">
-                  🔒 安全提示：Token 將加密儲存於瀏覽器擴充功能的安全儲存區，不會被網頁或其他擴充功能存取
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  GitHub Personal Access Token
-                </label>
-                <input
-                  type="password"
-                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                  value={githubToken}
-                  onChange={(e) => setGithubToken(e.target.value)}
-                  placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                />
-              </div>
-
-              <div className="text-xs text-slate-400">
-                Token 將安全地儲存在瀏覽器本機，不會上傳到任何伺服器
-              </div>
-            </div>
-
-            <div className="mt-6 flex items-center justify-end gap-2">
-              <button
-                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
-                onClick={() => {
-                  setShowTokenDialog(false);
-                  setGithubToken('');
-                }}
-              >
-                取消
-              </button>
-              <button
-                className="px-3 py-1 rounded border border-green-600 text-green-300 hover:bg-green-950/30 disabled:opacity-50"
-                onClick={async () => {
-                  if (githubToken.trim()) {
-                    // 使用 chrome.storage.local 安全存儲 token
-                    try {
-                      await new Promise<void>((resolve, reject) => {
-                        chrome.storage?.local?.set?.({ 'github.token': githubToken.trim() }, () => {
-                          if (chrome.runtime?.lastError) {
-                            reject(chrome.runtime.lastError);
-                          } else {
-                            resolve();
-                          }
-                        });
-                      });
-                      setShowTokenDialog(false);
-                      setGithubToken('');
-                      showToast('GitHub Token 已安全儲存！現在可以發布分享連結了', 'success');
-                      // 自動重試發布
-                      setTimeout(() => publishToGist(), 500);
-                    } catch (error) {
-                      showToast('儲存 Token 失敗，請重試', 'error');
-                    }
-                  }
-                }}
-                disabled={!githubToken.trim()}
-              >
-                儲存
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Share Result Dialog */}
-      {shareResultUrl && (
-        <div
-          className="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-4"
-          onClick={() => setShareResultUrl(null)}
-        >
-          <div
-            className="rounded border border-slate-700 bg-[var(--panel)] w-[560px] max-w-[95vw]"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-label="分享連結"
-          >
-            <div className="px-4 py-3 border-b border-slate-700">
-              <div className="text-base font-semibold">✅ 分享連結已建立</div>
-            </div>
-            <div className="px-4 py-4">
-              <div className="text-sm opacity-90 mb-3">
-                您的分享連結已成功發布到 GitHub Gist，可以複製連結分享給他人：
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={shareResultUrl}
-                  readOnly
-                  className="flex-1 px-3 py-2 rounded bg-slate-800 border border-slate-600 text-sm font-mono"
-                  onClick={(e) => e.currentTarget.select()}
-                />
-                <button
-                  className="px-3 py-2 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] whitespace-nowrap text-sm"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(shareResultUrl);
-                      showToast('已複製到剪貼簿', 'success');
-                    } catch {
-                      showToast('複製失敗，請手動選取複製', 'error');
-                    }
-                  }}
-                >
-                  複製連結
-                </button>
-              </div>
-              <div className="mt-3 text-xs opacity-70">
-                💡 提示：連結會在您的 GitHub Gist 中永久保存，可隨時在 <a href="https://gist.github.com" target="_blank" rel="noopener" className="text-blue-400 hover:underline">gist.github.com</a> 管理
-              </div>
-            </div>
-            <div className="px-4 py-3 border-t border-slate-700 flex items-center justify-end gap-2">
-              <button
-                className="px-3 py-1.5 rounded text-sm border border-slate-600 hover:bg-slate-800"
-                onClick={() => window.open(shareResultUrl, '_blank')}
-              >
-                開啟連結
-              </button>
-              <button
-                className="px-3 py-1.5 rounded text-sm border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]"
-                onClick={() => setShareResultUrl(null)}
-              >
-                關閉
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ShareResultDialog
+        isOpen={!!shareResultUrl}
+        shareUrl={shareResultUrl}
+        onClose={() => setShareResultUrl(null)}
+        onCopy={handleCopyShareUrl}
+      />
     </div>
   );
 };
