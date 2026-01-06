@@ -8,6 +8,7 @@ import type { TabItemData } from '../tabs/types';
 import { dbg } from '../../utils/debug';
 import { ContextMenu } from '../ui/ContextMenu';
 import { useGroupShare } from './share/useGroupShare';
+import { useGroupImport } from './import/useGroupImport';
 
 interface GroupItem {
   id: string;
@@ -26,12 +27,6 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
   const [confirmDeleteGroup, setConfirmDeleteGroup] = React.useState<string | null>(null);
   // Compact actions menu per-group
   const [menuFor, setMenuFor] = React.useState<null | { id: string; x: number; y: number }>(null);
-  // Toby import wizard state
-  const [tobyOpenFor, setTobyOpenFor] = React.useState<string | null>(null);
-  const [tobyFile, setTobyFile] = React.useState<File | null>(null);
-  const [tobyPreview, setTobyPreview] = React.useState<{ links: number } | null>(null);
-  const [tobyProgress, setTobyProgress] = React.useState<{ total: number; processed: number } | null>(null);
-  const tobyAbortRef = React.useRef<AbortController | null>(null);
 
   // Use share hook for all sharing functionality
   const {
@@ -52,6 +47,19 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     publishToGist,
     generateShareFile,
   } = useGroupShare({ categoryId, items, showToast });
+
+  // Use import hook for all import functionality
+  const {
+    tobyOpenFor,
+    tobyFile,
+    tobyPreview,
+    tobyProgress,
+    handleHtmlImport,
+    handleTobyFileSelect,
+    executeTobyImport,
+    cancelTobyImport,
+    abortTobyImport,
+  } = useGroupImport({ categoryId, groups, showToast, reloadWebpages: actions.load });
 
   const svc = React.useMemo(() => {
     // 直接使用 IndexedDB 版本的 storage service；在非擴充環境亦可運作
@@ -218,16 +226,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 onChange={async (e) => {
                   const f = e.currentTarget.files?.[0];
                   e.currentTarget.value = '';
-                  if (!f) return;
-                  try {
-                    const text = await f.text();
-                    const { importNetscapeHtmlIntoGroup } = await import('../../background/importers/html');
-                    const res = await importNetscapeHtmlIntoGroup(g.id, g.categoryId, text);
-                    await actions.load();
-                    showToast(`已匯入 HTML：新增 ${res.pagesCreated} 筆`, 'success');
-                  } catch (err: any) {
-                    showToast(err?.message || '匯入失敗', 'error');
-                  }
+                  if (f) await handleHtmlImport(g.id, f);
                 }}
               />
               <input
@@ -239,23 +238,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 onChange={async (e) => {
                   const f = e.currentTarget.files?.[0];
                   e.currentTarget.value = '';
-                  if (!f) return;
-                  // Open wizard modal for this group
-                  setTobyFile(f);
-                  setTobyOpenFor(g.id);
-                  try {
-                    const txt = await f.text();
-                    let count = 0;
-                    try {
-                      const obj = JSON.parse(txt);
-                      if (Array.isArray(obj?.lists)) {
-                        for (const l of obj.lists) if (Array.isArray(l?.cards)) count += l.cards.length;
-                      } else if (Array.isArray(obj?.cards)) {
-                        count = obj.cards.length;
-                      }
-                    } catch {}
-                    setTobyPreview({ links: count });
-                  } catch { setTobyPreview(null); }
+                  if (f) await handleTobyFileSelect(g.id, f);
                 }}
               />
               {/* Kebab menu trigger */}
@@ -400,7 +383,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       {tobyOpenFor && (
         <div
           className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
-          onClick={() => { setTobyOpenFor(null); setTobyFile(null); setTobyPreview(null); }}
+          onClick={cancelTobyImport}
         >
           <div
             className="rounded border border-slate-700 bg-[var(--bg)] w-[520px] max-w-[95vw] p-5"
@@ -412,33 +395,10 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
             <div className="mt-2 text-sm opacity-80">檔案：{tobyFile?.name} {tobyPreview ? `— 連結 ${tobyPreview.links}` : ''}</div>
             {/* Dedup option removed per request */}
             <div className="mt-4 flex items-center justify-end gap-2">
-              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => { setTobyOpenFor(null); setTobyFile(null); setTobyPreview(null); }}>取消</button>
+              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={cancelTobyImport}>取消</button>
               <button
                 className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
-                onClick={async () => {
-                  const gid = tobyOpenFor;
-                  const f = tobyFile;
-                  setTobyOpenFor(null);
-                  if (!gid || !f) return;
-                  try {
-                    const text = await f.text();
-                    const { importTobyV3IntoGroup } = await import('../../background/importers/toby');
-                    const g = groups.find((x)=>x.id===gid);
-                    const ctrl = new AbortController();
-                    tobyAbortRef.current = ctrl;
-                    setTobyProgress({ total: tobyPreview?.links || 0, processed: 0 });
-                    const res = await importTobyV3IntoGroup(gid, g?.categoryId || categoryId, text, { signal: ctrl.signal, onProgress: ({ total, processed }) => setTobyProgress({ total, processed }) });
-                    await actions.load();
-                    showToast(`已匯入 Toby：新增 ${res.pagesCreated} 筆`, 'success');
-                  } catch (err: any) {
-                    showToast(err?.message || '匯入失敗', 'error');
-                  } finally {
-                    setTobyFile(null);
-                    setTobyPreview(null);
-                    setTobyProgress(null);
-                    tobyAbortRef.current = null;
-                  }
-                }}
+                onClick={executeTobyImport}
               >
                 開始匯入
               </button>
@@ -455,7 +415,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
               <div className="h-2 bg-[var(--accent)] rounded" style={{ width: `${tobyProgress.total ? Math.min(100, Math.floor((tobyProgress.processed/tobyProgress.total)*100)) : 0}%` }} />
             </div>
             <div className="mt-3 flex items-center justify-end gap-2">
-              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => { try { tobyAbortRef.current?.abort(); } catch {} }}>取消</button>
+              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={abortTobyImport}>取消</button>
             </div>
           </div>
         </div>
