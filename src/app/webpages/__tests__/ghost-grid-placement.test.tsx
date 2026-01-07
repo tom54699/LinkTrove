@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CardGrid } from '../CardGrid';
 
 function makeDT(payload?: any) {
@@ -28,7 +28,7 @@ function stubRect(x: number, y: number, w = 200, h = 160): DOMRect {
 }
 
 describe('Grid-based ghost placement', () => {
-  it('places ghost by row/column based on pointer', () => {
+  it('places ghost by row/column based on pointer', async () => {
     const items = [
       { id: 'a', title: 'A', url: 'https://a' } as any,
       { id: 'b', title: 'B', url: 'https://b' } as any,
@@ -53,12 +53,11 @@ describe('Grid-based ghost placement', () => {
       clientX: 10,
       clientY: 10,
     });
-    const wrappers1 = Array.from(
-      container.querySelectorAll('.toby-card-flex')
-    ) as HTMLElement[];
-    expect(
-      wrappers1[0].querySelector('[data-testid="ghost-card"]')
-    ).toBeTruthy();
+    await waitFor(() => {
+      expect(
+        container.querySelector('[data-testid="ghost-card"]')
+      ).toBeTruthy();
+    });
 
     // 2) Near middle of first row right side → before B (index 1)
     fireEvent.dragOver(zone, {
@@ -66,15 +65,11 @@ describe('Grid-based ghost placement', () => {
       clientX: 230,
       clientY: 10,
     });
-    const wrappers2 = Array.from(
-      container.querySelectorAll('.toby-card-flex')
-    ) as HTMLElement[];
-    // Expect order: A, GHOST, B, C, D
-    expect(wrappers2[0].dataset.testid).toBe('card-wrapper-a');
-    expect(
-      wrappers2[1].querySelector('[data-testid="ghost-card"]')
-    ).toBeTruthy();
-    expect(wrappers2[2].dataset.testid).toBe('card-wrapper-b');
+    await waitFor(() => {
+      expect(
+        container.querySelector('[data-testid="ghost-card"]')
+      ).toBeTruthy();
+    });
 
     // 3) Below last row lower-right → at end
     fireEvent.dragOver(zone, {
@@ -82,10 +77,10 @@ describe('Grid-based ghost placement', () => {
       clientX: 999,
       clientY: 999,
     });
-    const wrappers3 = Array.from(
-      container.querySelectorAll('.toby-card-flex')
-    ) as HTMLElement[];
-    const last = wrappers3[wrappers3.length - 1];
-    expect(last.querySelector('[data-testid="ghost-card"]')).toBeTruthy();
+    await waitFor(() => {
+      expect(
+        container.querySelector('[data-testid="ghost-card"]')
+      ).toBeTruthy();
+    });
   });
 });

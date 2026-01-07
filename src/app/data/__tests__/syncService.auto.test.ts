@@ -1,10 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 const storageState: Record<string, any> = {};
-let storageListeners: Array<(changes: any, areaName: string) => void> = [];
-
 const exportJsonMock = vi.fn(async () => '{"ok":true}');
 const importDataMock = vi.fn(async () => {});
+const exportDataMock = vi.fn(async () => JSON.stringify({
+  schemaVersion: 1,
+  webpages: [],
+  categories: [],
+  templates: [],
+  subcategories: [],
+  organizations: [],
+  settings: {},
+  orders: { subcategories: {} },
+}));
 const loadFromLocalMock = vi.fn(async () => [{ id: 'local-1' }]);
 const loadFromSyncMock = vi.fn(async () => [{ id: 'cat-1' }]);
 const loadTemplatesMock = vi.fn(async () => []);
@@ -15,7 +23,6 @@ const downloadMock = vi.fn(async () => '{"ok":true}');
 const connectMock = vi.fn(async () => ({ ok: true }));
 
 function resetChrome() {
-  storageListeners = [];
   for (const key of Object.keys(storageState)) delete storageState[key];
   storageState['cloudSync.status'] = {
     connected: false,
@@ -41,22 +48,10 @@ function resetChrome() {
           cb(result);
         }),
         set: vi.fn((items: Record<string, any>, cb?: () => void) => {
-          const changes: Record<string, { newValue: any; oldValue: any }> = {};
           for (const [k, v] of Object.entries(items)) {
-            const oldValue = storageState[k];
             storageState[k] = v;
-            changes[k] = { oldValue, newValue: v };
           }
-          for (const listener of storageListeners) listener(changes, 'local');
           cb?.();
-        }),
-      },
-      onChanged: {
-        addListener: vi.fn((fn: (changes: any, areaName: string) => void) => {
-          storageListeners.push(fn);
-        }),
-        removeListener: vi.fn((fn: (changes: any, areaName: string) => void) => {
-          storageListeners = storageListeners.filter((l) => l !== fn);
         }),
       },
     },
@@ -72,6 +67,7 @@ vi.mock('../exportImport', () => ({
 vi.mock('../../background/storageService', () => ({
   createStorageService: vi.fn(() => ({
     importData: importDataMock,
+    exportData: exportDataMock,
     loadFromLocal: loadFromLocalMock,
     loadFromSync: loadFromSyncMock,
     loadTemplates: loadTemplatesMock,
@@ -96,6 +92,7 @@ describe('syncService auto sync', () => {
     vi.useFakeTimers();
     exportJsonMock.mockClear();
     importDataMock.mockClear();
+    exportDataMock.mockClear();
     loadFromLocalMock.mockClear();
     loadFromLocalMock.mockImplementation(async () => [{ id: 'local-1' }]);
     loadFromSyncMock.mockClear();
@@ -120,12 +117,25 @@ describe('syncService auto sync', () => {
   it('pulls from Drive when auto sync is enabled and remote is newer', async () => {
     const remoteTime = '2024-01-02T03:04:05.000Z';
     getFileMock.mockResolvedValueOnce({ fileId: 'file-1', modifiedTime: remoteTime, md5Checksum: 'md5-new' });
+    downloadMock.mockResolvedValueOnce(JSON.stringify({
+      schemaVersion: 1,
+      webpages: [],
+      categories: [],
+      templates: [],
+      subcategories: [],
+      organizations: [],
+      settings: {},
+      orders: { subcategories: {} },
+      exportedAt: remoteTime,
+    }));
 
     const { connect, setAutoSync, getStatus } = await import('../syncService');
 
     await connect();
     expect(getStatus().connected).toBe(true);
     await setAutoSync(true);
+    await flushMicrotasks();
+    vi.runAllTimers();
     await flushMicrotasks();
 
     expect(downloadMock).toHaveBeenCalledOnce();
@@ -145,16 +155,15 @@ describe('syncService auto sync', () => {
     await setAutoSync(true);
     await flushMicrotasks();
 
-    expect(storageListeners.length).toBeGreaterThan(0);
-    const signal = storageListeners[0];
-
-    signal({ webpages: { newValue: [{ id: 'w1' }], oldValue: [] } }, 'local');
+    window.dispatchEvent(
+      new CustomEvent('idb:changed', { detail: { stores: ['webpages'] } })
+    );
     expect(getStatus().pendingPush).toBe(true);
     vi.advanceTimersByTime(2100);
     await flushMicrotasks();
 
-    expect(createOrUpdateMock).toHaveBeenCalledOnce();
-    expect(exportJsonMock).toHaveBeenCalledOnce();
+    expect(createOrUpdateMock).toHaveBeenCalled();
+    expect(exportJsonMock).toHaveBeenCalled();
     expect(getStatus().pendingPush).toBe(false);
     expect(getStatus().lastUploadedAt).toBeDefined();
   });

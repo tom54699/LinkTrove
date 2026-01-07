@@ -50,13 +50,6 @@ vi.mock('../../../background/storageService', () => ({
   }),
 }));
 
-const addTabToGroupSpy = vi.fn();
-vi.mock('../../../background/webpageService', () => ({
-  createWebpageService: () => ({
-    addTabToGroup: addTabToGroupSpy,
-  }),
-}));
-
 // Component under test
 import { GroupsView } from '../GroupsView';
 
@@ -78,11 +71,10 @@ describe('GroupsView drag-and-drop (UI)', () => {
     moveToEndSpy.mockReset();
     updateCardSubcategorySpy.mockReset();
     listSubcategoriesMock.mockClear();
-    addTabToGroupSpy.mockReset();
   });
 
-  it('uses atomic API addTabToGroup when dropping a tab into CardGrid', async () => {
-    addTabToGroupSpy.mockResolvedValue({ id: 'w1', category: 'c1', subcategoryId: 'g1', url: 'https://ex.com/' });
+  it('uses legacy flow when dropping a tab into CardGrid', async () => {
+    addFromTabSpy.mockResolvedValue('w1');
     render(<GroupsView categoryId="c1" />);
     // 等待 group 載入
     await screen.findByText('group');
@@ -92,19 +84,14 @@ describe('GroupsView drag-and-drop (UI)', () => {
     fireEvent.dragEnter(dropZone, { dataTransfer: dt });
     fireEvent.dragOver(dropZone, { dataTransfer: dt });
     fireEvent.drop(dropZone, { dataTransfer: dt });
-    await waitFor(() => expect(addTabToGroupSpy).toHaveBeenCalled());
-    // 應帶入目標 collection/group
-    const args = addTabToGroupSpy.mock.calls[0];
-    expect(args[1]).toBe('c1');
-    expect(args[2]).toBe('g1');
+    await waitFor(() => expect(addFromTabSpy).toHaveBeenCalled());
+    await waitFor(() => expect(updateCategorySpy).toHaveBeenCalledWith('w1', 'c1'));
+    await waitFor(() => expect(updateCardSubcategorySpy).toHaveBeenCalledWith('w1', 'g1'));
     // 完成後會 load 一次
     await waitFor(() => expect(loadSpy).toHaveBeenCalled());
-    // 不走 fallback
-    expect(addFromTabSpy).not.toHaveBeenCalled();
   });
 
   it('does not handle drop on header anymore', async () => {
-    addTabToGroupSpy.mockResolvedValue({ id: 'w1', category: 'c1', subcategoryId: 'g1', url: 'https://ex.com/' });
     render(<GroupsView categoryId="c1" />);
     const header = await screen.findByText('group');
     const tabPayload = JSON.stringify({ id: 1, title: 'Ex', url: 'https://ex.com' });
@@ -112,15 +99,10 @@ describe('GroupsView drag-and-drop (UI)', () => {
     // 嘗試對 header 派 drop，不應觸發 addTabToGroup 或 fallback
     fireEvent.drop(header, { dataTransfer: dt });
     await new Promise((r) => setTimeout(r, 10));
-    expect(addTabToGroupSpy).not.toHaveBeenCalled();
     expect(addFromTabSpy).not.toHaveBeenCalled();
   });
 
   it('falls back to legacy flow when atomic API is unavailable', async () => {
-    // 改變 mock：讓 atomic 不存在
-    const mod = await import('../../../background/webpageService');
-    (mod as any).createWebpageService = () => ({}) as any;
-
     render(<GroupsView categoryId="c1" />);
     await screen.findByText('group');
     const dropZone = await screen.findByTestId('drop-zone');
@@ -131,4 +113,3 @@ describe('GroupsView drag-and-drop (UI)', () => {
     await waitFor(() => expect(addFromTabSpy).toHaveBeenCalled());
   });
 });
-

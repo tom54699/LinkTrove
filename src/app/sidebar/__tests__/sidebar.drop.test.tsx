@@ -32,23 +32,21 @@ function makeDT(data: Record<string, string>) {
 }
 
 describe('Sidebar drop behavior', () => {
-  it('moves existing card to category on drop', () => {
+  it('ignores card drops (disabled feature)', () => {
     render(<Sidebar />);
     const btn = screen.getByText('C1');
     const dt = makeDT({ 'application/x-linktrove-webpage': 'w_1' });
     fireEvent.drop(btn, { dataTransfer: dt });
-    expect(updateCategory).toHaveBeenCalledWith('w_1', 'c1');
+    expect(updateCategory).not.toHaveBeenCalled();
   });
 
-  it('adds from tab on drop and then moves to category', async () => {
+  it('ignores tab drops (disabled feature)', async () => {
     render(<Sidebar />);
     const btn = screen.getByText('C1');
     const tab = { id: 9, title: 'T', url: 'https://e.com', favIconUrl: '' };
     const dt = makeDT({ 'application/x-linktrove-tab': JSON.stringify(tab) });
     await fireEvent.drop(btn, { dataTransfer: dt });
-    expect(addFromTab).toHaveBeenCalledWith(tab);
-    // After promise resolves, updateCategory should be called with new id
-    await Promise.resolve();
-    expect(updateCategory).toHaveBeenCalledWith('new_id', 'c1');
+    expect(addFromTab).not.toHaveBeenCalled();
+    expect(updateCategory).not.toHaveBeenCalled();
   });
 });

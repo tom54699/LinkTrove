@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import React from 'react';
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { OrganizationsProvider, useOrganizations } from '../organizations';
 import { putAll } from '../../../background/idb/db';
 
@@ -42,8 +42,12 @@ describe('OrganizationsProvider basic switch', () => {
     );
     const sel = await screen.findByTestId('sel');
     expect(sel.textContent === 'o_default' || sel.textContent === 'o_b').toBe(true);
+    await waitFor(() => {
+      expect(screen.getByTestId('sel').textContent).toBe('o_default');
+    });
     fireEvent.click(screen.getByText('swap'));
-    expect((await screen.findByTestId('sel')).textContent).toBe('o_b');
+    await waitFor(() => {
+      expect(screen.getByTestId('sel').textContent).toBe('o_b');
+    });
   });
 });
-

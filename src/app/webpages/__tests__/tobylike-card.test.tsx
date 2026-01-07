@@ -60,7 +60,7 @@ describe('TobyLikeCard interactions', () => {
         onUpdateDescription={onDesc}
       />
     );
-    const editBtn = screen.getByRole('button', { name: /編輯/ });
+    const editBtn = screen.getByLabelText('編輯', { selector: 'button' });
     fireEvent.click(editBtn);
     fireEvent.change(screen.getByLabelText('Title', { selector: 'input' }), {
       target: { value: 'New' },
@@ -87,16 +87,16 @@ describe('TobyLikeCard interactions', () => {
         faviconText="WW"
       />
     );
-    fireEvent.click(screen.getByRole('button', { name: /編輯/ }));
-    // click overlay area (outside content) shouldn't close because overlay doesn't handle clicks now
-    // Simulate by clicking the overlay container; since we don't have a direct test id, we click the dialog region and ensure Close works explicitly
-    expect(
-      screen.getByRole('dialog', { name: /Edit Card/ })
-    ).toBeInTheDocument();
-    // Close with X
+    fireEvent.click(screen.getByLabelText('編輯', { selector: 'button' }));
+    const dialog = screen.getByRole('dialog', { name: /Edit Card/ });
+    expect(dialog).toBeInTheDocument();
+    // Click overlay (outside dialog) should close
+    fireEvent.click(dialog.parentElement as HTMLElement);
+    expect(screen.queryByRole('dialog', { name: /Edit Card/ })).toBeNull();
+    // Reopen and close with X / Cancel
+    fireEvent.click(screen.getByLabelText('編輯', { selector: 'button' }));
     fireEvent.click(screen.getByRole('button', { name: /Close/ }));
-    // Reopen and try Cancel
-    fireEvent.click(screen.getByRole('button', { name: /編輯/ }));
+    fireEvent.click(screen.getByLabelText('編輯', { selector: 'button' }));
     fireEvent.click(screen.getByRole('button', { name: /Cancel/ }));
   });
 });

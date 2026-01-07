@@ -1,9 +1,10 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 vi.mock('../TemplatesProvider', () => {
   const addField = vi.fn();
+  const addFields = vi.fn();
   const updateFieldRequired = vi.fn();
   const updateField = vi.fn();
   const updateFieldType = vi.fn();
@@ -18,6 +19,7 @@ vi.mock('../TemplatesProvider', () => {
       templates: [{ id: 't1', name: 'T1', fields: [] }],
       actions: {
         add,
+        addFields,
         rename,
         remove,
         addField,
@@ -46,55 +48,55 @@ vi.mock('../../sidebar/categories', () => ({
   }),
 }));
 
+vi.mock('../../ui/feedback', () => ({
+  useFeedback: () => ({
+    showToast: vi.fn(),
+  }),
+}));
+
 import { TemplatesManager } from '../TemplatesManager';
 
 describe('TemplatesManager quick-add common fields', () => {
-  it('adds selected common field (always text) with required', async () => {
-    render(<TemplatesManager />);
-    const selectCommon = screen.getByTitle('選擇常用欄位') as HTMLSelectElement;
-    const required = screen.getByLabelText('required') as HTMLInputElement;
-
-    fireEvent.change(selectCommon, { target: { value: 'author' } });
-    fireEvent.click(required);
-
-    const addBtn = screen.getByTitle('新增常用欄位');
-    fireEvent.click(addBtn);
-
+  it('quick-adds the book template preset', async () => {
     const { useTemplates } = await import('../TemplatesProvider');
     const { actions } = useTemplates();
-    expect(actions.addField).toHaveBeenCalledWith(
-      't1',
-      expect.objectContaining({ key: 'author', label: '作者', type: 'text' })
-    );
-    expect(actions.updateFieldRequired).toHaveBeenCalledWith(
-      't1',
-      'author',
-      true
+    render(<TemplatesManager />);
+
+    fireEvent.click(screen.getByRole('button', { name: /書籍模板/ }));
+
+    await waitFor(() => expect(actions.add).toHaveBeenCalledWith('書籍模板'));
+    await waitFor(() =>
+      expect(actions.addFields).toHaveBeenCalledWith(
+        't1',
+        expect.arrayContaining([
+          expect.objectContaining({ key: 'bookTitle', label: '書名' }),
+          expect.objectContaining({ key: 'author', label: '作者' }),
+          expect.objectContaining({ key: 'serialStatus', label: '連載狀態' }),
+        ])
+      )
     );
   });
 
   it('adds custom field with type/options/required', async () => {
+    const { useTemplates } = await import('../TemplatesProvider');
+    const { actions } = useTemplates();
     render(<TemplatesManager />);
-    const key = screen.getByPlaceholderText(
-      'key (e.g. author)'
-    ) as HTMLInputElement;
-    const label = screen.getByPlaceholderText('label') as HTMLInputElement;
-    const typeSel = screen.getAllByRole('combobox')[2] as HTMLSelectElement; // third select in the row
+    const key = screen.getByPlaceholderText('例如：author') as HTMLInputElement;
+    const label = screen.getByPlaceholderText('輸入顯示名稱') as HTMLInputElement;
+    const typeSel = screen.getByRole('combobox') as HTMLSelectElement;
 
     fireEvent.change(key, { target: { value: 'priority' } });
     fireEvent.change(label, { target: { value: 'Priority' } });
     fireEvent.change(typeSel, { target: { value: 'select' } });
     const options = screen.getByPlaceholderText(
-      'options (comma-separated)'
+      '例如：選颅1, 選颅2, 選颅3'
     ) as HTMLInputElement;
     fireEvent.change(options, { target: { value: 'High, Medium, Low' } });
-    const req = screen.getByLabelText('required') as HTMLInputElement;
+    const req = screen.getByRole('checkbox') as HTMLInputElement;
     fireEvent.click(req);
 
-    fireEvent.click(screen.getByText('Add Field'));
+    fireEvent.click(screen.getByRole('button', { name: '新增欄位' }));
 
-    const { useTemplates } = await import('../TemplatesProvider');
-    const { actions } = useTemplates();
     expect(actions.addField).toHaveBeenCalledWith(
       't1',
       expect.objectContaining({

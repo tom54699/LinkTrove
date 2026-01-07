@@ -67,6 +67,13 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
+function requestToPromise<T>(req: IDBRequest<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
 // Helper to clear all stores
 async function clearAllStores() {
   try {
@@ -327,9 +334,7 @@ describe('gcService', () => {
       // Verify only w1 was cleaned
       const db = await openDB();
       const tx = db.transaction('webpages', 'readonly');
-      const allReq = tx.objectStore('webpages').getAll();
-      await tx.done;
-      const all = await allReq;
+      const all = await requestToPromise(tx.objectStore('webpages').getAll());
       db.close();
 
       expect(all).toHaveLength(2);
@@ -360,9 +365,7 @@ describe('gcService', () => {
       // Verify item still exists
       const db = await openDB();
       const tx = db.transaction('webpages', 'readonly');
-      const allReq = tx.objectStore('webpages').getAll();
-      await tx.done;
-      const all = await allReq;
+      const all = await requestToPromise(tx.objectStore('webpages').getAll());
       db.close();
 
       expect(all).toHaveLength(1);

@@ -33,32 +33,24 @@ const AUTO_GC_INTERVAL_DAYS = 7;
  * Get tombstone statistics
  */
 export async function getGCStats(): Promise<GCStats> {
-  const storage = createStorageService();
-  const idbStorage = storage as any;
+  createStorageService();
 
   // Get all data including deleted items (bypass filters)
   const db = await openDB();
   const tx = db.transaction(['webpages', 'categories', 'subcategories', 'templates', 'organizations'], 'readonly');
 
-  const webpagesReq = tx.objectStore('webpages').getAll();
-  const categoriesReq = tx.objectStore('categories').getAll();
-  const subcategoriesReq = tx.objectStore('subcategories').getAll();
-  const templatesReq = tx.objectStore('templates').getAll();
-  const organizationsReq = tx.objectStore('organizations').getAll();
-
-  await (tx as any).done;
-
-  const webpagesRaw = await webpagesReq;
-  const categoriesRaw = await categoriesReq;
-  const subcategoriesRaw = await subcategoriesReq;
-  const templatesRaw = await templatesReq;
-  const organizationsRaw = await organizationsReq;
+  const webpagesRaw = await requestToPromise(tx.objectStore('webpages').getAll());
+  const categoriesRaw = await requestToPromise(tx.objectStore('categories').getAll());
+  const subcategoriesRaw = await requestToPromise(tx.objectStore('subcategories').getAll());
+  const templatesRaw = await requestToPromise(tx.objectStore('templates').getAll());
+  const organizationsRaw = await requestToPromise(tx.objectStore('organizations').getAll());
 
   const webpages = Array.isArray(webpagesRaw) ? webpagesRaw : [];
   const categories = Array.isArray(categoriesRaw) ? categoriesRaw : [];
   const subcategories = Array.isArray(subcategoriesRaw) ? subcategoriesRaw : [];
   const templates = Array.isArray(templatesRaw) ? templatesRaw : [];
   const organizations = Array.isArray(organizationsRaw) ? organizationsRaw : [];
+  db.close();
 
   // Filter deleted items
   const deletedWebpages = webpages.filter((w: any) => w.deleted);
@@ -144,20 +136,24 @@ export async function runGC(retentionDays: number = 30): Promise<GCResult> {
 
   // Clean each store
   for (const [storeName, store] of Object.entries(stores)) {
-    const allReq = store.getAll();
-    const allRaw = await allReq;
+    const allRaw = await requestToPromise(store.getAll());
     const all = Array.isArray(allRaw) ? allRaw : [];
     const toDelete = all.filter(shouldClean);
 
     for (const item of toDelete) {
-      await store.delete(item.id);
+      await requestToPromise(store.delete(item.id));
     }
 
     result.categories[storeName as keyof typeof result.categories] = toDelete.length;
     result.cleaned += toDelete.length;
   }
 
-  await (tx as any).done;
+  await new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
+  db.close();
 
   // Record GC time
   await recordGCTime();
@@ -225,5 +221,12 @@ function openDB(): Promise<IDBDatabase> {
     const request = indexedDB.open('linktrove', 3);
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
+  });
+}
+
+function requestToPromise<T>(req: IDBRequest<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
   });
 }

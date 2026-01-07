@@ -102,6 +102,7 @@ describe('Drag-drop integration (task 12)', () => {
     const dt = createDataTransfer();
     await act(async () => {
       fireEvent.dragStart(item, { dataTransfer: dt });
+      fireEvent.dragOver(zone, { dataTransfer: dt });
       fireEvent.drop(zone, { dataTransfer: dt });
     });
     // Webpage card should appear with the saved title

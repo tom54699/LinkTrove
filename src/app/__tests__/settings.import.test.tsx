@@ -52,6 +52,11 @@ describe('Settings import/export UI (task 10)', () => {
         categories: [{ id: 'c2', name: 'Work', color: '#0f0', order: 1 }],
       }),
     ], 'import.json', { type: 'application/json' });
+    (file as any).text = async () =>
+      JSON.stringify({
+        webpages: [{ id: '2', title: 'B', url: 'https://b' }],
+        categories: [{ id: 'c2', name: 'Work', color: '#0f0', order: 1 }],
+      });
     Object.defineProperty(input, 'files', { value: [file] });
     fireEvent.change(input);
     fireEvent.click(screen.getByRole('button', { name: /import json/i }));
