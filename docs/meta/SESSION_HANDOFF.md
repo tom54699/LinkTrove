@@ -33,12 +33,18 @@
    - 刪除 .eslintrc.json（已使用 eslint.config.js）
    - 保留 AGENTS.md（用戶要求）
 
-5. ✅ **文檔架構建立**（本次工作）
+5. ✅ **文檔架構建立**
    - 創建 docs/ 分層結構（architecture/、features/、specs/、development/、meta/）
    - 移動現有文檔到新位置
    - 創建 INDEX.md、component-map.md、SESSION_HANDOFF.md（本文件）
    - 創建 openspec-installation.md（OpenSpec 安裝指南）
-   - 精簡 CLAUDE.md（待完成）
+   - 精簡 CLAUDE.md（202 → 154 行，-24%）
+
+6. ✅ **文檔一致性修正**
+   - 修正 INDEX.md 中的錨點與連結錯誤
+   - 修正跨文檔引用路徑（cloud-sync、openspec）
+   - 更新過期的行號與文檔結構描述
+   - 為舊文檔添加重構警告標註
 
 ---
 
@@ -51,7 +57,7 @@
 - ✅ 功能測試通過（用戶驗證）
 
 ### Git 狀態
-- ✅ 已提交 8 個 commits：
+- ✅ 已提交 10 個 commits：
   1. `fix: 修復 TypeScript 型別錯誤`
   2. `chore: 刪除未使用的 DatabaseManager 系統`
   3. `refactor(groups): 提取 generateBooklistHTML 為獨立模組`
@@ -60,7 +66,9 @@
   6. `refactor(groups): 提取所有對話框為獨立 UI 組件`
   7. `chore: 清理過時檔案與配置，簡化專案結構`
   8. `docs: 新增重構總結文檔`
-- 🟡 **待提交：** 文檔架構系統（待本次 Session 結束前提交）
+  9. `docs: 建立文檔架構系統與 Session 交接機制`
+  10. `docs: 修正文檔中的連結、引用路徑與行號不一致`
+- ✅ **所有變更已提交完成**
 
 ### 分支狀態
 - 當前分支：`main`
@@ -70,16 +78,17 @@
 
 ## 🎯 待辦事項
 
-### 優先級 P0（本 Session 必須完成）
+### 優先級 P0（本 Session 已完成）
 
 - [x] 創建文檔目錄結構
 - [x] 移動現有文檔到新位置
 - [x] 創建 docs/INDEX.md
 - [x] 創建 docs/architecture/component-map.md
 - [x] 創建 docs/meta/SESSION_HANDOFF.md（本文件）
-- [ ] 創建 docs/development/openspec-installation.md（進行中）
-- [ ] 精簡 CLAUDE.md
-- [ ] Git 提交文檔變更
+- [x] 創建 docs/development/openspec-installation.md
+- [x] 精簡 CLAUDE.md
+- [x] 修正文檔一致性問題
+- [x] Git 提交所有變更
 
 ### 優先級 P1（下次 Session 開始時）
 
