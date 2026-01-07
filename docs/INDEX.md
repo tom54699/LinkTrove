@@ -7,7 +7,7 @@
 ## 快速導航
 
 - 🚀 [快速開始](../CLAUDE.md#quick-start) - 開發環境設置與常用命令
-- 🏗️ 系統架構 - 專案整體架構說明（🚧 待建立：architecture/overview.md）
+- 🏗️ [系統架構](architecture/overview.md) - 專案整體架構說明
 - 🧩 [組件關係圖](architecture/component-map.md) - 防止改 A 壞 B 的組件依賴圖
 - 📦 [功能列表](#功能文檔) - 各功能模組說明
 - 🔄 [Session 交接](meta/SESSION_HANDOFF.md) - AI 工具 Session 交接文檔
@@ -19,9 +19,9 @@
 ### 架構與設計
 
 - [組件關係圖](architecture/component-map.md) - GroupsView 模組架構與依賴關係
-- 系統概覽 - 整體架構說明（🚧 待建立：architecture/overview.md）
-- 資料流向 - 資料流與狀態管理（🚧 待建立：architecture/data-flow.md）
-- 模組依賴關係 - 模組間依賴分析（🚧 待建立：architecture/module-dependencies.md）
+- [系統概覽](architecture/overview.md) - 整體架構說明
+- [資料流向](architecture/data-flow.md) - 資料流與狀態管理
+- [模組依賴關係](architecture/module-dependencies.md) - 模組間依賴分析
 
 ### 功能文檔
 
@@ -39,8 +39,8 @@
 ### 開發指南
 
 - [快速開始](../CLAUDE.md#quick-start) - 安裝與開發命令
-- 測試指南 - 測試策略與執行（🚧 待建立：development/testing-guide.md）
-- 提交規範 - Git 提交訊息規範（🚧 待建立：development/commit-conventions.md）
+- [測試指南](development/testing-guide.md) - 測試策略與執行
+- [提交規範](development/commit-conventions.md) - Git 提交訊息規範
 - [OpenSpec 安裝](development/openspec-installation.md) - OpenSpec 整合指南
 
 ### 元文檔
@@ -77,4 +77,4 @@
 
 ---
 
-**最後更新：2026-01-06**
+**最後更新：2026-01-07**
