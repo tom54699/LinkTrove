@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { clearStore } from '../idb/db';
 
 declare global {
   var chrome: any;
@@ -33,6 +34,12 @@ beforeEach(async () => {
   globalThis.chrome = {
     storage: { local: mockStorageArea(), sync: mockStorageArea() },
   };
+  await clearStore('webpages');
+  await clearStore('categories');
+  await clearStore('templates');
+  try { await clearStore('subcategories' as any); } catch {}
+  try { await clearStore('organizations' as any); } catch {}
+  try { await clearStore('meta'); } catch {}
 });
 
 describe('WebpageService (task 6.1)', () => {
@@ -51,7 +58,7 @@ describe('WebpageService (task 6.1)', () => {
     expect(list[0].url).toBe('https://ex.com/');
   });
 
-  it('allows duplicate by url and creates unique ids', async () => {
+  it('deduplicates same URL within a short window', async () => {
     const { createWebpageService } = await import('../webpageService');
     const svc = createWebpageService();
     const a = await svc.addWebpageFromTab({
@@ -64,9 +71,9 @@ describe('WebpageService (task 6.1)', () => {
       title: 'B',
       favIconUrl: '',
     });
-    expect(a.id).not.toBe(b.id);
+    expect(a.id).toBe(b.id);
     const list = await svc.loadWebpages();
-    expect(list.length).toBe(2);
+    expect(list.length).toBe(1);
   });
 
   it('updates a webpage and bumps updatedAt', async () => {
@@ -87,7 +94,7 @@ describe('WebpageService (task 6.1)', () => {
     );
   });
 
-  it('deletes a webpage', async () => {
+  it('soft deletes a webpage', async () => {
     const { createWebpageService } = await import('../webpageService');
     const svc = createWebpageService();
     const created = await svc.addWebpageFromTab({

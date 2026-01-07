@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { waitFor } from '@testing-library/react';
 import { clearStore, putAll, getAll } from '../idb/db';
 
 declare global { var chrome: any; }
@@ -29,27 +30,29 @@ async function reset() {
   try { await clearStore('meta'); } catch {}
 }
 
-// Mock pageMeta to simulate extraction after tab completes
-vi.mock('../pageMeta', () => ({
-  waitForTabComplete: vi.fn(async () => {}),
-  extractMetaForTab: vi.fn(async () => ({
-    description: 'Auto Desc',
-    siteName: 'AutoSite',
-    author: 'AutoAuthor',
-    url: 'https://ex.com/',
-    // novel canonical fields
-    bookTitle: '書名A',
-    serialStatus: '連載中',
-    genre: '奇幻',
-    wordCount: '123456',
-    latestChapter: '第10章 測試',
-    coverImage: 'https://img.example/cover.jpg',
-    bookUrl: 'https://ex.com/book',
-    lastUpdate: '2025-01-02T03:04:05.000Z',
-  })),
-}));
+const META_FIXTURE = {
+  description: 'Auto Desc',
+  siteName: 'AutoSite',
+  author: 'AutoAuthor',
+  url: 'https://ex.com/',
+  // novel canonical fields
+  bookTitle: '書名A',
+  serialStatus: '連載中',
+  genre: '奇幻',
+  wordCount: '123456',
+  latestChapter: '第10章 測試',
+  coverImage: 'https://img.example/cover.jpg',
+  bookUrl: 'https://ex.com/book',
+  lastUpdate: '2025-01-02T03:04:05.000Z',
+};
 
 beforeEach(async () => {
+  vi.resetModules();
+  vi.doMock('../pageMeta', () => ({
+    waitForTabComplete: vi.fn(async () => {}),
+    extractMetaForTab: vi.fn(async () => META_FIXTURE),
+    queuePendingExtraction: vi.fn(),
+  }));
   globalThis.chrome = { storage: { local: mockStorageArea(), sync: mockStorageArea() } } as any;
   await reset();
 });
@@ -64,11 +67,13 @@ describe('addTabToGroup enrichment (non-blocking)', () => {
     const svc = createWebpageService();
     const created = await (svc as any).addTabToGroup({ id: 10, url: 'https://ex.com/page', title: 'X' }, 'c1', 'g1');
     expect(created.note).toBe('');
-    // wait a tick for enrichment
-    await new Promise((r) => setTimeout(r, 10));
+    await waitFor(async () => {
+      const pages = await getAll('webpages');
+      const one = (pages as any[]).find((p) => p.id === created.id);
+      expect(one?.note).toBe('Auto Desc');
+    });
     const pages = await getAll('webpages');
     const one = (pages as any[]).find((p) => p.id === created.id);
-    expect(one?.note).toBe('Auto Desc');
     // should also backfill siteName/author when template fields exist and empty
     expect((one?.meta || {}).siteName).toBe('AutoSite');
     expect((one?.meta || {}).author).toBe('AutoAuthor');

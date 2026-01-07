@@ -493,7 +493,8 @@ export function createWebpageService(deps?: {
     // 更新目標群組排序
     const currentIds = next
       .filter((w: any) => w.subcategoryId === targetGroupId)
-      .map((w: any) => w.id);
+      .map((w: any) => w.id)
+      .filter((id: string) => id !== item.id);
     const existing = await getGroupOrder(targetGroupId);
     const seen = new Set<string>();
     const base: string[] = [];
