@@ -148,7 +148,7 @@ providers:
     dependencies: [OrganizationsProvider]
 
   - name: WebpagesProvider
-    file: src/app/webpages/webpages.tsx
+    file: src/app/webpages/WebpagesProvider.tsx
     description: 書籤卡片資料管理
     dependencies: [CategoriesProvider]
 

@@ -83,11 +83,12 @@ import/
 
 ### **保留項目**
 - **AGENTS.md** - AI 代理設定（用戶要求保留）
-- **docs/** - 4 個核心技術文檔
-  - book-metadata-mapping.md
-  - cloud-sync.google-drive.md
-  - data-format.md
-  - drag-drop-storage-display.md
+- **docs/** - 技術文檔（重構後已分層組織）
+  - features/ - 功能文檔（cloud-sync.google-drive.md、drag-drop-storage-display.md）
+  - specs/ - 規格文檔（data-format.md、book-metadata-mapping.md）
+  - architecture/ - 架構文檔（component-map.md）
+  - development/ - 開發指南（openspec-installation.md）
+  - meta/ - 元文檔（REFACTORING_SUMMARY.md、DOCUMENTATION_PLAN.md、SESSION_HANDOFF.md）
 
 ---
 
@@ -173,8 +174,13 @@ LinkTrove/
 │   ├── AGENTS.md
 │   └── 發布相關 (3 個)
 │
-├── 📂 docs/ (4 個技術文檔)
-│   └── REFACTORING_SUMMARY.md (本文件)
+├── 📂 docs/ (分層文檔系統) ⭐️
+│   ├── INDEX.md (核心索引)
+│   ├── architecture/ (組件關係圖等)
+│   ├── features/ (功能文檔)
+│   ├── specs/ (規格文檔)
+│   ├── development/ (開發指南)
+│   └── meta/ (本文件等元文檔)
 │
 ├── 📂 src/
 │   ├── app/

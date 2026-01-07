@@ -227,4 +227,4 @@ Drive API 端點（REST v3）：
 ---
 
 附錄：欄位固定鍵名對照
-- 參考 `docs/book-metadata-mapping.md`（書籍欄位鍵名與 OG 對應、正規化、合併策略）
+- 參考 `docs/specs/book-metadata-mapping.md`（書籍欄位鍵名與 OG 對應、正規化、合併策略）
