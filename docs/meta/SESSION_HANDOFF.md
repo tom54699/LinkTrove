@@ -2,9 +2,9 @@
 
 > **用途：** 解決 AI 工具 Session 斷開後的連續性問題，確保下次對話能無縫接續
 >
-> **最後更新：** 2026-01-06 (Session 結束前更新)
+> **最後更新：** 2026-01-08 (Session 結束前更新)
 >
-> **更新者：** Claude Sonnet 4.5
+> **更新者：** Codex
 
 ---
 
@@ -46,6 +46,20 @@
    - 更新過期的行號與文檔結構描述
    - 為舊文檔添加重構警告標註
 
+7. ✅ **最小數量刪除保護（Minimum Count Protection）**
+   - Data layer + UI layer 三層刪除保護完成（Organization/Collection/Group）
+   - 級聯刪除行為確認（Organization → Collections → Groups → Webpages）
+   - 測試修正完成：Organizations/Categories/Groups/Integration
+
+8. ✅ **新增 Organization 管理入口與自動儲存**
+   - OrganizationNav 新增「管理 Organizations」按鈕與對話框
+   - 重新命名與顏色調整改為自動儲存
+   - 新增管理對話框 UI 測試
+
+9. ✅ **手動驗證最小數量刪除保護**
+   - Organization/Collection/Group 最小數量保護皆通過手動驗證
+   - 級聯刪除與錯誤提示符合預期
+
 ---
 
 ## 💾 程式碼狀態
@@ -55,6 +69,12 @@
 - ✅ Vite 建置成功
 - ✅ 無執行時錯誤
 - ✅ 功能測試通過（用戶驗證）
+ - ✅ 測試已執行（2026-01-08）：
+   - `npm test -- src/app/__tests__/delete-protection.integration.test.tsx`
+   - `npm test -- src/app/sidebar/__tests__/categories.delete.test.tsx`
+   - `npm test -- src/app/sidebar/__tests__/organizations.delete.test.tsx`
+   - `npm test -- src/app/groups/__tests__/GroupsView.delete.test.tsx`
+   - `npm test -- src/app/sidebar/__tests__/organization-nav.manage.test.tsx`
 
 ### Git 狀態
 - ✅ 已提交 10 個 commits：
@@ -69,6 +89,7 @@
   9. `docs: 建立文檔架構系統與 Session 交接機制`
   10. `docs: 修正文檔中的連結、引用路徑與行號不一致`
 - ✅ **所有變更已提交完成**
+ - ⚠️ **本次變更是否提交需自行確認**（請查看 git status）
 
 ### 分支狀態
 - 當前分支：`main`

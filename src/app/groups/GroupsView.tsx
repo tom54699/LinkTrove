@@ -141,7 +141,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
         ((await (svc as any).listSubcategories?.(categoryId)) as any) || [];
       const others = latest.filter((g) => g.id !== id);
       if (others.length === 0) {
-        showToast('刪除失敗：至少需要保留一個 group', 'error');
+        showToast('刪除失敗：至少需要保留一個 Group', 'error');
         return;
       }
       // 直接刪除該 group 及其關聯書籤
@@ -163,8 +163,9 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       await persistCollapsed(rest);
       await load();
       try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
-      showToast('已刪除 group 與其書籤', 'success');
-    } catch {
+      showToast('已刪除 Group 與其書籤', 'success');
+    } catch (error) {
+      console.error('Delete group error:', error);
       showToast('刪除失敗', 'error');
     }
   };

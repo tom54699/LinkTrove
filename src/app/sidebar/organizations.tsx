@@ -16,6 +16,7 @@ interface OrgsState {
     reload: () => Promise<void>;
     add: (name: string, color?: string) => Promise<Organization>;
     rename: (id: string, name: string) => Promise<void>;
+    updateColor: (id: string, color?: string) => Promise<void>;
     remove: (id: string, reassignToId?: string) => Promise<void>;
     reorder: (orderedIds: string[]) => Promise<void>;
   };
@@ -64,6 +65,38 @@ export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch {}
     },
     async add(name: string, color?: string) {
+      try {
+        // Use storageService to create organization with default collection
+        const { createStorageService } = await import('../../background/storageService');
+        const storage = createStorageService();
+        const result = await storage.createOrganization?.(name, color);
+
+        if (result) {
+          const org = result.organization;
+          setOrganizations((prev) => [...prev, org]);
+
+          // Auto-create default group for the default collection
+          if (result.defaultCollection) {
+            const catId = result.defaultCollection.id;
+            const now = Date.now();
+            const defaultGroup = {
+              id: `g_default_${catId}`,
+              categoryId: catId,
+              name: 'group',
+              order: 0,
+              createdAt: now,
+              updatedAt: now,
+            };
+            await tx(['subcategories' as any], 'readwrite', async (t) => {
+              t.objectStore('subcategories' as any).put(defaultGroup);
+            });
+          }
+
+          return org;
+        }
+      } catch {}
+
+      // Fallback to old behavior if storageService fails
       const nowList = organizations.slice();
       const order = nowList.length ? (nowList[nowList.length - 1].order ?? nowList.length - 1) + 1 : 0;
       const next: Organization = { id: 'o_' + Math.random().toString(36).slice(2, 9), name: name.trim() || 'Org', color, order };
@@ -83,23 +116,83 @@ export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({
         });
       } catch {}
     },
-    async remove(id: string, reassignToId?: string) {
-      // Reassign categories in this org to target (or default)
+    async updateColor(id: string, color?: string) {
+      setOrganizations((prev) => prev.map((o) => o.id === id ? { ...o, color } : o));
       try {
-        await tx(['categories', 'organizations' as any], 'readwrite', async (t) => {
-          const cs = t.objectStore('categories');
-          const os = t.objectStore('organizations' as any);
-          const catList: any[] = await new Promise((resolve, reject) => { const req = cs.getAll(); req.onsuccess = () => resolve(req.result || []); req.onerror = () => reject(req.error); });
-          const orgs: any[] = await new Promise((resolve, reject) => { const req = os.getAll(); req.onsuccess = () => resolve(req.result || []); req.onerror = () => reject(req.error); });
-          const target = reassignToId && orgs.find((o: any) => o.id === reassignToId) ? reassignToId : (orgs.find((o: any) => o.id !== id)?.id || 'o_default');
-          for (const c of catList) {
-            if ((c as any).organizationId === id) { (c as any).organizationId = target; cs.put(c); }
-          }
-          os.delete(id);
+        await tx('organizations' as any, 'readwrite', async (t) => {
+          const s = t.objectStore('organizations' as any);
+          const cur = await new Promise<any>((resolve, reject) => { const req = s.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
+          if (!cur) return;
+          cur.color = color;
+          s.put(cur);
         });
       } catch {}
+    },
+    async remove(id: string) {
+      // Minimum count protection
+      if (organizations.length <= 1) {
+        throw new Error('Cannot delete last organization');
+      }
+
+      // Cascade delete: delete all categories (which will delete all groups and webpages)
+      try {
+        await tx(['categories', 'subcategories' as any, 'webpages', 'organizations' as any], 'readwrite', async (t) => {
+          const cs = t.objectStore('categories');
+          const ss = t.objectStore('subcategories' as any);
+          const ws = t.objectStore('webpages');
+          const os = t.objectStore('organizations' as any);
+
+          // Get all categories in this org
+          const catList: any[] = await new Promise((resolve, reject) => {
+            const req = cs.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+          });
+          const catsInOrg = catList.filter((c: any) => c.organizationId === id);
+
+          // For each category, cascade delete groups and webpages
+          for (const cat of catsInOrg) {
+            // Get all groups in this category
+            const subList: any[] = await new Promise((resolve, reject) => {
+              const req = ss.getAll();
+              req.onsuccess = () => resolve(req.result || []);
+              req.onerror = () => reject(req.error);
+            });
+            const subsInCat = subList.filter((s: any) => s.categoryId === cat.id);
+
+            // For each group, delete all webpages
+            for (const sub of subsInCat) {
+              const webList: any[] = await new Promise((resolve, reject) => {
+                const req = ws.getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error);
+              });
+              const websInSub = webList.filter((w: any) => w.subcategoryId === sub.id);
+              for (const web of websInSub) {
+                ws.delete(web.id);
+              }
+              ss.delete(sub.id);
+            }
+
+            cs.delete(cat.id);
+          }
+
+          // Finally delete organization
+          os.delete(id);
+        });
+      } catch (error) {
+        console.error('Delete organization error:', error);
+        throw error;
+      }
+
       setOrganizations((prev) => prev.filter((o) => o.id !== id));
-      if (selectedOrgId === id) setSelectedOrgId('o_default');
+
+      // Auto-switch to another organization if current one is deleted
+      if (selectedOrgId === id) {
+        const remaining = organizations.filter(o => o.id !== id);
+        const nextOrgId = remaining[0]?.id || 'o_default';
+        setSelectedOrgId(nextOrgId);
+      }
     },
     async reorder(orderedIds: string[]) {
       const byId = new Map(organizations.map((o) => [o.id, o]));
@@ -149,6 +242,7 @@ export function useOrganizations(): OrgsState {
         reload: async () => {},
         add: async (name: string, color?: string) => ({ id: 'o_default', name: name || 'Personal', color, order: 0 }),
         rename: async () => {},
+        updateColor: async () => {},
         remove: async () => {},
         reorder: async () => {},
       },

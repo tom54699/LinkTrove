@@ -37,8 +37,10 @@ describe('StorageService organizations API', () => {
     expect(Array.isArray(list0)).toBe(true);
     expect(list0.find((o) => o.id === 'o_default')).toBeTruthy();
 
-    const a = await (s as any).createOrganization?.('Org A', '#123456');
-    const b = await (s as any).createOrganization?.('Org B');
+    const resultA = await (s as any).createOrganization?.('Org A', '#123456', { createDefaultCollection: false });
+    const resultB = await (s as any).createOrganization?.('Org B', undefined, { createDefaultCollection: false });
+    const a = resultA.organization;
+    const b = resultB.organization;
     const list1 = (await (s as any).listOrganizations?.()) as any[];
     const names = list1.map((o) => o.name);
     expect(names.includes('Org A')).toBe(true);
@@ -59,7 +61,8 @@ describe('StorageService organizations API', () => {
     const s = createStorageService();
     await waitForOrgMigration();
 
-    const orgB = await (s as any).createOrganization?.('Org B');
+    const resultOrgB = await (s as any).createOrganization?.('Org B', undefined, { createDefaultCollection: false });
+    const orgB = resultOrgB.organization;
     // Add three categories under default
     const c1 = await (s as any).addCategory?.('C1');
     const c2 = await (s as any).addCategory?.('C2');
@@ -81,5 +84,57 @@ describe('StorageService organizations API', () => {
     await (s as any).deleteOrganization?.(orgB.id, { reassignTo: 'o_default' });
     const finalCats = (await getAll('categories')) as any[];
     expect(finalCats.every((c) => c.organizationId === 'o_default')).toBe(true);
+  });
+
+  it('should auto-create default Collection when creating Organization', async () => {
+    const { createStorageService } = await import('../../storageService');
+    const s = createStorageService();
+    await waitForOrgMigration();
+
+    const result = await (s as any).createOrganization?.('Test Org', '#ff0000');
+
+    // Verify organization was created
+    expect(result.organization).toBeDefined();
+    expect(result.organization.name).toBe('Test Org');
+    expect(result.organization.color).toBe('#ff0000');
+
+    // Verify default Collection was auto-created
+    expect(result.defaultCollection).toBeDefined();
+    expect(result.defaultCollection).not.toBeNull();
+    expect(result.defaultCollection.name).toBe('General');
+    expect(result.defaultCollection.organizationId).toBe(result.organization.id);
+    expect(result.defaultCollection.order).toBe(0);
+    expect(result.defaultCollection.color).toBe('#ff0000');
+
+    // Verify Collection exists in database
+    const allCategories = (await getAll('categories')) as any[];
+    const createdCategory = allCategories.find((c) => c.id === result.defaultCollection.id);
+    expect(createdCategory).toBeDefined();
+    expect(createdCategory.name).toBe('General');
+  });
+
+  it('should skip default Collection when createDefaultCollection is false', async () => {
+    const { createStorageService } = await import('../../storageService');
+    const s = createStorageService();
+    await waitForOrgMigration();
+
+    const categoriesBeforeCount = ((await getAll('categories')) as any[]).length;
+
+    const result = await (s as any).createOrganization?.(
+      'Test Org No Collection',
+      '#00ff00',
+      { createDefaultCollection: false }
+    );
+
+    // Verify organization was created
+    expect(result.organization).toBeDefined();
+    expect(result.organization.name).toBe('Test Org No Collection');
+
+    // Verify NO default Collection was created
+    expect(result.defaultCollection).toBeNull();
+
+    // Verify no new categories in database
+    const categoriesAfter = (await getAll('categories')) as any[];
+    expect(categoriesAfter.length).toBe(categoriesBeforeCount);
   });
 });

@@ -66,3 +66,9 @@
   - `by_organizationId_order`
 - `webpages` 增加複合索引：`category_subcategory`
 
+## 刪除/最小數量約束
+
+- Organization：至少保留 1 個（刪除最後一個會被阻擋）
+- Collection（Category）：每個 Organization 至少保留 1 個
+- Group（Subcategory）：每個 Collection 至少保留 1 個
+- 刪除 Organization/Collection/Group 時會級聯刪除其下層資料

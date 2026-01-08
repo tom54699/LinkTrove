@@ -2,9 +2,7 @@
 
 ## Purpose
 階層式書籤管理系統，支援 Organizations → Categories (Collections) → Subcategories (Groups) → Webpages (Cards) 四層架構。提供完整的書籤組織、儲存、排序和元資料管理功能。
-
 ## Requirements
-
 ### Requirement: 階層式組織架構
 系統必須（SHALL）支援四層式書籤組織架構：Organizations（組織）、Categories（類別/集合）、Subcategories（子類別/群組）、Webpages（網頁卡片）。
 
@@ -13,6 +11,20 @@
 - **THEN** 系統產生唯一 ID（格式：`o_` + timestamp）
 - **THEN** 允許使用者設定組織名稱和顏色（可選）
 - **THEN** 該組織出現在組織切換器中
+
+#### Scenario: 建立新組織時自動創建預設類別
+- **WHEN** 使用者建立新組織
+- **THEN** 系統自動創建名為 "General" 的預設類別
+- **THEN** 該預設類別的 `organizationId` 自動關聯到新組織的 ID
+- **THEN** 該預設類別的 `order` 設為 0
+- **THEN** 該預設類別立即顯示在左側邊欄（當該組織被選中時）
+- **THEN** 使用者可以立即在該預設類別下新增群組和卡片
+
+#### Scenario: 匯入資料時不重複創建預設類別
+- **GIVEN** 使用者正在匯入包含組織和類別的 JSON 資料
+- **WHEN** 匯入流程創建新組織
+- **THEN** 系統跳過自動創建預設類別（避免與匯入資料中的類別重複）
+- **THEN** 匯入的類別資料正確關聯到對應的組織
 
 #### Scenario: 建立類別並關聯組織
 - **WHEN** 使用者在組織 A 下建立新類別

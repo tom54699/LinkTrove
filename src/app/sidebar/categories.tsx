@@ -279,6 +279,15 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         try { chrome.storage?.local?.set?.({ categories: list }); } catch {}
       },
       async deleteCategory(id: string) {
+        // Minimum count protection: check if this is the last category in the organization
+        const toDelete = categories.find((c) => c.id === id);
+        if (toDelete) {
+          const inSameOrg = categories.filter((c) => c.organizationId === toDelete.organizationId);
+          if (inSameOrg.length <= 1) {
+            throw new Error('Cannot delete last category in organization');
+          }
+        }
+
         const next = categories.filter((c) => c.id !== id);
         setCategories(next);
         try { chrome.storage?.local?.set?.({ categories: next }); } catch {}
@@ -304,7 +313,10 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
           await tx('categories', 'readwrite', async (t) => {
             t.objectStore('categories').delete(id);
           });
-        } catch {}
+        } catch (error) {
+          console.error('Delete category error:', error);
+          throw error;
+        }
       },
       async setDefaultTemplate(id: string, templateId?: string) {
         // 局部更新該筆記錄，避免覆蓋掉 organizationId 等欄位

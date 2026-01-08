@@ -15,7 +15,11 @@
       "Bash(node:*)",
       "WebFetch(domain:developer.chrome.com)",
       "Bash(grep:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(openspec list:*)",
+      "Bash(openspec validate:*)",
+      "Bash(openspec archive:*)",
+      "Bash(openspec show:*)"
     ],
     "deny": []
   }

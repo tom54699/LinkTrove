@@ -101,7 +101,11 @@ export interface StorageService {
 
   // Organizations CRUD / order
   listOrganizations?: () => Promise<OrganizationData[]>;
-  createOrganization?: (name: string, color?: string) => Promise<OrganizationData>;
+  createOrganization?: (
+    name: string,
+    color?: string,
+    options?: { createDefaultCollection?: boolean }
+  ) => Promise<{ organization: OrganizationData; defaultCollection: CategoryData | null }>;
   renameOrganization?: (id: string, name: string) => Promise<void>;
   deleteOrganization?: (
     id: string,

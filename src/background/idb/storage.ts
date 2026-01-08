@@ -647,14 +647,52 @@ export function createIdbStorageService(): StorageService {
       );
       return filtered as any;
     },
-    createOrganization: async (name: string, color?: string) => {
+    createOrganization: async (name: string, color?: string, options?: { createDefaultCollection?: boolean }) => {
+      const { createDefaultCollection = true } = options || {};
+
+      // Calculate order for Organization
       const existing = (await getAll('organizations' as any).catch(() => [])) as any[];
       const order = existing.length ? Math.max(...existing.map((o: any) => o.order ?? 0)) + 1 : 0;
-      const org = { id: 'o_' + Math.random().toString(36).slice(2, 9), name: (name || 'Org').trim() || 'Org', color, order } as any;
-      await tx('organizations' as any, 'readwrite', async (t) => {
-        t.objectStore('organizations' as any).put(org);
+
+      // Generate IDs
+      const orgId = 'o_' + Math.random().toString(36).slice(2, 9);
+      const catId = 'c_' + Math.random().toString(36).slice(2, 9);
+
+      // Create Organization object
+      const org = {
+        id: orgId,
+        name: (name || 'Org').trim() || 'Org',
+        color,
+        order
+      };
+
+      // Create default Collection object
+      const defaultCategory = createDefaultCollection ? {
+        id: catId,
+        name: 'General',
+        color: color || '#64748b',
+        order: 0,
+        organizationId: orgId
+      } : null;
+
+      // Atomic transaction: write both or rollback
+      await tx(['organizations' as any, 'categories'], 'readwrite', async (t) => {
+        const orgStore = t.objectStore('organizations' as any);
+        const catStore = t.objectStore('categories');
+
+        // Write Organization
+        orgStore.put(org);
+
+        // Write default Collection if enabled
+        if (defaultCategory) {
+          catStore.put(defaultCategory);
+        }
       });
-      return org as any;
+
+      return {
+        organization: org,
+        defaultCollection: defaultCategory
+      } as any;
     },
     renameOrganization: async (id: string, name: string) => {
       await tx('organizations' as any, 'readwrite', async (t) => {

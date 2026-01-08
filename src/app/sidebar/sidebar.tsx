@@ -4,6 +4,7 @@ import { useOrganizations } from './organizations';
 import { useTemplates } from '../templates/TemplatesProvider';
 import { useWebpages } from '../webpages/WebpagesProvider';
 import { SearchBox } from '../ui/SearchBox';
+import { useFeedback } from '../ui/feedback';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -14,6 +15,7 @@ export const Sidebar: React.FC = () => {
   } = useCategories() as any;
   const { organizations, selectedOrgId, setCurrentOrganization } = useOrganizations();
   const { templates } = useTemplates();
+  const { showToast } = useFeedback();
   const [editing, setEditing] = React.useState<any | null>(null);
   const [editName, setEditName] = React.useState('');
   const [editColor, setEditColor] = React.useState('#64748b');
@@ -230,12 +232,24 @@ export const Sidebar: React.FC = () => {
                     <button
                       className="px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30"
                       onClick={async () => {
+                        if (!editing) return;
+
+                        // UI Layer Check: minimum count protection
+                        const inSameOrg = categories.filter((c: any) => c.organizationId === editing.organizationId);
+                        if (inSameOrg.length <= 1) {
+                          showToast('刪除失敗：至少需要保留一個 Collection', 'error');
+                          return;
+                        }
+
                         try {
-                          if (!editing) return;
                           await catActions.deleteCategory(editing.id);
                           setEditing(null);
                           setConfirmDelete(false);
-                        } catch {}
+                          showToast('已刪除 Collection 及其所有資料', 'success');
+                        } catch (error) {
+                          console.error('Delete category error:', error);
+                          showToast('刪除失敗', 'error');
+                        }
                       }}
                     >
                       Delete
