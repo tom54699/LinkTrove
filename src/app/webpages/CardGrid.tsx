@@ -5,6 +5,7 @@ import type { TabItemData } from '../tabs/types';
 import { getDragTab, getDragWebpage, setDragWebpage, broadcastGhostActive } from '../dnd/dragContext';
 import { useFeedback } from '../ui/feedback';
 import { dbg, isDebug } from '../../utils/debug';
+import { MoveSelectedDialog } from './MoveSelectedDialog';
 
 export interface CardGridProps {
   items?: WebpageCardData[];
@@ -49,7 +50,6 @@ export const CardGrid: React.FC<CardGridProps> = ({
 }) => {
   const [isOver, setIsOver] = React.useState(false);
   const { showToast } = useFeedback();
-  const [selectMode, setSelectMode] = React.useState(false);
   const [selected, setSelected] = React.useState<Record<string, boolean>>({});
 
   const selectedCount = Object.values(selected).filter(Boolean).length;
@@ -58,6 +58,71 @@ export const CardGrid: React.FC<CardGridProps> = ({
   const clearSelection = () => setSelected({});
 
   const [confirming, setConfirming] = React.useState(false);
+  const [showMoveDialog, setShowMoveDialog] = React.useState(false);
+  const [showOpenTabsConfirm, setShowOpenTabsConfirm] = React.useState(false);
+
+  // Handler for batch open tabs
+  const handleOpenTabs = () => {
+    const selectedIds = Object.entries(selected)
+      .filter(([, v]) => v)
+      .map(([key]) => key);
+
+    // If more than 10 tabs, show confirmation
+    if (selectedIds.length > 10) {
+      setShowOpenTabsConfirm(true);
+      return;
+    }
+
+    executeOpenTabs();
+  };
+
+  const executeOpenTabs = () => {
+    try {
+      const selectedIds = Object.entries(selected)
+        .filter(([, v]) => v)
+        .map(([key]) => key);
+      const selectedItems = items.filter((item) => selectedIds.includes(item.id));
+      selectedItems.forEach((item) => {
+        window.open(item.url, '_blank');
+      });
+      clearSelection();
+      setShowOpenTabsConfirm(false);
+    } catch {
+      showToast('Failed to open tabs', 'error');
+    }
+  };
+
+  // Handler for batch move
+  const handleBatchMove = async (categoryId: string, subcategoryId: string) => {
+    try {
+      const selectedIds = Object.entries(selected)
+        .filter(([, v]) => v)
+        .map(([key]) => key);
+
+      // Import storage service for subcategory update
+      const { createStorageService } = await import('../../background/storageService');
+      const svc = createStorageService();
+
+      // Update each card's category and subcategory
+      await Promise.all(
+        selectedIds.map(async (cardId) => {
+          // Update category first
+          if (onUpdateCategory) {
+            await onUpdateCategory(cardId, categoryId);
+          }
+          // Then update subcategory
+          await (svc as any).updateCardSubcategory?.(cardId, subcategoryId);
+        })
+      );
+
+      setShowMoveDialog(false);
+      clearSelection();
+      showToast(`已移動 ${selectedIds.length} 張卡片`, 'success');
+    } catch (error) {
+      showToast('移動失敗', 'error');
+      console.error('Batch move error:', error);
+    }
+  };
   const [dragDisabled, setDragDisabled] = React.useState(false);
   const [ghostTab, setGhostTab] = React.useState<TabItemData | null>(null);
   const [ghostType, setGhostType] = React.useState<'tab' | 'card' | null>(null);
@@ -396,32 +461,67 @@ export const CardGrid: React.FC<CardGridProps> = ({
 
   return (
     <div>
-      {/* Debug overlay removed */}
-      <div className="mb-3 flex items-center gap-2">
-        <button
-          type="button"
-          className="text-sm px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
-          onClick={() => setSelectMode((v) => !v)}
-        >
-          {selectMode ? 'Cancel' : 'Select'}
-        </button>
-        {selectMode && (
-          <>
-            <span className="text-sm opacity-80">{selectedCount} selected</span>
-            <button
-              type="button"
-              className="text-sm px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30 disabled:opacity-50"
-              onClick={() => {
-                (document.activeElement as HTMLElement | null)?.blur?.();
-                setConfirming(true);
-              }}
-              disabled={selectedCount === 0}
-            >
-              Delete Selected
-            </button>
-          </>
-        )}
-      </div>
+      {/* Floating toolbar when cards are selected */}
+      {selectedCount > 0 && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-[var(--panel)] border border-slate-700 rounded-lg shadow-2xl px-4 py-3 flex items-center gap-4">
+          <p className="text-sm font-medium opacity-90">
+            ({selectedCount} {selectedCount === 1 ? 'tab' : 'tabs'} selected)
+          </p>
+
+          <button
+            type="button"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-slate-600 hover:bg-slate-800 transition-colors"
+            onClick={() => setShowMoveDialog(true)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2"></path>
+            </svg>
+            MOVE
+          </button>
+
+          <button
+            type="button"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-slate-600 hover:bg-slate-800 transition-colors"
+            onClick={handleOpenTabs}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 7l-10 10"></path>
+              <path d="M8 7l9 0l0 9"></path>
+            </svg>
+            Open tabs
+          </button>
+
+          <button
+            type="button"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-red-600 text-red-300 hover:bg-red-950/30 transition-colors"
+            onClick={() => {
+              (document.activeElement as HTMLElement | null)?.blur?.();
+              setConfirming(true);
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 7l16 0"></path>
+              <path d="M10 11l0 6"></path>
+              <path d="M14 11l0 6"></path>
+              <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
+              <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
+            </svg>
+            DELETE
+          </button>
+
+          <button
+            type="button"
+            className="ml-2 p-1 hover:bg-slate-800 rounded transition-colors"
+            onClick={clearSelection}
+            aria-label="Close"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6l-12 12"></path>
+              <path d="M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      )}
       <div
         aria-label="Drop Zone"
         data-testid="drop-zone"
@@ -597,7 +697,6 @@ export const CardGrid: React.FC<CardGridProps> = ({
                     url={(node.item as any).url}
                     categoryId={(node.item as any).category}
                     meta={(node.item as any).meta || {}}
-                    selectMode={selectMode}
                     selected={!!selected[(node.item as any).id]}
                     onToggleSelect={() => toggleSelect((node.item as any).id)}
                     onOpen={() => {
@@ -674,6 +773,43 @@ export const CardGrid: React.FC<CardGridProps> = ({
           </div>
         </div>
       )}
+      {showOpenTabsConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setShowOpenTabsConfirm(false)}
+        >
+          <div
+            className="rounded border border-slate-700 bg-[var(--bg)] p-4"
+            role="dialog"
+            aria-label="Confirm Open Tabs"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 font-medium">
+              確定要開啟 {selectedCount} 個標籤頁嗎？
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                onClick={() => setShowOpenTabsConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]"
+                onClick={executeOpenTabs}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <MoveSelectedDialog
+        isOpen={showMoveDialog}
+        selectedCount={selectedCount}
+        onClose={() => setShowMoveDialog(false)}
+        onMove={handleBatchMove}
+      />
     </div>
   );
 };

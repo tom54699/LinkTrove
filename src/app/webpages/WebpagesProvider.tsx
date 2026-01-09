@@ -282,11 +282,18 @@ export const WebpagesProvider: React.FC<{
           '../../background/storageService'
         );
         const s = createStorageService();
-        const [cats, tmpls] = await Promise.all([
+        const [cats, tmpls, groups] = await Promise.all([
           s.loadFromSync(),
           (s as any).loadTemplates(),
+          (s as any).listSubcategories?.(category) || [],
         ]);
         const cat = (cats as any[]).find((c) => c.id === category);
+
+        // Update subcategoryId to the first group in the target category
+        if (groups && groups.length > 0) {
+          const sortedGroups = [...groups].sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+          updates.subcategoryId = sortedGroups[0].id;
+        }
         const tpl = cat?.defaultTemplateId
           ? (tmpls as any[]).find((t) => t.id === cat.defaultTemplateId)
           : null;

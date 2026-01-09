@@ -65,6 +65,13 @@
   transition: all 0.3s ease;
   cursor: pointer;
 }
+/* Show checkbox on hover or when card is selected */
+.tobylike .icon-container:hover .checkbox-overlay,
+.tobylike .checkbox-overlay.selected {
+  opacity: 1;
+  visibility: visible;
+}
+/* Legacy support for data-select attribute */
 .tobylike .card[data-select='true'] .checkbox-overlay {
   opacity: 1;
   visibility: visible;

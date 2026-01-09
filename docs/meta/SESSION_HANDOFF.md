@@ -2,9 +2,9 @@
 
 > **用途：** 解決 AI 工具 Session 斷開後的連續性問題，確保下次對話能無縫接續
 >
-> **最後更新：** 2026-01-08 (Session 結束前更新)
+> **最後更新：** 2026-01-09 (Session 結束前更新)
 >
-> **更新者：** Codex
+> **更新者：** Claude Sonnet 4.5
 
 ---
 
@@ -60,6 +60,29 @@
    - Organization/Collection/Group 最小數量保護皆通過手動驗證
    - 級聯刪除與錯誤提示符合預期
 
+10. ✅ **批次操作功能（Batch Operations）**（2026-01-09）
+   - 使用 OpenSpec 規範完成需求設計與提案
+   - 實作多選卡片功能（hover 顯示 checkbox）
+   - 新增浮動工具列（MOVE / Open tabs / DELETE）
+   - 批次開啟標籤頁（10+ 張時顯示確認提示）
+   - 批次移動卡片（MoveSelectedDialog 對話框）
+   - 批次刪除卡片（含確認對話框）
+   - **UX 改進**：移除 "Select" 按鈕，改為 hover 顯示 checkbox（更直覺）
+   - 建置通過，無編譯錯誤
+   - 更新 CLAUDE.md 文檔
+
+**新增檔案：**
+- `src/app/webpages/MoveSelectedDialog.tsx` - 批次移動對話框組件
+- `openspec/changes/add-batch-operations/proposal.md` - OpenSpec 提案
+- `openspec/changes/add-batch-operations/tasks.md` - 實作任務清單
+- `openspec/changes/add-batch-operations/specs/bookmark-management/spec.md` - Spec Delta
+
+**修改檔案：**
+- `src/app/webpages/CardGrid.tsx` - 新增浮動工具列與批次操作邏輯（移除 selectMode）
+- `src/app/webpages/TobyLikeCard.tsx` - 簡化 checkbox 邏輯（移除 selectMode 檢查）
+- `src/styles/toby-like.css` - 新增 hover 顯示 checkbox 樣式
+- `CLAUDE.md` - 新增批次操作使用說明
+
 ---
 
 ## 💾 程式碼狀態
@@ -77,19 +100,12 @@
    - `npm test -- src/app/sidebar/__tests__/organization-nav.manage.test.tsx`
 
 ### Git 狀態
-- ✅ 已提交 10 個 commits：
-  1. `fix: 修復 TypeScript 型別錯誤`
-  2. `chore: 刪除未使用的 DatabaseManager 系統`
-  3. `refactor(groups): 提取 generateBooklistHTML 為獨立模組`
-  4. `refactor(groups): 提取分享功能為 useGroupShare Hook`
-  5. `refactor(groups): 提取匯入功能為 useGroupImport Hook`
-  6. `refactor(groups): 提取所有對話框為獨立 UI 組件`
-  7. `chore: 清理過時檔案與配置，簡化專案結構`
-  8. `docs: 新增重構總結文檔`
-  9. `docs: 建立文檔架構系統與 Session 交接機制`
-  10. `docs: 修正文檔中的連結、引用路徑與行號不一致`
-- ✅ **所有變更已提交完成**
- - ⚠️ **本次變更是否提交需自行確認**（請查看 git status）
+- ✅ 已提交 10 個 commits (2026-01-08)
+- ⚠️ **本次 Session (2026-01-09) 新增批次操作功能，尚未提交**
+  - 新增 `src/app/webpages/MoveSelectedDialog.tsx`
+  - 修改 `src/app/webpages/CardGrid.tsx`
+  - 新增 OpenSpec 提案文檔（`openspec/changes/add-batch-operations/`）
+  - 更新 `CLAUDE.md` 和 `docs/meta/SESSION_HANDOFF.md`
 
 ### 分支狀態
 - 當前分支：`main`

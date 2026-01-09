@@ -42,7 +42,6 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   url,
   categoryId,
   meta,
-  selectMode,
   selected,
   onToggleSelect,
   onOpen,
@@ -162,7 +161,6 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
     <div className="tobylike">
       <div
         className="card"
-        data-select={selectMode ? 'true' : undefined}
         onClick={onOpen}
         style={{
           background: 'var(--card)',
@@ -199,15 +197,10 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
                 );
               })()}
               <label
-                className="checkbox-overlay"
+                className={`checkbox-overlay ${selected ? 'selected' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  const others = (() => {
-                    try {
-                      return document.querySelectorAll('input[aria-label="Select"]').length > 1;
-                    } catch { return false; }
-                  })();
-                  if (selectMode || others) onToggleSelect?.();
+                  onToggleSelect?.();
                 }}
               >
                 <input
@@ -215,22 +208,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
                   aria-label={'Select'}
                   className="sr-only"
                   checked={!!selected}
-                  onClick={() => {
-                    const others = (() => {
-                      try {
-                        return document.querySelectorAll('input[aria-label="Select"]').length > 1;
-                      } catch { return false; }
-                    })();
-                    if (selectMode || others) onToggleSelect?.();
-                  }}
-                  onChange={() => {
-                    const others = (() => {
-                      try {
-                        return document.querySelectorAll('input[aria-label="Select"]').length > 1;
-                      } catch { return false; }
-                    })();
-                    if (selectMode || others) onToggleSelect?.();
-                  }}
+                  onChange={() => onToggleSelect?.()}
                 />
                 <div className={`checkbox ${selected ? 'checked' : ''}`}>
                   <svg

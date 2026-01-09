@@ -32,6 +32,7 @@ LinkTrove is a Chrome browser extension for bookmark/webpage management, similar
 - Drag-and-drop card reordering with per-group order preservation
 - IndexedDB storage with automatic migration from chrome.storage
 - **GitHub Gist Sharing**: One-click publish sharing links via GitHub Gist
+- **Batch Operations**: Multi-select cards for batch delete, move, and open tabs
 
 **Tech Stack:** React 18, TypeScript, Vite 5, IndexedDB, Chrome Manifest V3
 
@@ -146,6 +147,29 @@ For detailed architecture, see [component-map.md](docs/architecture/component-ma
 
 **For Developers:**
 - Set `VITE_GITHUB_TOKEN=your_token_here` in `.env.local`
+
+### Using Batch Operations
+
+**Multi-Select Cards:**
+1. **Hover over a card** → checkbox appears on the card icon
+2. **Click checkbox** to select/deselect the card
+3. Once you select at least one card, a **floating toolbar** appears at the bottom with:
+   - **MOVE**: Move selected cards to another Space/Collection
+   - **Open tabs**: Open all selected URLs in new tabs
+   - **DELETE**: Delete all selected cards (with confirmation)
+4. Click **✕** on the toolbar to clear all selections
+
+**Features:**
+- **Hover to select**: No need to enter "select mode" first
+- **Persistent checkbox**: Selected cards keep checkbox visible
+- **Open tabs warning**: Shows confirmation if selecting 10+ cards
+- **Batch move**: Choose target organization and category via dialog
+- **Success feedback**: Toast notifications for all operations
+
+**Files:**
+- `src/app/webpages/CardGrid.tsx` - Main batch operations logic
+- `src/app/webpages/MoveSelectedDialog.tsx` - Move dialog component
+- `src/styles/toby-like.css` - Checkbox hover styles
 
 ### Modifying Import/Export
 1. Update importers in `src/background/importers/`
