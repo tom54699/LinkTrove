@@ -4,7 +4,7 @@
 `add-batch-operations`
 
 ## Status
-🟡 Proposed - Awaiting approval
+✅ Completed - Implemented and deployed (2026-01-09)
 
 ## Summary
 增加批次操作功能，允許使用者多選卡片後進行批次刪除、批次移動、批次開啟標籤頁操作。提供類似 Toby 的浮動工具列介面，提升批次管理效率。
@@ -203,9 +203,9 @@ handleBatchDelete()
 - **文檔**: 更新 CLAUDE.md 與 SESSION_HANDOFF.md
 
 ## Approval
-- [ ] Product Owner (使用者)
-- [ ] Technical Lead (Claude Code)
-- [ ] Architecture Review (Claude Code)
+- [x] Product Owner (使用者) - 測試通過
+- [x] Technical Lead (Claude Code) - 實作完成
+- [x] Architecture Review (Claude Code) - 驗證通過
 
 ---
 
