@@ -212,15 +212,6 @@
   visibility: visible;
 }
 
-/* Smooth ghost placeholder for drag previews */
-.tobylike [data-testid='ghost-card'] {
-  opacity: 0.65 !important;
-  transform: scale(0.985);
-  transition:
-    transform 0.12s ease,
-    opacity 0.12s ease;
-}
-
 /* Visually hidden input for accessibility */
 .tobylike .sr-only {
   position: absolute;

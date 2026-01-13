@@ -10,17 +10,11 @@ import { OrganizationsProvider, useOrganizations } from './sidebar/organizations
 import { Sidebar } from './sidebar/sidebar';
 import { OrganizationNav } from './sidebar/OrganizationNav';
 import { FeedbackProvider, ErrorBoundary } from './ui/feedback';
-import { SearchBox } from './ui/SearchBox';
-import {
-  createExportImportService,
-  type ExportImportService,
-} from './data/exportImport';
 import { createStorageService } from '../background/storageService';
 import { useFeedback } from './ui/feedback';
 import { WebpagesProvider, useWebpages } from './webpages/WebpagesProvider';
 import { SettingsModal } from './ui/SettingsModal';
 import { useTemplates } from './templates/TemplatesProvider';
-import { TemplatesManager } from './templates/TemplatesManager';
 import { GroupsView } from './groups/GroupsView';
 
 export const AppLayout: React.FC = () => {

@@ -8,12 +8,10 @@ import { useTemplates } from '../templates/TemplatesProvider';
 export interface TobyLikeCardProps {
   title: string;
   description?: string;
-  faviconText?: string; 
   faviconUrl?: string;
   url?: string;
   categoryId?: string;
   meta?: Record<string, string>;
-  selectMode?: boolean;
   selected?: boolean;
   onToggleSelect?: () => void;
   onOpen?: () => void;

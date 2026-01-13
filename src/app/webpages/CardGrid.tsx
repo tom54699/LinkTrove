@@ -22,9 +22,6 @@ export interface CardGridProps {
       meta: Record<string, string>;
     }>
   ) => void;
-  density?: 'compact' | 'cozy' | 'roomy';
-  collapsed?: boolean;
-  onReorder?: (fromId: string, toId: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
   onUpdateUrl?: (id: string, url: string) => void;
   onUpdateCategory?: (id: string, category: string) => void;
@@ -38,7 +35,6 @@ export const CardGrid: React.FC<CardGridProps> = ({
   onDeleteOne,
   onEditDescription,
   onSave,
-  onReorder,
   onDropExistingCard,
   onUpdateTitle,
   onUpdateUrl,
