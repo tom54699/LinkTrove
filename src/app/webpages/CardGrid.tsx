@@ -419,6 +419,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
 
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.stopPropagation();
 
     // 取消任何待處理的 DragLeave 延遲
     if (dragLeaveTimeoutRef.current) {
@@ -536,7 +537,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
         onDragEnter={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`min-h-[100px] rounded-xl transition-all ${isOver ? 'ring-2 ring-[var(--accent)] ring-inset bg-[var(--accent)]/5' : ''}`}
+        className="min-h-[100px] rounded-xl transition-all"
       >
         {lastDropTitle && <span className="sr-only" aria-hidden="true">{lastDropTitle}</span>}
         {items.length === 0 && !((ghostTab != null || ghostType != null) && ghostIndex != null) ? (

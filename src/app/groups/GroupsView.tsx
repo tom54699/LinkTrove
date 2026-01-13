@@ -3,7 +3,7 @@ import { createStorageService } from '../../background/storageService';
 import { useFeedback } from '../ui/feedback';
 import { useWebpages } from '../webpages/WebpagesProvider';
 import { CardGrid } from '../webpages/CardGrid';
-import { broadcastGhostActive } from '../dnd/dragContext';
+import { broadcastGhostActive, getDragTab, getDragWebpage } from '../dnd/dragContext';
 import { ContextMenu } from '../ui/ContextMenu';
 import { useGroupShare } from './share/useGroupShare';
 import { useGroupImport } from './import/useGroupImport';
@@ -27,6 +27,8 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
   const [confirmDeleteGroup, setConfirmDeleteGroup] = React.useState<string | null>(null);
   // Compact actions menu per-group
   const [menuFor, setMenuFor] = React.useState<null | { id: string; x: number; y: number }>(null);
+  // Active drop target group
+  const [activeDropGroupId, setActiveDropGroupId] = React.useState<string | null>(null);
 
   // Use share hook for all sharing functionality
   const {
@@ -219,6 +221,71 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     }
   };
 
+  const handleGroupDragOver = (e: React.DragEvent, groupId: string) => {
+    e.preventDefault();
+    e.stopPropagation(); // Stop propagation to prevent multiple highlights
+    e.dataTransfer.dropEffect = 'move';
+    if (activeDropGroupId !== groupId) {
+      setActiveDropGroupId(groupId);
+    }
+  };
+
+  const handleGroupDragLeave = (e: React.DragEvent, groupId: string) => {
+    e.preventDefault();
+    const currentTarget = e.currentTarget as HTMLElement;
+    const relatedTarget = e.relatedTarget as HTMLElement | null;
+    // Only clear if we really left the section (not entering a child like Header or CardGrid)
+    if (!relatedTarget || !currentTarget.contains(relatedTarget)) {
+      if (activeDropGroupId === groupId) {
+        setActiveDropGroupId(null);
+      }
+    }
+  };
+
+  const handleGroupDrop = async (e: React.DragEvent, g: GroupItem) => {
+    e.preventDefault();
+    e.stopPropagation(); // Consume the event so parents/children don't double-handle if logic overlaps
+    setActiveDropGroupId(null);
+
+    try {
+      const fromId = e.dataTransfer.getData('application/x-linktrove-webpage');
+      if (fromId) {
+        // Drop Existing Card -> Move to End of Group
+        if ((svc as any).moveCardToGroup) {
+          await (svc as any).moveCardToGroup(fromId, g.categoryId, g.id, '__END__');
+        } else {
+          await actions.updateCategory(fromId, g.categoryId);
+          await (svc as any).updateCardSubcategory?.(fromId, g.id);
+          await (actions as any).moveToEnd(fromId);
+        }
+        await actions.load();
+        try { broadcastGhostActive(null); } catch {}
+        showToast('已移動到 group', 'success');
+        return;
+      }
+
+      // Drop New Tab -> Create Card at End of Group
+      let raw = '';
+      try { raw = e.dataTransfer.getData('application/x-linktrove-tab'); } catch {}
+      let tab: any = null;
+      if (raw) tab = JSON.parse(raw);
+      if (!tab) { try { tab = (getDragTab() as any) || null; } catch { tab = null; } }
+      
+      if (tab) {
+        const createdId = (await actions.addFromTab(tab as any)) as any as string;
+        await actions.updateCategory(createdId, g.categoryId);
+        await (svc as any).updateCardSubcategory?.(createdId, g.id);
+        await (actions as any).moveToEnd(createdId);
+        await actions.load();
+        try { broadcastGhostActive(null); } catch {}
+        showToast('已從分頁建立並加入 group', 'success');
+      }
+    } catch {
+      try { broadcastGhostActive(null); } catch {}
+      showToast('操作失敗', 'error');
+    }
+  };
+
   if (!svc) return null;
 
   return (
@@ -226,10 +293,18 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       {groups.map((g) => {
         const groupItems = items.filter((it: any) => it.category === categoryId && it.subcategoryId === g.id);
         const isCollapsed = !!collapsed[g.id];
+        const isActive = activeDropGroupId === g.id;
 
         return (
-          <section key={g.id} className="group-container group/container transition-all">
-            <header className="flex items-center gap-3 mb-4 select-none">
+          <section 
+            key={g.id} 
+            className={`group-container group/container transition-all rounded-xl border ${isActive ? 'border-[var(--accent)] bg-[var(--accent)]/5 shadow-[0_0_15px_rgba(var(--accent-rgb),0.15)]' : 'border-transparent'}`}
+            onDragOver={(e) => handleGroupDragOver(e, g.id)}
+            onDragEnter={(e) => handleGroupDragOver(e, g.id)} // Handle enter same as over for highlight
+            onDragLeave={(e) => handleGroupDragLeave(e, g.id)}
+            onDrop={(e) => handleGroupDrop(e, g)}
+          >
+            <header className="flex items-center gap-3 mb-4 select-none p-2 rounded-t-xl">
               <button
                 className="text-[var(--muted)] hover:text-[var(--text)] transition-transform duration-200"
                 style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
@@ -361,7 +436,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
             )}
 
             {!isCollapsed && (
-              <div className="min-h-[40px]">
+              <div className="min-h-[40px] px-2 pb-2">
                 <CardGrid
                   items={groupItems}
                   onDropTab={async (tab: any, beforeId?: string) => {

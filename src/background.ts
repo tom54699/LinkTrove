@@ -63,28 +63,35 @@ chrome.runtime.onConnect.addListener((port) => {
   // Ensure listeners are active when a UI connects (SW may have cold-started)
   boot();
   clients.add(port);
-  // Send initial snapshot of open tabs across all windows and current active window id
-  chrome.windows.getLastFocused?.({ populate: false }, (w) => {
-    const activeWindowId = w?.id;
-    chrome.windows.getAll?.({ populate: false }, (wins) => {
-      const windowIds = (wins || [])
-        .map((x) => x.id)
-        .filter((x) => typeof x === 'number');
-      chrome.tabs.query({}, (tabs) => {
-        try {
-          const payload = {
-            kind: 'init',
-            activeWindowId,
-            windowIds,
-            tabs: tabs.map(tabToPayload),
-          };
-          port.postMessage(payload);
-        } catch (err) {
-          console.error('failed to send init tabs', err);
-        }
+
+  // Handshake: Wait for UI to signal readiness before sending initial snapshot
+  // This prevents race conditions where init message is sent before UI listeners are attached
+  port.onMessage.addListener((msg) => {
+    if (msg?.kind === 'ready') {
+      chrome.windows.getLastFocused?.({ populate: false }, (w) => {
+        const activeWindowId = w?.id;
+        chrome.windows.getAll?.({ populate: false }, (wins) => {
+          const windowIds = (wins || [])
+            .map((x) => x.id)
+            .filter((x) => typeof x === 'number');
+          chrome.tabs.query({}, (tabs) => {
+            try {
+              const payload = {
+                kind: 'init',
+                activeWindowId,
+                windowIds,
+                tabs: tabs.map(tabToPayload),
+              };
+              port.postMessage(payload);
+            } catch (err) {
+              console.error('failed to send init tabs', err);
+            }
+          });
+        });
       });
-    });
+    }
   });
+
   port.onDisconnect.addListener(() => {
     clients.delete(port);
   });

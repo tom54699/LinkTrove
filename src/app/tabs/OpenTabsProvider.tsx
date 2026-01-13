@@ -140,6 +140,9 @@ export const OpenTabsProvider: React.FC<{
       }
     };
     port.onMessage.addListener(onMsg);
+    // Handshake: Signal readiness to background to trigger init data
+    try { port.postMessage({ kind: 'ready' }); } catch {}
+
     return () => {
       try {
         port.onMessage.removeListener(onMsg);
