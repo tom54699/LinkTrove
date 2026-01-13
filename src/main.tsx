@@ -4,7 +4,8 @@ import './index.css';
 import './styles/toby.css';
 import { AppProvider } from './app/AppContext';
 import { createHashRouter, RouterProvider, Navigate } from 'react-router-dom';
-import { AppLayout, Home, Settings } from './app/App';
+import { AppLayout, Home } from './app/App';
+import { Settings } from './app/SettingsPage';
 
 const router = createHashRouter([
   {

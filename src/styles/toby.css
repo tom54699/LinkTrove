@@ -27,8 +27,8 @@
   flex-wrap: wrap;
   gap: 16px;
 }
-.toby-mode .toby-card-flex {
-  width: calc((100% - 32px) / 3); /* wider cards: 3 per row by default */
+/* .toby-mode .toby-card-flex {
+  width: calc((100% - 32px) / 3);
 }
 @media (max-width: 1200px) {
   .toby-mode .toby-card-flex {
@@ -44,7 +44,7 @@
   .toby-mode .toby-card-flex {
     width: 100%;
   }
-}
+} */
 
 /* Card look */
 .toby-mode .toby-card {

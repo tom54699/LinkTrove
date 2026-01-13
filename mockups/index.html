@@ -1,0 +1,357 @@
+<!doctype html>
+<!-- 
+  ========================================================================
+  LINKTROVE DESIGN BLUEPRINT (v2.1 - Flexbox Layout with Flush Right Tabs)
+  ========================================================================
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>LinkTrove Prototype (Final)</title>
+  <style>
+    /* --- THEMES --- */
+    :root {
+      /* Default Dark */
+      --bg: #0f1115;
+      --panel: #181c22;
+      --border: #2a3240;
+      --text: #e8eaf0;
+      --muted: #9aa3b2;
+      --accent: #4fd1c5;
+      --surface: #232730;
+      --surface-hover: #2d323b;
+      --shadow: none;
+    }
+
+    body.theme-toby {
+      /* Toby Light */
+      --bg: #f4f5f7;
+      --panel: #ffffff;
+      --border: #e1e4e8;
+      --text: #24292e;
+      --muted: #586069;
+      --accent: #ff507a;
+      --surface: #ffffff;
+      --surface-hover: #f1f3f5;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    body.theme-toby-dark {
+      /* Toby Dark (Dracula Match) */
+      --bg: #282a36;
+      --panel: #343746;
+      --border: #44475a;
+      --text: #f8f8f2;
+      --muted: #6272a4;
+      --accent: #ff507a;
+      --surface: #44475a;
+      --surface-hover: #6272a4;
+      --shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    * { box-sizing: border-box; }
+    body { 
+      margin: 0; padding: 0;
+      font-family: "Space Grotesk", system-ui, -apple-system, sans-serif; 
+      background: var(--bg); color: var(--text); 
+      display: flex; /* Flex Layout for Flush Right Sidebar */
+      height: 100vh; width: 100vw;
+      user-select: none; transition: background 0.3s, color 0.3s; overflow: hidden; 
+    }
+    
+    /* 1. Left & Center Container (The Padded Area) */
+    .layout-main-area {
+      flex: 1; display: flex; gap: 16px; padding: 16px; min-width: 0;
+    }
+
+    /* Rail */
+    .rail { width: 72px; flex-shrink: 0; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 12px; box-shadow: var(--shadow); }
+    .org-dot { width: 44px; height: 44px; border-radius: 14px; background: var(--surface); display: grid; place-items: center; font-weight: 700; cursor: pointer; border: 2px solid transparent; transition: 0.2s; color: var(--muted); }
+    .org-dot:hover { background: var(--surface-hover); color: var(--text); }
+    .org-dot.active { border-color: var(--accent); color: var(--accent); background: var(--surface); }
+    .rail-divider { width: 32px; height: 1px; background: var(--border); margin: 4px 0; }
+    .rail-actions { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+    .rail-icon { font-size: 18px; color: var(--muted); cursor: pointer; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; transition: 0.2s; }
+    .rail-icon:hover { background: var(--surface-hover); color: var(--text); }
+
+    /* Sidebar */
+    .sidebar { width: 260px; flex-shrink: 0; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+    .nav-header { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 12px; display: flex; justify-content: space-between; letter-spacing: 1px; }
+    .add-coll-btn { cursor: pointer; color: var(--accent); opacity: 0.7; } .add-coll-btn:hover { opacity: 1; }
+    .nav-item { padding: 10px 12px; border-radius: 10px; cursor: pointer; color: var(--muted); font-size: 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border: 1px solid transparent; }
+    .nav-item:hover { background: var(--surface-hover); color: var(--text); }
+    .nav-item.active { background: var(--surface); color: var(--accent); font-weight: 500; border-color: var(--border); }
+    .nav-opts { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 4px; opacity: 0; font-size: 12px; }
+    .nav-item:hover .nav-opts { opacity: 1; background: var(--surface-hover); }
+
+    /* Main Content */
+    .main-content { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; position: relative; box-shadow: var(--shadow); }
+    .header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .page-title { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    
+    .header-controls { display: flex; gap: 12px; align-items: center; }
+    .search-box { position: relative; width: 240px; }
+    .search-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px 8px 32px; color: var(--text); font-size: 13px; outline: none; }
+    .search-input:focus { outline: none; border-color: var(--accent); background: var(--bg); }
+    .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+    .header-btn { height: 34px; padding: 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+    .header-btn:hover { background: var(--surface-hover); color: var(--text); border-color: var(--accent); }
+    .btn-save { background: var(--accent); color: var(--accent-text); border: none; padding: 0 16px; height: 34px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+
+    .content-area { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 24px; }
+    
+    /* Groups & Cards */
+    .group { border: 2px solid transparent; border-radius: 12px; padding: 10px; transition: 0.2s; }
+    .group.drag-over { border-color: var(--accent); border-style: dashed; opacity: 0.7; }
+    .group-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; cursor: grab; padding: 4px; border-radius: 4px; }
+    .group-title { font-weight: 600; font-size: 15px; color: var(--text); background: transparent; border: none; color: inherit; font: inherit; }
+    .group-count { font-size: 12px; color: var(--text-tertiary); font-weight: 600; background-color: var(--bg-surface); padding: 2px 8px; border-radius: 12px; }
+    .group-actions { margin-left: auto; display: flex; gap: 8px; opacity: 0; }
+    .group:hover .group-actions { opacity: 1; }
+    .icon-btn { cursor: pointer; color: var(--muted); font-size: 14px; } .icon-btn:hover { color: var(--text); }
+
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; padding-bottom: 40px; }
+    .card { background: var(--surface); border-radius: 8px; padding: 14px; cursor: pointer; position: relative; display: flex; flex-direction: column; height: 140px; border: 1px solid var(--border); transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.15); z-index: 2; }
+    .card.dragging { opacity: 0.5; transform: scale(0.98); }
+    
+    .card-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: auto; }
+    .card-icon { width: 32px; height: 32px; flex-shrink: 0; border-radius: 6px; background: var(--bg); display: grid; place-items: center; font-size: 16px; color: var(--text); }
+    .card-title-box { flex: 1; min-width: 0; padding-top: 2px; }
+    .card-title { font-weight: 700; font-size: 15px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; line-height: 1.3; }
+    .card-url { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.8; }
+    .card-desc { font-size: 11px; color: var(--muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 10px; opacity: 0.7; }
+    
+    .card-menu { position: absolute; top: 8px; right: 8px; display: none; gap: 4px; background: var(--panel); padding: 2px; border-radius: 4px; border:1px solid var(--border); z-index: 5; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .card:hover .card-menu { display: flex; }
+    .cm-btn { width: 24px; height: 24px; border-radius: 4px; color: var(--muted); display: grid; place-items: center; font-size: 12px; transition: 0.2s; }
+    .cm-btn:hover { background: var(--accent); color: var(--accent-text); }
+
+    .add-group-placeholder { border: 2px dashed var(--border); border-radius: 12px; padding: 16px; text-align: center; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 20px; }
+    .add-group-placeholder:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* 2. Right Tabs (The "Flush" Column) */
+    .tabs-column { 
+      width: 70px; flex-shrink: 0; 
+      background: var(--panel); 
+      border-left: 1px solid var(--border);
+      height: 100vh; /* Top to Bottom */
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 20px 8px; z-index: 100; position: relative;
+    }
+    .tabs-column:hover { 
+      width: 300px; 
+      padding: 20px; 
+      align-items: stretch;
+      box-shadow: -10px 0 40px rgba(0,0,0,0.3);
+    }
+    .tabs-header-text { 
+      font-size: 10px; font-weight: 700; color: var(--muted); margin-bottom: 20px; white-space: nowrap; 
+      writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; height: 100px;
+      transition: 0.2s;
+    }
+    .tabs-column:hover .tabs-header-text { writing-mode: horizontal-tb; transform: none; text-align: left; height: auto; width: 100%; display: flex; justify-content: space-between; }
+    
+    .tab-list { width: 100%; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+    .tabs-column:hover .tab-list { align-items: stretch; }
+    .tab-item { width: 44px; height: 44px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: grab; transition: 0.2s; flex-shrink: 0; }
+    .tabs-column:hover .tab-item { width: 100%; height: auto; justify-content: flex-start; padding: 10px; }
+    .tab-text { display: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; margin-left: 10px; }
+    .tabs-column:hover .tab-text { display: block; }
+    .save-all-btn { display: none; margin-top: auto; background: var(--accent); color: var(--accent-text); font-weight: 700; border: none; padding: 12px; border-radius: 8px; cursor: pointer; text-align: center; }
+    .tabs-column:hover .save-all-btn { display: block; }
+
+    /* Modals */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; width: 440px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); overflow: hidden; display: flex; flex-direction: column; }
+    .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-size: 18px; font-weight: 700; color: var(--text); }
+    .modal-body { padding: 24px; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: rgba(0,0,0,0.05); }
+    .modal input { width: 100%; background: var(--bg); border: 1px solid var(--border); padding: 12px; border-radius: 8px; color: var(--text); font-size: 14px; outline: none; }
+    .modal input:focus { border-color: var(--accent); }
+    .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.2s; }
+    .btn-cancel { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-cancel:hover { background: var(--bg); color: var(--text); border-color: var(--muted); }
+    .btn-save { background: var(--accent); color: var(--accent-text); }
+    .btn-save:hover { filter: brightness(1.1); }
+    .btn-icon-text { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px; display: grid; place-items: center; border-radius: 50%; width: 32px; height: 32px; }
+    .btn-icon-text:hover { background: var(--bg); color: var(--text); }
+    .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .theme-opt { border: 2px solid var(--border); padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); }
+    .theme-opt.active { border-color: var(--accent); color: var(--accent); background: var(--surface); }
+  </style>
+</head>
+<body>
+
+  <div class="layout-main-area">
+    <div class="rail" id="rail"></div>
+    <div class="sidebar">
+      <div class="nav-header">COLLECTIONS <span style="cursor:pointer;" onclick="app.openModal('add-col-modal')">+</span></div>
+      <div id="nav-list" style="flex:1; overflow-y:auto;"></div>
+      <div class="rail-actions" style="margin-top:auto; padding-top:16px; border-top:1px solid var(--border); width:100%; align-items:center;">
+        <div class="nav-item" style="width:100%" onclick="app.openModal('import-modal')"><span>📥 Import</span></div>
+        <div class="nav-item" style="width:100%" onclick="app.openModal('settings-modal')"><span>⚙ Settings</span></div>
+      </div>
+    </div>
+    <div class="main-content">
+      <header class="header">
+        <div class="page-title" id="page-title">Loading...</div>
+        <div class="header-controls">
+          <div class="search-box">
+            <span class="search-icon" style="position:absolute; left:10px; top:50%; transform:translateY(-50%);">🔍</span>
+            <input class="search-input" type="text" placeholder="Search cards..." oninput="app.setSearch(this.value)">
+          </div>
+          <button class="header-btn" onclick="app.toggleSort()"><span id="sort-label">⇅ Custom</span></button>
+          <button class="header-btn" onclick="app.openShare()">🔗 Share</button>
+          <button class="btn-save" onclick="app.addGroup()">+ Group</button>
+        </div>
+      </header>
+      <div class="content-area" id="content-area"></div>
+    </div>
+  </div>
+
+  <div class="tabs-column">
+    <div class="tabs-header-text">OPEN TABS</div>
+    <div class="tab-list" id="tabs-list"></div>
+    <button class="save-all-btn" onclick="app.saveAllTabs()">SAVE ALL TABS</button>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal-overlay" id="add-org-modal">
+    <div class="modal"><div class="modal-header"><div class="modal-title">Add Organization</div><button class="btn-icon-text" onclick="app.closeModal('add-org-modal')">✕</button></div>
+    <div class="modal-body">
+      <div style="margin-bottom:15px;"><label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">Name</label><input type="text" id="new-org-name" placeholder="e.g. Work"></div>
+      <div><label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">Color</label><input type="color" id="new-org-color" value="#4fd1c5" style="width:100%;height:40px;border:none;background:none;"></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="app.closeModal('add-org-modal')">Cancel</button><button class="btn-save" onclick="app.confirmAddOrg()">Create</button></div></div>
+  </div>
+
+  <div class="modal-overlay" id="add-col-modal">
+    <div class="modal"><div class="modal-header"><div class="modal-title">New Collection</div><button class="btn-icon-text" onclick="app.closeModal('add-col-modal')">✕</button></div>
+    <div class="modal-body"><input type="text" id="new-col-name" placeholder="Collection Name"></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="app.closeModal('add-col-modal')">Cancel</button><button class="btn-save" onclick="app.confirmAddCollection()">Add</button></div></div>
+  </div>
+
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal"><div class="modal-header"><div class="modal-title">Edit Card</div><button class="btn-icon-text" onclick="app.closeModal('edit-modal')">✕</button></div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px;"><input id="edit-title" type="text" placeholder="Title"></div>
+      <div><input id="edit-url" type="text" placeholder="URL"></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="app.closeModal('edit-modal')">Cancel</button><button class="btn-save" onclick="app.saveCardEdit()">Save</button></div></div>
+  </div>
+
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal"><div class="modal-header"><div class="modal-title">Settings</div><button class="btn-icon-text" onclick="app.closeModal('settings-modal')">✕</button></div>
+    <div class="modal-body">
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:700;">APPEARANCE</div>
+        <div class="theme-grid">
+          <div class="theme-opt active" id="theme-dark" onclick="app.setTheme('dark')">🌑 Original</div>
+          <div class="theme-opt" id="theme-toby" onclick="app.setTheme('toby')">☀️ Toby Light</div>
+          <div class="theme-opt" id="theme-toby-dark" onclick="app.setTheme('toby-dark')">🌌 Toby Dark</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700;">DATA</div>
+        <button class="btn btn-cancel" style="width:100%;text-align:left;display:flex;justify-content:space-between;" onclick="app.openImport()">Import Data <span>→</span></button>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-save" onclick="app.closeModal('settings-modal')">Done</button></div></div>
+  </div>
+
+  <div class="modal-overlay" id="import-modal">
+    <div class="modal"><div class="modal-header"><div class="modal-title">Import Data</div><button class="btn-icon-text" onclick="app.closeModal('import-modal')">✕</button></div>
+    <div class="modal-body"><div style="border:2px dashed var(--border);padding:40px 20px;text-align:center;color:var(--muted);border-radius:12px;background:rgba(0,0,0,0.1);"><div style="font-size:32px;margin-bottom:10px;">📥</div><div style="font-size:14px;font-weight:600;">Drop Toby JSON here</div></div></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="app.closeModal('import-modal')">Cancel</button></div></div>
+  </div>
+
+  <div class="modal-overlay" id="share-modal">
+    <div class="modal"><div class="modal-header"><div class="modal-title">Share Collection</div><button class="btn-icon-text" onclick="app.closeModal('share-modal')">✕</button></div>
+    <div class="modal-body"><div style="background:rgba(79, 209, 197, 0.1); border:1px solid var(--accent); padding:12px; border-radius:8px; color:var(--text); font-size:12px;">Generates a secret GitHub Gist link.</div></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="app.closeModal('share-modal')">Cancel</button><button class="btn-save" onclick="alert('Published!')">Publish</button></div></div>
+  </div>
+
+<script>
+const db = {
+  orgs: [{id: 'o1', name: 'Personal', color: '#4fd1c5'}, {id: 'o2', name: 'Work', color: '#ff507a'}],
+  activeOrgId: 'o1', activeColId: 'c1',
+  cols: [{id: 'c1', orgId: 'o1', name: 'Development', groups: [{id: 'g1', name: 'Documentation', cards: [{id: 'cd1', title: 'React Documentation', url: 'react.dev'}, {id: 'cd2', title: 'MDN Web Docs', url: 'developer.mozilla.org'}]}, {id: 'g2', name: 'Tools', cards: [{id: 'cd3', title: 'Vercel', url: 'vercel.com'}]}]}],
+  tabs: [{id: 't1', title: 'Stack Overflow', url: 'stackoverflow.com'}, {id: 't2', title: 'GitHub PR', url: 'github.com'}, {id: 't3', title: 'Gmail', url: 'mail.google.com'}],
+  searchQuery: '', sortMode: 'custom', dragType: null, dragSrc: null 
+};
+
+const app = {
+  editingCard: null,
+  init() { this.render(); },
+  setTheme(name) {
+    document.body.classList.remove('theme-toby', 'theme-toby-dark');
+    if(name !== 'dark') document.body.classList.add('theme-' + name);
+    document.querySelectorAll('.theme-opt').forEach(el => el.classList.toggle('active', el.id === 'theme-'+name));
+  },
+  setSearch(q) { db.searchQuery = q.toLowerCase(); this.render(); },
+  toggleSort() { db.sortMode = db.sortMode === 'custom' ? 'alpha' : 'custom'; this.render(); },
+  switchOrg(id) { db.activeOrgId = id; db.activeColId = db.cols.find(c => c.orgId === id)?.id || null; this.render(); },
+  switchCol(id) { db.activeColId = id; this.render(); },
+  openModal(id) { document.getElementById(id).style.display = 'flex'; },
+  closeModal(id) { document.getElementById(id).style.display = 'none'; this.editingCard = null; },
+  confirmAddOrg() { const n = document.getElementById('new-org-name').value; const c = document.getElementById('new-org-color').value; if(n){ const id='o'+Date.now(); db.orgs.push({id, name:n, color:c}); db.cols.push({id:'c'+Date.now(), orgId:id, name:'General', groups:[]}); this.closeModal('add-org-modal'); this.switchOrg(id); } },
+  confirmAddCollection() { const n = document.getElementById('new-col-name').value; if(n){ const id='c'+Date.now(); db.cols.push({id, orgId:db.activeOrgId, name:n, groups:[]}); this.closeModal('add-col-modal'); this.switchCol(id); } },
+  addGroup() { if(!db.activeColId) return; const col = db.cols.find(c => c.id === db.activeColId); col.groups.push({id:'g'+Date.now(), name:'New Group', cards:[]}); this.render(); },
+  deleteGroup(gid) { const col = db.cols.find(c => c.id === db.activeColId); col.groups = col.groups.filter(g => g.id !== gid); this.render(); },
+  renameGroup(gid, n) { const col = db.cols.find(c => c.id === db.activeColId); const g = col.groups.find(x => x.id === gid); if(g) g.name = n; },
+  deleteCard(gid, cid) { const g = db.cols.find(c => c.id === db.activeColId).groups.find(x => x.id === gid); g.cards = g.cards.filter(x => x.id !== cid); this.render(); },
+  openEditModal(gid, cid) { const c = db.cols.find(x => x.id === db.activeColId).groups.find(x => x.id === gid).cards.find(x => x.id === cid); this.editingCard = { gid, cid }; document.getElementById('edit-title').value = c.title; document.getElementById('edit-url').value = c.url; this.openModal('edit-modal'); },
+  saveCardEdit() { if(!this.editingCard) return; const c = db.cols.find(x => x.id === db.activeColId).groups.find(x => x.id === this.editingCard.gid).cards.find(x => x.id === this.editingCard.cid); c.title = document.getElementById('edit-title').value; c.url = document.getElementById('edit-url').value; this.closeModal('edit-modal'); this.render(); },
+  saveTabToGroup(tabId, groupId) {
+    const tabIndex = db.tabs.findIndex(t => t.id === tabId); if(tabIndex === -1) return;
+    const tab = db.tabs[tabIndex]; const col = db.cols.find(c => c.id === db.activeColId); const group = col.groups.find(g => g.id === groupId);
+    group.cards.push({id: 'cd'+Date.now(), title: tab.title, url: tab.url}); db.tabs.splice(tabIndex, 1); this.render();
+  },
+  saveAllTabs() {
+    const col = db.cols.find(c => c.id === db.activeColId); if(!col) return; if(!col.groups.length) this.addGroup();
+    const group = col.groups[0]; db.tabs.forEach(t => g.cards.push({id:'cd'+Date.now()+t.id, title:t.title, url:t.url})); db.tabs = []; this.render();
+  },
+  openShare() { app.openModal('share-modal'); },
+  openImport() { app.openModal('import-modal'); },
+  render() {
+    document.getElementById('rail').innerHTML = db.orgs.map(o => `<div class="org-dot ${o.id === db.activeOrgId ? 'active' : ''}" style="background-color:${o.color}; color:#fff" onclick="app.switchOrg('${o.id}')" title="${o.name}">${o.name[0]}</div>`).join('') + `<div class="rail-divider"></div><div class="org-dot" style="color:var(--muted); font-size:20px;" onclick="app.addOrg()">+</div>`;
+    const orgCols = db.cols.filter(c => c.orgId === db.activeOrgId);
+    document.getElementById('nav-list').innerHTML = orgCols.map(c => `<div class="nav-item ${c.id === db.activeColId ? 'active' : ''}" onclick="app.switchCol('${c.id}')">${c.name}</div>`).join('');
+    document.getElementById('sort-label').innerText = db.sortMode === 'custom' ? '⇅ Custom' : 'az Alpha';
+    const activeCol = db.cols.find(c => c.id === db.activeColId);
+    document.getElementById('page-title').innerText = activeCol ? activeCol.name : "No Collection";
+    document.getElementById('content-area').innerHTML = activeCol ? activeCol.groups.map(g => {
+      let visibleCards = g.cards.filter(c => c.title.toLowerCase().includes(db.searchQuery) || c.url.toLowerCase().includes(db.searchQuery));
+      if (db.sortMode === 'alpha') visibleCards = [...visibleCards].sort((a,b) => a.title.localeCompare(b.title));
+      if (db.searchQuery && visibleCards.length === 0) return '';
+      return `<div class="group" data-gid="${g.id}" ondragover="app.onDragOver(event)" ondragleave="app.onDragLeave(event)" ondrop="app.onDrop(event)">
+        <div class="group-head" draggable="true"><span>▼</span><input class="group-title" value="${g.name}" onblur="app.renameGroup('${g.id}', this.value)"><span class="group-count">${visibleCards.length}</span><div class="group-actions"><span class="icon-btn" onclick="app.deleteGroup('${g.id}')">🗑</span></div></div>
+        <div class="card-grid">${visibleCards.map((c, idx) => `<div class="card" draggable="true" data-gid="${g.id}" data-cid="${c.id}" data-idx="${idx}" ondragstart="app.onCardDragStart(event)" onclick="window.open('https://${c.url}')"><div class="card-menu" onclick="event.stopPropagation()"><div class="cm-btn" onclick="app.openEditModal('${g.id}', '${c.id}')">✎</div><div class="cm-btn" onclick="app.deleteCard('${g.id}', '${c.id}')">✕</div></div><div class="card-top"><div class="card-icon">★</div><div class="card-title-box"><div class="card-title">${c.title}</div><div class="card-url">${c.url}</div></div></div><div class="card-desc">Simulated description from LinkTrove.</div></div>`).join('')}</div></div>`;
+    }).join('') + `<div class="add-group-placeholder" onclick="app.addGroup()">+ Create New Group</div>` : "";
+    document.getElementById('tabs-list').innerHTML = db.tabs.map(t => `<div class="tab-item" draggable="true" ondragstart="app.onTabDragStart(event, '${t.id}')"><div style="width:10px;height:10px;background:orange;border-radius:50%;flex-shrink:0;"></div><span class="tab-text">${t.title}</span></div>`).join('');
+  },
+  onTabDragStart(ev, tabId) { db.dragType = 'tab'; ev.dataTransfer.setData("tabId", tabId); },
+  onCardDragStart(ev) { db.dragType = 'card'; const card = ev.currentTarget; db.dragSrc = { gid: card.dataset.gid, cid: card.dataset.cid }; setTimeout(() => card.classList.add('dragging'), 0); },
+  onDragOver(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); },
+  onDragLeave(ev) { ev.currentTarget.classList.remove('drag-over'); },
+  onDrop(ev) {
+    ev.preventDefault(); const group = ev.currentTarget; group.classList.remove('drag-over'); const destGId = group.dataset.gid;
+    if(db.dragType === 'tab') {
+      const tabId = ev.dataTransfer.getData("tabId");
+      const tab = db.tabs.splice(db.tabs.findIndex(x=>x.id===tabId), 1)[0];
+      db.cols.find(c=>c.id===db.activeColId).groups.find(x=>x.id===destGId).cards.push({id:'cd'+Date.now(), title:tab.title, url:tab.url});
+    } else if (db.dragType === 'card') {
+      const srcG = db.cols.find(c=>c.id===db.activeColId).groups.find(x=>x.id===db.dragSrc.gid);
+      const card = srcG.cards.splice(srcG.cards.findIndex(x=>x.id===db.dragSrc.cid), 1)[0];
+      db.cols.find(c=>c.id===db.activeColId).groups.find(x=>x.id===destGId).cards.push(card);
+    }
+    app.render();
+  }
+};
+app.init();
+</script>
+</body>
+</html>

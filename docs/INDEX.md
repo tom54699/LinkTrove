@@ -19,6 +19,7 @@
 ### 架構與設計
 
 - [組件關係圖](architecture/component-map.md) - GroupsView 模組架構與依賴關係
+- [Mockup 組件映射](architecture/mockup-mapping.md) - 設計藍圖與 React 組件對應表
 - [系統概覽](architecture/overview.md) - 整體架構說明
 - [資料流向](architecture/data-flow.md) - 資料流與狀態管理
 - [模組依賴關係](architecture/module-dependencies.md) - 模組間依賴分析

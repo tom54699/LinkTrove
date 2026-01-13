@@ -1,13 +1,20 @@
-# Change: 新增 Organizations 管理按鈕與對話框
+# Change: Add Organization Management Dialog
 
-## Why
-目前僅提供右鍵操作刪除組織，使用者回饋不直觀，需要明顯的管理入口來降低操作成本與誤解。
+## Change ID
+`add-organization-management-dialog`
 
-## What Changes
-- 在組織導覽區新增「管理 Organizations」按鈕
-- 提供管理對話框，列出所有組織並提供重新命名與刪除入口
-- 刪除流程沿用既有確認對話框與錯誤提示行為
+## Status
+✅ Completed (2026-01-13)
 
-## Impact
-- Affected specs: bookmark-management
-- Affected code: src/app/sidebar/OrganizationNav.tsx
+## Summary
+新增了專用的 Organization 管理對話框，並移除了原有的右鍵選單 (Context Menu) 操作，統一了管理入口。
+
+## Changes Implemented
+- **管理按鈕**: 在 `OrganizationNav` 底部新增了「管理 Organizations」按鈕。
+- **管理對話框**: 提供列表視圖，允許使用者重新命名或刪除現有組織。
+- **移除右鍵選單**: 為了避免功能重複與混淆，移除了 Organization Icon 上的右鍵選單功能。
+
+## Verification
+- [x] 點擊管理按鈕可開啟對話框。
+- [x] 對話框內可正常重新命名與刪除。
+- [x] 右鍵點擊 Organization Icon 不再觸發選單。

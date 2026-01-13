@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import '../../styles/toby-like.css';
 import { ContextMenu } from '../ui/ContextMenu';
 import { useCategories } from '../sidebar/categories';
@@ -7,7 +8,7 @@ import { useTemplates } from '../templates/TemplatesProvider';
 export interface TobyLikeCardProps {
   title: string;
   description?: string;
-  faviconText?: string; // fallback initials
+  faviconText?: string; 
   faviconUrl?: string;
   url?: string;
   categoryId?: string;
@@ -37,7 +38,6 @@ export interface TobyLikeCardProps {
 export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   title,
   description,
-  faviconText: _faviconText = 'WW',
   faviconUrl,
   url,
   categoryId,
@@ -60,16 +60,10 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   const [titleValue, setTitleValue] = React.useState(title);
   const [urlValue, setUrlValue] = React.useState('');
   const [descValue, setDescValue] = React.useState(description || '');
-  const [moveMenuPos, setMoveMenuPos] = React.useState<{
-    x: number;
-    y: number;
-  } | null>(null);
+  const [moveMenuPos, setMoveMenuPos] = React.useState<{ x: number; y: number; } | null>(null);
   const { categories } = useCategories();
-  const [metaValue, setMetaValue] = React.useState<Record<string, string>>({
-    ...(meta || {}),
-  });
+  const [metaValue, setMetaValue] = React.useState<Record<string, string>>({ ...(meta || {}) });
 
-  // Debounced auto-save function
   const autoSaveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   function validateUrl(raw: string): { value?: string; error?: string } {
@@ -77,33 +71,20 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
     if (!v) return { error: 'URL is required' };
     try {
       const u = new URL(v);
-      if (!/^https?:$/.test(u.protocol))
-        return { error: 'Only http/https supported' };
+      if (!/^https?:$/.test(u.protocol)) return { error: 'Only http/https supported' };
       return { value: u.toString() };
-    } catch {
-      return { error: 'Invalid URL' };
-    }
+    } catch { return { error: 'Invalid URL' }; }
   }
 
   const performAutoSave = React.useCallback(() => {
     if (!showModal) return;
-
-    const patch: any = {
-      title: titleValue.trim(),
-      description: descValue,
-    };
-
+    const patch: any = { title: titleValue.trim(), description: descValue };
     const norm = urlValue.trim() ? validateUrl(urlValue) : undefined;
-    if (norm?.error) return; // Skip auto-save if URL is invalid
-
+    if (norm?.error) return;
     if (norm?.value) patch.url = norm.value;
     patch.meta = metaValue;
-
-    // Call the save functions
-    if (onSave) {
-      onSave(patch);
-    } else {
-      // Fallback to individual update functions
+    if (onSave) onSave(patch);
+    else {
       if (onUpdateTitle) onUpdateTitle(patch.title);
       if (patch.url && onUpdateUrl) onUpdateUrl(patch.url);
       if (onUpdateDescription) onUpdateDescription(patch.description);
@@ -112,351 +93,127 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   }, [showModal, titleValue, descValue, urlValue, metaValue, onSave, onUpdateTitle, onUpdateUrl, onUpdateDescription, onUpdateMeta]);
 
   const triggerAutoSave = React.useCallback(() => {
-    if (autoSaveTimeoutRef.current) {
-      clearTimeout(autoSaveTimeoutRef.current);
-    }
-    autoSaveTimeoutRef.current = setTimeout(() => {
-      performAutoSave();
-    }, 500); // 500ms debounce
+    if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+    autoSaveTimeoutRef.current = setTimeout(() => performAutoSave(), 500);
   }, [performAutoSave]);
 
-  // Cleanup timeout on unmount
   React.useEffect(() => {
-    return () => {
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
-      }
-    };
+    return () => { if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current); };
   }, []);
 
-  // When opening edit modal, sync fields and try to hydrate siteName/author from cached meta
   React.useEffect(() => {
     if (showModal) {
       setTitleValue(title);
       setDescValue(description || '');
       setUrlValue(url || '');
-      // 同步最新的 meta（修正初次掛載時為空，導致打開編輯看不到值）
       setMetaValue({ ...(meta || {}) });
-      (async () => {
-        try {
-          if (!url) return;
-          const mod = await import('../../background/pageMeta');
-          const cached = await mod.getCachedMeta(url);
-          if (cached) {
-            const next = { ...(meta || {}), ...(metaValue || {}) } as any;
-            if (!String(next.siteName || '').trim() && (cached as any).siteName) {
-              next.siteName = String((cached as any).siteName);
-            }
-            if (!String(next.author || '').trim() && (cached as any).author) {
-              next.author = String((cached as any).author);
-            }
-            setMetaValue(next);
-          }
-        } catch {}
-      })();
     }
   }, [showModal, title, description, url, meta]);
 
+  const defaultIconUrl = React.useMemo(() => {
+    try {
+      return (chrome as any)?.runtime?.getURL?.('icons/default-favicon.png') || '/icons/default-favicon.png';
+    } catch { return '/icons/default-favicon.png'; }
+  }, []);
+
   return (
     <div className="tobylike">
-      <div
-        className="card"
-        onClick={onOpen}
-        style={{
-          background: 'var(--card)',
-          ...(ghost ? { opacity: 0.5, pointerEvents: 'none' } : {}),
-        }}
-        data-testid={ghost ? 'ghost-card' : undefined}
-      >
+      {/* Added 'group' class to the card wrapper to allow child elements to react to card hover */}
+      <div className={`card group relative flex flex-col transition-all select-none box-border overflow-visible ${ghost ? 'opacity-50 pointer-events-none' : ''}`}
+           style={{ height: '140px', minHeight: '140px', background: 'var(--card)' }}
+           onClick={onOpen}>
+        
         <div className="card-content">
-          <div className="block-a" style={{ width: '100%' }}>
-            <div
-              className="icon-container"
-              style={{ background: faviconUrl ? 'transparent' : undefined }}
-            >
-              {(() => {
-                const defaultIconUrl = (() => {
-                  try {
-                    return (
-                      (chrome as any)?.runtime?.getURL?.(
-                        'icons/default-favicon.png'
-                      ) || '/icons/default-favicon.png'
-                    );
-                  } catch {
-                    return '/icons/default-favicon.png';
-                  }
-                })();
-                const src = faviconUrl || defaultIconUrl;
-                return (
-                  <img
-                    src={src}
-                    alt=""
-                    style={{ width: 32, height: 32, objectFit: 'cover' }}
-                    draggable={false}
-                  />
-                );
-              })()}
-              <label
-                className={`checkbox-overlay ${selected ? 'selected' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleSelect?.();
-                }}
-              >
-                <input
-                  type="checkbox"
-                  aria-label={'Select'}
-                  className="sr-only"
-                  checked={!!selected}
-                  onChange={() => onToggleSelect?.()}
-                />
+          {/* Top Section: Icon + Title */}
+          <div className="block-a" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="icon-container" style={{ background: 'var(--accent)/20', position: 'relative', width: '40px', height: '40px', borderRadius: '8px', flexShrink: 0, display: 'flex', alignItems: 'center', justifycenter: 'center' }}>
+              <img src={faviconUrl || defaultIconUrl} alt="" style={{ width: '32px', height: '32px', objectFit: 'contain' }} draggable={false} />
+              
+              {/* Checkbox Overlay */}
+              {/* Changed logic: visible if selected OR parent card (.group) is hovered */}
+              <label className={`checkbox-overlay ${selected ? 'selected' : 'opacity-0 group-hover:opacity-100'}`}
+                   style={{visibility: selected ? 'visible' : undefined}} 
+                   onClick={(e) => { e.stopPropagation(); onToggleSelect?.(); }}>
+                <input type="checkbox" className="sr-only" checked={!!selected} onChange={() => onToggleSelect?.()} />
                 <div className={`checkbox ${selected ? 'checked' : ''}`}>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20,6 9,17 4,12"></polyline>
                   </svg>
                 </div>
               </label>
             </div>
-            <div className="title-box">
-              <h2 className="title" title={title}>
+            
+            <div className="title-box" style={{ flex: 1, minWidth: 0 }}>
+              <h2 className="title" style={{ fontSize: '16px', fontWeight: 400, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={title}>
                 {title}
               </h2>
             </div>
           </div>
-          <div className="sep" />
+
+          <div className="sep" style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '8px 0' }} />
+
+          {/* Bottom Section: Description */}
           <div className="block-b" style={{ width: '100%' }}>
-            <p className="description" title={description}>
-              {description || ''}
+            <p className="description" style={{ fontSize: '13px', color: 'var(--text)', opacity: 0.85, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }} title={description}>
+              {description || "No description provided."}
             </p>
           </div>
         </div>
 
-        <button
-          className="delete-btn"
-          title="刪除"
-          onClick={(e) => {
-            e.stopPropagation();
-            setConfirming(true);
-          }}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ width: 14, height: 14 }}
-          >
-            <path d="M18 6 L6 18"></path>
-            <path d="M6 6 L18 18"></path>
-          </svg>
-        </button>
+        {/* Delete Bubble (Original Style) */}
+        {!ghost && (
+          <button className="delete-btn" title="刪除" onClick={(e) => { e.stopPropagation(); setConfirming(true); }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+          </button>
+        )}
 
-        <div className="actions" onClick={(e) => e.stopPropagation()}>
-          <button
-            className="action-btn"
-            title="編輯"
-            aria-label="編輯"
-            onClick={() => {
-              setTitleValue(title);
-              setDescValue(description || '');
-              setShowModal(true);
-              onModalOpenChange?.(true);
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"></path>
-              <path d="M13.5 6.5l4 4"></path>
-            </svg>
-          </button>
-          <button
-            className="action-btn"
-            title="移動"
-            aria-label="移動"
-            onClick={(e) => {
-              const r = (
-                e.currentTarget as HTMLElement
-              ).getBoundingClientRect();
-              setMoveMenuPos({ x: r.left, y: r.bottom + 8 });
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 15l6 -6"></path>
-              <path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464"></path>
-              <path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463"></path>
-            </svg>
-          </button>
-        </div>
+        {/* Action Sticker (Original Style) */}
+        {!ghost && (
+          <div className="actions" onClick={(e) => e.stopPropagation()}>
+            <button className="action-btn" title="編輯" onClick={() => { setShowModal(true); onModalOpenChange?.(true); }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"></path><path d="M13.5 6.5l4 4"></path></svg>
+            </button>
+            <button className="action-btn" title="移動" onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setMoveMenuPos({ x: r.left, y: r.bottom + 8 }); }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 15l6 -6"></path><path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464"></path><path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463"></path></svg>
+            </button>
+          </div>
+        )}
       </div>
 
-      {confirming && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60"
-          onClick={() => setConfirming(false)}
-        >
-          <div
-            className="rounded border border-slate-700 bg-[var(--bg)] p-4"
-            role="dialog"
-            aria-label="Confirm Delete"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-3 font-medium">Confirm Delete</div>
+      {/* Portals for Modals */}
+      {confirming && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4" onClick={() => setConfirming(false)}>
+          <div className="bg-[var(--panel)] border border-white/10 rounded-xl p-5 shadow-2xl max-w-xs w-full" onClick={(e) => e.stopPropagation()}>
+            <h4 className="text-lg font-bold mb-2 text-[var(--text)]">Delete Card?</h4>
+            <p className="text-sm text-[var(--muted)] mb-6">Are you sure you want to remove this webpage?</p>
             <div className="flex gap-2 justify-end">
-              <button
-                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
-                onClick={() => setConfirming(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-3 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30"
-                onClick={() => {
-                  setConfirming(false);
-                  onDelete?.();
-                }}
-              >
-                Delete
-              </button>
+              <button className="px-4 py-2 text-sm font-semibold rounded-lg border border-white/10 text-[var(--text)] hover:bg-white/5 transition-colors" onClick={() => setConfirming(false)}>Cancel</button>
+              <button className="px-4 py-2 text-sm font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors" onClick={() => { setConfirming(false); onDelete?.(); }}>Delete</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {showModal && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
-          onClick={() => {
-            setShowModal(false);
-            onModalOpenChange?.(false);
-          }}
-        >
-          <div
-            className="relative rounded border border-slate-700 bg-[var(--panel)] w-[560px] max-w-[95vw] max-h-[90vh] overflow-y-auto hide-scrollbar p-5"
-            role="dialog"
-            aria-label="Edit Card"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              aria-label="Close"
-              title="Close"
-              className="absolute right-2 top-2 text-slate-300 hover:text-white z-10"
-              onClick={() => {
-                setShowModal(false);
-                onModalOpenChange?.(false);
-              }}
-            >
-              ✕
-            </button>
-            <h3 className="text-lg font-medium pr-6 mb-4">編輯卡片</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm mb-1" htmlFor="edit-title">Title</label>
-                <input
-                  id="edit-title"
-                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                  value={titleValue}
-                  onChange={(e) => {
-                    setTitleValue(e.target.value);
-                    triggerAutoSave();
-                  }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-1" htmlFor="edit-desc">Description</label>
-                <input
-                  id="edit-desc"
-                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                  value={descValue}
-                  onChange={(e) => {
-                    setDescValue(e.target.value);
-                    triggerAutoSave();
-                  }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-1" htmlFor="edit-url">URL</label>
-                <input
-                  id="edit-url"
-                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                  value={urlValue}
-                  onChange={(e) => {
-                    setUrlValue(e.target.value);
-                    triggerAutoSave();
-                  }}
-                  placeholder="https://example.com"
-                />
-              </div>
-              <TemplateFields
-                categoryId={categoryId || 'default'}
-                meta={metaValue}
-                onChange={(newMeta) => {
-                  setMetaValue(newMeta);
-                  triggerAutoSave();
-                }}
-              />
+      {showModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4" onClick={() => { setShowModal(false); onModalOpenChange?.(false); }}>
+          <div className="relative bg-[var(--panel)] border border-white/10 rounded-2xl w-[560px] max-w-full shadow-2xl flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <header className="px-6 py-4 border-b border-white/5 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-[var(--text)]">Edit Webpage</h3>
+              <button className="text-[var(--muted)] hover:text-[var(--text)]" onClick={() => { setShowModal(false); onModalOpenChange?.(false); }}>✕</button>
+            </header>
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">Title</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={titleValue} onChange={(e) => { setTitleValue(e.target.value); triggerAutoSave(); }} /></div>
+              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">URL</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={urlValue} onChange={(e) => { setUrlValue(e.target.value); triggerAutoSave(); }} /></div>
+              <TemplateFields categoryId={categoryId || 'default'} meta={metaValue} onChange={(newMeta) => { setMetaValue(newMeta); triggerAutoSave(); }} />
             </div>
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <button
-                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
-                onClick={() => {
-                  setShowModal(false);
-                  onModalOpenChange?.(false);
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]"
-                onClick={() => {
-                  const patch: any = {
-                    title: titleValue.trim(),
-                    description: descValue,
-                  };
-                  const norm = urlValue.trim()
-                    ? validateUrl(urlValue)
-                    : undefined;
-                  if (!norm || !norm.error) patch.url = norm?.value ?? urlValue;
-                  patch.meta = metaValue;
-                  if (onSave) {
-                    onSave(patch);
-                  } else {
-                    if (onUpdateTitle) onUpdateTitle(patch.title);
-                    if (patch.url && onUpdateUrl) onUpdateUrl(patch.url);
-                    if (onUpdateDescription)
-                      onUpdateDescription(patch.description);
-                    if (onUpdateMeta) onUpdateMeta(patch.meta);
-                  }
-                  setShowModal(false);
-                  onModalOpenChange?.(false);
-                }}
-              >
-                Save
-              </button>
-            </div>
+            <footer className="px-6 py-4 bg-white/5 border-t border-white/5 flex justify-end gap-2">
+              <button className="px-4 py-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--text)]" onClick={() => { setShowModal(false); onModalOpenChange?.(false); }}>Cancel</button>
+              <button className="px-6 py-2 text-sm font-bold bg-[var(--accent)] text-black rounded-lg hover:brightness-110" onClick={() => { const patch: any = { title: titleValue.trim(), description: descValue, url: urlValue.trim(), meta: metaValue }; if (onSave) onSave(patch); setShowModal(false); onModalOpenChange?.(false); }}>Save Changes</button>
+            </footer>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {moveMenuPos && (
@@ -478,7 +235,6 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   );
 };
 
-// Local copy of TemplateFields (mirrors WebpageCard version)
 const TemplateFields: React.FC<{
   categoryId: string;
   meta: Record<string, string>;
@@ -487,106 +243,21 @@ const TemplateFields: React.FC<{
   const { categories } = useCategories();
   const { templates } = useTemplates();
   const cat = categories.find((c: any) => c.id === categoryId);
-  const tpl = templates.find(
-    (t: any) => t.id === (cat?.defaultTemplateId || '')
-  );
+  const tpl = templates.find((t: any) => t.id === (cat?.defaultTemplateId || ''));
   if (!tpl || !tpl.fields || tpl.fields.length === 0) return null;
-  const hasRequiredError = tpl.fields.some(
-    (f: any) => f.required && !(meta[f.key] ?? '').trim()
-  );
   return (
-    <div className="space-y-2">
+    <div className="space-y-3 pt-2 border-t border-white/5">
       {tpl.fields.map((f: any) => {
         const val = meta[f.key] ?? '';
         const set = (v: string) => onChange({ ...meta, [f.key]: v });
-        const baseCls = `w-full rounded bg-slate-900 border p-2 text-sm ${f.required && !val ? 'border-red-600' : 'border-slate-700'}`;
         return (
           <div key={f.key}>
-            <label className="block text-sm mb-1">
-              {f.label} {f.required && <span className="text-red-400">*</span>}
-            </label>
-            {f.type === 'select' ? (
-              <select
-                className={baseCls}
-                value={val}
-                onChange={(e) => set(e.target.value)}
-              >
-                <option value="">{f.defaultValue || 'Select...'}</option>
-                {(f.options || []).map((op: string) => (
-                  <option key={op} value={op}>
-                    {op}
-                  </option>
-                ))}
-              </select>
-            ) : f.type === 'number' ? (
-              <input
-                className={baseCls}
-                type="number"
-                value={val}
-                placeholder={f.defaultValue || ''}
-                onChange={(e) => set(e.target.value)}
-              />
-            ) : f.type === 'date' ? (
-              (() => {
-                const toDateInput = (s: string) => {
-                  if (!s) return '';
-                  const d = new Date(s);
-                  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
-                  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
-                };
-                const dateVal = toDateInput(String(val || ''));
-                return (
-                  <input
-                    className={baseCls}
-                    type="date"
-                    value={dateVal}
-                    onChange={(e) => set(e.target.value)}
-                  />
-                );
-              })()
-            ) : f.type === 'url' ? (
-              <input
-                className={baseCls}
-                type="url"
-                value={val}
-                placeholder={f.defaultValue || ''}
-                onChange={(e) => set(e.target.value)}
-              />
-            ) : f.type === 'rating' ? (
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    aria-label={`Rate ${n}`}
-                    className={`text-lg ${Number(val) >= n ? 'text-yellow-400' : 'text-slate-600'} hover:text-yellow-300`}
-                    onClick={() => set(String(n))}
-                  >
-                    {Number(val) >= n ? '★' : '☆'}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className="ml-2 text-xs text-slate-400 hover:text-slate-200"
-                  onClick={() => set('')}
-                >
-                  Clear
-                </button>
-              </div>
-            ) : (
-              <input
-                className={baseCls}
-                value={val}
-                placeholder={f.defaultValue || ''}
-                onChange={(e) => set(e.target.value)}
-              />
-            )}
+            <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{f.label}</label>
+            <input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+                   value={val} placeholder={f.defaultValue} onChange={(e) => set(e.target.value)} />
           </div>
         );
       })}
-      {hasRequiredError && (
-        <div className="text-xs text-red-400">請填寫所有必填欄位</div>
-      )}
     </div>
   );
 };

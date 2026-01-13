@@ -41,12 +41,6 @@ export const OrganizationNav: React.FC = () => {
             }`}
             style={{ backgroundColor: org.color || '#64748b' }}
             onClick={() => setCurrentOrganization(org.id)}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              const rect = e.currentTarget.getBoundingClientRect();
-              setOrgMenuPos({ x: rect.right + 8, y: rect.top });
-              setOrgMenuOpen(org.id);
-            }}
             title={org.name}
           >
             {org.name.slice(0, 2).toUpperCase()}

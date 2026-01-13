@@ -3,9 +3,7 @@ import { createStorageService } from '../../background/storageService';
 import { useFeedback } from '../ui/feedback';
 import { useWebpages } from '../webpages/WebpagesProvider';
 import { CardGrid } from '../webpages/CardGrid';
-import { broadcastGhostActive, getDragTab } from '../dnd/dragContext';
-import type { TabItemData } from '../tabs/types';
-import { dbg } from '../../utils/debug';
+import { broadcastGhostActive } from '../dnd/dragContext';
 import { ContextMenu } from '../ui/ContextMenu';
 import { useGroupShare } from './share/useGroupShare';
 import { useGroupImport } from './import/useGroupImport';
@@ -64,7 +62,6 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
   } = useGroupImport({ categoryId, groups, showToast, reloadWebpages: actions.load });
 
   const svc = React.useMemo(() => {
-    // 直接使用 IndexedDB 版本的 storage service；在非擴充環境亦可運作
     return createStorageService();
   }, []);
 
@@ -72,7 +69,6 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     try {
       if (!svc) return;
       const list = (await (svc as any).listSubcategories?.(categoryId)) || [];
-      // 去重（以 id 為準）
       const m = new Map<string, GroupItem>();
       for (const g of list as any[]) if (!m.has(g.id)) m.set(g.id, g);
       setGroups(Array.from(m.values()));
@@ -91,7 +87,6 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     load();
     const onChanged = () => { load(); };
     try { window.addEventListener('groups:changed', onChanged as any); } catch {}
-    // Expand/Collapse all listener
     const onCollapseAll = (ev: any) => {
       try {
         const det = ev?.detail || {};
@@ -122,8 +117,6 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     })();
   }, [categoryId]);
 
-  
-
   const rename = async (id: string, name: string) => {
     try {
       await (svc as any).renameSubcategory?.(id, name.trim() || 'group');
@@ -136,36 +129,29 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
 
   const remove = async (id: string) => {
     try {
-      // 以最新資料判斷，避免本地 state 與儲存不同步
-      const latest: GroupItem[] =
-        ((await (svc as any).listSubcategories?.(categoryId)) as any) || [];
+      const latest: GroupItem[] = ((await (svc as any).listSubcategories?.(categoryId)) as any) || [];
       const others = latest.filter((g) => g.id !== id);
       if (others.length === 0) {
         showToast('刪除失敗：至少需要保留一個 Group', 'error');
         return;
       }
-      // 直接刪除該 group 及其關聯書籤
       if ((svc as any).deleteSubcategoryAndPages) {
         await (svc as any).deleteSubcategoryAndPages(id);
       } else {
-        // 後備方案：以 UI 端刪除卡片後，再刪 group（較不原子）
         try {
           const ids = items.filter((it: any) => it.subcategoryId === id).map((it: any) => it.id);
           if (ids.length) await actions.deleteMany(ids);
         } catch {}
         try {
-          // 無重指派版本：非原子，僅作為後備
           await (svc as any).deleteSubcategory?.(id, '__NO_REASSIGN__');
         } catch {}
       }
-      // Remove collapse state for deleted group
       const { [id]: _omit, ...rest } = collapsed;
       await persistCollapsed(rest);
       await load();
       try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
       showToast('已刪除 Group 與其書籤', 'success');
-    } catch (error) {
-      console.error('Delete group error:', error);
+    } catch {
       showToast('刪除失敗', 'error');
     }
   };
@@ -185,62 +171,77 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     } catch {}
   };
 
-  // Handler for saving GitHub token
   const handleSaveToken = async () => {
     if (githubToken.trim()) {
       try {
         await new Promise<void>((resolve, reject) => {
           chrome.storage?.local?.set?.({ 'github.token': githubToken.trim() }, () => {
-            if (chrome.runtime?.lastError) {
-              reject(chrome.runtime.lastError);
-            } else {
-              resolve();
-            }
+            if (chrome.runtime?.lastError) { reject(chrome.runtime.lastError); } else { resolve(); }
           });
         });
         setShowTokenDialog(false);
         setGithubToken('');
-        showToast('GitHub Token 已安全儲存！現在可以發布分享連結了', 'success');
-        // Auto retry publishing
+        showToast('GitHub Token 已安全儲存！', 'success');
         setTimeout(() => publishToGist(), 500);
-      } catch (error) {
-        showToast('儲存 Token 失敗，請重試', 'error');
+      } catch {
+        showToast('儲存 Token 失敗', 'error');
       }
     }
   };
 
-  // Handler for copying share result URL
   const handleCopyShareUrl = async () => {
     if (shareResultUrl) {
       try {
         await navigator.clipboard.writeText(shareResultUrl);
         showToast('已複製到剪貼簿', 'success');
       } catch {
-        showToast('複製失敗，請手動選取複製', 'error');
+        showToast('複製失敗', 'error');
       }
+    }
+  };
+
+  const createNewGroup = async () => {
+    try {
+      if (!categoryId) return;
+      const { createStorageService } = await import('../../background/storageService');
+      const s = createStorageService();
+      const list = (((await (s as any).listSubcategories?.(categoryId)) as any[]) || []);
+      const lower = new Set(list.map((x:any)=>String(x.name||'').toLowerCase()));
+      let name = 'group';
+      let i = 2;
+      while (lower.has(name.toLowerCase())) name = `group ${i++}`;
+      await (s as any).createSubcategory?.(categoryId, name);
+      load();
+      try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
+      showToast(`已新增 ${name}`, 'success');
+    } catch {
+      showToast('新增失敗', 'error');
     }
   };
 
   if (!svc) return null;
 
   return (
-    <div className="space-y-3 mt-3">
-      {groups.map((g) => (
-        <section key={g.id} className="rounded border border-slate-700 bg-[var(--panel)]">
-          <header
-            className="flex items-center justify-between px-3 py-2 border-b border-slate-700"
-          >
-            <div className="flex items-center gap-2">
+    <div className="space-y-6 mt-3 pb-20">
+      {groups.map((g) => {
+        const groupItems = items.filter((it: any) => it.category === categoryId && it.subcategoryId === g.id);
+        const isCollapsed = !!collapsed[g.id];
+
+        return (
+          <section key={g.id} className="group-container group/container transition-all">
+            <header className="flex items-center gap-3 mb-4 select-none">
               <button
-                className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:bg-slate-800"
-                onClick={() => persistCollapsed({ ...collapsed, [g.id]: !collapsed[g.id] })}
-                aria-expanded={collapsed[g.id] ? 'false' : 'true'}
+                className="text-[var(--muted)] hover:text-[var(--text)] transition-transform duration-200"
+                style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+                onClick={() => persistCollapsed({ ...collapsed, [g.id]: !isCollapsed })}
+                title={isCollapsed ? '展開' : '摺疊'}
               >
-                {collapsed[g.id] ? '展開' : '摺疊'}
+                ▼
               </button>
+              
               {renaming === g.id ? (
                 <input
-                  className="text-sm bg-slate-900 border border-slate-700 rounded px-2 py-1"
+                  className="text-base font-bold bg-transparent border-b border-[var(--accent)] outline-none px-1"
                   value={renameText}
                   onChange={(e) => setRenameText(e.target.value)}
                   onBlur={() => { setRenaming(null); void rename(g.id, renameText); }}
@@ -251,136 +252,188 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   autoFocus
                 />
               ) : (
-                <div className="text-sm font-medium">{g.name}</div>
+                <h2 
+                  className="text-base font-bold text-[var(--text)] cursor-text"
+                  onDoubleClick={() => { setRenaming(g.id); setRenameText(g.name); }}
+                >
+                  {g.name}
+                </h2>
               )}
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Hidden inputs for import actions */}
-              <input
-                id={`html-file-${g.id}`}
-                type="file"
-                accept="text/html,.html"
-                aria-label="Import HTML bookmarks file"
-                className="hidden"
-                onChange={async (e) => {
-                  const f = e.currentTarget.files?.[0];
-                  e.currentTarget.value = '';
-                  if (f) await handleHtmlImport(g.id, f);
-                }}
-              />
-              <input
-                id={`toby-file-${g.id}`}
-                type="file"
-                accept="application/json,.json"
-                aria-label="Import Toby JSON file"
-                className="hidden"
-                onChange={async (e) => {
-                  const f = e.currentTarget.files?.[0];
-                  e.currentTarget.value = '';
-                  if (f) await handleTobyFileSelect(g.id, f);
-                }}
-              />
-              {/* Kebab menu trigger */}
-              <button
-                className="text-xs px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
-                aria-label="更多操作"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
-                  const x = Math.max(8, Math.min(vw - 200, e.clientX - 20));
-                  setMenuFor({ id: g.id, x, y: e.clientY + 6 });
-                }}
-              >
-                ⋯
-              </button>
-            </div>
-          </header>
-          {/* Context menu for this group */}
-          {menuFor?.id === g.id && (
-            <ContextMenu
-              x={menuFor.x}
-              y={menuFor.y}
-              onClose={() => setMenuFor(null)}
-              items={[
-                { key: 'share', label: '分享此群組', onSelect: () => { setMenuFor(null); void openShareDialog(g); } },
-                { key: 'import-html', label: '匯入 HTML', onSelect: () => { setMenuFor(null); try { document.getElementById(`html-file-${g.id}`)?.click(); } catch {} } },
-                { key: 'import-toby', label: '匯入 Toby', onSelect: () => { setMenuFor(null); try { document.getElementById(`toby-file-${g.id}`)?.click(); } catch {} } },
-                { key: 'rename', label: '重新命名', onSelect: () => { setMenuFor(null); setRenaming(g.id); setRenameText(g.name); } },
-                { key: 'move-up', label: '上移', onSelect: () => { setMenuFor(null); void move(g.id, -1); } },
-                { key: 'move-down', label: '下移', onSelect: () => { setMenuFor(null); void move(g.id, 1); } },
-                { key: 'delete', label: '刪除', onSelect: () => { setMenuFor(null); setConfirmDeleteGroup(g.id); } },
-              ]}
-            />
-          )}
-          {!collapsed[g.id] && (
-            <div className="p-3">
-              <CardGrid
-                items={items.filter((it: any) => it.category === categoryId && it.subcategoryId === g.id)}
-                onDropTab={async (tab: any, beforeId?: string) => {
-                  try {
-                    // 使用舊三段式流程以確保 meta enrich（回歸既有行為）
-                    const createdId = (await actions.addFromTab(tab as any)) as any as string;
-                    await actions.updateCategory(createdId, g.categoryId);
-                    await (svc as any).updateCardSubcategory?.(createdId, g.id);
-                    if (beforeId && beforeId !== '__END__') {
-                      dbg('dnd', 'onDropTab reorder', { createdId, beforeId });
-                      await actions.reorder(createdId, beforeId);
-                    } else if (beforeId === '__END__') {
-                      dbg('dnd', 'onDropTab moveToEnd', { createdId });
-                      await (actions as any).moveToEnd(createdId);
-                    }
-                    await actions.load();
-                    dbg('dnd', 'afterDrop load()', { groupId: g.id });
-                    showToast('已從分頁建立並加入 group', 'success');
-                  } catch {
-                    showToast('建立失敗', 'error');
-                  }
-                }}
-                onDropExistingCard={async (cardId, beforeId) => {
-                  try {
-                    // Create atomic cross-group move by using a special service method
-                    if ((svc as any).moveCardToGroup) {
-                      // Use dedicated atomic operation if available
-                      await (svc as any).moveCardToGroup(cardId, g.categoryId, g.id, beforeId);
-                    } else {
-                      // Fallback: sequential operations with careful error handling
-                      await actions.updateCategory(cardId, g.categoryId);
 
-                      if (!beforeId || beforeId === '__END__') {
+              <span className="text-xs font-bold text-[var(--muted)] bg-[var(--surface)] px-2 py-0.5 rounded-full border border-white/5">
+                {groupItems.length}
+              </span>
+
+              <div className="flex items-center gap-1 ml-auto opacity-0 group-hover/container:opacity-100 transition-all duration-200">
+                {/* Open All Tabs Button */}
+                <button
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[var(--accent)] hover:bg-[var(--accent)]/10 rounded-lg transition-all active:scale-95"
+                  title="開啟全部分頁"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    groupItems.forEach(item => window.open(item.url, '_blank'));
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                  <span>OPEN TABS</span>
+                </button>
+
+                {/* Group Settings Button */}
+                <button
+                  className="p-2 text-[var(--accent)] hover:bg-[var(--accent)]/10 rounded-lg transition-all active:scale-90"
+                  title="群組設定"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (menuFor?.id === g.id) {
+                      setMenuFor(null);
+                    } else {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setMenuFor({ id: g.id, x: rect.right, y: rect.bottom + 8 });
+                    }
+                  }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="1"></circle>
+                    <circle cx="19" cy="12" r="1"></circle>
+                    <circle cx="5" cy="12" r="1"></circle>
+                  </svg>
+                </button>
+              </div>
+            </header>
+
+            {/* Context menu for this group */}
+            {menuFor?.id === g.id && (
+              <ContextMenu
+                x={menuFor.x}
+                y={menuFor.y}
+                align="right"
+                onClose={() => setMenuFor(null)}
+                items={[
+                  { 
+                    key: 'share', 
+                    label: '分享此群組', 
+                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>,
+                    onSelect: () => { setMenuFor(null); void openShareDialog(g); } 
+                  },
+                  { 
+                    key: 'import-html', 
+                    label: '匯入 HTML', 
+                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>,
+                    onSelect: () => { setMenuFor(null); try { document.getElementById(`html-file-${g.id}`)?.click(); } catch {} } 
+                  },
+                  { 
+                    key: 'import-toby', 
+                    label: '匯入 Toby', 
+                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>,
+                    onSelect: () => { setMenuFor(null); try { document.getElementById(`toby-file-${g.id}`)?.click(); } catch {} } 
+                  },
+                  { 
+                    key: 'rename', 
+                    label: '重新命名', 
+                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>,
+                    onSelect: () => { setMenuFor(null); setRenaming(g.id); setRenameText(g.name); } 
+                  },
+                  { 
+                    key: 'move-up', 
+                    label: '上移', 
+                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>,
+                    onSelect: () => { setMenuFor(null); void move(g.id, -1); } 
+                  },
+                  { 
+                    key: 'move-down', 
+                    label: '下移', 
+                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>,
+                    onSelect: () => { setMenuFor(null); void move(g.id, 1); } 
+                  },
+                  { 
+                    key: 'delete', 
+                    label: '刪除', 
+                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
+                    className: 'text-red-400 hover:text-red-300 hover:bg-red-950/20',
+                    onSelect: () => { setMenuFor(null); setConfirmDeleteGroup(g.id); } 
+                  },
+                ]}
+              />
+            )}
+
+            {!isCollapsed && (
+              <div className="min-h-[40px]">
+                <CardGrid
+                  items={groupItems}
+                  onDropTab={async (tab: any, beforeId?: string) => {
+                    try {
+                      const createdId = (await actions.addFromTab(tab as any)) as any as string;
+                      await actions.updateCategory(createdId, g.categoryId);
+                      await (svc as any).updateCardSubcategory?.(createdId, g.id);
+                      if (beforeId && beforeId !== '__END__') {
+                        await actions.reorder(createdId, beforeId);
+                      } else if (beforeId === '__END__') {
+                        await (actions as any).moveToEnd(createdId);
+                      }
+                      await actions.load();
+                      showToast('已從分頁建立並加入 group', 'success');
+                    } catch {
+                      showToast('建立失敗', 'error');
+                    }
+                  }}
+                  onDropExistingCard={async (cardId, beforeId) => {
+                    try {
+                      if ((svc as any).moveCardToGroup) {
+                        await (svc as any).moveCardToGroup(cardId, g.categoryId, g.id, beforeId);
+                      } else {
+                        // Fallback: 
+                        // 1. Update category (data property)
+                        await actions.updateCategory(cardId, g.categoryId);
+                        
+                        // 2. Ensure card is in the target group's order list (by moving to end)
+                        // This handles both the subcategoryId update and the order array insertion
                         await (svc as any).updateCardSubcategory?.(cardId, g.id);
                         await (actions as any).moveToEnd(cardId);
-                      } else {
-                        // Use reorder which now handles cross-group atomically
-                        await actions.reorder(cardId, beforeId);
+                        
+                        // 3. If specific position needed, reorder it
+                        if (beforeId && beforeId !== '__END__') {
+                          await actions.reorder(cardId, beforeId);
+                        }
                       }
+                      await actions.load();
+                      try { broadcastGhostActive(null); } catch {}
+                      showToast('已移動到 group', 'success');
+                    } catch {
+                      try { broadcastGhostActive(null); } catch {}
+                      showToast('移動失敗', 'error');
                     }
-
+                  }}
+                  onDeleteMany={async (ids) => { await actions.deleteMany(ids); showToast('Deleted selected', 'success'); }}
+                  onDeleteOne={async (id) => { await actions.deleteOne(id); showToast('Deleted', 'success'); }}
+                  onEditDescription={async (id, description) => { await actions.updateDescription(id, description); showToast('Saved note', 'success'); }}
+                  onSave={async (id, patch) => { await actions.updateCard(id, patch); showToast('Saved', 'success'); }}
+                  onReorder={async (fromId, toId) => {
+                    await actions.reorder(fromId, toId);
                     await actions.load();
-                    try { broadcastGhostActive(null); } catch {}
-                    showToast('已移動到 group', 'success');
-                  } catch (error) {
-                    console.error('Move card error:', error);
-                    try { broadcastGhostActive(null); } catch {}
-                    showToast('移動失敗', 'error');
-                  }
-                }}
-                onDeleteMany={async (ids) => { await actions.deleteMany(ids); showToast('Deleted selected', 'success'); }}
-                onDeleteOne={async (id) => { await actions.deleteOne(id); showToast('Deleted', 'success'); }}
-                onEditDescription={async (id, description) => { await actions.updateDescription(id, description); showToast('Saved note', 'success'); }}
-                onSave={async (id, patch) => { await actions.updateCard(id, patch); showToast('Saved', 'success'); }}
-                onReorder={async (fromId, toId) => {
-                  await actions.reorder(fromId, toId);
-                  await actions.load();
-                }}
-                onUpdateTitle={(id, title) => actions.updateTitle(id, title)}
-                onUpdateUrl={(id, url) => actions.updateUrl(id, url)}
-                onUpdateCategory={(id, cat) => actions.updateCategory(id, cat)}
-                onUpdateMeta={(id, meta) => actions.updateMeta(id, meta)}
-              />
-            </div>
-          )}
-        </section>
-      ))}
+                  }}
+                  onUpdateTitle={(id, title) => actions.updateTitle(id, title)}
+                  onUpdateUrl={(id, url) => actions.updateUrl(id, url)}
+                  onUpdateCategory={(id, cat) => actions.updateCategory(id, cat)}
+                  onUpdateMeta={(id, meta) => actions.updateMeta(id, meta)}
+                />
+              </div>
+            )}
+          </section>
+        );
+      })}
+
+      {/* Add New Group Placeholder */}
+      <button 
+        className="w-full py-4 border-2 border-dashed border-slate-700 hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 rounded-2xl text-[var(--muted)] hover:text-[var(--accent)] font-semibold transition-all duration-200 flex items-center justify-center gap-2"
+        onClick={createNewGroup}
+      >
+        <span>+</span> Create New Group
+      </button>
+
       {confirmDeleteGroup && (
         <div
           className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
