@@ -72,15 +72,18 @@ export const CardGrid: React.FC<CardGridProps> = ({
 
   const handleBatchMove = async (categoryId: string, subcategoryId: string) => {
     try {
-      const selectedIds = Object.entries(selected).filter(([, v]) => v).map(([key]) => key);
+      // Preserve order: filter from items instead of using Object.entries
+      const selectedIds = items.filter(item => selected[item.id]).map(item => item.id);
+      
       const { createStorageService } = await import('../../background/storageService');
       const svc = createStorageService();
-      await Promise.all(
-        selectedIds.map(async (cardId) => {
-          if (onUpdateCategory) await onUpdateCategory(cardId, categoryId);
-          await (svc as any).updateCardSubcategory?.(cardId, subcategoryId);
-        })
-      );
+      
+      // Sequential execution to prevent race conditions and preserve order
+      for (const cardId of selectedIds) {
+        if (onUpdateCategory) await onUpdateCategory(cardId, categoryId);
+        await (svc as any).updateCardSubcategory?.(cardId, subcategoryId);
+      }
+      
       setShowMoveDialog(false); clearSelection(); showToast(`已移動 ${selectedIds.length} 張卡片`, 'success');
     } catch { showToast('移動失敗', 'error'); }
   };
