@@ -464,12 +464,14 @@ export const CardGrid: React.FC<CardGridProps> = ({
           beforeId = idx >= list.length ? '__END__' : list[idx].id;
         }
         
-        onDropExistingCard?.(fromId, beforeId);
-        
-        // Cleanup
-        setGhostTab(null); setGhostType(null); setGhostIndex(null); setDraggingCardId(null);
-        setIsOver(false);
-        try { broadcastGhostActive(null); } catch {}
+        try {
+          await onDropExistingCard?.(fromId, beforeId);
+        } finally {
+          // Cleanup - 確保 ghost 一定會清理，即使 async 拋異常
+          setGhostTab(null); setGhostType(null); setGhostIndex(null); setDraggingCardId(null);
+          setIsOver(false);
+          try { broadcastGhostActive(null); } catch {}
+        }
         return;
       }
       // ... similar logic for new tab drop ...

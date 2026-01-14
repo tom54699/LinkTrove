@@ -2,9 +2,7 @@
 
 ## Purpose
 提供直覺的拖放操作介面，讓使用者可以重新排列卡片順序、跨群組移動卡片，並即時持久化變更到 IndexedDB。拖放操作是 LinkTrove 的核心 UX 功能。
-
 ## Requirements
-
 ### Requirement: 卡片拖放排序
 系統必須（SHALL）支援在同一群組內拖放卡片以調整顯示順序，並即時儲存變更。
 
@@ -207,6 +205,19 @@
 - **WHEN** 使用者意外關閉分頁（拖放未完成）
 - **THEN** 下次開啟時，順序保持拖放前的狀態（未持久化）
 - **THEN** 不會產生部分更新的資料損壞
+
+### Requirement: Card Drop Timing
+The system SHALL wait for the drop operation to complete before clearing the ghost preview state, ensuring smooth visual transition without flicker.
+
+#### Scenario: Drop existing card to new position
+- **WHEN** user drops a card to a new position
+- **THEN** the ghost preview remains visible until the data update completes
+- **AND** the ghost is cleared only after the card appears in its new position
+
+#### Scenario: Drop operation fails
+- **WHEN** user drops a card and the operation fails
+- **THEN** the ghost preview is still cleared (via try-finally)
+- **AND** an error message is shown to the user
 
 ## Related Documentation
 - **技術設計**: `design.md` - 拖放實作細節與程式庫選擇

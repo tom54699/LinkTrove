@@ -461,15 +461,15 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                       if ((svc as any).moveCardToGroup) {
                         await (svc as any).moveCardToGroup(cardId, g.categoryId, g.id, beforeId);
                       } else {
-                        // Fallback: 
+                        // Fallback:
                         // 1. Update category (data property)
                         await actions.updateCategory(cardId, g.categoryId);
-                        
+
                         // 2. Ensure card is in the target group's order list (by moving to end)
                         // This handles both the subcategoryId update and the order array insertion
                         await (svc as any).updateCardSubcategory?.(cardId, g.id);
                         await (actions as any).moveToEnd(cardId);
-                        
+
                         // 3. If specific position needed, reorder it
                         if (beforeId && beforeId !== '__END__') {
                           await actions.reorder(cardId, beforeId);
