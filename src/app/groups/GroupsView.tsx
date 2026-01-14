@@ -104,7 +104,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       try { window.removeEventListener('groups:changed', onChanged as any); } catch {}
       try { window.removeEventListener('groups:collapse-all', onCollapseAll as any); } catch {}
     };
-  }, [load, groups, categoryId, persistCollapsed]);
+  }, [load, categoryId, persistCollapsed]);
 
   React.useEffect(() => {
     (async () => {
@@ -456,6 +456,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                     }
                   }}
                   onDropExistingCard={async (cardId, beforeId) => {
+                    setActiveDropGroupId(null);
                     try {
                       if ((svc as any).moveCardToGroup) {
                         await (svc as any).moveCardToGroup(cardId, g.categoryId, g.id, beforeId);

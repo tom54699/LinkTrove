@@ -58,12 +58,12 @@ export const WebpagesProvider: React.FC<{
 }> = ({ children, svc }) => {
   const service = React.useMemo(() => {
     if (svc) return svc;
-    // 一律使用 IDB-backed 的 service；pageMeta 相關功能內部自我保護
-    return createWebpageService();
-  }, [svc]);
-  const [items, setItems] = React.useState<WebpageCardData[]>([]);
-  const { selectedId } = useCategories();
-  const selectedIdRef = React.useRef(selectedId);
+        // 一律使用 IDB-backed 的 service；pageMeta 相關功能內部自我保護
+        return createWebpageService();
+      }, [svc]);
+      const [items, setItems] = React.useState<WebpageCardData[]>([]);
+    
+      const { selectedId } = useCategories();      const selectedIdRef = React.useRef(selectedId);
   React.useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
 
   const load = React.useCallback(async () => {
