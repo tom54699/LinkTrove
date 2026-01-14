@@ -181,6 +181,42 @@
     .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .theme-opt { border: 2px solid var(--border); padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); }
     .theme-opt.active { border-color: var(--accent); color: var(--accent); background: var(--surface); }
+
+    /* --- Spotlight Search Styles --- */
+    .search-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      z-index: 1000; display: none; justify-content: center; align-items: flex-start;
+      padding-top: 12vh; animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    .spotlight-modal {
+      width: 600px; max-width: 90vw; background: #1a1d24; border: 1px solid var(--border);
+      border-radius: 16px; box-shadow: 0 30px 60px rgba(0,0,0,0.5); overflow: hidden;
+      display: flex; flex-direction: column; transform: translateY(0);
+      animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideDown { from { transform: translateY(-20px); } to { transform: translateY(0); } }
+
+    .spotlight-input-wrap { display: flex; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border); gap: 16px; }
+    .spotlight-input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 18px; outline: none; font-family: inherit; }
+    .spotlight-input::placeholder { color: var(--muted); opacity: 0.5; }
+    
+    .spotlight-results { max-height: 400px; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+    .sl-section-title { font-size: 10px; font-weight: 800; color: var(--muted); padding: 12px 12px 4px; letter-spacing: 1px; text-transform: uppercase; }
+    .sl-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: 0.1s; }
+    .sl-item.selected { background: rgba(79, 209, 197, 0.15); }
+    .sl-icon { width: 24px; height: 24px; display: grid; place-items: center; background: var(--bg); border-radius: 6px; font-size: 12px; }
+    .sl-content { flex: 1; min-width: 0; }
+    .sl-title { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sl-meta { font-size: 11px; color: var(--muted); opacity: 0.7; margin-top: 2px; }
+    .sl-action { font-size: 11px; color: var(--accent); font-weight: 700; opacity: 0; }
+    .sl-item.selected .sl-action { opacity: 1; }
+
+    .spotlight-footer { padding: 10px 20px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+    .sl-keys { display: flex; gap: 12px; }
+    .sl-keys span { background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px; color: var(--text); margin-right: 4px; }
   </style>
 </head>
 <body>
@@ -201,7 +237,7 @@
         <div class="header-controls">
           <div class="search-box">
             <span class="search-icon" style="position:absolute; left:10px; top:50%; transform:translateY(-50%);">🔍</span>
-            <input class="search-input" type="text" placeholder="Search cards..." oninput="app.setSearch(this.value)">
+            <input class="search-input" type="text" placeholder="Search cards... (Try Cmd+K)" onfocus="app.openSpotlight()" readonly>
           </div>
           <button class="header-btn" onclick="app.toggleSort()"><span id="sort-label">⇅ Custom</span></button>
           <button class="header-btn" onclick="app.openShare()">🔗 Share</button>
@@ -216,6 +252,27 @@
     <div class="tabs-header-text">OPEN TABS</div>
     <div class="tab-list" id="tabs-list"></div>
     <button class="save-all-btn" onclick="app.saveAllTabs()">SAVE ALL TABS</button>
+  </div>
+
+  <!-- Spotlight Search Overlay -->
+  <div class="search-overlay" id="spotlight-overlay" onclick="app.closeSpotlight()">
+    <div class="spotlight-modal" onclick="event.stopPropagation()">
+      <div class="spotlight-input-wrap">
+        <span style="font-size:20px; opacity:0.5;">🔍</span>
+        <input type="text" class="spotlight-input" id="sl-input" placeholder="Search for anything..." oninput="app.updateSpotlight(this.value)">
+        <div style="font-size:10px; color:var(--muted); border:1px solid var(--border); padding:2px 6px; border-radius:4px;">ESC</div>
+      </div>
+      <div class="spotlight-results" id="sl-results">
+        <!-- Results injected here -->
+      </div>
+      <div class="spotlight-footer">
+        <div class="sl-keys">
+          <span>↑↓</span> to navigate 
+          <span style="margin-left:12px;">↵</span> to select
+        </div>
+        <div>LinkTrove Search</div>
+      </div>
+    </div>
   </div>
 
   <!-- Modals -->
@@ -284,12 +341,97 @@ const db = {
 };
 
 const app = {
-  editingCard: null,
-  init() { this.render(); },
+  editingCard: null, spotlightIndex: 0,
+  init() { this.render(); this.setupGlobalKeys(); },
+  setupGlobalKeys() {
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault(); app.openSpotlight();
+      }
+      if (e.key === 'Escape') app.closeSpotlight();
+      
+      const overlay = document.getElementById('spotlight-overlay');
+      if (overlay.style.display === 'flex') {
+        const items = document.querySelectorAll('.sl-item');
+        if (e.key === 'ArrowDown') {
+          e.preventDefault(); app.spotlightIndex = Math.min(app.spotlightIndex + 1, items.length - 1); app.renderSpotlight();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault(); app.spotlightIndex = Math.max(app.spotlightIndex - 1, 0); app.renderSpotlight();
+        } else if (e.key === 'Enter') {
+          items[app.spotlightIndex]?.click();
+        }
+      }
+    });
+  },
   setTheme(name) {
     document.body.classList.remove('theme-toby', 'theme-toby-dark');
     if(name !== 'dark') document.body.classList.add('theme-' + name);
     document.querySelectorAll('.theme-opt').forEach(el => el.classList.toggle('active', el.id === 'theme-'+name));
+  },
+  openSpotlight() { 
+    document.getElementById('spotlight-overlay').style.display = 'flex';
+    const input = document.getElementById('sl-input');
+    input.value = ''; input.focus();
+    this.spotlightIndex = 0;
+    this.updateSpotlight('');
+  },
+  closeSpotlight() { document.getElementById('spotlight-overlay').style.display = 'none'; },
+  updateSpotlight(q) {
+    const results = document.getElementById('sl-results');
+    const query = q.toLowerCase();
+    
+    // Fake results
+    let html = '';
+    
+    const matchedTabs = db.tabs.filter(t => t.title.toLowerCase().includes(query));
+    if (matchedTabs.length) {
+      html += `<div class="sl-section-title">Open Tabs</div>`;
+      matchedTabs.forEach(t => {
+        html += `<div class="sl-item" onclick="alert('Switching to ${t.title}'); app.closeSpotlight()">
+          <div class="sl-icon">📄</div>
+          <div class="sl-content"><div class="sl-title">${t.title}</div><div class="sl-meta">${t.url}</div></div>
+          <div class="sl-action">↵ Switch</div>
+        </div>`;
+      });
+    }
+
+    const matchedCards = [];
+    db.cols.forEach(c => c.groups.forEach(g => g.cards.forEach(card => {
+      if (card.title.toLowerCase().includes(query)) matchedCards.push({card, g});
+    })));
+    
+    if (matchedCards.length) {
+      html += `<div class="sl-section-title">Saved Cards</div>`;
+      matchedCards.forEach(({card, g}) => {
+        html += `<div class="sl-item" onclick="window.open('https://${card.url}'); app.closeSpotlight()">
+          <div class="sl-icon">★</div>
+          <div class="sl-content"><div class="sl-title">${card.title}</div><div class="sl-meta">In ${g.name}</div></div>
+          <div class="sl-action">↵ Open</div>
+        </div>`;
+      });
+    }
+
+    html += `<div class="sl-section-title">Commands</div>
+      <div class="sl-item" onclick="app.openModal('settings-modal'); app.closeSpotlight()">
+        <div class="sl-icon">⚙️</div>
+        <div class="sl-content"><div class="sl-title">Settings</div><div class="sl-meta">Adjust preferences</div></div>
+        <div class="sl-action">↵ Run</div>
+      </div>
+      <div class="sl-item" onclick="app.setTheme('dark'); app.closeSpotlight()">
+        <div class="sl-icon">🌙</div>
+        <div class="sl-content"><div class="sl-title">Dark Mode</div><div class="sl-meta">Switch UI theme</div></div>
+        <div class="sl-action">↵ Run</div>
+      </div>`;
+
+    results.innerHTML = html;
+    this.renderSpotlight();
+  },
+  renderSpotlight() {
+    const items = document.querySelectorAll('.sl-item');
+    items.forEach((el, i) => {
+      el.classList.toggle('selected', i === this.spotlightIndex);
+      if (i === this.spotlightIndex) el.scrollIntoView({ block: 'nearest' });
+    });
   },
   setSearch(q) { db.searchQuery = q.toLowerCase(); this.render(); },
   toggleSort() { db.sortMode = db.sortMode === 'custom' ? 'alpha' : 'custom'; this.render(); },
