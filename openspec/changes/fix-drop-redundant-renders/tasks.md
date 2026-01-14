@@ -46,7 +46,11 @@
 - [x] 3.2.2 在分頁 A 執行拖放
 - [x] 3.2.3 確認分頁 B 在 1-2 秒內同步更新
 
+### 3.3 單元測試補強
+- [x] 3.3.1 覆蓋 moveCardToGroup setItems 行為
+- [x] 3.3.2 覆蓋 onChanged 鎖定窗口跳過 load
+
 ## 4. 程式碼品質
 - [x] 4.1 確保 TypeScript 編譯通過
-- [ ] 4.2 確保 ESLint 無錯誤
-- [ ] 4.3 執行現有單元測試確保無 regression
+- [x] 4.2 確保 ESLint 無錯誤
+- [x] 4.3 執行現有單元測試確保無 regression

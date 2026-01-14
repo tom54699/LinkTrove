@@ -32,6 +32,12 @@ interface CtxValue {
     updateMeta: (id: string, meta: Record<string, string>) => Promise<void>;
     reorder: (fromId: string, toId: string) => void;
     moveToEnd: (id: string) => void;
+    moveCardToGroup: (
+      cardId: string,
+      targetCategoryId: string,
+      targetGroupId: string,
+      beforeId?: string
+    ) => Promise<void>;
   };
 }
 
@@ -58,13 +64,19 @@ export const WebpagesProvider: React.FC<{
 }> = ({ children, svc }) => {
   const service = React.useMemo(() => {
     if (svc) return svc;
-        // 一律使用 IDB-backed 的 service；pageMeta 相關功能內部自我保護
-        return createWebpageService();
-      }, [svc]);
-      const [items, setItems] = React.useState<WebpageCardData[]>([]);
-    
-      const { selectedId } = useCategories();      const selectedIdRef = React.useRef(selectedId);
-  React.useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
+    // 一律使用 IDB-backed 的 service；pageMeta 相關功能內部自我保護
+    return createWebpageService();
+  }, [svc]);
+  const [items, setItems] = React.useState<WebpageCardData[]>([]);
+
+  const { selectedId } = useCategories();
+  const selectedIdRef = React.useRef(selectedId);
+  React.useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
+
+  // 操作鎖定：防止 drop 操作期間 onChanged 重複觸發 load
+  const operationLockRef = React.useRef<number>(0);
 
   const load = React.useCallback(async () => {
     const list = await service.loadWebpages();
@@ -276,6 +288,7 @@ export const WebpagesProvider: React.FC<{
 
   const updateCategory = React.useCallback(
     async (id: string, category: string) => {
+      operationLockRef.current = Date.now(); // 設置操作鎖定
       let updates: any = { category };
       try {
         const { createStorageService } = await import(
@@ -445,6 +458,7 @@ export const WebpagesProvider: React.FC<{
 
   const reorder = React.useCallback(
     async (fromId: string, toId: string) => {
+      operationLockRef.current = Date.now(); // 設置操作鎖定
       const saved = await service.reorderWebpages(fromId, toId);
       setItems(saved.map(toCard));
       return saved;
@@ -454,7 +468,28 @@ export const WebpagesProvider: React.FC<{
 
   const moveToEnd = React.useCallback(
     async (id: string) => {
+      operationLockRef.current = Date.now(); // 設置操作鎖定
       const saved = await (service as any).moveWebpageToEnd(id);
+      setItems(saved.map(toCard));
+      return saved;
+    },
+    [service]
+  );
+
+  const moveCardToGroup = React.useCallback(
+    async (
+      cardId: string,
+      targetCategoryId: string,
+      targetGroupId: string,
+      beforeId?: string
+    ) => {
+      operationLockRef.current = Date.now(); // 設置操作鎖定
+      const saved = await service.moveCardToGroup(
+        cardId,
+        targetCategoryId,
+        targetGroupId,
+        beforeId
+      );
       setItems(saved.map(toCard));
       return saved;
     },
@@ -476,6 +511,8 @@ export const WebpagesProvider: React.FC<{
         if (areaName !== 'local') return;
         if (!changes || typeof changes !== 'object') return;
         if (!('webpages' in changes)) return;
+        // 操作鎖定期間跳過，避免重複 load
+        if (Date.now() - operationLockRef.current < 800) return;
         if (t) clearTimeout(t);
         t = setTimeout(() => {
           load().catch(() => {});
@@ -510,6 +547,7 @@ export const WebpagesProvider: React.FC<{
         updateMeta,
         reorder,
         moveToEnd,
+        moveCardToGroup,
       },
     }),
     [
@@ -527,6 +565,7 @@ export const WebpagesProvider: React.FC<{
       updateMeta,
       reorder,
       moveToEnd,
+      moveCardToGroup,
     ]
   );
 
@@ -552,6 +591,7 @@ export function useWebpages() {
         updateMeta: async () => {},
         reorder: () => {},
         moveToEnd: () => {},
+        moveCardToGroup: async () => {},
       },
     } as any;
   }

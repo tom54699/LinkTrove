@@ -17,6 +17,7 @@ const addFromTabSpy = vi.fn();
 const updateCategorySpy = vi.fn();
 const reorderSpy = vi.fn();
 const moveToEndSpy = vi.fn();
+const moveCardToGroupSpy = vi.fn();
 
 vi.mock('../../webpages/WebpagesProvider', () => ({
   useWebpages: () => ({
@@ -27,6 +28,7 @@ vi.mock('../../webpages/WebpagesProvider', () => ({
       updateCategory: updateCategorySpy,
       reorder: reorderSpy,
       moveToEnd: moveToEndSpy,
+      moveCardToGroup: moveCardToGroupSpy,
       deleteMany: vi.fn(),
       deleteOne: vi.fn(),
       updateDescription: vi.fn(),
@@ -69,11 +71,12 @@ describe('GroupsView drag-and-drop (UI)', () => {
     updateCategorySpy.mockReset();
     reorderSpy.mockReset();
     moveToEndSpy.mockReset();
+    moveCardToGroupSpy.mockReset();
     updateCardSubcategorySpy.mockReset();
     listSubcategoriesMock.mockClear();
   });
 
-  it('uses legacy flow when dropping a tab into CardGrid', async () => {
+  it('moves created card via moveCardToGroup when dropping a tab into CardGrid', async () => {
     addFromTabSpy.mockResolvedValue('w1');
     render(<GroupsView categoryId="c1" />);
     // 等待 group 載入
@@ -85,10 +88,10 @@ describe('GroupsView drag-and-drop (UI)', () => {
     fireEvent.dragOver(dropZone, { dataTransfer: dt });
     fireEvent.drop(dropZone, { dataTransfer: dt });
     await waitFor(() => expect(addFromTabSpy).toHaveBeenCalled());
-    await waitFor(() => expect(updateCategorySpy).toHaveBeenCalledWith('w1', 'c1'));
-    await waitFor(() => expect(updateCardSubcategorySpy).toHaveBeenCalledWith('w1', 'g1'));
-    // 完成後會 load 一次
-    await waitFor(() => expect(loadSpy).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(moveCardToGroupSpy).toHaveBeenCalledWith('w1', 'c1', 'g1', undefined)
+    );
+    expect(loadSpy).not.toHaveBeenCalled();
   });
 
   it('handles drop on header', async () => {
@@ -102,14 +105,14 @@ describe('GroupsView drag-and-drop (UI)', () => {
     expect(addFromTabSpy).toHaveBeenCalled();
   });
 
-  it('falls back to legacy flow when atomic API is unavailable', async () => {
+  it('moves existing card via moveCardToGroup when dropping into CardGrid', async () => {
     render(<GroupsView categoryId="c1" />);
     await screen.findByText('group');
     const dropZone = await screen.findByLabelText(/drop zone/i);
-    const tabPayload = JSON.stringify({ id: 42, title: 'Ex2', url: 'https://ex2.com' });
-    const dt = makeDataTransfer({ 'application/x-linktrove-tab': tabPayload });
+    const dt = makeDataTransfer({ 'application/x-linktrove-webpage': 'w2' });
     fireEvent.drop(dropZone, { dataTransfer: dt });
-    // 走舊流程：addFromTab → updateCategory → updateCardSubcategory
-    await waitFor(() => expect(addFromTabSpy).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(moveCardToGroupSpy).toHaveBeenCalledWith('w2', 'c1', 'g1', '__END__')
+    );
   });
 });
