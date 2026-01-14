@@ -63,6 +63,8 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   const [metaValue, setMetaValue] = React.useState<Record<string, string>>({ ...(meta || {}) });
 
   const autoSaveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const prevShowModalRef = React.useRef(false);
+  const mouseDownInsideRef = React.useRef(false);
 
   function validateUrl(raw: string): { value?: string; error?: string } {
     const v = (raw || '').trim();
@@ -90,17 +92,25 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
     }
   }, [showModal, titleValue, descValue, urlValue, metaValue, onSave, onUpdateTitle, onUpdateUrl, onUpdateDescription, onUpdateMeta]);
 
+  // 使用 ref 保存最新的 performAutoSave，避免 stale closure
+  const performAutoSaveRef = React.useRef(performAutoSave);
+  performAutoSaveRef.current = performAutoSave;
+
   const triggerAutoSave = React.useCallback(() => {
     if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
-    autoSaveTimeoutRef.current = setTimeout(() => performAutoSave(), 500);
-  }, [performAutoSave]);
+    autoSaveTimeoutRef.current = setTimeout(() => performAutoSaveRef.current(), 500);
+  }, []);
 
   React.useEffect(() => {
     return () => { if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current); };
   }, []);
 
   React.useEffect(() => {
-    if (showModal) {
+    // 只在 Modal 從關閉變開啟時初始化，避免 props 更新時覆蓋用戶輸入
+    const justOpened = showModal && !prevShowModalRef.current;
+    prevShowModalRef.current = showModal;
+
+    if (justOpened) {
       setTitleValue(title);
       setDescValue(description || '');
       setUrlValue(url || '');
@@ -194,8 +204,22 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
       )}
 
       {showModal && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4" onClick={() => { setShowModal(false); onModalOpenChange?.(false); }}>
-          <div className="relative bg-[var(--panel)] border border-white/10 rounded-2xl w-[560px] max-w-full shadow-2xl flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
+          onMouseDown={() => { mouseDownInsideRef.current = false; }}
+          onClick={() => {
+            // 只有當 mousedown 也發生在 overlay 上時才關閉（避免選取文字時意外關閉）
+            if (!mouseDownInsideRef.current) {
+              setShowModal(false);
+              onModalOpenChange?.(false);
+            }
+          }}
+        >
+          <div
+            className="relative bg-[var(--panel)] border border-white/10 rounded-2xl w-[560px] max-w-full shadow-2xl flex flex-col overflow-hidden"
+            onMouseDown={(e) => { e.stopPropagation(); mouseDownInsideRef.current = true; }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <header className="px-6 py-4 border-b border-white/5 flex justify-between items-center">
               <h3 className="text-lg font-bold text-[var(--text)]">Edit Webpage</h3>
               <button className="text-[var(--muted)] hover:text-[var(--text)]" onClick={() => { setShowModal(false); onModalOpenChange?.(false); }}>✕</button>
@@ -203,6 +227,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
             <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
               <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">Title</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={titleValue} onChange={(e) => { setTitleValue(e.target.value); triggerAutoSave(); }} /></div>
               <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">URL</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={urlValue} onChange={(e) => { setUrlValue(e.target.value); triggerAutoSave(); }} /></div>
+              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">Note</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={descValue} onChange={(e) => { setDescValue(e.target.value); triggerAutoSave(); }} /></div>
               <TemplateFields categoryId={categoryId || 'default'} meta={metaValue} onChange={(newMeta) => { setMetaValue(newMeta); triggerAutoSave(); }} />
             </div>
             <footer className="px-6 py-4 bg-white/5 border-t border-white/5 flex justify-end gap-2">
