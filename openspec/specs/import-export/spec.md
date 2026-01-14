@@ -2,9 +2,7 @@
 
 ## Purpose
 提供完整的資料匯入匯出功能，支援 LinkTrove 原生格式、Toby v3/v4 JSON 格式、HTML 書籤格式的互通性。確保使用者資料的可攜性和跨平台遷移能力。
-
 ## Requirements
-
 ### Requirement: LinkTrove JSON 格式匯出
 系統必須（SHALL）支援將所有書籤資料匯出為 LinkTrove 原生 JSON 格式，包含完整的階層結構和元資料。
 
@@ -247,6 +245,21 @@
 - **THEN** 系統清空所有 IndexedDB stores
 - **THEN** 系統匯入檔案內容
 - **THEN** 匯入完成後，系統只包含匯入的資料
+
+### Requirement: 群組層級匯入介面
+系統必須（SHALL）允許使用者從個別群組的右鍵選單中觸發匯入功能，將內容直接匯入至該群組。
+
+#### Scenario: 從群組選單匯入 HTML
+- **GIVEN** 使用者對群組 A 開啟右鍵選單
+- **WHEN** 使用者點擊「匯入 HTML」
+- **THEN** 系統開啟檔案選擇對話框
+- **THEN** 使用者選擇檔案後，系統將內容匯入至群組 A
+
+#### Scenario: 從群組選單匯入 Toby JSON
+- **GIVEN** 使用者對群組 B 開啟右鍵選單
+- **WHEN** 使用者點擊「匯入 Toby」
+- **THEN** 系統開啟檔案選擇對話框
+- **THEN** 使用者選擇檔案後，系統將內容匯入至群組 B
 
 ## Related Documentation
 - **技術設計**: `design.md` - 匯入匯出實作細節
