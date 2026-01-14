@@ -251,14 +251,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       const fromId = e.dataTransfer.getData('application/x-linktrove-webpage');
       if (fromId) {
         // Drop Existing Card -> Move to End of Group
-        if ((svc as any).moveCardToGroup) {
-          await (svc as any).moveCardToGroup(fromId, g.categoryId, g.id, '__END__');
-        } else {
-          await actions.updateCategory(fromId, g.categoryId);
-          await (svc as any).updateCardSubcategory?.(fromId, g.id);
-          await (actions as any).moveToEnd(fromId);
-        }
-        await actions.load();
+        await actions.moveCardToGroup(fromId, g.categoryId, g.id, '__END__');
         try { broadcastGhostActive(null); } catch {}
         showToast('已移動到 group', 'success');
         return;
@@ -273,10 +266,8 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       
       if (tab) {
         const createdId = (await actions.addFromTab(tab as any)) as any as string;
-        await actions.updateCategory(createdId, g.categoryId);
-        await (svc as any).updateCardSubcategory?.(createdId, g.id);
-        await (actions as any).moveToEnd(createdId);
-        await actions.load();
+        // 使用 moveCardToGroup 移動到目標 group 末尾
+        await actions.moveCardToGroup(createdId, g.categoryId, g.id, '__END__');
         try { broadcastGhostActive(null); } catch {}
         showToast('已從分頁建立並加入 group', 'success');
       }
@@ -380,6 +371,30 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
               </div>
             </header>
 
+            {/* Hidden import inputs */}
+            <input
+              type="file"
+              id={`html-file-${g.id}`}
+              className="hidden"
+              accept="text/html,.html"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleHtmlImport(g.id, f);
+                e.target.value = '';
+              }}
+            />
+            <input
+              type="file"
+              id={`toby-file-${g.id}`}
+              className="hidden"
+              accept="application/json,.json"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleTobyFileSelect(g.id, f);
+                e.target.value = '';
+              }}
+            />
+
             {/* Context menu for this group */}
             {menuFor?.id === g.id && (
               <ContextMenu
@@ -442,14 +457,8 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   onDropTab={async (tab: any, beforeId?: string) => {
                     try {
                       const createdId = (await actions.addFromTab(tab as any)) as any as string;
-                      await actions.updateCategory(createdId, g.categoryId);
-                      await (svc as any).updateCardSubcategory?.(createdId, g.id);
-                      if (beforeId && beforeId !== '__END__') {
-                        await actions.reorder(createdId, beforeId);
-                      } else if (beforeId === '__END__') {
-                        await (actions as any).moveToEnd(createdId);
-                      }
-                      await actions.load();
+                      // 使用 moveCardToGroup 移動到目標位置
+                      await actions.moveCardToGroup(createdId, g.categoryId, g.id, beforeId);
                       showToast('已從分頁建立並加入 group', 'success');
                     } catch {
                       showToast('建立失敗', 'error');
@@ -458,24 +467,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   onDropExistingCard={async (cardId, beforeId) => {
                     setActiveDropGroupId(null);
                     try {
-                      if ((svc as any).moveCardToGroup) {
-                        await (svc as any).moveCardToGroup(cardId, g.categoryId, g.id, beforeId);
-                      } else {
-                        // Fallback:
-                        // 1. Update category (data property)
-                        await actions.updateCategory(cardId, g.categoryId);
-
-                        // 2. Ensure card is in the target group's order list (by moving to end)
-                        // This handles both the subcategoryId update and the order array insertion
-                        await (svc as any).updateCardSubcategory?.(cardId, g.id);
-                        await (actions as any).moveToEnd(cardId);
-
-                        // 3. If specific position needed, reorder it
-                        if (beforeId && beforeId !== '__END__') {
-                          await actions.reorder(cardId, beforeId);
-                        }
-                      }
-                      await actions.load();
+                      await actions.moveCardToGroup(cardId, g.categoryId, g.id, beforeId);
                       try { broadcastGhostActive(null); } catch {}
                       showToast('已移動到 group', 'success');
                     } catch {
