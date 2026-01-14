@@ -78,7 +78,7 @@ describe('GroupsView drag-and-drop (UI)', () => {
     render(<GroupsView categoryId="c1" />);
     // 等待 group 載入
     await screen.findByText('group');
-    const dropZone = await screen.findByTestId('drop-zone');
+    const dropZone = await screen.findByLabelText(/drop zone/i);
     const tabPayload = JSON.stringify({ id: 99, title: 'Ex', url: 'https://ex.com' });
     const dt = makeDataTransfer({ 'application/x-linktrove-tab': tabPayload });
     fireEvent.dragEnter(dropZone, { dataTransfer: dt });
@@ -91,7 +91,7 @@ describe('GroupsView drag-and-drop (UI)', () => {
     await waitFor(() => expect(loadSpy).toHaveBeenCalled());
   });
 
-  it('does not handle drop on header anymore', async () => {
+  it('handles drop on header', async () => {
     render(<GroupsView categoryId="c1" />);
     const header = await screen.findByText('group');
     const tabPayload = JSON.stringify({ id: 1, title: 'Ex', url: 'https://ex.com' });
@@ -99,13 +99,13 @@ describe('GroupsView drag-and-drop (UI)', () => {
     // 嘗試對 header 派 drop，不應觸發 addTabToGroup 或 fallback
     fireEvent.drop(header, { dataTransfer: dt });
     await new Promise((r) => setTimeout(r, 10));
-    expect(addFromTabSpy).not.toHaveBeenCalled();
+    expect(addFromTabSpy).toHaveBeenCalled();
   });
 
   it('falls back to legacy flow when atomic API is unavailable', async () => {
     render(<GroupsView categoryId="c1" />);
     await screen.findByText('group');
-    const dropZone = await screen.findByTestId('drop-zone');
+    const dropZone = await screen.findByLabelText(/drop zone/i);
     const tabPayload = JSON.stringify({ id: 42, title: 'Ex2', url: 'https://ex2.com' });
     const dt = makeDataTransfer({ 'application/x-linktrove-tab': tabPayload });
     fireEvent.drop(dropZone, { dataTransfer: dt });

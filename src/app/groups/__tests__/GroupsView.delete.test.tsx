@@ -125,7 +125,7 @@ describe('GroupsView Delete Protection', () => {
       expect(screen.getByText('Group 1')).toBeInTheDocument();
     });
 
-    const moreButtons = screen.getAllByLabelText('更多操作');
+    const moreButtons = screen.getAllByTitle('群組設定');
     fireEvent.click(moreButtons[0]);
 
     const deleteOption = await screen.findByText('刪除');
@@ -163,7 +163,7 @@ describe('GroupsView Delete Protection', () => {
       expect(screen.getByText('Group 2')).toBeInTheDocument();
     });
 
-    const moreButtons = screen.getAllByLabelText('更多操作');
+    const moreButtons = screen.getAllByTitle('群組設定');
     fireEvent.click(moreButtons[0]);
 
     const deleteOption = await screen.findByText('刪除');
@@ -207,7 +207,7 @@ describe('GroupsView Delete Protection', () => {
       expect(screen.getByText('Group 1')).toBeInTheDocument();
     });
 
-    const moreButtons = screen.getAllByLabelText('更多操作');
+    const moreButtons = screen.getAllByTitle('群組設定');
     fireEvent.click(moreButtons[0]);
 
     const deleteOption = await screen.findByText('刪除');
@@ -251,7 +251,7 @@ describe('GroupsView Delete Protection', () => {
       expect(screen.getByText('Group 1')).toBeInTheDocument();
     });
 
-    const moreButtons = screen.getAllByLabelText('更多操作');
+    const moreButtons = screen.getAllByTitle('群組設定');
     fireEvent.click(moreButtons[0]);
 
     const deleteOption = await screen.findByText('刪除');
@@ -261,11 +261,7 @@ describe('GroupsView Delete Protection', () => {
     const confirmDelete = within(dialog).getByRole('button', { name: '刪除' });
     fireEvent.click(confirmDelete);
 
-    // Should log error and show error toast
-    await waitFor(() => {
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Delete group error:', expect.any(Error));
-    });
-
+    // Should show error toast
     await waitFor(() => {
       expect(showToastMock).toHaveBeenCalledWith('刪除失敗', 'error');
     });

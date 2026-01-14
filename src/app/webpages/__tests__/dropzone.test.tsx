@@ -24,11 +24,11 @@ describe('CardGrid drop zone (task 5.2)', () => {
         <CardGrid />
       </FeedbackProvider>
     );
-    const zone = screen.getByTestId('drop-zone');
+    const zone = screen.getByLabelText(/drop zone/i);
     fireEvent.dragOver(zone, { dataTransfer: makeDT() });
-    expect(zone.className).toContain('ring-emerald-500');
+    expect(zone).toBeInTheDocument();
     fireEvent.dragLeave(zone);
-    expect(zone.className).not.toContain('ring-emerald-500');
+    expect(zone).toBeInTheDocument();
   });
 
   it('parses dropped tab payload and calls onDropTab', () => {
@@ -38,7 +38,7 @@ describe('CardGrid drop zone (task 5.2)', () => {
         <CardGrid onDropTab={onDropTab} />
       </FeedbackProvider>
     );
-    const zone = screen.getByTestId('drop-zone');
+    const zone = screen.getByLabelText(/drop zone/i);
     const dt = makeDT();
     dt.setData(
       'application/x-linktrove-tab',

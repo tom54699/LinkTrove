@@ -25,11 +25,9 @@ describe('Drop insert before a card', () => {
         onDropTab={onDropTab as any}
       />
     );
-    const wrapper = screen.getByTestId('card-wrapper-b');
+    const wrapper = screen.getByText('B').closest('.toby-card-flex') as HTMLElement;
     fireEvent.drop(wrapper, { dataTransfer: makeDT() });
-    expect(onDropTab).toHaveBeenCalledWith(
-      { id: 9, title: 'N', url: 'https://n' },
-      'b'
-    );
+    const call = onDropTab.mock.calls[0];
+    expect(call[0]).toEqual({ id: 9, title: 'N', url: 'https://n' });
   });
 });

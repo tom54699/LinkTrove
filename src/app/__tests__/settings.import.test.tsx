@@ -1,12 +1,39 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Settings } from '../App';
+import { Settings } from '../SettingsPage';
 import { FeedbackProvider } from '../ui/feedback';
 import {
   createExportImportService,
   type StorageLike,
 } from '../data/exportImport';
+
+vi.mock('../webpages/WebpagesProvider', () => ({
+  useWebpages: () => ({
+    actions: { load: vi.fn() },
+  }),
+}));
+
+vi.mock('../sidebar/categories', () => ({
+  useCategories: () => ({
+    categories: [],
+    actions: { reload: vi.fn() },
+  }),
+}));
+
+vi.mock('../templates/TemplatesProvider', () => ({
+  useTemplates: () => ({
+    templates: [],
+    actions: {
+      reload: vi.fn(),
+      add: vi.fn(),
+      remove: vi.fn(),
+      update: vi.fn(),
+      updateFields: vi.fn(),
+      setDefaultTemplate: vi.fn(),
+    },
+  }),
+}));
 
 function makeStorage(
   initial: { pages?: any[]; cats?: any[] } = {}
@@ -22,6 +49,8 @@ function makeStorage(
       cats = d as any;
     },
     loadFromSync: async () => cats as any,
+    loadTemplates: async () => [] as any,
+    saveTemplates: async () => {},
     exportData: async () =>
       JSON.stringify({ webpages: pages, categories: cats }),
     importData: async (json) => {

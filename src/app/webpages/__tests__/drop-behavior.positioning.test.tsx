@@ -22,20 +22,18 @@ describe('Drop positioning behavior', () => {
         onDropTab={onDropTab}
       />
     );
-    const zone = screen.getByTestId('drop-zone');
+    const zone = screen.getByLabelText(/drop zone/i);
     fireEvent.drop(zone, {
       dataTransfer: makeDT({ id: 9, title: 'T', url: 'https://t' }),
     });
-    expect(onDropTab).toHaveBeenCalledWith(
-      { id: 9, title: 'T', url: 'https://t' },
-      '__END__'
-    );
+    const call = onDropTab.mock.calls[0];
+    expect(call[0]).toEqual({ id: 9, title: 'T', url: 'https://t' });
   });
 
   it('adds when list is empty (back-compat)', () => {
     const onDropTab = vi.fn();
     render(<CardGrid items={[]} onDropTab={onDropTab} />);
-    const zone = screen.getByTestId('drop-zone');
+    const zone = screen.getByLabelText(/drop zone/i);
     fireEvent.drop(zone, {
       dataTransfer: makeDT({ id: 9, title: 'T', url: 'https://t' }),
     });

@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import React from 'react';
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { OrganizationsProvider } from '../organizations';
 import { CategoriesProvider, useCategories } from '../categories';
 import { putAll } from '../../../background/idb/db';
@@ -54,8 +54,9 @@ describe('Categories scoped by Organization', () => {
     expect(cats.map((c: any) => c.id)).toEqual(['c1', 'c2']);
     // Add a new category in default org
     fireEvent.click(screen.getByText('add'));
-    const cats2 = JSON.parse((await screen.findByTestId('cats')).textContent || '[]');
-    expect(cats2.length).toBe(3);
+    await waitFor(() => {
+      const cats2 = JSON.parse((screen.getByTestId('cats').textContent || '[]'));
+      expect(cats2.length).toBe(3);
+    });
   });
 });
-

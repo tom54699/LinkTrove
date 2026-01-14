@@ -71,7 +71,7 @@ describe('Feedback (task 9)', () => {
         <CardGrid onDropTab={onDropTab} />
       </FeedbackProvider>
     );
-    const zone = screen.getByTestId('drop-zone');
+    const zone = screen.getByLabelText(/drop zone/i);
     const dt = {
       getData: (t: string) =>
         t === 'application/x-linktrove-tab'
