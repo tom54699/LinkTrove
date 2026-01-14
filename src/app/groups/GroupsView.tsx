@@ -455,6 +455,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 <CardGrid
                   items={groupItems}
                   onDropTab={async (tab: any, beforeId?: string) => {
+                    setActiveDropGroupId(null);
                     try {
                       const createdId = (await actions.addFromTab(tab as any)) as any as string;
                       // 使用 moveCardToGroup 移動到目標位置
