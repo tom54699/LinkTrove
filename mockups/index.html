@@ -217,6 +217,13 @@
     .spotlight-footer { padding: 10px 20px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
     .sl-keys { display: flex; gap: 12px; }
     .sl-keys span { background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px; color: var(--text); margin-right: 4px; }
+
+    /* Flash Highlight Animation */
+    @keyframes flashHighlight {
+      0% { box-shadow: 0 0 0 4px var(--accent), 0 0 20px var(--accent); border-color: var(--accent); z-index: 10; transform: scale(1.02); }
+      100% { box-shadow: none; border-color: var(--border); z-index: 1; transform: scale(1); }
+    }
+    .highlight-flash { animation: flashHighlight 2s ease-out forwards; }
   </style>
 </head>
 <body>
@@ -376,6 +383,18 @@ const app = {
     this.updateSpotlight('');
   },
   closeSpotlight() { document.getElementById('spotlight-overlay').style.display = 'none'; },
+  
+  // Highlight card effect
+  flashCard(cardId) {
+    const target = document.querySelector(`.card[data-cid="${cardId}"]`);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.remove('highlight-flash');
+      void target.offsetWidth; // trigger reflow
+      target.classList.add('highlight-flash');
+    }
+  },
+
   updateSpotlight(q) {
     const results = document.getElementById('sl-results');
     const query = q.toLowerCase();
@@ -403,10 +422,10 @@ const app = {
     if (matchedCards.length) {
       html += `<div class="sl-section-title">Saved Cards</div>`;
       matchedCards.forEach(({card, g}) => {
-        html += `<div class="sl-item" onclick="window.open('https://${card.url}'); app.closeSpotlight()">
+        html += `<div class="sl-item" onclick="app.closeSpotlight(); app.flashCard('${card.id}')">
           <div class="sl-icon">★</div>
           <div class="sl-content"><div class="sl-title">${card.title}</div><div class="sl-meta">In ${g.name}</div></div>
-          <div class="sl-action">↵ Open</div>
+          <div class="sl-action">↵ Locate</div>
         </div>`;
       });
     }
