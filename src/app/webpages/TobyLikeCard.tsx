@@ -232,7 +232,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
             </div>
             <footer className="px-6 py-4 bg-white/5 border-t border-white/5 flex justify-end gap-2">
               <button className="px-4 py-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--text)]" onClick={() => { setShowModal(false); onModalOpenChange?.(false); }}>Cancel</button>
-              <button className="px-6 py-2 text-sm font-bold bg-[var(--accent)] text-black rounded-lg hover:brightness-110" onClick={() => { const patch: any = { title: titleValue.trim(), description: descValue, url: urlValue.trim(), meta: metaValue }; if (onSave) onSave(patch); setShowModal(false); onModalOpenChange?.(false); }}>Save Changes</button>
+              <button className="px-6 py-2 text-sm font-bold bg-[var(--accent)] text-white rounded-lg hover:brightness-110" onClick={() => { const patch: any = { title: titleValue.trim(), description: descValue, url: urlValue.trim(), meta: metaValue }; if (onSave) onSave(patch); setShowModal(false); onModalOpenChange?.(false); }}>Save Changes</button>
             </footer>
           </div>
         </div>,
