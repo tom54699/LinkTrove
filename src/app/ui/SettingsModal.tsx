@@ -6,8 +6,9 @@ import { TemplatesManager } from '../templates/TemplatesManager';
 import { useWebpages } from '../webpages/WebpagesProvider';
 import { useCategories } from '../sidebar/categories';
 import { useTemplates } from '../templates/TemplatesProvider';
-import { ConflictDialog } from './ConflictDialog';
 import type { ConflictInfo } from '../data/conflictDetection';
+
+const ConflictDialog = React.lazy(() => import('./ConflictDialog').then(module => ({ default: module.ConflictDialog })));
 
 type Section = 'data' | 'templates';
 // 擴充：Cloud Sync 區塊
@@ -820,28 +821,30 @@ const CloudSyncPanel: React.FC = () => {
 
       {/* Conflict Dialog */}
       {conflictInfo && conflictOperation && (
-        <ConflictDialog
-          conflict={conflictInfo}
-          operation={conflictOperation}
-          onConfirm={() => {
-            if (conflictOperation === 'auto-sync') {
-              confirmAutoSync();
-            } else if (conflictOperation === 'manual-merge') {
-              confirmManualMerge();
-            }
-          }}
-          onCancel={() => {
-            setConflictInfo(null);
-            setConflictOperation(null);
-          }}
-          onBackupFirst={() => {
-            if (conflictOperation === 'auto-sync') {
-              backupAndConfirmAutoSync();
-            } else if (conflictOperation === 'manual-merge') {
-              backupAndConfirmMerge();
-            }
-          }}
-        />
+        <React.Suspense fallback={<div className="fixed inset-0 z-[10002] flex items-center justify-center bg-black/20"><div className="text-white text-sm">Loading...</div></div>}>
+          <ConflictDialog
+            conflict={conflictInfo}
+            operation={conflictOperation}
+            onConfirm={() => {
+              if (conflictOperation === 'auto-sync') {
+                confirmAutoSync();
+              } else if (conflictOperation === 'manual-merge') {
+                confirmManualMerge();
+              }
+            }}
+            onCancel={() => {
+              setConflictInfo(null);
+              setConflictOperation(null);
+            }}
+            onBackupFirst={() => {
+              if (conflictOperation === 'auto-sync') {
+                backupAndConfirmAutoSync();
+              } else if (conflictOperation === 'manual-merge') {
+                backupAndConfirmMerge();
+              }
+            }}
+          />
+        </React.Suspense>
       )}
 
       {/* Confirm Dialog */}
