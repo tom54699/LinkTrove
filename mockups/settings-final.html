@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkTrove Settings (Production Fidelity)</title>
+  <style>
+    /* --- PROJECT THEME (Dracula) --- */
+    :root {
+      --bg: #282a36;
+      --panel: #343746;
+      --border: #44475a;
+      --text: #f8f8f2;
+      --muted: #6272a4;
+      --accent: #ff507a;
+      --accent-hover: rgba(255, 80, 122, 0.2);
+      --surface: #44475a;
+      --success-bg: rgba(16, 185, 129, 0.2);
+      --success-text: #a7f3d0;
+      --success-border: rgba(4, 120, 87, 0.5);
+      
+      --input-bg: rgba(0,0,0,0.2);
+      --input-border: #6272a4;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* --- LAYOUT CONTAINER --- */
+    .settings-modal {
+      width: 900px;
+      height: 650px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* --- SIDEBAR --- */
+    .sidebar {
+      width: 180px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 16px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      font-size: 14px;
+      font-weight: 600;
+      padding: 0 12px 12px;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+
+    .nav-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--muted);
+      border-radius: 6px;
+      transition: all 0.1s ease;
+      text-align: left;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: #44475a;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* --- MAIN CONTENT --- */
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: var(--bg);
+    }
+
+    .scroll-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .footer {
+      padding: 12px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* --- TYPOGRAPHY & ELEMENTS --- */
+    h2 { font-size: 18px; font-weight: 700; margin: 0 0 4px 0; }
+    p.desc { font-size: 13px; color: var(--muted); margin: 0 0 20px 0; }
+
+    .section-divider { height: 1px; background: var(--border); margin: 20px 0; }
+    .label-sm { font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+
+    /* Buttons */
+    .btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: 0.1s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn:hover { background: var(--surface); color: var(--text); }
+    
+    .btn-accent {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .btn-accent:hover { opacity: 0.9; color: #fff; }
+
+    .btn-icon { padding: 6px; border-radius: 4px; border:none; background:transparent; color: var(--muted); cursor: pointer; }
+    .btn-icon:hover { background: var(--surface); color: var(--text); }
+
+    /* Inputs */
+    .input {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      width: 100%;
+    }
+    .input:focus { border-color: var(--accent); }
+
+    /* --- DATA PANEL SPECIFIC --- */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      transition: 0.2s;
+    }
+    .drop-zone:hover {
+      border-color: var(--accent);
+      background: rgba(255, 80, 122, 0.05);
+    }
+    .file-input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* --- CLOUD PANEL SPECIFIC --- */
+    .badge {
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .badge-connected {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(4, 120, 87, 0.5);
+      color: #a7f3d0;
+    }
+
+    .info-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .info-row:last-child { margin-bottom: 0; }
+
+    .snapshot-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* --- TEMPLATE MANAGER SPECIFIC --- */
+    .tpl-add-box {
+      background: linear-gradient(to right, rgba(24, 28, 34, 0.4), rgba(40, 42, 54, 0.4));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .tpl-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    .tpl-card:hover { border-color: var(--muted); }
+
+    .tpl-header {
+      padding: 12px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer;
+      background: rgba(0,0,0,0.1);
+    }
+    .tpl-header:hover { background: rgba(0,0,0,0.2); }
+
+    .tpl-body {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      background: rgba(0,0,0,0.1);
+      display: none; /* Hidden by default */
+    }
+    .tpl-body.open { display: block; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 30px 2fr 2fr 1.5fr 60px 80px;
+      gap: 10px;
+      align-items: center;
+      padding: 8px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .field-header {
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      margin-bottom: 6px;
+    }
+    
+    .tag {
+      font-size: 11px; padding: 2px 6px; border-radius: 10px;
+      background: rgba(0,0,0,0.3); color: var(--muted); border: 1px solid var(--border);
+    }
+    .tag-green { color: #50fa7b; border-color: rgba(80, 250, 123, 0.3); background: rgba(80, 250, 123, 0.1); }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="settings-modal">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-title">Settings</div>
+      <div class="nav-item active" onclick="switchTab('data', this)">匯出/匯入</div>
+      <div class="nav-item" onclick="switchTab('cloud', this)">Cloud Sync</div>
+      <div class="nav-item" onclick="switchTab('templates', this)">Templates</div>
+    </aside>
+
+    <!-- Main Area -->
+    <div class="content">
+      <div class="scroll-area">
+        
+        <!-- DATA PANEL -->
+        <div id="tab-data" class="tab-content">
+          <h2>專案備份與還原（僅本專案）</h2>
+          <p class="desc">
+            匯出/匯入本專案格式 JSON。此匯入將取代現有資料，建議先匯出備份。
+          </p>
+
+          <div class="label-sm">匯出備份</div>
+          <button class="btn" onclick="alert('Exporting JSON...')">Export JSON</button>
+
+          <div class="section-divider"></div>
+
+          <div class="label-sm">還原（取代現有資料）</div>
+          <div class="drop-zone">
+            <div class="file-input-wrapper">
+              <span style="font-size:13px; color:var(--muted); flex:1;">Drag JSON here or select file...</span>
+              <button class="btn btn-accent">Import JSON</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLOUD SYNC PANEL -->
+        <div id="tab-cloud" class="tab-content hidden">
+          <h2>Google Drive 雲端同步</h2>
+          <p class="desc">使用 Google Drive appDataFolder 儲存備份（私有、不顯示於雲端硬碟）</p>
+
+          <!-- Connection Status -->
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+            <div class="badge badge-connected">已連線</div>
+            <button class="btn">中斷連線</button>
+            <span style="font-size:12px; opacity:0.6;">最後同步：2026/01/16 14:30</span>
+          </div>
+
+          <!-- Manual Actions -->
+          <div class="section-divider"></div>
+          <div class="label-sm">手動操作</div>
+          <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <button class="btn">立即備份</button>
+            <button class="btn btn-accent">合併雲端資料</button>
+            <button class="btn">完全還原</button>
+          </div>
+          <div style="font-size:11px; color:var(--muted);">
+            備份：上傳本地到雲端 / 合併：保留較新版本 / 完全還原：雲端覆蓋本地
+          </div>
+
+          <!-- Auto Sync -->
+          <div class="section-divider"></div>
+          <label style="display:flex; gap:10px; cursor:pointer;">
+            <input type="checkbox" checked style="accent-color:var(--accent);">
+            <div>
+              <div class="label-sm" style="margin:0;">自動同步</div>
+              <div style="font-size:12px; opacity:0.7; margin-top:4px;">
+                啟用後，本地變更會自動上傳；啟動時自動下載
+              </div>
+            </div>
+          </label>
+          <div style="margin-top:10px; font-size:12px; color:#a7f3d0; background:rgba(16,185,129,0.1); padding:8px; border-radius:4px;">
+            ✓ 已啟用 LWW 合併：自動保留較新版本，降低衝突
+          </div>
+
+          <!-- GC -->
+          <div class="section-divider"></div>
+          <div class="label-sm">垃圾回收 (GC)</div>
+          <p class="desc" style="margin-bottom:10px;">清理超過 30 天的已刪除項目</p>
+          
+          <div class="info-box">
+            <div class="info-row">
+              <span style="opacity:0.7;">已刪除項目：</span>
+              <span>1,240 個</span>
+            </div>
+            <div class="info-row">
+              <span style="opacity:0.7;">最舊項目：</span>
+              <span>2025/12/01</span>
+            </div>
+          </div>
+          <button class="btn" style="margin-top:10px;">執行 GC</button>
+
+          <!-- Snapshots -->
+          <div class="section-divider"></div>
+          <div class="label-sm">本地快照</div>
+          <p class="desc" style="margin-bottom:10px;">危險操作前自動建立，可還原</p>
+
+          <div class="snapshot-item">
+            <div>
+              <div style="font-size:12px; font-weight:600;">2026/01/16 14:28</div>
+              <div style="font-size:11px; opacity:0.6; margin-top:2px;">合併前 · 150 網頁</div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-accent" style="padding:4px 8px; font-size:11px;">恢復</button>
+              <button class="btn" style="padding:4px 8px; font-size:11px;">刪除</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TEMPLATES MANAGER PANEL -->
+        <div id="tab-templates" class="tab-content hidden">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+            <div>
+              <h2>Templates</h2>
+              <p class="desc" style="margin-bottom:0;">Manage data structures for your cards.</p>
+            </div>
+            <div style="font-size:12px; color:var(--muted);">2 Templates</div>
+          </div>
+
+          <!-- Add Template Section -->
+          <div class="tpl-add-box">
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+              <div style="width:36px; height:36px; background:rgba(255,80,122,0.1); border-radius:8px; display:grid; place-items:center; color:var(--accent);">
+                <span>＋</span>
+              </div>
+              <div>
+                <div style="font-weight:600; font-size:14px;">Create New Template</div>
+                <div style="font-size:12px; color:var(--muted);">Start from scratch or pick a preset</div>
+              </div>
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+              <input type="text" class="input" placeholder="Template Name (e.g. Article, Product)" style="max-width:300px;">
+              <button class="btn btn-accent">Create</button>
+            </div>
+            
+            <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:12px; display:flex; gap:10px; align-items:center;">
+              <span style="font-size:12px; color:var(--muted);">Presets:</span>
+              <button class="btn" style="font-size:12px; padding:4px 10px;">📚 Books</button>
+              <button class="btn" style="font-size:12px; padding:4px 10px;">🔧 Tools</button>
+            </div>
+          </div>
+
+          <!-- Template List -->
+          <div id="tpl-list">
+            
+            <!-- Template Item 1: Books (Collapsed) -->
+            <div class="tpl-card">
+              <div class="tpl-header" onclick="toggleTpl(this)">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <span style="opacity:0.5; transform:rotate(-90deg); transition:0.2s;" class="arrow">▼</span>
+                  <span style="font-weight:600;">Book Tracker</span>
+                  <span class="tag">8 fields</span>
+                  <span class="tag tag-green">Used: 3</span>
+                </div>
+                <button class="btn-icon" title="Cannot delete (in use)">🔒</button>
+              </div>
+              <div class="tpl-body">
+                <!-- Content hidden when collapsed -->
+              </div>
+            </div>
+
+            <!-- Template Item 2: Custom (Expanded) -->
+            <div class="tpl-card">
+              <div class="tpl-header" onclick="toggleTpl(this)">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <span style="opacity:0.5; transition:0.2s;" class="arrow">▼</span>
+                  <span style="font-weight:600;">Dev Tools</span>
+                  <span class="tag">5 fields</span>
+                </div>
+                <button class="btn-icon" style="color:#ff5555;">🗑</button>
+              </div>
+              
+              <div class="tpl-body open">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                  <span style="font-size:13px; font-weight:600; color:var(--muted);">Field Configuration</span>
+                </div>
+
+                <!-- Field Headers -->
+                <div style="display:grid; grid-template-columns: 30px 2fr 2fr 1.5fr 60px 80px; gap:10px; padding:0 8px; margin-bottom:4px;">
+                  <div></div>
+                  <div class="field-header">KEY</div>
+                  <div class="field-header">LABEL</div>
+                  <div class="field-header">TYPE</div>
+                  <div class="field-header" style="text-align:center;">REQ</div>
+                  <div class="field-header">ACTION</div>
+                </div>
+
+                <!-- Field Rows -->
+                <div class="field-row">
+                  <span style="color:var(--muted); cursor:grab;">☰</span>
+                  <input class="input" value="toolName" disabled style="opacity:0.6;" title="Key locked">
+                  <input class="input" value="Tool Name">
+                  <select class="input"><option>text</option></select>
+                  <div style="text-align:center;"><input type="checkbox" checked></div>
+                  <button class="btn-icon" style="color:#ff5555;">×</button>
+                </div>
+
+                <div class="field-row">
+                  <span style="color:var(--muted); cursor:grab;">☰</span>
+                  <input class="input" value="platform">
+                  <input class="input" value="Platform">
+                  <select class="input"><option>select</option></select>
+                  <div style="text-align:center;"><input type="checkbox"></div>
+                  <button class="btn-icon" style="color:#ff5555;">×</button>
+                </div>
+                
+                <div style="padding:8px 8px 8px 48px; background:rgba(0,0,0,0.1); border-radius:0 0 6px 6px; margin-top:-9px; margin-bottom:8px; font-size:12px;">
+                   <span style="color:var(--muted);">Options:</span> <span style="color:var(--text);">Web, Desktop, Mobile, CLI</span>
+                </div>
+
+                <div class="field-row">
+                  <span style="color:var(--muted); cursor:grab;">☰</span>
+                  <input class="input" value="rating">
+                  <input class="input" value="Rating">
+                  <select class="input"><option selected>rating</option></select>
+                  <div style="text-align:center;"><input type="checkbox"></div>
+                  <button class="btn-icon" style="color:#ff5555;">×</button>
+                </div>
+
+                <!-- Add Field Form -->
+                <div style="margin-top:20px; background:rgba(255,255,255,0.03); padding:16px; border-radius:8px; border:1px solid var(--border);">
+                  <div class="label-sm">Add New Field</div>
+                  <div style="display:grid; grid-template-columns: 2fr 2fr 1.5fr 60px auto; gap:10px; align-items:end;">
+                    <div>
+                      <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">Key</div>
+                      <input class="input" placeholder="e.g. price">
+                    </div>
+                    <div>
+                      <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">Label</div>
+                      <input class="input" placeholder="Price">
+                    </div>
+                    <div>
+                      <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">Type</div>
+                      <select class="input">
+                        <option>text</option>
+                        <option>number</option>
+                        <option>select</option>
+                        <option>url</option>
+                        <option>date</option>
+                        <option>rating</option>
+                        <option>tags</option>
+                      </select>
+                    </div>
+                    <div style="text-align:center;">
+                      <div style="font-size:11px; color:var(--muted); margin-bottom:8px;">Req</div>
+                      <input type="checkbox">
+                    </div>
+                    <button class="btn btn-accent" style="height:35px;">Add</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+      
+      <!-- Footer -->
+      <div class="footer">
+        <button class="btn" onclick="alert('Close')">關閉</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function switchTab(tabId, navEl) {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      navEl.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-' + tabId).classList.remove('hidden');
+    }
+
+    function toggleTpl(header) {
+      const body = header.nextElementSibling;
+      const arrow = header.querySelector('.arrow');
+      
+      if (body.classList.contains('open')) {
+        body.classList.remove('open');
+        arrow.style.transform = 'rotate(-90deg)';
+      } else {
+        body.classList.add('open');
+        arrow.style.transform = 'rotate(0deg)';
+      }
+    }
+  </script>
+</body>
+</html>
