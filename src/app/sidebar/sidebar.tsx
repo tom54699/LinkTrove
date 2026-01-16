@@ -13,7 +13,7 @@ export const Sidebar: React.FC = () => {
     setCurrentCategory,
     actions: catActions,
   } = useCategories() as any;
-  const { organizations, selectedOrgId, setCurrentOrganization } = useOrganizations();
+  const { organizations, selectedOrgId } = useOrganizations();
   const { templates } = useTemplates();
   const { showToast } = useFeedback();
   const [editing, setEditing] = React.useState<any | null>(null);
@@ -28,7 +28,7 @@ export const Sidebar: React.FC = () => {
     setEditColor(cat.color || '#64748b');
     setEditTpl(cat.defaultTemplateId || '');
   }
-  const { actions } = useWebpages();
+  useWebpages();
 
   return (
     <div className="text-[13px] h-full flex flex-col">

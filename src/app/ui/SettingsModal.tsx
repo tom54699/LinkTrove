@@ -229,8 +229,6 @@ const CloudSyncPanel: React.FC = () => {
   const [error, setError] = React.useState<string | undefined>(undefined);
   const [autoEnabled, setAutoEnabled] = React.useState(false);
   const [pendingPush, setPendingPush] = React.useState(false);
-  const [lastDownloaded, setLastDownloaded] = React.useState<string | undefined>(undefined);
-  const [lastUploaded, setLastUploaded] = React.useState<string | undefined>(undefined);
   const [conflictInfo, setConflictInfo] = React.useState<ConflictInfo | null>(null);
   const [conflictOperation, setConflictOperation] = React.useState<'auto-sync' | 'manual-merge' | null>(null);
   const [snapshots, setSnapshots] = React.useState<any[]>([]);
@@ -253,8 +251,6 @@ const CloudSyncPanel: React.FC = () => {
       setError(st.error);
       setAutoEnabled(!!st.auto);
       setPendingPush(!!st.pendingPush);
-      setLastDownloaded(st.lastDownloadedAt);
-      setLastUploaded(st.lastUploadedAt);
     } catch {}
   }, []);
 
@@ -371,8 +367,6 @@ const CloudSyncPanel: React.FC = () => {
       setLast(refreshed.lastSyncedAt);
       setAutoEnabled(!!refreshed.auto);
       setPendingPush(!!refreshed.pendingPush);
-      setLastDownloaded(refreshed.lastDownloadedAt);
-      setLastUploaded(refreshed.lastUploadedAt);
 
       // After connect, check if Auto Sync was auto-enabled and cloud has data
       // If so, detect conflicts before first sync
@@ -421,7 +415,6 @@ const CloudSyncPanel: React.FC = () => {
       await mod.backupNow();
       const refreshed = mod.getStatus();
       setLast(refreshed.lastSyncedAt);
-      setLastUploaded(refreshed.lastUploadedAt);
       setPendingPush(!!refreshed.pendingPush);
     } catch (e: any) { setError(String(e?.message || e)); }
     finally { setSyncing(false); }
@@ -444,7 +437,6 @@ const CloudSyncPanel: React.FC = () => {
         await mod.restoreNow(undefined, false);
         const refreshed = mod.getStatus();
         setLast(refreshed.lastSyncedAt);
-        setLastDownloaded(refreshed.lastDownloadedAt);
         setPendingPush(!!refreshed.pendingPush);
       } catch (e: any) { setError(String(e?.message || e)); }
       finally { setSyncing(false); }
@@ -483,7 +475,6 @@ const CloudSyncPanel: React.FC = () => {
         await mod.restoreNow(undefined, true);
         const refreshed = mod.getStatus();
         setLast(refreshed.lastSyncedAt);
-        setLastDownloaded(refreshed.lastDownloadedAt);
         setPendingPush(!!refreshed.pendingPush);
         setSyncing(false);
       } else {
@@ -512,7 +503,6 @@ const CloudSyncPanel: React.FC = () => {
       await mod.restoreNow(undefined, true);
       const refreshed = mod.getStatus();
       setLast(refreshed.lastSyncedAt);
-      setLastDownloaded(refreshed.lastDownloadedAt);
       setPendingPush(!!refreshed.pendingPush);
       setConflictInfo(null);
       setConflictOperation(null);
@@ -619,8 +609,6 @@ const CloudSyncPanel: React.FC = () => {
       setAutoEnabled(true);
       const refreshed = mod.getStatus();
       setPendingPush(!!refreshed.pendingPush);
-      setLastDownloaded(refreshed.lastDownloadedAt);
-      setLastUploaded(refreshed.lastUploadedAt);
       setLast(refreshed.lastSyncedAt);
       setConflictInfo(null);
       setConflictOperation(null);

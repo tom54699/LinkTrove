@@ -40,7 +40,6 @@ describe('bootstrap default group for Default collection', () => {
     // Using polling with time budget
     let list: any[] = [];
     const deadline = Date.now() + 2000;
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       list = ((await svc.listSubcategories?.('default')) as any[]) || [];
       if (Array.isArray(list) && list.length > 0) break;
@@ -54,4 +53,3 @@ describe('bootstrap default group for Default collection', () => {
     expect(names).toContain('group');
   });
 });
-

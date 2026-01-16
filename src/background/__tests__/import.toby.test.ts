@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { clearStore, getAll, setMeta, putAll } from '../idb/db';
+import { clearStore, getAll, putAll } from '../idb/db';
 import { importTobyV3 } from '../importers/toby';
 
 async function reset() {

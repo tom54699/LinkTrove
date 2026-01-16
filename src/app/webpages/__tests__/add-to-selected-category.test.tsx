@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { WebpagesProvider, useWebpages } from '../../webpages/WebpagesProvider';
 import { CategoriesProvider, useCategories } from '../../sidebar/categories';
 
@@ -22,7 +22,7 @@ const Harness: React.FC = () => {
       } as any);
       setReady(true);
     })();
-  }, []);
+  }, [catActions, setCurrentCategory, pageActions]);
   return (
     <div>
       <pre data-testid="items">{JSON.stringify(items)}</pre>
@@ -52,4 +52,3 @@ describe('addFromTab assigns current collection', () => {
     expect(created.category).toBe(newCat.id);
   });
 });
-

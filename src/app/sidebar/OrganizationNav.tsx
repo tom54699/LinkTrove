@@ -9,7 +9,7 @@ export const OrganizationNav: React.FC = () => {
   const [importMenuOpen, setImportMenuOpen] = React.useState(false);
   const [importMenuPos, setImportMenuPos] = React.useState({ x: 0, y: 0 });
   const [orgMenuOpen, setOrgMenuOpen] = React.useState<string | null>(null);
-  const [orgMenuPos, setOrgMenuPos] = React.useState({ x: 0, y: 0 });
+  const [orgMenuPos] = React.useState({ x: 0, y: 0 });
   const [confirmDeleteOrg, setConfirmDeleteOrg] = React.useState<string | null>(null);
   const [manageDialogOpen, setManageDialogOpen] = React.useState(false);
   const [renameDrafts, setRenameDrafts] = React.useState<Record<string, string>>({});
@@ -31,7 +31,7 @@ export const OrganizationNav: React.FC = () => {
     <div className="w-16 flex flex-col items-center py-4 h-full">
       {/* Organization icons */}
       <div className="space-y-3 flex-1">
-        {organizations.map((org, index) => (
+        {organizations.map((org) => (
           <button
             key={org.id}
             className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-sm transition-all hover:scale-105 ${

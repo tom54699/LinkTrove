@@ -6,8 +6,6 @@ export type StoreName =
   | 'subcategories'
   | 'organizations';
 
-let dbPromise: Promise<IDBDatabase> | null = null;
-
 // Ensure subcategory defaults for pages missing subcategoryId.
 async function ensureSubcategoriesMigrated(): Promise<void> {
   try {

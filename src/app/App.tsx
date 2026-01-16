@@ -10,7 +10,6 @@ import { OrganizationsProvider, useOrganizations } from './sidebar/organizations
 import { Sidebar } from './sidebar/sidebar';
 import { OrganizationNav } from './sidebar/OrganizationNav';
 import { FeedbackProvider, ErrorBoundary } from './ui/feedback';
-import { createStorageService } from '../background/storageService';
 import { useFeedback } from './ui/feedback';
 import { WebpagesProvider, useWebpages } from './webpages/WebpagesProvider';
 import { SettingsModal } from './ui/SettingsModal';
@@ -106,10 +105,6 @@ const HomeInner: React.FC = () => {
   const [tobyHasOrgs, setTobyHasOrgs] = React.useState(false);
   const [tobyProgress, setTobyProgress] = React.useState<{ total: number; processed: number } | null>(null);
   const tobyAbortRef = React.useRef<AbortController | null>(null);
-  const viewItems = React.useMemo(
-    () => items.filter((it: any) => it.category === selectedId),
-    [items, selectedId]
-  );
 
   // Get subcategories (groups) count for current category
   const [groupsCount, setGroupsCount] = React.useState(0);

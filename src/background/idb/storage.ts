@@ -135,7 +135,7 @@ export function createIdbStorageService(): StorageService {
           if (!byOrg[oid]) byOrg[oid] = [];
           byOrg[oid].push(c);
         }
-        for (const [oid, list] of Object.entries(byOrg)) {
+        for (const [_oid, list] of Object.entries(byOrg)) {
           list.sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0) || String(a.name || '').localeCompare(String(b.name || '')));
           let i = 0;
           for (const c of list) c.order = i++;

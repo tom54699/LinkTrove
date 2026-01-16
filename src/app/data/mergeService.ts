@@ -175,8 +175,6 @@ function mergeCategories(
   remote: CategoryData[]
 ): CategoryData[] {
   const merged = new Map<string, CategoryData>();
-  const localById = new Map(local.map((c) => [c.id, c]));
-  const remoteById = new Map(remote.map((c) => [c.id, c]));
 
   // Merge by ID
   for (const item of local) {

@@ -2,15 +2,12 @@ import React from 'react';
 import { useTemplates } from './TemplatesProvider';
 import { useFeedback } from '../ui/feedback';
 import { createStorageService } from '../../background/storageService';
-import { useCategories } from '../sidebar/categories';
 
 export const TemplatesManager: React.FC = () => {
   const { templates, actions } = useTemplates();
   const { showToast } = useFeedback();
   const [usageMap, setUsageMap] = React.useState<Record<string, number>>({});
-  const [usageDetails, setUsageDetails] = React.useState<Record<string, string[]>>({});
   const [modal, setModal] = React.useState<null | { title: string; content: React.ReactNode }>(null);
-  const { categories, actions: catActions } = useCategories();
   const [name, setName] = React.useState('');
   const [newField, setNewField] = React.useState<
     Record<
@@ -27,9 +24,6 @@ export const TemplatesManager: React.FC = () => {
     >
   >({});
   const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
-  const [commonAdd, setCommonAdd] = React.useState<
-    Record<string, { key: 'siteName' | 'author'; required: boolean }>
-  >({});
 
   // Load usage count per template id (collections defaultTemplateId)
   React.useEffect(() => {
@@ -38,16 +32,12 @@ export const TemplatesManager: React.FC = () => {
         const s = createStorageService();
         const cats = (await s.loadFromSync()) as any[];
         const count: Record<string, number> = {};
-        const detail: Record<string, string[]> = {};
         for (const c of cats || []) {
           const tid = (c as any).defaultTemplateId;
           if (!tid) continue;
           count[tid] = (count[tid] || 0) + 1;
-          if (!detail[tid]) detail[tid] = [];
-          detail[tid].push((c as any).name || c.id);
         }
         setUsageMap(count);
-        setUsageDetails(detail);
       } catch {}
     })();
   }, [templates]);

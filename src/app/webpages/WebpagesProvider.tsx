@@ -156,7 +156,6 @@ export const WebpagesProvider: React.FC<{
             '../../background/pageMeta'
           );
           const tid = (tab as any).id as number;
-          const targetCategory = target; // Capture target for async block
 
           // Use synchronous meta enrichment in test environment, non-blocking in production
           const enrichmentPromise = (async () => {
@@ -221,8 +220,7 @@ export const WebpagesProvider: React.FC<{
                 if (metaChanged) {
                   patch.meta = curMeta;
                 }
-              } catch (error) {
-              }
+              } catch {}
 
               if (Object.keys(patch).length > 0) {
                 const updated = await service.updateWebpage(created.id, patch);

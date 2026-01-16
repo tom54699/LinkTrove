@@ -2,15 +2,6 @@ import { describe, it, expect } from 'vitest';
 
 // Extract the generateBooklistHTML function for testing
 function generateBooklistHTML(group: any, items: any[], templates: any[], customTitle?: string, customDescription?: string): string {
-  const now = new Date();
-  const formattedDate = now.toLocaleDateString('zh-TW', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-
   const createBookCard = (item: any) => {
     const customFields = [];
     const metadata = [];

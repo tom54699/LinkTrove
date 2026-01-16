@@ -104,7 +104,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
     (
       clientX: number | undefined,
       clientY: number | undefined,
-      target?: EventTarget | null
+      _target?: EventTarget | null
     ) => {
       const zone = zoneRef.current;
       if (!zone || clientX == null || clientY == null) return null;
@@ -246,13 +246,13 @@ export const CardGrid: React.FC<CardGridProps> = ({
           const card2 = cardsWithPos.find(c => c.idx === Math.max(newIndex, currentIndex) - 1);
 
           if (card1 && newIndex > currentIndex) {
-            // 向右移動
-            if (clientX < card1.rect.right - buffer) {
+            // 向右移動：必須超過中心點一定的 buffer (超過一半多一點)
+            if (clientX < card1.centerX + buffer) {
               return currentIndex;
             }
           } else if (card2 && newIndex < currentIndex) {
-            // 向左移動
-            if (clientX > card2.rect.left + buffer) {
+            // 向左移動：必須超過中心點一定的 buffer (往左)
+            if (clientX > card2.centerX - buffer) {
               return currentIndex;
             }
           }

@@ -3,7 +3,7 @@ import { createStorageService } from '../../background/storageService';
 import { useFeedback } from '../ui/feedback';
 import { useWebpages } from '../webpages/WebpagesProvider';
 import { CardGrid } from '../webpages/CardGrid';
-import { broadcastGhostActive, getDragTab, getDragWebpage } from '../dnd/dragContext';
+import { broadcastGhostActive, getDragTab } from '../dnd/dragContext';
 import { ContextMenu } from '../ui/ContextMenu';
 import { useGroupShare } from './share/useGroupShare';
 import { useGroupImport } from './import/useGroupImport';

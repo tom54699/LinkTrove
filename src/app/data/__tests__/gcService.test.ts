@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { getGCStats, runGC, shouldAutoGC, getLastGCTime } from '../gcService';
 import type { WebpageData } from '../../../background/storageService';
 import { createStorageService } from '../../../background/storageService';
@@ -88,7 +88,7 @@ async function clearAllStores() {
     ]);
     await tx.done;
     db.close();
-  } catch (e) {
+  } catch {
     // DB might not exist yet, ignore
   }
 }

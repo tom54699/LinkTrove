@@ -276,7 +276,7 @@ describe('Delete Protection Integration Tests', () => {
         try {
           // Simulate bypassing UI check and calling data layer directly
           await orgs.actions.remove('o_default');
-        } catch (error) {
+        } catch {
           setErrorMessage('blocked');
         }
       };

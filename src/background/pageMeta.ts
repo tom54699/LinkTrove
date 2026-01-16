@@ -472,7 +472,7 @@ export async function waitForTabComplete(
         }
 
         // Wait for completion with additional DOM ready check
-        const handler = (id: number, changeInfo: any, updatedTab: chrome.tabs.Tab) => {
+        const handler = (id: number, changeInfo: any, _updatedTab: chrome.tabs.Tab) => {
           if (id !== tabId) return;
 
           const newStatus = changeInfo?.status;
@@ -497,7 +497,7 @@ export async function waitForTabComplete(
           } catch {}
         }, timeoutMs);
       });
-    } catch (error) {
+    } catch {
       clearTimeout(timeoutId);
       safeResolve();
     }

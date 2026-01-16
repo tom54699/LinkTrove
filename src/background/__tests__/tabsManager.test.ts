@@ -18,7 +18,6 @@ function createEvent<T extends any[] = any[]>() {
 let createTabsManager: any;
 
 declare global {
-  // eslint-disable-next-line no-var
   var chrome: any;
 }
 
