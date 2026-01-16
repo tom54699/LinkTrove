@@ -128,7 +128,7 @@
   gap: 10px;
   align-items: center;
 }
-.toby-mode .toby-board-actions button {
+.toby-mode .toby-board-actions button.legacy-btn {
   background: none;
   border: none;
   color: #ff507a;
@@ -136,7 +136,7 @@
   cursor: pointer;
   padding: 4px 6px;
 }
-.toby-mode .toby-board-actions button:hover {
+.toby-mode .toby-board-actions button.legacy-btn:hover {
   text-decoration: underline;
 }
 .toby-mode .toby-board-actions .muted {

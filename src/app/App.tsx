@@ -154,7 +154,7 @@ const HomeInner: React.FC = () => {
                 })()}</h1>
                 <div className="subtext">{groupsCount} groups</div>
               </div>
-              <div className="toby-board-actions">
+              <div className="toby-board-actions flex items-center gap-3">
                 {/* Category-level HTML import (create a NEW collection; multi-group by H3) */}
                 <input
                   id="html-cat-file"
@@ -222,10 +222,57 @@ const HomeInner: React.FC = () => {
                     setTobyOpen(true);
                   }}
                 />
+
                 <button
-                  className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800 mr-2"
-                  title="新增 group"
-                  aria-label="新增 group"
+                  className="h-[34px] px-3 bg-transparent border border-transparent rounded-lg text-[13px] font-semibold text-[var(--muted)] flex items-center gap-2 transition-all duration-200 hover:bg-white/5 hover:text-[var(--fg)] hover:border-[var(--accent)]"
+                  title="Expand all groups"
+                  onClick={() => {
+                    try {
+                      window.dispatchEvent(
+                        new CustomEvent('groups:collapse-all', {
+                          detail: { categoryId: selectedId, collapsed: false },
+                        }) as any
+                      );
+                    } catch {}
+                    setCollapsed(false);
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <polyline points="9 21 3 21 3 15"></polyline>
+                    <line x1="21" y1="3" x2="14" y2="10"></line>
+                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                  </svg>
+                  <span>EXPAND</span>
+                </button>
+
+                <button
+                  className="h-[34px] px-3 bg-transparent border border-transparent rounded-lg text-[13px] font-semibold text-[var(--muted)] flex items-center gap-2 transition-all duration-200 hover:bg-white/5 hover:text-[var(--fg)] hover:border-[var(--accent)]"
+                  title="Collapse all groups"
+                  onClick={() => {
+                    try {
+                      window.dispatchEvent(
+                        new CustomEvent('groups:collapse-all', {
+                          detail: { categoryId: selectedId, collapsed: true },
+                        }) as any
+                      );
+                    } catch {}
+                    setCollapsed(true);
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="4 14 10 14 10 20"></polyline>
+                    <polyline points="20 10 14 10 14 4"></polyline>
+                    <line x1="14" y1="10" x2="21" y2="3"></line>
+                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                  </svg>
+                  <span>COLLAPSE</span>
+                </button>
+
+                <button
+                  className="h-[34px] px-5 bg-[var(--accent)] text-[var(--accent-contrast)] border-none rounded-lg text-[13px] font-bold flex items-center gap-1.5 transition-all duration-200 hover:brightness-110 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[var(--accent)]/10"
+                  title="Add new group"
+                  aria-label="Add new group"
                   disabled={
                     creatingGroup ||
                     !selectedId ||
@@ -261,40 +308,11 @@ const HomeInner: React.FC = () => {
                     }
                   }}
                 >
-                  新增 group
-                </button>
-                {/* Single view only: density control removed */}
-                <button
-                  className="link muted"
-                  title="Expand all groups in this collection"
-                  onClick={() => {
-                    try {
-                      window.dispatchEvent(
-                        new CustomEvent('groups:collapse-all', {
-                          detail: { categoryId: selectedId, collapsed: false },
-                        }) as any
-                      );
-                    } catch {}
-                    setCollapsed(false);
-                  }}
-                >
-                  EXPAND
-                </button>
-                <button
-                  className="link muted"
-                  title="Collapse all groups in this collection"
-                  onClick={() => {
-                    try {
-                      window.dispatchEvent(
-                        new CustomEvent('groups:collapse-all', {
-                          detail: { categoryId: selectedId, collapsed: true },
-                        }) as any
-                      );
-                    } catch {}
-                    setCollapsed(true);
-                  }}
-                >
-                  COLLAPSE
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  <span>Group</span>
                 </button>
               </div>
             </div>

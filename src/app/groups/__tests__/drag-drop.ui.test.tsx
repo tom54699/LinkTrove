@@ -76,8 +76,7 @@ describe('GroupsView drag-and-drop (UI)', () => {
     listSubcategoriesMock.mockClear();
   });
 
-  it('moves created card via moveCardToGroup when dropping a tab into CardGrid', async () => {
-    addFromTabSpy.mockResolvedValue('w1');
+  it('adds a new card with group info when dropping a tab into CardGrid', async () => {
     render(<GroupsView categoryId="c1" />);
     // 等待 group 載入
     await screen.findByText('group');
@@ -88,9 +87,11 @@ describe('GroupsView drag-and-drop (UI)', () => {
     fireEvent.dragOver(dropZone, { dataTransfer: dt });
     fireEvent.drop(dropZone, { dataTransfer: dt });
     await waitFor(() => expect(addFromTabSpy).toHaveBeenCalled());
-    await waitFor(() =>
-      expect(moveCardToGroupSpy).toHaveBeenCalledWith('w1', 'c1', 'g1', undefined)
+    expect(addFromTabSpy).toHaveBeenCalledWith(
+      { id: 99, title: 'Ex', url: 'https://ex.com' },
+      { categoryId: 'c1', subcategoryId: 'g1', beforeId: undefined }
     );
+    expect(moveCardToGroupSpy).not.toHaveBeenCalled();
     expect(loadSpy).not.toHaveBeenCalled();
   });
 

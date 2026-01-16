@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 const updateCategory = vi.fn();
@@ -22,6 +22,18 @@ vi.mock('../categories', () => ({
 
 import { Sidebar } from '../sidebar';
 
+function setupChromeStub() {
+  const g: any = globalThis as any;
+  if (!g.chrome) g.chrome = {} as any;
+  if (!g.chrome.storage) g.chrome.storage = {} as any;
+  if (!g.chrome.storage.local)
+    g.chrome.storage.local = {
+      get: (defaults: any, cb: (res: any) => void) => cb({ ...defaults }),
+      set: (_items: any, _cb?: () => void) => _cb?.(),
+      clear: (_cb?: () => void) => _cb?.(),
+    } as any;
+}
+
 function makeDT(data: Record<string, string>) {
   return {
     getData: (k: string) => (data as any)[k] || '',
@@ -32,6 +44,10 @@ function makeDT(data: Record<string, string>) {
 }
 
 describe('Sidebar drop behavior', () => {
+  beforeEach(() => {
+    setupChromeStub();
+  });
+
   it('ignores card drops (disabled feature)', () => {
     render(<Sidebar />);
     const btn = screen.getByText('C1');

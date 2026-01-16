@@ -38,6 +38,18 @@ vi.mock('../../webpages/WebpagesProvider', () => ({
 
 import { Sidebar } from '../sidebar';
 
+function setupChromeStub() {
+  const g: any = globalThis as any;
+  if (!g.chrome) g.chrome = {} as any;
+  if (!g.chrome.storage) g.chrome.storage = {} as any;
+  if (!g.chrome.storage.local)
+    g.chrome.storage.local = {
+      get: (defaults: any, cb: (res: any) => void) => cb({ ...defaults }),
+      set: (_items: any, _cb?: () => void) => _cb?.(),
+      clear: (_cb?: () => void) => _cb?.(),
+    } as any;
+}
+
 function dt(data: Record<string, string>) {
   return {
     getData: (t: string) => data[t] || '',
@@ -51,6 +63,7 @@ describe('Sidebar drop behaviour', () => {
     reorderSpy.mockReset();
     updateCategorySpy.mockReset();
     addFromTabSpy.mockReset();
+    setupChromeStub();
   });
 
   it('still supports category reorder via dragging categories', async () => {
@@ -88,4 +101,3 @@ describe('Sidebar drop behaviour', () => {
     expect(updateCategorySpy).not.toHaveBeenCalled();
   });
 });
-

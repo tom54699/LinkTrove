@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { SearchBox } from '../SearchBox';
@@ -22,7 +22,23 @@ vi.mock('../../sidebar/categories', async () => {
   } as any;
 });
 
+function setupChromeStub() {
+  const g: any = globalThis as any;
+  if (!g.chrome) g.chrome = {} as any;
+  if (!g.chrome.storage) g.chrome.storage = {} as any;
+  if (!g.chrome.storage.local)
+    g.chrome.storage.local = {
+      get: (defaults: any, cb: (res: any) => void) => cb({ ...defaults }),
+      set: (_items: any, _cb?: () => void) => _cb?.(),
+      clear: (_cb?: () => void) => _cb?.(),
+    } as any;
+}
+
 describe('SearchBox scrolls to card and highlights', () => {
+  beforeEach(() => {
+    setupChromeStub();
+  });
+
   it('expands and scrolls to the matched card', async () => {
     const container = document.createElement('div');
     // Simulate content area scroll container
@@ -35,7 +51,9 @@ describe('SearchBox scrolls to card and highlights', () => {
 
     render(<SearchBox />, { container });
 
-    const input = screen.getByLabelText('Search') as HTMLInputElement;
+    const openBtn = screen.getByRole('button', { name: /open search/i });
+    fireEvent.click(openBtn);
+    const input = await screen.findByRole('textbox');
     fireEvent.change(input, { target: { value: 'hello' } });
 
     // Click the first result
@@ -65,10 +83,6 @@ describe('SearchBox scrolls to card and highlights', () => {
     // And card should have highlight classes eventually
     const card = container.querySelector('#card-w_1') as HTMLElement | null;
     expect(card).toBeTruthy();
-    expect(
-      card?.classList.contains('ring-2') ||
-        card?.classList.contains('outline')
-    ).toBe(true);
+    expect(card?.style.outline).toContain('2px solid');
   });
 });
-

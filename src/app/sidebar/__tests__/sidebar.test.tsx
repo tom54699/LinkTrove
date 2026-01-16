@@ -1,9 +1,21 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThreeColumnLayout } from '../../layout/ThreeColumn';
 import { CategoriesProvider, useCategories } from '../categories';
 import { Sidebar } from '../sidebar';
+
+function setupChromeStub() {
+  const g: any = globalThis as any;
+  if (!g.chrome) g.chrome = {} as any;
+  if (!g.chrome.storage) g.chrome.storage = {} as any;
+  if (!g.chrome.storage.local)
+    g.chrome.storage.local = {
+      get: (defaults: any, cb: (res: any) => void) => cb({ ...defaults }),
+      set: (_items: any, _cb?: () => void) => _cb?.(),
+      clear: (_cb?: () => void) => _cb?.(),
+    } as any;
+}
 
 const ContentProbe: React.FC = () => {
   const { selectedId } = useCategories();
@@ -11,6 +23,10 @@ const ContentProbe: React.FC = () => {
 };
 
 describe('Sidebar (task 7.1)', () => {
+  beforeEach(() => {
+    setupChromeStub();
+  });
+
   it('shows default categories and allows selection', () => {
     render(
       <CategoriesProvider>
