@@ -102,6 +102,8 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
     return 't_' + Math.random().toString(36).slice(2, 9);
   }
 
+  const isValidFieldKey = (key: string) => /^[A-Za-z0-9_]+$/.test(key);
+
   const actions = useMemo(
     () => ({
       async reload() {
@@ -154,6 +156,9 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
         const latest = await svc.loadTemplates();
         const list = latest.map((t) => {
           if (t.id !== id) return t;
+          if (!isValidFieldKey(field.key)) {
+            throw new Error('欄位鍵只能包含英文字母、數字或底線');
+          }
           const exists = (t.fields || []).some((f) => f.key === field.key);
           if (exists) throw new Error('Field key already exists');
           const newField = { ...field, type: (field.type || 'text') as any };
@@ -187,7 +192,12 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
               seen.add(k);
               return true;
             })
-            .map((f) => ({ ...f, type: (f.type || 'text') as any }));
+            .map((f) => {
+              if (!isValidFieldKey(f.key)) {
+                throw new Error('欄位鍵只能包含英文字母、數字或底線');
+              }
+              return { ...f, type: (f.type || 'text') as any };
+            });
           return { ...t, fields: (t.fields || []).concat(toAppend) } as TemplateData;
         });
         await persist(next);

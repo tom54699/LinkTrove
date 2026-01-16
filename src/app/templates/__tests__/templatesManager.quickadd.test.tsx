@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 vi.mock('../TemplatesProvider', () => {
@@ -57,6 +57,10 @@ vi.mock('../../ui/feedback', () => ({
 import { TemplatesManager } from '../TemplatesManager';
 
 describe('TemplatesManager quick-add common fields', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('quick-adds the book template preset', async () => {
     const { useTemplates } = await import('../TemplatesProvider');
     const { actions } = useTemplates();
@@ -107,5 +111,22 @@ describe('TemplatesManager quick-add common fields', () => {
         required: true,
       })
     );
+  });
+
+  it('rejects invalid field key with error message', async () => {
+    const { useTemplates } = await import('../TemplatesProvider');
+    const { actions } = useTemplates();
+    render(<TemplatesManager />);
+    const key = screen.getByPlaceholderText('例如：author') as HTMLInputElement;
+    const label = screen.getByPlaceholderText('輸入顯示名稱') as HTMLInputElement;
+
+    fireEvent.change(key, { target: { value: '作者' } });
+    fireEvent.change(label, { target: { value: '作者' } });
+    fireEvent.click(screen.getByRole('button', { name: '新增欄位' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('欄位鍵只能包含英文字母、數字或底線')).toBeInTheDocument();
+    });
+    expect(actions.addField).not.toHaveBeenCalled();
   });
 });

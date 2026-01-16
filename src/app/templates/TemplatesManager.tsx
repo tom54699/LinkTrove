@@ -568,6 +568,13 @@ export const TemplatesManager: React.FC = () => {
                                 });
                                 return;
                               }
+                              if (!/^[A-Za-z0-9_]+$/.test(key)) {
+                                setNewField({
+                                  ...newField,
+                                  [t.id]: { ...nf, err: '欄位鍵只能包含英文字母、數字或底線' },
+                                });
+                                return;
+                              }
                               try {
                                 const payload: any = {
                                   key,
