@@ -67,6 +67,12 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     return createStorageService();
   }, []);
 
+  // Keep track of latest groups to avoid stale closure in event listener
+  const groupsRef = React.useRef(groups);
+  React.useEffect(() => {
+    groupsRef.current = groups;
+  }, [groups]);
+
   const load = React.useCallback(async () => {
     try {
       if (!svc) return;
@@ -92,12 +98,21 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     const onCollapseAll = (ev: any) => {
       try {
         const det = ev?.detail || {};
-        if (!det || det.categoryId !== categoryId) return;
+        // Relaxed check: if no categoryId passed, apply to current; otherwise match
+        if (det.categoryId && det.categoryId !== categoryId) return;
+        
         const doCollapse = !!det.collapsed;
         const next: Record<string, boolean> = {};
-        for (const g of groups) next[g.id] = doCollapse;
+        // Use ref to get latest groups without re-binding listener constantly
+        for (const g of groupsRef.current) next[g.id] = doCollapse;
+        
+        // Update state immediately for UI responsiveness
+        setCollapsed(next);
+        // Persist in background
         void persistCollapsed(next);
-      } catch {}
+      } catch (err) {
+        console.error('Error in onCollapseAll:', err);
+      }
     };
     try { window.addEventListener('groups:collapse-all', onCollapseAll as any); } catch {}
     return () => {
@@ -265,9 +280,12 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       if (!tab) { try { tab = (getDragTab() as any) || null; } catch { tab = null; } }
       
       if (tab) {
-        const createdId = (await actions.addFromTab(tab as any)) as any as string;
-        // 使用 moveCardToGroup 移動到目標 group 末尾
-        await actions.moveCardToGroup(createdId, g.categoryId, g.id, '__END__');
+        // 一步完成：建立卡片 + 設定 subcategoryId + 排序
+        await actions.addFromTab(tab as any, {
+          categoryId: g.categoryId,
+          subcategoryId: g.id,
+          beforeId: '__END__',
+        });
         try { broadcastGhostActive(null); } catch {}
         showToast('已從分頁建立並加入 group', 'success');
       }
@@ -457,9 +475,12 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   onDropTab={async (tab: any, beforeId?: string) => {
                     setActiveDropGroupId(null);
                     try {
-                      const createdId = (await actions.addFromTab(tab as any)) as any as string;
-                      // 使用 moveCardToGroup 移動到目標位置
-                      await actions.moveCardToGroup(createdId, g.categoryId, g.id, beforeId);
+                      // 一步完成：建立卡片 + 設定 subcategoryId + 排序
+                      await actions.addFromTab(tab as any, {
+                        categoryId: g.categoryId,
+                        subcategoryId: g.id,
+                        beforeId,
+                      });
                       showToast('已從分頁建立並加入 group', 'success');
                     } catch {
                       showToast('建立失敗', 'error');

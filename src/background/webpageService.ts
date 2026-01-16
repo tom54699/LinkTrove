@@ -9,12 +9,13 @@ export interface TabLike {
 }
 
 export interface WebpageService {
-  addWebpageFromTab: (tab: TabLike) => Promise<WebpageData>;
-  addTabToGroup?: (
+  addWebpageFromTab: (
     tab: TabLike,
-    targetCategoryId: string,
-    targetGroupId: string,
-    beforeId?: string | '__END__'
+    options?: {
+      category?: string;
+      subcategoryId?: string;
+      beforeId?: string | '__END__';
+    }
   ) => Promise<WebpageData>;
   updateWebpage: (
     id: string,
@@ -156,7 +157,14 @@ export function createWebpageService(deps?: {
     try { chrome.storage?.local?.set?.({ webpages: all }); } catch {}
   }
 
-  async function addWebpageFromTab(tab: TabLike): Promise<WebpageData> {
+  async function addWebpageFromTab(
+    tab: TabLike,
+    options?: {
+      category?: string;
+      subcategoryId?: string;
+      beforeId?: string | '__END__';
+    }
+  ): Promise<WebpageData> {
     const url = normalizeUrl(tab.url);
     const title = cleanTitle(tab.title, url);
     const favicon = tab.favIconUrl ?? '';
@@ -182,12 +190,45 @@ export function createWebpageService(deps?: {
       url,
       favicon,
       note: '',
-      category: 'default',
+      category: options?.category || 'default',
+      subcategoryId: options?.subcategoryId,
       createdAt: now,
       updatedAt: now,
     };
     const next = [item, ...list];
     await saveWebpages(next);
+
+    // 如果有指定 subcategoryId，處理 group 內排序
+    if (options?.subcategoryId) {
+      const targetGroupId = options.subcategoryId;
+      const beforeId = options.beforeId;
+      const currentIds = next
+        .filter((w: any) => w.subcategoryId === targetGroupId)
+        .map((w: any) => w.id)
+        .filter((id: string) => id !== item.id);
+      const existing = await getGroupOrder(targetGroupId);
+      const seen = new Set<string>();
+      const base: string[] = [];
+      for (const id of existing)
+        if (currentIds.includes(id) && !seen.has(id)) {
+          seen.add(id);
+          base.push(id);
+        }
+      for (const id of currentIds)
+        if (!seen.has(id)) {
+          seen.add(id);
+          base.push(id);
+        }
+      // 插入新卡片
+      if (!beforeId || beforeId === '__END__') base.push(item.id);
+      else {
+        const idx = base.indexOf(beforeId);
+        const insertAt = idx === -1 ? base.length : idx;
+        base.splice(insertAt, 0, item.id);
+      }
+      await setGroupOrder(targetGroupId, base);
+    }
+
     return item;
   }
 
@@ -404,214 +445,8 @@ export function createWebpageService(deps?: {
     }
   }
 
-  async function addTabToGroup(
-    tab: TabLike,
-    targetCategoryId: string,
-    targetGroupId: string,
-    beforeId?: string | '__END__'
-  ): Promise<WebpageData> {
-    const url = normalizeUrl(tab.url);
-    const title = cleanTitle(tab.title, url);
-    const favicon = tab.favIconUrl ?? '';
-    const now = nowIso();
-
-    // 短時窗去重（1 秒內同 URL 忽略第二次新增）
-    try {
-      const nowMs = Date.now();
-      const last = recentlyAdded.get(url) || 0;
-      if (nowMs - last < 1000) {
-        // 若在短時間內，再嘗試載入現有清單，直接回傳第一個同 URL 的項目
-        const cur = await storage.loadFromLocal();
-        const exist = cur.find((w) => w.url === url);
-        if (exist) return exist;
-      }
-      recentlyAdded.set(url, nowMs);
-    } catch {}
-
-    // 取得目前清單與目標群組既有順序
-    const list = await storage.loadFromLocal();
-
-    // 準備 meta（依目標 collection 的 template 欄位推導）
-    let meta: Record<string, string> | undefined = undefined;
-    try {
-      const [cats, tmpls] = await Promise.all([
-        storage.loadFromSync(),
-        storage.loadTemplates(),
-      ]);
-      const cat = (cats as any[]).find((c) => c.id === targetCategoryId);
-      const tpl = cat?.defaultTemplateId
-        ? (tmpls as any[]).find((t) => t.id === cat.defaultTemplateId)
-        : null;
-      if (tpl) {
-        const { computeAutoMeta } = await import('../app/webpages/metaAutoFill');
-        meta = computeAutoMeta(undefined, (tpl as any).fields || [], {
-          title,
-          url,
-          favicon,
-        } as any);
-        // 不把 title/description 放進 meta（與現有行為一致）
-        delete (meta as any).title;
-        delete (meta as any).description;
-        // 嘗試合併已快取的 siteName/author（若欄位存在而且目前為空）
-        try {
-          const fields = ((tpl as any).fields || []) as any[];
-          const hasField = (k: string) => fields.some((f) => f.key === k);
-          const want = ['siteName', 'author'] as const;
-          if (want.some((k) => hasField(k))) {
-            const { getCachedMeta } = await import('./pageMeta');
-            const cached = await getCachedMeta(url);
-            if (cached) {
-              meta = { ...(meta || {}) };
-              for (const k of want) {
-                const cur = (meta as any)[k] as string | undefined;
-                const val = (cached as any)[k] as string | undefined;
-                if (hasField(k) && (!cur || !cur.trim()) && val) (meta as any)[k] = val;
-              }
-            }
-          }
-        } catch {}
-      }
-    } catch {}
-
-    const item: WebpageData = {
-      id: genId(url),
-      title,
-      url,
-      favicon,
-      note: '',
-      category: targetCategoryId,
-      subcategoryId: targetGroupId as any,
-      meta,
-      createdAt: now,
-      updatedAt: now,
-    } as any;
-
-    // 寫入清單
-    const next = [item, ...list];
-    await saveWebpages(next);
-
-    // 更新目標群組排序
-    const currentIds = next
-      .filter((w: any) => w.subcategoryId === targetGroupId)
-      .map((w: any) => w.id)
-      .filter((id: string) => id !== item.id);
-    const existing = await getGroupOrder(targetGroupId);
-    const seen = new Set<string>();
-    const base: string[] = [];
-    for (const id of existing)
-      if (currentIds.includes(id) && !seen.has(id)) {
-        seen.add(id);
-        base.push(id);
-      }
-    for (const id of currentIds)
-      if (!seen.has(id)) {
-        seen.add(id);
-        base.push(id);
-      }
-    // 插入新卡片
-    if (!beforeId || beforeId === '__END__') base.push(item.id);
-    else {
-      const idx = base.indexOf(beforeId);
-      const insertAt = idx === -1 ? base.length : idx;
-      base.splice(insertAt, 0, item.id);
-    }
-    await setGroupOrder(targetGroupId, base);
-    // 非阻塞 enrich：若有 tab.id，嘗試補齊 note 與常見欄位（僅在空值時）
-    try {
-      const tid = (tab as any)?.id;
-      if (typeof tid === 'number') {
-        void (async () => {
-          try {
-            const { waitForTabComplete, extractMetaForTab, queuePendingExtraction } = await import('./pageMeta');
-            try { await waitForTabComplete(tid); } catch {}
-            const live = await extractMetaForTab(tid);
-
-            // If extraction failed (likely due to sleeping page), queue for later
-            if (!live) {
-              queuePendingExtraction(tid, item.url, item.id);
-            }
-            // 1) note（description）補齊（僅在目前為空時）
-            try {
-              const fresh = await storage.loadFromLocal();
-              const cur = fresh.find((w) => w.id === item.id);
-              if (cur && (!cur.note || !String(cur.note).trim())) {
-                const desc = (live?.description || '').trim();
-                if (desc) {
-                  await updateWebpage(item.id, { note: desc } as any);
-                }
-              }
-            } catch {}
-
-            // 2) siteName/author 補齊（需模板含對應欄位，且當前為空）
-            try {
-              const [cats2, tmpls2] = await Promise.all([
-                storage.loadFromSync(),
-                storage.loadTemplates(),
-              ]);
-              const cat2 = (cats2 as any[]).find((c) => c.id === targetCategoryId);
-              const tpl2 = cat2?.defaultTemplateId
-                ? (tmpls2 as any[]).find((t) => t.id === cat2.defaultTemplateId)
-                : null;
-              const fields = (tpl2?.fields || []) as any[];
-              const hasField = (k: string) => fields.some((f) => f.key === k);
-              if (fields.length) {
-                const fresh = await storage.loadFromLocal();
-                const cur = fresh.find((w) => w.id === item.id) as any;
-                const curMeta: Record<string, string> = { ...(cur?.meta || {}) };
-                let changed = false;
-                if (hasField('siteName')) {
-                  const curVal = (curMeta.siteName || '').trim();
-                  const val = (live?.siteName || '').trim();
-                  if (!curVal && val) { curMeta.siteName = val; changed = true; }
-                }
-                if (hasField('author')) {
-                  const curVal = (curMeta.author || '').trim();
-                  const val = (live?.author || '').trim();
-                  if (!curVal && val) { curMeta.author = val; changed = true; }
-                }
-                if (changed) {
-                  await updateWebpage(item.id, { meta: curMeta } as any);
-                }
-              }
-            } catch {}
-
-            // 3) 書籍固定鍵名補齊（與模板無關；僅填空避免覆蓋）
-            try {
-              const fresh2 = await storage.loadFromLocal();
-              const cur2 = fresh2.find((w) => w.id === item.id) as any;
-              const curMeta2: Record<string, string> = { ...(cur2?.meta || {}) };
-              let changed2 = false;
-              const setIfEmpty = (key: string, val?: any) => {
-                const v = (val ?? '').toString().trim();
-                if (!v) return;
-                if (!((curMeta2 as any)[key] || '').toString().trim()) {
-                  (curMeta2 as any)[key] = v;
-                  changed2 = true;
-                }
-              };
-              setIfEmpty('bookTitle', (live as any)?.bookTitle);
-              setIfEmpty('serialStatus', (live as any)?.serialStatus);
-              setIfEmpty('genre', (live as any)?.genre);
-              setIfEmpty('wordCount', (live as any)?.wordCount);
-              setIfEmpty('latestChapter', (live as any)?.latestChapter);
-              setIfEmpty('coverImage', (live as any)?.coverImage);
-              setIfEmpty('bookUrl', (live as any)?.bookUrl);
-              setIfEmpty('lastUpdate', (live as any)?.lastUpdate);
-              if (changed2) {
-                await updateWebpage(item.id, { meta: curMeta2 } as any);
-              }
-            } catch {}
-          } catch {}
-        })();
-      }
-    } catch {}
-
-    return item;
-  }
-
   return {
     addWebpageFromTab,
-    addTabToGroup,
     updateWebpage,
     deleteWebpage,
     loadWebpages,
