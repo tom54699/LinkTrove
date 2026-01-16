@@ -6,6 +6,22 @@ import type {
 } from '../storageService';
 import { getAll, putAll, setMeta, getMeta, clearStore, tx } from './db';
 
+// Entity limits for UI layout constraints
+export const ENTITY_LIMITS = {
+  MAX_ORGANIZATIONS: 8,
+  MAX_CATEGORIES_PER_ORG: 20,
+  MAX_GROUPS_PER_CATEGORY: 50,
+} as const;
+
+// Custom error for limit exceeded
+export class LimitExceededError extends Error {
+  code = 'LIMIT_EXCEEDED';
+  constructor(message: string) {
+    super(message);
+    this.name = 'LimitExceededError';
+  }
+}
+
 async function migrateOnce(): Promise<void> {
   try {
     const migrated = await getMeta<boolean>('migratedToIdb');
@@ -394,6 +410,12 @@ export function createIdbStorageService(): StorageService {
     listSubcategories: async (categoryId: string) => listSubcategoriesImpl(categoryId),
     createSubcategory: async (categoryId: string, name: string) => {
       const list = await listSubcategoriesImpl(categoryId);
+
+      // Check limit (list already filters deleted items)
+      if (list.length >= ENTITY_LIMITS.MAX_GROUPS_PER_CATEGORY) {
+        throw new LimitExceededError(`已達上限：每個 Collection 最多只能建立 ${ENTITY_LIMITS.MAX_GROUPS_PER_CATEGORY} 個 Group`);
+      }
+
       // 若同名已存在（忽略大小寫），直接回傳現有的，避免重複建立
       const exists = list.find(
         (g) => String(g.name || '').toLowerCase() === String(name || '').toLowerCase()
@@ -652,6 +674,13 @@ export function createIdbStorageService(): StorageService {
 
       // Calculate order for Organization
       const existing = (await getAll('organizations' as any).catch(() => [])) as any[];
+      const activeOrgs = existing.filter((o: any) => !o.deleted);
+
+      // Check limit
+      if (activeOrgs.length >= ENTITY_LIMITS.MAX_ORGANIZATIONS) {
+        throw new LimitExceededError(`已達上限：最多只能建立 ${ENTITY_LIMITS.MAX_ORGANIZATIONS} 個 Organization`);
+      }
+
       const order = existing.length ? Math.max(...existing.map((o: any) => o.order ?? 0)) + 1 : 0;
 
       // Generate IDs
@@ -780,8 +809,9 @@ export function createIdbStorageService(): StorageService {
     addCategory: async (name: string, color?: string, organizationId?: string) => {
       const orgId = organizationId || 'o_default';
       const id = 'c_' + Math.random().toString(36).slice(2, 9);
-      // compute next order within org
+      // compute next order within org and check limit
       let nextOrder = 0;
+      let currentCount = 0;
       try {
         await tx('categories', 'readonly', async (t) => {
           const s = t.objectStore('categories');
@@ -793,6 +823,8 @@ export function createIdbStorageService(): StorageService {
               req.onsuccess = () => resolve(req.result || []);
               req.onerror = () => reject(req.error);
             });
+            const activeList = list.filter((c: any) => !c.deleted);
+            currentCount = activeList.length;
             nextOrder = list.length ? Math.max(...list.map((c: any) => c.order ?? 0)) + 1 : 0;
           } catch {
             const list: any[] = await new Promise((resolve, reject) => {
@@ -800,10 +832,17 @@ export function createIdbStorageService(): StorageService {
               rq.onsuccess = () => resolve(rq.result || []);
               rq.onerror = () => reject(rq.error);
             });
-            nextOrder = list.filter((c: any) => c.organizationId === orgId).length;
+            const filtered = list.filter((c: any) => c.organizationId === orgId && !c.deleted);
+            currentCount = filtered.length;
+            nextOrder = filtered.length;
           }
         });
       } catch {}
+
+      // Check limit
+      if (currentCount >= ENTITY_LIMITS.MAX_CATEGORIES_PER_ORG) {
+        throw new LimitExceededError(`已達上限：每個 Organization 最多只能建立 ${ENTITY_LIMITS.MAX_CATEGORIES_PER_ORG} 個 Collection`);
+      }
       const cat = {
         id,
         name: (name || 'Collection').trim() || 'Collection',

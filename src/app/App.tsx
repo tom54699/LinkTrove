@@ -376,19 +376,27 @@ const HomeInner: React.FC = () => {
                 className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
                 disabled={!newCatName.trim()}
                 onClick={async () => {
-                  const cat = await catActions.addCategory(
-                    newCatName.trim(),
-                    newCatColor
-                  );
-                  const sel =
-                    (
-                      document.getElementById(
-                        'tpl-select'
-                      ) as HTMLSelectElement | null
-                    )?.value || '';
-                  if (sel) await catActions.setDefaultTemplate(cat.id, sel);
-                  setCurrentCategory(cat.id);
-                  setShowAddCat(false);
+                  try {
+                    const cat = await catActions.addCategory(
+                      newCatName.trim(),
+                      newCatColor
+                    );
+                    const sel =
+                      (
+                        document.getElementById(
+                          'tpl-select'
+                        ) as HTMLSelectElement | null
+                      )?.value || '';
+                    if (sel) await catActions.setDefaultTemplate(cat.id, sel);
+                    setCurrentCategory(cat.id);
+                    setShowAddCat(false);
+                  } catch (err: any) {
+                    if (err?.name === 'LimitExceededError' || err?.code === 'LIMIT_EXCEEDED') {
+                      showToast(err.message, 'error');
+                    } else {
+                      showToast('建立 Collection 失敗', 'error');
+                    }
+                  }
                 }}
               >
                 Create
@@ -440,10 +448,18 @@ const HomeInner: React.FC = () => {
                 className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
                 disabled={!newOrgName.trim()}
                 onClick={async () => {
-                  const org = await orgActions.add(newOrgName.trim(), newOrgColor);
-                  setCurrentOrganization(org.id);
-                  setShowAddOrg(false);
-                  showToast(`Created organization "${org.name}"`, 'success');
+                  try {
+                    const org = await orgActions.add(newOrgName.trim(), newOrgColor);
+                    setCurrentOrganization(org.id);
+                    setShowAddOrg(false);
+                    showToast(`Created organization "${org.name}"`, 'success');
+                  } catch (err: any) {
+                    if (err?.name === 'LimitExceededError' || err?.code === 'LIMIT_EXCEEDED') {
+                      showToast(err.message, 'error');
+                    } else {
+                      showToast('建立 Organization 失敗', 'error');
+                    }
+                  }
                 }}
               >
                 Create

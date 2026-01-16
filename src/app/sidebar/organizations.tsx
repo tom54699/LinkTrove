@@ -65,38 +65,38 @@ export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch {}
     },
     async add(name: string, color?: string) {
-      try {
-        // Use storageService to create organization with default collection
-        const { createStorageService } = await import('../../background/storageService');
-        const storage = createStorageService();
-        const result = await storage.createOrganization?.(name, color);
+      // Use storageService to create organization with default collection
+      const { createStorageService } = await import('../../background/storageService');
+      const storage = createStorageService();
+      const result = await storage.createOrganization?.(name, color);
 
-        if (result) {
-          const org = result.organization;
-          setOrganizations((prev) => [...prev, org]);
+      if (result) {
+        const org = result.organization;
+        setOrganizations((prev) => [...prev, org]);
 
-          // Auto-create default group for the default collection
-          if (result.defaultCollection) {
-            const catId = result.defaultCollection.id;
-            const now = Date.now();
-            const defaultGroup = {
-              id: `g_default_${catId}`,
-              categoryId: catId,
-              name: 'group',
-              order: 0,
-              createdAt: now,
-              updatedAt: now,
-            };
+        // Auto-create default group for the default collection
+        if (result.defaultCollection) {
+          const catId = result.defaultCollection.id;
+          const now = Date.now();
+          const defaultGroup = {
+            id: `g_default_${catId}`,
+            categoryId: catId,
+            name: 'group',
+            order: 0,
+            createdAt: now,
+            updatedAt: now,
+          };
+          try {
             await tx(['subcategories' as any], 'readwrite', async (t) => {
               t.objectStore('subcategories' as any).put(defaultGroup);
             });
-          }
-
-          return org;
+          } catch {}
         }
-      } catch {}
 
-      // Fallback to old behavior if storageService fails
+        return org;
+      }
+
+      // Fallback to old behavior if storageService fails (but not for limit errors)
       const nowList = organizations.slice();
       const order = nowList.length ? (nowList[nowList.length - 1].order ?? nowList.length - 1) + 1 : 0;
       const next: Organization = { id: 'o_' + Math.random().toString(36).slice(2, 9), name: name.trim() || 'Org', color, order };

@@ -231,8 +231,12 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       load();
       try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
       showToast(`已新增 ${name}`, 'success');
-    } catch {
-      showToast('新增失敗', 'error');
+    } catch (err: any) {
+      if (err?.name === 'LimitExceededError' || err?.code === 'LIMIT_EXCEEDED') {
+        showToast(err.message, 'error');
+      } else {
+        showToast('新增失敗', 'error');
+      }
     }
   };
 
