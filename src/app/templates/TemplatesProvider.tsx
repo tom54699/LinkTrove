@@ -88,7 +88,7 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [loadTemplates]);
 
-  const persist = async (list: TemplateData[]) => {
+  const persist = React.useCallback(async (list: TemplateData[]) => {
     setTemplates(list);
     try {
       await svc.saveTemplates(list);
@@ -96,7 +96,7 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       chrome.storage?.local?.set?.({ templates: list });
     } catch {}
-  };
+  }, [svc]);
 
   function genId() {
     return 't_' + Math.random().toString(36).slice(2, 9);
@@ -263,7 +263,7 @@ export const TemplatesProvider: React.FC<{ children: React.ReactNode }> = ({
         );
       },
     }),
-    [templates, loadTemplates, svc]
+    [templates, loadTemplates, svc, persist]
   );
 
   const value = useMemo<TemplatesCtx>(

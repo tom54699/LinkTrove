@@ -37,6 +37,7 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [selectedId, setSelectedId] = useState<string>('default');
+  const selectedIdRef = React.useRef(selectedId);
   const { selectedOrgId } = useOrganizations();
   const orgCtx = React.useContext(OrgsCtx);
   const hasOrgProvider = !!orgCtx;
@@ -61,6 +62,10 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch {}
     };
   }, []);
+
+  React.useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
 
   React.useLayoutEffect(() => {
     (async () => {
@@ -169,6 +174,7 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
       } catch {}
       // Restore selected category for this organization
+      let want: string | undefined;
       try {
         // 先試 chrome.storage.local，其次讀取 IDB meta 作為備援
         let persisted: string | undefined;
@@ -184,17 +190,17 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         const listInOrg = ordered as any[];
         const has = (id?: string) => !!id && listInOrg.some((c) => c.id === id);
         // 預設使用第一個可用的分類或 default
-        const want = has(persisted)
+        want = has(persisted)
           ? persisted!
-          : has(selectedId)
-            ? selectedId
+          : has(selectedIdRef.current)
+            ? selectedIdRef.current
             : listInOrg[0]?.id || 'default';
         setSelectedId(want);
         try { chrome.storage?.local?.set?.({ selectedCategoryId: want }); } catch {}
       } catch {}
       try { if (hasOrgProvider) setReady(true); } catch {}
     })();
-  }, [svc, selectedOrgId, refreshTick]);
+  }, [svc, selectedOrgId, refreshTick, hasOrgProvider]);
 
 
   const actions = React.useMemo(

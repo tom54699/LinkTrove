@@ -251,7 +251,7 @@ export const WebpagesProvider: React.FC<{
       }
       return created.id;
     },
-    [service, selectedId]
+    [service, load]
   );
 
   const deleteMany = React.useCallback(

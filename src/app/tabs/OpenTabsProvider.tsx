@@ -71,6 +71,10 @@ export const OpenTabsProvider: React.FC<{
     () => ({ tabs, allTabs, activeWindowId, actions }),
     [tabs, allTabs, activeWindowId, actions]
   );
+  const actionsRef = React.useRef(actions);
+  React.useEffect(() => {
+    actionsRef.current = actions;
+  }, [actions]);
   React.useEffect(() => {
     expose?.(value);
   }, [expose, value]);
@@ -106,17 +110,17 @@ export const OpenTabsProvider: React.FC<{
           setActiveWindowId(msg.activeWindowId);
       } else if (msg?.kind === 'tab-event' && msg.evt) {
         const evt = msg.evt;
-        if (evt.type === 'created' && evt.payload) actions.addTab(evt.payload);
-        else if (evt.type === 'removed') actions.removeTab(evt.payload.tabId);
+        if (evt.type === 'created' && evt.payload) actionsRef.current.addTab(evt.payload);
+        else if (evt.type === 'removed') actionsRef.current.removeTab(evt.payload.tabId);
         else if (evt.type === 'updated')
-          actions.updateTab(evt.payload.tabId, evt.payload.changeInfo);
+          actionsRef.current.updateTab(evt.payload.tabId, evt.payload.changeInfo);
         else if (evt.type === 'moved')
-          actions.updateTab(evt.payload.tabId, {
+          actionsRef.current.updateTab(evt.payload.tabId, {
             index: evt.payload.toIndex,
             windowId: evt.payload.windowId,
           });
         else if (evt.type === 'attached') {
-          actions.updateTab(evt.payload.tabId, {
+          actionsRef.current.updateTab(evt.payload.tabId, {
             index: evt.payload.newPosition,
             windowId: evt.payload.newWindowId,
           });
@@ -127,7 +131,7 @@ export const OpenTabsProvider: React.FC<{
         }
         // detached will be followed by attached; ignore interim
         else if (evt.type === 'replaced')
-          actions.removeTab(evt.payload.removedTabId);
+          actionsRef.current.removeTab(evt.payload.removedTabId);
       } else if (msg?.kind === 'window-focus') {
         if (typeof msg.windowId === 'number' && msg.windowId > 0)
           setActiveWindowId(msg.windowId);
