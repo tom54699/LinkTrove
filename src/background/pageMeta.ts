@@ -371,19 +371,23 @@ export async function extractMetaForTab(
 
       // Skip problematic tab states
       if ((tabInfo as any).discarded) {
-        console.log(`[pageMeta] Tab ${tabId} is discarded/sleeping, attempting to reactivate...`);
-        // Try to reactivate the tab
+        console.log(`[pageMeta] Tab ${tabId} is discarded/sleeping, attempting to reload in background...`);
+        // Use reload() to wake up the tab without switching user focus
         try {
-          await new Promise<void>((resolve) => {
-            chrome.tabs.update(tabId, { active: true }, () => {
-              resolve();
+          await new Promise<void>((resolve, reject) => {
+            chrome.tabs.reload(tabId, {}, () => {
+              if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError.message));
+              } else {
+                resolve();
+              }
             });
           });
-          // Wait a bit for reactivation
-          await new Promise(resolve => setTimeout(resolve, 500));
-          console.log(`[pageMeta] Tab ${tabId} reactivated successfully`);
+          // Wait for the page to fully load
+          await waitForTabComplete(tabId, 8000);
+          console.log(`[pageMeta] Tab ${tabId} reloaded successfully in background`);
         } catch (e) {
-          console.warn(`[pageMeta] Failed to reactivate tab ${tabId}:`, e);
+          console.warn(`[pageMeta] Failed to reload tab ${tabId}:`, e);
           // Continue anyway, extraction might still work
         }
       }

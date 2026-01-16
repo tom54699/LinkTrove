@@ -130,8 +130,26 @@ export const OpenTabsProvider: React.FC<{
           );
         }
         // detached will be followed by attached; ignore interim
-        else if (evt.type === 'replaced')
+        else if (evt.type === 'replaced') {
           actionsRef.current.removeTab(evt.payload.removedTabId);
+          // Also add the new tab that replaced the old one
+          if (evt.payload.addedTabId) {
+            try {
+              chrome.tabs.get(evt.payload.addedTabId, (tab) => {
+                if (tab && !chrome.runtime.lastError) {
+                  actionsRef.current.addTab({
+                    id: tab.id!,
+                    title: tab.title,
+                    url: tab.url,
+                    favIconUrl: tab.favIconUrl,
+                    index: tab.index,
+                    windowId: tab.windowId,
+                  });
+                }
+              });
+            } catch {}
+          }
+        }
       } else if (msg?.kind === 'window-focus') {
         if (typeof msg.windowId === 'number' && msg.windowId > 0)
           setActiveWindowId(msg.windowId);
