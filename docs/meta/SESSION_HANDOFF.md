@@ -2,9 +2,9 @@
 
 > **用途：** 解決 AI 工具 Session 斷開後的連續性問題，確保下次對話能無縫接續
 >
-> **最後更新：** 2026-01-09 (Session 結束前更新)
+> **最後更新：** 2026-01-19 (同步 OpenSpec 與現況)
 >
-> **更新者：** Claude Sonnet 4.5
+> **更新者：** Codex
 
 ---
 
@@ -71,17 +71,63 @@
    - 建置通過，無編譯錯誤
    - 更新 CLAUDE.md 文檔
 
+11. ✅ **拖放冗餘重渲染修復**
+   - `WebpagesProvider` 加入操作鎖定，避免 drop 期間多次 `load()`
+   - 新增 `actions.moveCardToGroup` 封裝跨群組移動
+
+12. ✅ **休眠分頁 Meta 擷取修復**
+   - `pageMeta` 對 discarded tab 改為背景 `reload`，避免切換焦點
+   - `OpenTabsProvider` 補強 onReplaced 事件處理
+
+13. ✅ **搜尋 UI 強化**
+   - Pill 觸發 + 全螢幕 modal
+   - 快捷鍵：Ctrl/Cmd+K、Ctrl/Cmd+F、`/`
+   - Recent Search（最近 10 筆）與相對時間顯示
+
+14. ✅ **卡片編輯對話框修復**
+   - 補回 Note 欄位
+   - 修正自動儲存回朔問題（僅在 modal 開啟時初始化）
+
+15. ✅ **模板欄位鍵格式驗證**
+   - 限制欄位鍵僅允許英數與底線
+   - 驗證失敗時阻止儲存並提示錯誤
+
+16. ✅ **文檔同步更新（2026-01-19）**
+   - 新增功能文檔：搜尋 / 模板 / 批次操作
+   - 更新架構文檔：overview / data-flow / component-map / INDEX
+   - 更新現況稽核：spec-capabilities-audit / drag-drop-storage-display
+
+17. ✅ **搜尋自動載入與簡繁互通（2026-01-19）**
+   - SearchBox 加入接近底部自動載入（每頁 20）
+   - 引入 OpenCC 轉換器，支援簡繁互通搜尋
+   - 新增搜尋測試：簡繁互通 + 自動載入
+
 **新增檔案：**
 - `src/app/webpages/MoveSelectedDialog.tsx` - 批次移動對話框組件
 - `openspec/changes/add-batch-operations/proposal.md` - OpenSpec 提案
 - `openspec/changes/add-batch-operations/tasks.md` - 實作任務清單
 - `openspec/changes/add-batch-operations/specs/bookmark-management/spec.md` - Spec Delta
+- `src/utils/opencc.ts` - OpenCC 轉換器載入與封裝
+- `src/types/opencc-js.d.ts` - opencc-js 型別宣告
+- `src/app/ui/__tests__/search.opencc.loadmore.test.tsx` - 搜尋簡繁與載入測試
+- `openspec/changes/update-search-infinite-scroll-opencc/*` - OpenSpec 變更提案與規格
 
 **修改檔案：**
 - `src/app/webpages/CardGrid.tsx` - 新增浮動工具列與批次操作邏輯（移除 selectMode）
 - `src/app/webpages/TobyLikeCard.tsx` - 簡化 checkbox 邏輯（移除 selectMode 檢查）
 - `src/styles/toby-like.css` - 新增 hover 顯示 checkbox 樣式
 - `CLAUDE.md` - 新增批次操作使用說明
+- `src/app/ui/SearchBox.tsx` - 搜尋結果分頁、自動載入、簡繁互通與計數更新
+- `package.json` - 新增 opencc-js 依賴
+- `openspec/changes/update-search-infinite-scroll-opencc/tasks.md` - 任務狀態更新
+
+**其他近期修改（摘要）：**
+- `src/app/webpages/WebpagesProvider.tsx` - drop 操作鎖定與 moveCardToGroup
+- `src/background/pageMeta.ts` - discarded tab 背景 reload
+- `src/app/tabs/OpenTabsProvider.tsx` - onReplaced 事件補強
+- `src/app/ui/SearchBox.tsx` - 搜尋 UI/快捷鍵/歷史
+- `src/app/webpages/TobyLikeCard.tsx` - Note 欄位與輸入回朔修復
+- `src/app/templates/TemplatesManager.tsx` - 欄位鍵格式驗證
 
 ---
 
@@ -100,12 +146,8 @@
    - `npm test -- src/app/sidebar/__tests__/organization-nav.manage.test.tsx`
 
 ### Git 狀態
-- ✅ 已提交 10 個 commits (2026-01-08)
-- ⚠️ **本次 Session (2026-01-09) 新增批次操作功能，尚未提交**
-  - 新增 `src/app/webpages/MoveSelectedDialog.tsx`
-  - 修改 `src/app/webpages/CardGrid.tsx`
-  - 新增 OpenSpec 提案文檔（`openspec/changes/add-batch-operations/`）
-  - 更新 `CLAUDE.md` 和 `docs/meta/SESSION_HANDOFF.md`
+- ⚠️ 工作目錄有未提交變更（包含 docs 與多個程式檔）
+- ⚠️ 未追蹤變更：`openspec/changes/update-settings-ui/`
 
 ### 分支狀態
 - 當前分支：`main`
@@ -125,24 +167,26 @@
 - [x] 創建 docs/development/openspec-installation.md
 - [x] 精簡 CLAUDE.md
 - [x] 修正文檔一致性問題
-- [x] Git 提交所有變更
+- [x] Git 提交所有變更（截至 2026-01-08）
+- [x] 補齊缺失文檔（overview/data-flow/testing-guide/commit-conventions）
+- [x] OpenSpec 已安裝並建立 specs/changes
 
 ### 優先級 P1（下次 Session 開始時）
 
-1. **安裝 OpenSpec**
-   - 閱讀 `docs/development/openspec-installation.md`
-   - 執行安裝指令（需關閉 Session）
-   - 驗證安裝成功
+1. **完成 OpenSpec 未完變更（tasks 未勾）**
+   - `update-settings-ui`
+   - `ui-stacked-flush-tabs`
+   - `optimize-group-interactions`
+   - `fix-groupsview-render-loop`
+   - `refactor-atomic-card-save`（仍有手動驗證）
+   - `ui-alignment-groups-cards`
 
-2. **配置 OpenSpec**
-   - 創建專案規格文件
-   - 整合到開發流程
+2. **補跑/補確認測試（依 OpenSpec 清單）**
+   - `fix-unit-test-regressions` 內列出的 Vitest 測試（需使用者執行）
 
-3. **補充缺失文檔**
-   - docs/architecture/overview.md（系統概覽）
-   - docs/architecture/data-flow.md（資料流向）
-   - docs/development/testing-guide.md（測試指南）
-   - docs/development/commit-conventions.md（提交規範）
+3. **補驗證已歸檔變更**
+   - `archive/2026-01-16-refactor-lazy-load-conflict-dialog`
+   - `archive/2026-01-08-auto-default-collection`
 
 ### 優先級 P2（功能改進，可選）
 
@@ -193,7 +237,7 @@
 - 匯入模組：`src/app/groups/import/` (useGroupImport.ts, dialogs/)
 
 **配置：**
-- CLAUDE.md（根目錄，待精簡）
+- CLAUDE.md（根目錄，已精簡）
 - AGENTS.md（根目錄）
 
 ---

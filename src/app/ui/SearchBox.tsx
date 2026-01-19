@@ -3,11 +3,14 @@ import { useWebpages } from '../webpages/WebpagesProvider';
 import { useCategories } from '../sidebar/categories';
 import { useOrganizations } from '../sidebar/organizations';
 import { createStorageService } from '../../background/storageService';
+import { loadOpenCCConverters } from '../../utils/opencc';
 
 interface HistoryItem {
   term: string;
   time: number;
 }
+
+const PAGE_SIZE = 20;
 
 export const SearchBox: React.FC<{
   placeholder?: string;
@@ -24,7 +27,15 @@ export const SearchBox: React.FC<{
   const [activeIdx, setActiveIdx] = React.useState(0);
   const [groupNameMap, setGroupNameMap] = React.useState<Record<string, string>>({});
   const [history, setHistory] = React.useState<HistoryItem[]>([]);
+  const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
+  const [openccReady, setOpenccReady] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const listRef = React.useRef<HTMLDivElement | null>(null);
+  const sentinelRef = React.useRef<HTMLDivElement | null>(null);
+  const openccRef = React.useRef({
+    s2t: (input: string) => input,
+    t2s: (input: string) => input,
+  });
 
   // Get current organization color for accent-only elements
   const currentOrg = React.useMemo(() => 
@@ -45,6 +56,18 @@ export const SearchBox: React.FC<{
     });
   }, []);
 
+  React.useEffect(() => {
+    let cancelled = false;
+    loadOpenCCConverters().then((converters) => {
+      if (cancelled) return;
+      openccRef.current = converters;
+      setOpenccReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const saveToHistory = (term: string) => {
     const trimmed = term.trim();
     if (!trimmed) return;
@@ -57,25 +80,61 @@ export const SearchBox: React.FC<{
     chrome.storage?.local?.set({ searchHistory: newHistory });
   };
 
+  const indexedItems = React.useMemo(() => {
+    const { s2t, t2s } = openccRef.current;
+    return items.map((it) => {
+      const base = `${it.title} ${it.url} ${(it as any).description || ''}`;
+      const lower = base.toLowerCase();
+      return {
+        it,
+        lower,
+        s2t: s2t(lower).toLowerCase(),
+        t2s: t2s(lower).toLowerCase(),
+      };
+    });
+  }, [items, openccReady]);
+
   const results = React.useMemo(() => {
-    const term = q.trim().toLowerCase();
-    if (!term) return [] as any[];
+    const raw = q.trim();
+    if (!raw) return [] as any[];
+    const term = raw.toLowerCase();
+    const { s2t, t2s } = openccRef.current;
+    const termVariants = Array.from(
+      new Set([term, s2t(term).toLowerCase(), t2s(term).toLowerCase()])
+    );
 
     const orgCategoryIds = new Set((categories || []).map((c: any) => c.id));
-
-    const scored = items
-      .filter((it) => (!it.category || orgCategoryIds.has(it.category)) && it.subcategoryId)
-      .map((it) => {
-        const hay =
-          `${it.title} ${it.url} ${(it as any).description || ''}`.toLowerCase();
-        const match = hay.indexOf(term);
-        if (match === -1) return null;
-        return { it, score: match };
+    const scored = indexedItems
+      .filter(({ it }) => (!it.category || orgCategoryIds.has(it.category)) && it.subcategoryId)
+      .map(({ it, lower, s2t: s2tText, t2s: t2sText }) => {
+        const hayVariants = [lower, s2tText, t2sText];
+        let best = Infinity;
+        for (const tv of termVariants) {
+          for (const hv of hayVariants) {
+            const match = hv.indexOf(tv);
+            if (match !== -1 && match < best) best = match;
+          }
+        }
+        if (best === Infinity) return null;
+        return { it, score: best };
       })
       .filter(Boolean) as { it: any; score: number }[];
     scored.sort((a, b) => a.score - b.score);
-    return scored.slice(0, 20).map((s) => s.it);
-  }, [q, items, categories]);
+    return scored.map((s) => s.it);
+  }, [q, indexedItems, categories]);
+
+  const visibleResults = React.useMemo(
+    () => results.slice(0, Math.min(visibleCount, results.length)),
+    [results, visibleCount]
+  );
+
+  const visibleIndexMap = React.useMemo(() => {
+    const map = new Map<string, number>();
+    visibleResults.forEach((it, idx) => {
+      map.set(it.id, idx);
+    });
+    return map;
+  }, [visibleResults]);
 
   function navigateTo(id: string, categoryId: string, searchTerm?: string) {
     if (searchTerm) saveToHistory(searchTerm);
@@ -174,10 +233,10 @@ export const SearchBox: React.FC<{
   }
 
   React.useEffect(() => {
-    if (open && results.length > 0) {
-      prepareGroupNames(results);
+    if (open && visibleResults.length > 0) {
+      prepareGroupNames(visibleResults);
     }
-  }, [open, results]);
+  }, [open, visibleResults]);
 
   // Global Keyboard Shortcuts
   React.useEffect(() => {
@@ -212,12 +271,45 @@ export const SearchBox: React.FC<{
     if (!open) {
       setQ('');
       setActiveIdx(0);
+      setVisibleCount(PAGE_SIZE);
     }
   }, [open]);
 
+  React.useEffect(() => {
+    if (!q.trim()) {
+      setVisibleCount(PAGE_SIZE);
+      setActiveIdx(0);
+      return;
+    }
+    setVisibleCount(PAGE_SIZE);
+    setActiveIdx(0);
+  }, [q]);
+
+  React.useEffect(() => {
+    if (activeIdx > visibleResults.length - 1) {
+      setActiveIdx(Math.max(0, visibleResults.length - 1));
+    }
+  }, [activeIdx, visibleResults.length]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    if (!listRef.current || !sentinelRef.current) return;
+    if (visibleResults.length >= results.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.some((entry) => entry.isIntersecting);
+        if (!hit) return;
+        setVisibleCount((count) => Math.min(count + PAGE_SIZE, results.length));
+      },
+      { root: listRef.current, rootMargin: '200px' }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [open, visibleResults.length, results.length]);
+
   const groupedResults = React.useMemo(() => {
     const byCat: Record<string, any[]> = {};
-    for (const it of results) {
+    for (const it of visibleResults) {
       const cid = String(it.category || 'default');
       (byCat[cid] ||= []).push(it);
     }
@@ -231,7 +323,7 @@ export const SearchBox: React.FC<{
       }
       return { cid, catName, subGroups: Object.entries(bySub) };
     });
-  }, [results, categories]);
+  }, [visibleResults, categories]);
 
   return (
     <>
@@ -276,12 +368,20 @@ export const SearchBox: React.FC<{
                   if (e.nativeEvent.isComposing) return;
                   if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    setActiveIdx((i) => Math.min(i + 1, results.length - 1));
+                    setActiveIdx((i) => {
+                      if (visibleResults.length === 0) return 0;
+                      const atEnd = i >= visibleResults.length - 1;
+                      if (atEnd && visibleResults.length < results.length) {
+                        setVisibleCount((count) => Math.min(count + PAGE_SIZE, results.length));
+                        return i + 1;
+                      }
+                      return Math.min(i + 1, visibleResults.length - 1);
+                    });
                   } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
                     setActiveIdx((i) => Math.max(i - 1, 0));
                   } else if (e.key === 'Enter') {
-                    const pick = results[activeIdx] || results[0];
+                    const pick = visibleResults[activeIdx] || visibleResults[0];
                     if (pick) navigateTo(pick.id, pick.category || 'default');
                   } else if (e.key === 'Escape') {
                     setOpen(false);
@@ -297,7 +397,7 @@ export const SearchBox: React.FC<{
             </div>
 
             {/* Modal Content */}
-            <div className="max-h-[60vh] overflow-y-auto p-2">
+            <div ref={listRef} className="max-h-[60vh] overflow-y-auto p-2">
               {q.trim() === '' ? (
                 <div className="py-2">
                   {history.length > 0 ? (
@@ -358,13 +458,13 @@ export const SearchBox: React.FC<{
                             </div>
                             <div className="space-y-0.5">
                               {list.map((it) => {
-                                const idx = results.indexOf(it);
+                                const idx = visibleIndexMap.get(it.id) ?? -1;
                                 const isActive = idx === activeIdx;
                                 return (
                                   <button
                                     key={it.id}
                                     onMouseMove={() => {
-                                      if (activeIdx !== idx) setActiveIdx(idx);
+                                      if (idx >= 0 && activeIdx !== idx) setActiveIdx(idx);
                                     }}
                                     onClick={() => navigateTo(it.id, it.category || 'default')}
                                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors group/item border-l-2 ${
@@ -398,6 +498,9 @@ export const SearchBox: React.FC<{
                       </div>
                     </div>
                   ))}
+                  {visibleResults.length < results.length ? (
+                    <div ref={sentinelRef} className="h-6" aria-hidden="true" />
+                  ) : null}
                 </div>
               )}
             </div>
@@ -409,7 +512,7 @@ export const SearchBox: React.FC<{
                 <span className="flex items-center gap-1"><kbd className="bg-[var(--card)] px-1 rounded border border-[var(--panel)]">Enter</kbd> 開啟</span>
               </div>
               <div style={{ color: orgColor }} className="font-medium">
-                找到 {results.length} 個結果
+                已載入 {visibleResults.length} / {results.length}
               </div>
             </div>
           </div>
