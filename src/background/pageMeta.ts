@@ -371,7 +371,6 @@ export async function extractMetaForTab(
 
       // Skip problematic tab states
       if ((tabInfo as any).discarded) {
-        console.log(`[pageMeta] Tab ${tabId} is discarded/sleeping, attempting to reload in background...`);
         // Use reload() to wake up the tab without switching user focus
         try {
           await new Promise<void>((resolve, reject) => {
@@ -385,7 +384,6 @@ export async function extractMetaForTab(
           });
           // Wait for the page to fully load
           await waitForTabComplete(tabId, 8000);
-          console.log(`[pageMeta] Tab ${tabId} reloaded successfully in background`);
         } catch (e) {
           console.warn(`[pageMeta] Failed to reload tab ${tabId}:`, e);
           // Continue anyway, extraction might still work

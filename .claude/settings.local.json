@@ -19,7 +19,8 @@
       "Bash(openspec list:*)",
       "Bash(openspec validate:*)",
       "Bash(openspec archive:*)",
-      "Bash(openspec show:*)"
+      "Bash(openspec show:*)",
+      "Skill(openspec:proposal)"
     ],
     "deny": []
   }

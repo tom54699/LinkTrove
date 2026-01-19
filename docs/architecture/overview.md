@@ -2,7 +2,7 @@
 
 本文件以現有程式碼為準，提供 LinkTrove 的整體架構概覽，並標註核心模組與入口檔案位置。
 
-**最後更新：2026-01-07**
+**最後更新：2026-01-19**
 
 ---
 
@@ -37,9 +37,12 @@
 ### UI 區塊
 
 - **Groups 主畫面**：`src/app/groups/GroupsView.tsx`
-- **卡片與拖放**：`src/app/webpages/CardGrid.tsx`、`src/app/webpages/TobyLikeCard.tsx`
+- **卡片/拖放/批次操作**：`src/app/webpages/CardGrid.tsx`、`src/app/webpages/TobyLikeCard.tsx`、`src/app/webpages/MoveSelectedDialog.tsx`
+- **搜尋（全螢幕 modal）**：`src/app/ui/SearchBox.tsx`
 - **Sidebar（Collections）**：`src/app/sidebar/sidebar.tsx`
-- **設定/匯入匯出**：`src/app/App.tsx`（Settings 區塊）
+- **Organization 管理**：`src/app/sidebar/OrganizationNav.tsx`
+- **設定/匯入匯出**：`src/app/ui/SettingsModal.tsx`
+- **設定子面板**：`DataPanel` / `CloudSyncPanel` / `TemplatesManager`
 
 ---
 

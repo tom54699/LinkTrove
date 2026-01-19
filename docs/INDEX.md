@@ -31,6 +31,9 @@
   - [匯入功能](../src/app/groups/import/) - Toby JSON 與 HTML 書籤匯入
 - [雲端同步](features/cloud-sync.google-drive.md) - Google Drive 同步功能
 - [拖放操作](features/drag-drop-storage-display.md) - 拖放排序與儲存
+- [批次操作](features/batch-operations.md) - 多選、批次移動/刪除/開新分頁
+- [搜尋功能](features/search.md) - 搜尋 UI 與資料流程
+- [模板功能](features/templates.md) - 模板管理與欄位定義
 
 ### 規格文檔
 
@@ -78,4 +81,4 @@
 
 ---
 
-**最後更新：2026-01-07**
+**最後更新：2026-01-19**

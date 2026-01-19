@@ -129,6 +129,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
       {/* Added 'group' class to the card wrapper to allow child elements to react to card hover */}
       <div className={`card group relative flex flex-col transition-all select-none box-border overflow-visible ${ghost ? 'opacity-50 pointer-events-none' : ''}`}
            style={{ height: '140px', minHeight: '140px', background: 'var(--card)' }}
+           data-testid={ghost ? 'ghost-card' : undefined}
            onClick={onOpen}>
         
         <div className="card-content">

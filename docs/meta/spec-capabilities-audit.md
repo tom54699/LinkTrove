@@ -8,7 +8,9 @@
 
 ### 對齊證據
 - 階層/組織與多組織資料實作：`src/app/sidebar/organizations.tsx`、`src/app/sidebar/categories.tsx`
+- Organization 管理對話框與最小數量刪除保護：`src/app/sidebar/OrganizationNav.tsx`、`src/app/__tests__/delete-protection.integration.test.tsx`
 - 卡片元資料擷取與保存：`src/app/webpages/metaAutoFill.ts`、`src/app/webpages/WebpagesProvider.tsx`
+- 休眠分頁 meta 擷取補強（背景 reload、不切換焦點）：`src/background/pageMeta.ts`
 - IndexedDB 寫入/讀取與遷移：`src/background/idb/*`
 - 順序保存與跨群組更新：`src/app/webpages/*`、`src/app/dnd/dragContext.ts`
 
@@ -28,8 +30,8 @@
   - `src/background/idb/db.ts`、`src/background/idb/__tests__/migration.organizations.test.ts`
 - 多組織支援：對齊（組織切換與保存）
   - `src/app/sidebar/organizations.tsx`、`src/background/idb/*`
-- 卡片元資料管理：部分（自動擷取與編輯存在，但完整對應情境需再核）
-  - `src/app/webpages/metaAutoFill.ts`、`src/app/webpages/WebpageCard.tsx`
+- 卡片元資料管理：部分（自動擷取與編輯存在；休眠分頁擷取補強、編輯對話框 Note 欄位已修復，但完整情境仍需再核）
+  - `src/app/webpages/metaAutoFill.ts`、`src/app/webpages/TobyLikeCard.tsx`、`src/background/pageMeta.ts`
 - 匯入匯出支援：部分/重疊（功能存在但由 `import-export` 承擔）
   - `src/app/data/exportImport.ts`、`src/app/groups/import/*`
 
@@ -69,10 +71,12 @@
   - `src/app/webpages/*`
   - `src/app/dnd/dragContext.ts`
   - `src/app/groups/__tests__/drag-drop.ui.test.tsx`
+- 多選批次操作（移動/刪除/開新分頁）：`src/app/webpages/CardGrid.tsx`
 
 ### 缺口/疑點
-- 規格的「多張卡片批次拖放」「撤銷拖放」「觸控長按拖放」「離線拖放」未見對應 UI 或邏輯。
-- 規格要求的「拖放效能優化（虛擬化/批次寫入）」未見明確流程或對應註記。
+- 規格的「多張卡片批次拖放」仍未見（目前已有多選批次操作：移動／刪除／開新分頁，但非拖放，詳見 `docs/features/batch-operations.md`）。
+- 「撤銷拖放」「觸控長按拖放」「離線拖放」未見對應 UI 或邏輯。
+- 拖放效能優化：已降低 drop 冗餘重渲染，但「虛擬化/批次寫入」策略仍未見明確流程或對應註記。
 
 ### Requirement 對照（逐條）
 - 卡片拖放排序：對齊
@@ -81,8 +85,8 @@
   - `src/app/webpages/*`、`src/app/sidebar/*`
 - 拖放區域偵測：部分（有高亮/插入視覺，但規格完整性需再核）
   - `src/app/webpages/*`
-- 拖放效能優化：未見（缺少虛擬化/批次寫入明確策略）
-- 多張卡片批次拖放：未見（多選僅用於批次刪除）
+- 拖放效能優化：部分（已降低 drop 冗餘重渲染；虛擬化/批次寫入未見）
+- 多張卡片批次拖放：未見（已有多選批次操作：移動／刪除／開新分頁，但非拖放）
   - `src/app/webpages/WebpageCard.tsx`
 - 撤銷拖放操作：未見
 - 觸控裝置支援：未見
@@ -96,6 +100,7 @@
 - 與 Chrome runtime 連線、tab event 處理、多視窗分組與標籤管理：
   - `src/app/tabs/OpenTabsProvider.tsx`
   - `src/app/tabs/TabsPanel.tsx`
+- onReplaced 事件處理（替換 tab 正確同步）：`src/app/tabs/OpenTabsProvider.tsx`
 
 ### 缺口/疑點
 - 「快速儲存分頁到書籤」「分頁搜尋與過濾」「錯誤處理與權限管理」未見完整 UI/流程。
@@ -112,7 +117,7 @@
 - 分頁搜尋與過濾：未見
 - 效能優化：未見明確措施
 - 視覺化顯示：部分（有 favicon/標籤，但音訊/固定分頁等未見）
-- 錯誤處理與權限管理：未見
+- 錯誤處理與權限管理：部分（事件補強，但 UI/權限說明仍不足）
 
 ---
 
@@ -122,6 +127,7 @@
 - 模板 CRUD、欄位型別、模板使用統計、預設模板：
   - `src/app/templates/TemplatesManager.tsx`
   - `src/app/templates/TemplatesProvider.tsx`
+- 欄位鍵格式驗證：`src/app/templates/TemplatesManager.tsx`
 - 模板資料進入匯出/同步流程：
   - `src/app/data/exportImport.ts`
   - `src/app/data/syncService.ts`
@@ -177,14 +183,15 @@
 ## 7) search（新增）
 
 ### 對齊證據
-- 基礎搜尋 UI 與快捷鍵（Ctrl/Cmd+K）：`src/app/ui/SearchBox.tsx`
+- 基礎搜尋 UI 與快捷鍵（Ctrl/Cmd+K / Ctrl+F / /）：`src/app/ui/SearchBox.tsx`
+- 全螢幕搜尋 modal + Recent Search：`src/app/ui/SearchBox.tsx`
 
 ### 缺口/疑點
-- 「模糊匹配」「過濾」「搜尋歷史」「搜尋建議」「效能虛擬化/取消」未見實作。
-- 現況為簡單 `indexOf` 比對，無歷史或建議資料結構。
+- 「模糊匹配」「過濾」「搜尋建議」「效能虛擬化/取消」未見實作。
+- 現況仍為簡單 `indexOf` 比對；已加入最近搜尋紀錄，但未見模糊/建議資料結構。
 
 ### Requirement 對照（逐條）
-- 全域搜尋介面：部分（有搜尋框與快捷鍵，但缺少獨立搜尋面板設計）
+- 全域搜尋介面：部分（已改為全螢幕 modal + pill 觸發，但缺少獨立面板/進階控制）
   - `src/app/ui/SearchBox.tsx`
 - 即時搜尋：對齊（輸入即更新）
   - `src/app/ui/SearchBox.tsx`
@@ -194,7 +201,7 @@
 - 搜尋過濾：未見
 - 搜尋結果操作：部分（Enter 導航，但快捷鍵/新分頁/快速編輯未見）
   - `src/app/ui/SearchBox.tsx`
-- 搜尋歷史：未見
+- 搜尋歷史：部分（最近 10 筆）
 - 搜尋效能優化：未見
 - 搜尋建議：未見
 

@@ -9,6 +9,8 @@ export default defineConfig({
   plugins: [react()],
   build: {
     target: 'es2019',
+    // Background service worker has no DOM; disable Vite's modulepreload helper.
+    modulePreload: false,
     sourcemap: true,
     minify: false,
     cssCodeSplit: true,

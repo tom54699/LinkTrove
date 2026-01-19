@@ -1,5 +1,6 @@
 // Background Service Worker (Manifest V3)
 import { createTabsManager } from './background/tabsManager';
+import * as pageMeta from './background/pageMeta';
 
 type ClientPort = chrome.runtime.Port;
 const clients = new Set<ClientPort>();
@@ -18,7 +19,6 @@ function tabToPayload(t: any) {
 let started = false;
 const tabsManager = createTabsManager({
   onChange: (evt) => {
-    // Broadcast tab events to connected UI ports
     clients.forEach((p) => {
       try {
         p.postMessage({ kind: 'tab-event', evt });
@@ -35,12 +35,13 @@ async function boot() {
       await tabsManager.start();
       started = true;
 
-      // Initialize pending meta extraction listeners
+      // Safe initialization of meta listeners
       try {
-        const { initPendingExtractionListeners } = await import('./background/pageMeta');
-        initPendingExtractionListeners();
+        if (typeof pageMeta.initPendingExtractionListeners === 'function') {
+          pageMeta.initPendingExtractionListeners();
+        }
       } catch (err) {
-        console.warn('Failed to initialize pending extraction listeners:', err);
+        console.warn('Failed to initialize pageMeta listeners:', err);
       }
     }
   } catch (err) {
@@ -52,20 +53,15 @@ chrome.runtime.onInstalled.addListener(() => {
   boot();
 });
 
-// Some Chromium variants may not support onStartup in SW context; guard
 chrome.runtime.onStartup?.addListener?.(() => {
   boot();
 });
 
-// Handle UI connections for Open Tabs syncing
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== 'openTabs') return;
-  // Ensure listeners are active when a UI connects (SW may have cold-started)
   boot();
   clients.add(port);
 
-  // Handshake: Wait for UI to signal readiness before sending initial snapshot
-  // This prevents race conditions where init message is sent before UI listeners are attached
   port.onMessage.addListener((msg) => {
     if (msg?.kind === 'ready') {
       chrome.windows.getLastFocused?.({ populate: false }, (w) => {
@@ -97,7 +93,6 @@ chrome.runtime.onConnect.addListener((port) => {
   });
 });
 
-// Broadcast window focus changes so UI can switch visible window
 chrome.windows?.onFocusChanged?.addListener?.((windowId) => {
   clients.forEach((p) => {
     try {
@@ -106,7 +101,6 @@ chrome.windows?.onFocusChanged?.addListener?.((windowId) => {
   });
 });
 
-// Broadcast window create/remove so UI can render groups immediately
 chrome.windows?.onCreated?.addListener?.((win) => {
   clients.forEach((p) => {
     try {

@@ -10,36 +10,68 @@
 :root {
   --bg: #282a36;
   --fg: #f8f8f2;
+  --text: var(--fg); /* Alias for mockup compatibility */
   --panel: #343746;
   --card: #51566e;
+  --surface: #44475a; /* Added for settings modal */
+  --border: #44475a; /* Added for settings modal */
   --muted: #6272a4;
   --accent: #ff507a;
   --accent-contrast: #ffffff;
   --accent-hover: #ff507a1a; /* ~10% */
+  
+  /* Success states for settings */
+  --success-bg: rgba(16, 185, 129, 0.2);
+  --success-text: #a7f3d0;
+  --success-border: rgba(4, 120, 87, 0.5);
+
+  /* Input styles */
+  --input-bg: rgba(0, 0, 0, 0.2);
+  --input-border: #6272a4;
 }
 
 /* Dracula theme */
 html.theme-dracula {
   --bg: #282a36;
   --fg: #f8f8f2;
+  --text: var(--fg);
   --panel: #343746;
   --card: #51566e;
+  --surface: #44475a;
+  --border: #44475a;
   --muted: #6272a4;
   --accent: #ff507a;
   --accent-contrast: #ffffff;
   --accent-hover: #ff507a1a;
+  
+  --success-bg: rgba(16, 185, 129, 0.2);
+  --success-text: #a7f3d0;
+  --success-border: rgba(4, 120, 87, 0.5);
+  
+  --input-bg: rgba(0, 0, 0, 0.2);
+  --input-border: #6272a4;
 }
 
 /* Gruvbox (Dark) theme */
 html.theme-gruvbox {
   --bg: #282828;
   --fg: #ebdbb2;
+  --text: var(--fg);
   --panel: #3c3836;
   --card: #504945;
+  --surface: #504945;
+  --border: #504945;
   --muted: #a89984;
   --accent: #ff507a;
   --accent-contrast: #282828;
   --accent-hover: #ff507a1a;
+  
+  --success-bg: rgba(184, 187, 38, 0.2);
+  --success-text: #b8bb26;
+  --success-border: rgba(184, 187, 38, 0.5);
+  
+  --input-bg: rgba(0, 0, 0, 0.2);
+  --input-border: #a89984;
 }
 body {
   background: var(--bg);

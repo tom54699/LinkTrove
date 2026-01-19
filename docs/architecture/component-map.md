@@ -2,7 +2,7 @@
 
 > 本文檔記錄 LinkTrove 主要組件的依賴關係，幫助理解修改影響範圍，防止「改 A 壞 B」
 
-**最後更新：2026-01-08**
+**最後更新：2026-01-19**
 **適用版本：重構後架構（GroupsView.tsx 468 行）**
 
 ---
@@ -32,6 +32,7 @@ graph TD
     J --> O[HTML Template Generation]
     M --> P[Toby JSON Parser]
     N --> Q[Netscape HTML Parser]
+    D --> R[MoveSelectedDialog]
 
     style A fill:#f9f,stroke:#333,stroke-width:4px
     style B fill:#bbf,stroke:#333,stroke-width:2px
@@ -166,7 +167,29 @@ interface UseGroupImportReturn {
 
 ---
 
-### 4. generateHTML.ts（HTML 生成）
+### 4. CardGrid.tsx（卡片格網/拖放/批次操作）
+
+**檔案位置：** `src/app/webpages/CardGrid.tsx`  
+**職責：** 卡片展示、拖放排序/插入、批次操作（移動/刪除/開新分頁）、拖放 ghost 計算
+
+#### 依賴的組件/模組
+
+| 組件/模組 | 用途 | 影響 |
+|----------|------|------|
+| TobyLikeCard | 單卡片 UI 與編輯 | 🔴 高：卡片互動失效 |
+| dragContext | 拖放資料與 ghost 同步 | 🔴 高：拖放/插入位置錯誤 |
+| MoveSelectedDialog | 批次移動對話框 | 🟡 中：批次移動不可用 |
+| useFeedback | Toast 提示 | 🟢 低：無法提示錯誤/成功 |
+
+#### 修改建議
+
+- ✅ **安全修改**：工具列文案、按鈕樣式
+- ⚠️ **謹慎修改**：拖放 ghost 計算、插入位置推算
+- 🔴 **危險修改**：拖放事件流程、批次操作邏輯
+
+---
+
+### 5. generateHTML.ts（HTML 生成）
 
 **檔案位置：** `src/app/groups/share/generateHTML.ts`
 **行數：** ~800 行

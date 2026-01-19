@@ -103,16 +103,57 @@ export function createWebpageService(deps?: {
   async function loadWebpages() {
     // 以 IDB 為準（實際環境資料來源），測試環境也有 fake-indexeddb 支援
     let list: WebpageData[] = await storage.loadFromLocal();
-    // Sort within the same subcategory by its order list; otherwise keep storage order
-    const index = new Map(list.map((w, i) => [w.id, i]));
+    // Sort within the same subcategory by its order list
+    // Keep original storage index for cards without subcategoryId
+    const storageIndex = new Map(list.map((w, i) => [w.id, i]));
     try {
       const groupIds = Array.from(
         new Set((list as any[]).map((w: any) => w.subcategoryId).filter(Boolean))
       ) as string[];
       const orders = await Promise.all(groupIds.map((g) => getGroupOrder(g)));
-      const posMap = new Map<string, Map<string, number>>(
-        groupIds.map((g, i) => [g, new Map(orders[i].map((id, j) => [id, j]))])
-      );
+
+      // Build a map of group -> card IDs actually in that group
+      const cardsByGroup = new Map<string, string[]>();
+      for (const w of list as any[]) {
+        const gid = w.subcategoryId;
+        if (gid) {
+          if (!cardsByGroup.has(gid)) cardsByGroup.set(gid, []);
+          cardsByGroup.get(gid)!.push(w.id);
+        }
+      }
+
+      // Build position maps and auto-repair incomplete orders
+      const posMap = new Map<string, Map<string, number>>();
+      const ordersToRepair: { gid: string; order: string[] }[] = [];
+
+      for (let i = 0; i < groupIds.length; i++) {
+        const gid = groupIds[i];
+        const order = orders[i];
+        const cardsInGroup = cardsByGroup.get(gid) || [];
+        const orderSet = new Set(order);
+
+        // Find cards in group that are missing from order
+        const missingCards = cardsInGroup.filter((id) => !orderSet.has(id));
+
+        if (missingCards.length > 0) {
+          // Repair: append missing cards to the order
+          const repairedOrder = [...order.filter((id) => cardsInGroup.includes(id)), ...missingCards];
+          posMap.set(gid, new Map(repairedOrder.map((id, j) => [id, j])));
+          ordersToRepair.push({ gid, order: repairedOrder });
+        } else {
+          // Clean order: remove IDs that no longer exist in this group
+          const cleanedOrder = order.filter((id) => cardsInGroup.includes(id));
+          posMap.set(gid, new Map(cleanedOrder.map((id, j) => [id, j])));
+          if (cleanedOrder.length !== order.length) {
+            ordersToRepair.push({ gid, order: cleanedOrder });
+          }
+        }
+      }
+
+      // Persist repaired orders asynchronously (don't block sorting)
+      if (ordersToRepair.length > 0) {
+        Promise.all(ordersToRepair.map(({ gid, order }) => setGroupOrder(gid, order))).catch(() => {});
+      }
 
       // Build group order mapping for inter-group sorting
       const groupOrderMap = new Map<string, number>();
@@ -123,13 +164,17 @@ export function createWebpageService(deps?: {
         const gb = b.subcategoryId;
 
         if (ga && gb && ga === gb) {
-          // Same group: use intra-group ordering
+          // Same group: use intra-group ordering from repaired order list
           const pm = posMap.get(ga);
-          const ia = pm?.get(a.id) ?? Number.MAX_SAFE_INTEGER;
-          const ib = pm?.get(b.id) ?? Number.MAX_SAFE_INTEGER;
-          if (ia !== ib) {
+          const ia = pm?.get(a.id);
+          const ib = pm?.get(b.id);
+
+          // Both should exist in order after repair
+          if (ia !== undefined && ib !== undefined) {
             return ia - ib;
           }
+          // Fallback (should rarely happen): use ID comparison for stability
+          return a.id.localeCompare(b.id);
         } else if (ga && gb) {
           // Different groups: use group order
           const groupOrderA = groupOrderMap.get(ga) ?? Number.MAX_SAFE_INTEGER;
@@ -139,10 +184,8 @@ export function createWebpageService(deps?: {
           }
         }
 
-        // Fallback to original storage order
-        const fallbackA = index.get(a.id) ?? 0;
-        const fallbackB = index.get(b.id) ?? 0;
-        return fallbackA - fallbackB;
+        // Fallback for cards without subcategoryId: use storage order
+        return (storageIndex.get(a.id) ?? 0) - (storageIndex.get(b.id) ?? 0);
       });
 
       return sorted;
@@ -351,6 +394,21 @@ export function createWebpageService(deps?: {
       const insertAt = idx === -1 ? filtered.length : idx;
       filtered.splice(insertAt, 0, fromId);
       await setGroupOrder(targetGid, filtered);
+      
+      // Optimization: Return manually sorted list to avoid DB read latency
+      const freshList = await storage.loadFromLocal();
+      // Apply the sort only for the target group
+      freshList.sort((a: any, b: any) => {
+        if (a.subcategoryId === targetGid && b.subcategoryId === targetGid) {
+          const ia = filtered.indexOf(a.id);
+          const ib = filtered.indexOf(b.id);
+          if (ia !== -1 && ib !== -1) return ia - ib;
+          if (ia !== -1) return -1;
+          if (ib !== -1) return 1;
+        }
+        return 0; // maintain relative order for others
+      });
+      return freshList;
     }
 
     return await loadWebpages();
@@ -430,7 +488,25 @@ export function createWebpageService(deps?: {
       }
 
       await setGroupOrder(targetGroupId, base);
-      return await loadWebpages();
+      
+      // Optimization: Manually sort return list to ensure immediate UI feedback
+      const freshList = await storage.loadFromLocal();
+      const sorted = freshList.sort((a: any, b: any) => {
+        const ga = a.subcategoryId;
+        const gb = b.subcategoryId;
+        
+        // If both in target group, use new base order
+        if (ga === targetGroupId && gb === targetGroupId) {
+          const ia = base.indexOf(a.id);
+          const ib = base.indexOf(b.id);
+          if (ia !== -1 && ib !== -1) return ia - ib;
+          if (ia !== -1) return -1; // known items first
+          if (ib !== -1) return 1;
+        }
+        return 0;
+      });
+
+      return sorted;
     } catch (error) {
       // Rollback on error - restore original state
       try {

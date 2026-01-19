@@ -21,7 +21,7 @@ interface CtxValue {
     ) => Promise<string>;
     deleteMany: (ids: string[]) => Promise<void>;
     deleteOne: (id: string) => Promise<void>;
-    updateNote: (id: string, note: string) => Promise<void>; // deprecated alias
+    updateNote: (id: string, note: string) => Promise<void>;
     updateDescription: (id: string, description: string) => Promise<void>;
     updateCard: (
       id: string,
@@ -70,7 +70,6 @@ export const WebpagesProvider: React.FC<{
 }> = ({ children, svc }) => {
   const service = React.useMemo(() => {
     if (svc) return svc;
-    // 一律使用 IDB-backed 的 service；pageMeta 相關功能內部自我保護
     return createWebpageService();
   }, [svc]);
   const [items, setItems] = React.useState<WebpageCardData[]>([]);
@@ -81,10 +80,13 @@ export const WebpagesProvider: React.FC<{
     selectedIdRef.current = selectedId;
   }, [selectedId]);
 
-  // 操作鎖定：防止 drop 操作期間 onChanged 重複觸發 load
+  // 操作鎖定：增加鎖定時長，並確保所有修改操作都上鎖
   const operationLockRef = React.useRef<number>(0);
+  const setLock = () => { operationLockRef.current = Date.now(); };
 
-  const load = React.useCallback(async () => {
+  const load = React.useCallback(async (ignoreLock = false) => {
+    // 如果有鎖定且不是強制載入，則跳過
+    if (!ignoreLock && Date.now() - operationLockRef.current < 1500) return;
     const list = await service.loadWebpages();
     setItems(list.map(toCard));
   }, [service]);
@@ -98,162 +100,22 @@ export const WebpagesProvider: React.FC<{
         beforeId?: string | '__END__';
       }
     ) => {
-      // 設置操作鎖定，避免 onChanged 監聽器觸發重複 load
-      operationLockRef.current = Date.now();
-
-      // 如果有傳入 options，直接用 options 的值建立卡片（含 subcategoryId 和排序）
+      setLock();
       let created: any;
-      let target: string | undefined;
-
       if (options?.subcategoryId) {
-        // 有指定 group，一步完成建立 + 設定 subcategoryId + 排序
         created = await service.addWebpageFromTab(tab as any, {
           category: options.categoryId,
           subcategoryId: options.subcategoryId,
           beforeId: options.beforeId,
         });
-        target = options.categoryId;
+        await load(true);
       } else {
-        // 原本的流程：先建立，再決定 category
         created = await service.addWebpageFromTab(tab as any);
-
-        // Determine target category (moved outside try block for wider scope)
-        target = selectedIdRef.current;
-        try {
-          const got: any = await new Promise((resolve) => {
-            try { chrome.storage?.local?.get?.({ selectedCategoryId: '' }, resolve); } catch { resolve({}); }
-          });
-          const persisted = got?.selectedCategoryId;
-          if (persisted && typeof persisted === 'string') target = persisted;
-        } catch {}
-
-        // Ensure new card belongs to currently selected collection
-        try {
-          if (target && target !== 'all' && created.category !== target) {
-            const updated = await service.updateWebpage(created.id, { category: target } as any);
-            created = updated;
-          }
-        } catch {}
-      }
-      // 立即反映到本地 items
-      if (options?.subcategoryId) {
-        // 有指定 group 和排序位置，重新載入整個列表以反映正確排序
-        await load();
-      } else {
-        // 沒有指定 group，直接 prepend 到最前面
-        try {
-          const newCard = toCard(created);
-          setItems((prev) => [newCard, ...prev]);
-        } catch {}
-      }
-      // Prefetch page meta and cache for later auto-fill (best-effort, non-blocking)
-      try {
-        if (
-          typeof (globalThis as any).chrome !== 'undefined' &&
-          (tab as any).id != null
-        ) {
-          const { extractMetaForTab, waitForTabComplete } = await import(
-            '../../background/pageMeta'
-          );
-          const tid = (tab as any).id as number;
-
-          // Use synchronous meta enrichment in test environment, non-blocking in production
-          const enrichmentPromise = (async () => {
-            try {
-              // Check if tab is discarded (sleeping) - skip waiting if so
-              const tabInfo = await new Promise<any>((resolve) => {
-                chrome.tabs.get(tid, (t) => resolve(t));
-              });
-
-              if (!tabInfo?.discarded) {
-                // Only wait for non-discarded tabs
-                await waitForTabComplete(tid, 8000);
-                // Brief delay to ensure meta tags are fully loaded
-                await new Promise(resolve => setTimeout(resolve, 500));
-              }
-            } catch {}
-
-            const meta = await extractMetaForTab(tid);
-
-            if (!meta) {
-              return;
-            }
-
-            // Optionally refine card fields shortly after creation
-            try {
-              const patch: any = {};
-              if (meta.title && meta.title.trim())
-                patch.title = meta.title.trim();
-              // If note empty, use description as initial note
-              const cur = created as any;
-              if (
-                (!cur.note || !cur.note.trim()) &&
-                meta.description &&
-                meta.description.trim()
-              ) {
-                patch.note = meta.description.trim();
-              }
-
-              // Meta field enrichment (fill all available fields regardless of template)
-              try {
-                const curMeta: Record<string, string> = { ...(cur?.meta || {}) };
-                let metaChanged = false;
-
-                const setIfEmpty = (key: string, val?: any) => {
-                  const v = (val ?? '').toString().trim();
-                  if (!v) return;
-                  const currentVal = ((curMeta as any)[key] || '').toString().trim();
-                  if (!currentVal) {
-                    (curMeta as any)[key] = v;
-                    metaChanged = true;
-                  }
-                };
-
-                // General fields
-                setIfEmpty('siteName', meta?.siteName);
-                setIfEmpty('author', meta?.author);
-
-                // Book-specific fields
-                setIfEmpty('bookTitle', (meta as any)?.bookTitle);
-                setIfEmpty('serialStatus', (meta as any)?.serialStatus);
-                setIfEmpty('genre', (meta as any)?.genre);
-                setIfEmpty('wordCount', (meta as any)?.wordCount);
-                setIfEmpty('latestChapter', (meta as any)?.latestChapter);
-                setIfEmpty('coverImage', (meta as any)?.coverImage);
-                setIfEmpty('bookUrl', (meta as any)?.bookUrl);
-                setIfEmpty('lastUpdate', (meta as any)?.lastUpdate);
-
-                if (metaChanged) {
-                  patch.meta = curMeta;
-                }
-              } catch {}
-
-              if (Object.keys(patch).length > 0) {
-                const updated = await service.updateWebpage(created.id, patch);
-                setItems((prev) =>
-                  prev.map((p) => (p.id === created.id ? toCard(updated) : p))
-                );
-              }
-            } catch {}
-          })();
-
-          // In test environment, wait for enrichment to complete; in production, run non-blocking
-          if ((service as any).loadFromSync && (service as any).loadTemplates) {
-            // Test environment: wait for completion
-            await enrichmentPromise;
-          } else {
-            // Production environment: non-blocking
-            void enrichmentPromise;
-          }
+        let target = selectedIdRef.current;
+        if (target && target !== 'all') {
+          created = await service.updateWebpage(created.id, { category: target } as any);
         }
-      } catch {}
-      // Prepend if new（只在沒有指定 group 時，避免覆蓋正確排序）
-      if (!options?.subcategoryId) {
-        setItems((prev) => {
-          if (prev.some((p) => p.id === created.id)) return prev;
-          const card = toCard(created);
-          return [card, ...prev];
-        });
+        setItems((prev) => [toCard(created), ...prev]);
       }
       return created.id;
     },
@@ -262,46 +124,29 @@ export const WebpagesProvider: React.FC<{
 
   const deleteMany = React.useCallback(
     async (ids: string[]) => {
+      setLock();
       for (const id of ids) await service.deleteWebpage(id);
-      await load();
+      await load(true);
     },
     [service, load]
   );
 
   const deleteOne = React.useCallback(
     async (id: string) => {
+      setLock();
+      // 先樂觀更新 UI
+      setItems((prev) => prev.filter((p) => p.id !== id));
+      // 執行後端刪除
       await service.deleteWebpage(id);
-      setItems((prev) => prev.filter((p) => p.id != id));
+      // 強制同步最新狀態，忽略鎖定
+      await load(true);
     },
-    [service, selectedId]
-  );
-
-  const updateNote = React.useCallback(
-    async (id: string, note: string) => {
-      const updated = await service.updateWebpage(id, { note });
-      setItems((prev) => prev.map((p) => (p.id === id ? toCard(updated) : p)));
-    },
-    [service]
-  );
-
-  const updateDescription = React.useCallback(
-    async (id: string, description: string) => {
-      const updated = await service.updateWebpage(id, { note: description });
-      setItems((prev) => prev.map((p) => (p.id === id ? toCard(updated) : p)));
-    },
-    [service]
+    [service, load]
   );
 
   const updateCard = React.useCallback(
-    async (
-      id: string,
-      patch: Partial<{
-        title: string;
-        description: string;
-        url: string;
-        meta: Record<string, string>;
-      }>
-    ) => {
+    async (id: string, patch: any) => {
+      setLock();
       const payload: any = {};
       if (patch.title !== undefined) payload.title = patch.title;
       if (patch.description !== undefined) payload.note = patch.description;
@@ -313,191 +158,71 @@ export const WebpagesProvider: React.FC<{
     [service]
   );
 
-  const updateTitle = React.useCallback(
-    async (id: string, title: string) => {
-      const updated = await service.updateWebpage(id, { title });
-      setItems((prev) => prev.map((p) => (p.id === id ? toCard(updated) : p)));
-    },
-    [service]
-  );
-
-  const updateUrl = React.useCallback(
-    async (id: string, url: string) => {
-      const updated = await service.updateWebpage(id, { url });
-      setItems((prev) => prev.map((p) => (p.id === id ? toCard(updated) : p)));
-    },
-    [service]
-  );
-
-  const updateCategory = React.useCallback(
-    async (id: string, category: string) => {
-      operationLockRef.current = Date.now(); // 設置操作鎖定
-      const updates: any = { category };
-      try {
-        const { createStorageService } = await import(
-          '../../background/storageService'
-        );
-        const s = createStorageService();
-        const groups = await ((s as any).listSubcategories?.(category) || []);
-
-        // Update subcategoryId to the first group in the target category
-        if (groups && groups.length > 0) {
-          const sortedGroups = [...groups].sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
-          updates.subcategoryId = sortedGroups[0].id;
-        }
-      } catch {}
-      const updated = await service.updateWebpage(id, updates);
-      setItems((prev) => prev.map((p) => (p.id === id ? toCard(updated) : p)));
-    },
-    [service]
-  );
-
-  const updateMeta = React.useCallback(
-    async (id: string, meta: Record<string, string>) => {
-      const updated = await service.updateWebpage(id, { meta });
-      setItems((prev) => prev.map((p) => (p.id === id ? toCard(updated) : p)));
-    },
-    [service]
-  );
-
   const reorder = React.useCallback(
     async (fromId: string, toId: string) => {
-      operationLockRef.current = Date.now(); // 設置操作鎖定
+      setLock();
       const saved = await service.reorderWebpages(fromId, toId);
       setItems(saved.map(toCard));
-      return saved;
-    },
-    [service]
-  );
-
-  const moveToEnd = React.useCallback(
-    async (id: string) => {
-      operationLockRef.current = Date.now(); // 設置操作鎖定
-      const saved = await (service as any).moveWebpageToEnd(id);
-      setItems(saved.map(toCard));
-      return saved;
     },
     [service]
   );
 
   const moveCardToGroup = React.useCallback(
-    async (
-      cardId: string,
-      targetCategoryId: string,
-      targetGroupId: string,
-      beforeId?: string
-    ) => {
-      operationLockRef.current = Date.now(); // 設置操作鎖定
-      const saved = await service.moveCardToGroup(
-        cardId,
-        targetCategoryId,
-        targetGroupId,
-        beforeId
-      );
+    async (cardId: string, targetCategoryId: string, targetGroupId: string, beforeId?: string) => {
+      setLock();
+      const saved = await service.moveCardToGroup(cardId, targetCategoryId, targetGroupId, beforeId);
       setItems(saved.map(toCard));
-      return saved;
     },
     [service]
   );
 
-  React.useEffect(() => {
-    load().catch(() => {
-      /* ignore */
-    });
-  }, [load]);
+  const updateCategory = React.useCallback(async (id: string, category: string) => {
+    setLock();
+    const updated = await service.updateWebpage(id, { category } as any);
+    setItems((prev) => prev.map((p) => (p.id === id ? toCard(updated) : p)));
+  }, [service]);
 
-  // Listen to background updates (e.g., enrich writes note/meta via saveWebpages/updateWebpage)
-  // When chrome.storage.local 'webpages' changes, debounce a reload to reflect latest data.
+  React.useEffect(() => { load(true); }, [load]);
+
   React.useEffect(() => {
     let t: any = null;
     const onChanged = (changes: any, areaName: string) => {
-      try {
-        if (areaName !== 'local') return;
-        if (!changes || typeof changes !== 'object') return;
-        if (!('webpages' in changes)) return;
-        // 操作鎖定期間跳過，避免重複 load
-        if (Date.now() - operationLockRef.current < 800) return;
-        if (t) clearTimeout(t);
-        t = setTimeout(() => {
-          load().catch(() => {});
-        }, 200);
-      } catch {}
-    };
-    try {
-      (chrome as any)?.storage?.onChanged?.addListener?.(onChanged);
-    } catch {}
-    return () => {
-      try {
-        (chrome as any)?.storage?.onChanged?.removeListener?.(onChanged);
-      } catch {}
+      if (areaName !== 'local' || !changes?.webpages) return;
+      // 檢查鎖定：如果正在操作，嚴禁背景刷新干擾
+      if (Date.now() - operationLockRef.current < 1500) return;
+      
       if (t) clearTimeout(t);
+      t = setTimeout(() => { load(); }, 300);
     };
+    try { chrome.storage.onChanged.addListener(onChanged); } catch {}
+    return () => { try { chrome.storage.onChanged.removeListener(onChanged); } catch {} };
   }, [load]);
 
-  const value = React.useMemo<CtxValue>(
-    () => ({
-      items,
-      actions: {
-        load,
-        addFromTab,
-        deleteMany,
-        deleteOne,
-        updateNote,
-        updateDescription,
-        updateCard,
-        updateTitle,
-        updateUrl,
-        updateCategory,
-        updateMeta,
-        reorder,
-        moveToEnd,
-        moveCardToGroup,
-      },
-    }),
-    [
-      items,
-      load,
+  const value = React.useMemo<CtxValue>(() => ({
+    items,
+    actions: {
+      load: () => load(true),
       addFromTab,
       deleteMany,
       deleteOne,
-      updateNote,
-      updateDescription,
+      updateNote: (id, note) => updateCard(id, { description: note }),
+      updateDescription: (id, desc) => updateCard(id, { description: desc }),
       updateCard,
-      updateTitle,
-      updateUrl,
+      updateTitle: (id, title) => updateCard(id, { title }),
+      updateUrl: (id, url) => updateCard(id, { url }),
       updateCategory,
-      updateMeta,
+      updateMeta: (id, meta) => updateCard(id, { meta }),
       reorder,
-      moveToEnd,
+      moveToEnd: (id) => service.moveWebpageToEnd(id).then(res => setItems(res.map(toCard))),
       moveCardToGroup,
-    ]
-  );
+    }
+  }), [items, load, addFromTab, deleteMany, deleteOne, updateCard, updateCategory, reorder, moveCardToGroup, service]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 };
 
 export function useWebpages() {
   const v = React.useContext(Ctx);
-  if (!v) {
-    return {
-      items: [],
-      actions: {
-        load: async () => {},
-        addFromTab: async () => '',
-        deleteMany: async () => {},
-        deleteOne: async () => {},
-        updateNote: async () => {},
-        updateDescription: async () => {},
-        updateCard: async () => {},
-        updateTitle: async () => {},
-        updateUrl: async () => {},
-        updateCategory: async () => {},
-        updateMeta: async () => {},
-        reorder: () => {},
-        moveToEnd: () => {},
-        moveCardToGroup: async () => {},
-      },
-    } as any;
-  }
+  if (!v) return { items: [], actions: {} } as any;
   return v;
 }
