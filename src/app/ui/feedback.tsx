@@ -53,15 +53,31 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`rounded border px-3 py-2 text-sm shadow ${
+            style={{ animation: 'toast-slide-in 0.2s ease-out' }}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm shadow-lg backdrop-blur-sm ${
               t.kind === 'success'
-                ? 'border-emerald-500 bg-emerald-950/30'
+                ? 'bg-emerald-900/90 text-emerald-100 border border-emerald-700/50'
                 : t.kind === 'error'
-                  ? 'border-red-600 bg-red-950/30'
-                  : 'border-slate-700 bg-slate-900'
+                  ? 'bg-red-900/90 text-red-100 border border-red-700/50'
+                  : 'bg-slate-800/90 text-slate-100 border border-slate-600/50'
             }`}
           >
-            {t.message}
+            {t.kind === 'success' && (
+              <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+            {t.kind === 'error' && (
+              <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+            {t.kind === 'info' && (
+              <svg className="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
+            <span>{t.message}</span>
           </div>
         ))}
       </div>

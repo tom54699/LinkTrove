@@ -272,7 +272,6 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
         // Drop Existing Card -> Move to End of Group
         await actions.moveCardToGroup(fromId, g.categoryId, g.id, '__END__');
         try { broadcastGhostActive(null); } catch {}
-        showToast('已移動到 group', 'success');
         return;
       }
 
@@ -495,7 +494,6 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                     try {
                       await actions.moveCardToGroup(cardId, g.categoryId, g.id, beforeId);
                       try { broadcastGhostActive(null); } catch {}
-                      showToast('已移動到 group', 'success');
                     } catch {
                       try { broadcastGhostActive(null); } catch {}
                       showToast('移動失敗', 'error');
