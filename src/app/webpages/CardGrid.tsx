@@ -297,6 +297,28 @@ export const CardGrid: React.FC<CardGridProps> = ({
     };
   }, []);
 
+  // 監聽全局 ghost 清理事件（當 setDragWebpage(null) 被調用時觸發）
+  // 這確保跨 Group 拖曳結束時，所有 CardGrid 實例都能清理 ghost 狀態
+  React.useEffect(() => {
+    const onGhostClear = () => {
+      setGhostTab(null);
+      setGhostType(null);
+      setGhostIndex(null);
+      setIsOver(false);
+      setDraggingCardId(null);
+      ghostBeforeRef.current = null;
+      prevGiRef.current = null;
+      if (dragLeaveTimeoutRef.current) {
+        clearTimeout(dragLeaveTimeoutRef.current);
+        dragLeaveTimeoutRef.current = null;
+      }
+    };
+    try { window.addEventListener('lt:ghost-clear', onGhostClear); } catch {}
+    return () => {
+      try { window.removeEventListener('lt:ghost-clear', onGhostClear); } catch {}
+    };
+  }, []);
+
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     try { e.dataTransfer.dropEffect = 'move'; } catch {}
@@ -492,11 +514,14 @@ export const CardGrid: React.FC<CardGridProps> = ({
           await onDropExistingCard?.(fromId, beforeId);
         } finally {
           // Cleanup - 確保 ghost 一定會清理，即使 async 拋異常
+          // 重要：跨 group 拖曳時，原卡片 DOM 會被移除，onDragEnd 不會觸發
+          // 所以必須在這裡直接調用 setDragWebpage(null) 來觸發全局清理
           setGhostTab(null); setGhostType(null); setGhostIndex(null); setDraggingCardId(null);
           ghostBeforeRef.current = null;
           prevGiRef.current = null;
           setIsOver(false);
           try { broadcastGhostActive(null); } catch {}
+          try { setDragWebpage(null); } catch {}  // 觸發 lt:ghost-clear 廣播
         }
         return;
       }
@@ -543,6 +568,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
         prevGiRef.current = null;
         setIsOver(false);
         try { broadcastGhostActive(null); } catch {}
+        try { setDragWebpage(null); } catch {}  // 觸發 lt:ghost-clear 廣播
         return;
       }
     } catch {
@@ -553,6 +579,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
     prevGiRef.current = null;
     setIsOver(false);
     try { broadcastGhostActive(null); } catch {}
+    try { setDragWebpage(null); } catch {}  // 觸發 lt:ghost-clear 廣播
   };
 
   return (

@@ -28,6 +28,12 @@ let currentWebpage: DragWebpage | null = null;
 
 export function setDragWebpage(card: DragWebpage | null) {
   currentWebpage = card;
+  // 當拖曳結束時（card 為 null），廣播清理事件給所有 CardGrid 實例
+  if (card === null) {
+    try {
+      window.dispatchEvent(new CustomEvent('lt:ghost-clear'));
+    } catch {}
+  }
 }
 
 export function getDragWebpage(): DragWebpage | null {
