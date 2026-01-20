@@ -55,87 +55,6 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
           </nav>
           <div className="mt-auto px-5 py-2 text-[10px] text-[var(--muted)] opacity-50 flex justify-between items-center">
             <span>Version 0.1.0</span>
-            <button 
-              className="hover:text-[var(--fg)] cursor-pointer" 
-              title="Run DB Integrity Check"
-              onClick={async () => {
-                console.log('Running DB Integrity Check...');
-                try {
-                  const { createStorageService } = await import('../../background/storageService');
-                  const s = createStorageService();
-                  const pages = await (s as any).loadFromLocal(); // only active
-                  const allPages = await (s as any).exportData().then((j: string) => JSON.parse(j).webpages); // all including deleted
-                  const groups = await (s as any).listSubcategories?.('all') || []; // assuming this lists all if impl supports it, or we iterate cats
-                  // Actually, let's just dump the raw meta orders
-                  const exportJson = await s.exportData();
-                  const data = JSON.parse(exportJson);
-                  
-                  const report: any = {
-                    totalWebpages: allPages.length,
-                    activeWebpages: pages.length,
-                    deletedWebpages: allPages.length - pages.length,
-                    orphanedInOrder: [],
-                    missingFromOrder: [],
-                    duplicatesInOrder: [],
-                  };
-
-                  const activeIds = new Set(pages.map((p: any) => p.id));
-                  const allIds = new Set(allPages.map((p: any) => p.id));
-                  const orderedIds = new Set<string>();
-
-                  if (data.orders?.subcategories) {
-                    for (const [gid, ids] of Object.entries(data.orders.subcategories)) {
-                      const idList = ids as string[];
-                      const unique = new Set(idList);
-                      if (unique.size !== idList.length) {
-                        report.duplicatesInOrder.push({ groupId: gid, ids: idList });
-                      }
-                      for (const id of idList) {
-                        orderedIds.add(id);
-                        if (!activeIds.has(id)) {
-                          const isDeleted = allIds.has(id); // exists but deleted
-                          report.orphanedInOrder.push({ groupId: gid, cardId: id, status: isDeleted ? 'deleted' : 'missing' });
-                        }
-                      }
-                    }
-                  }
-                  
-                  // Check active pages not in any order (if they have a group)
-                  for (const p of pages) {
-                    if (p.subcategoryId) {
-                      const key = `order.subcat.${p.subcategoryId}`;
-                      let currentOrder = (data.orders?.subcategories?.[p.subcategoryId] || []) as string[];
-                      
-                      if (!currentOrder.includes(p.id)) {
-                        report.missingFromOrder.push({ cardId: p.id, groupId: p.subcategoryId });
-                        // Auto-fix: Append to order
-                        currentOrder.push(p.id);
-                        await (s as any).setGroupOrder?.(p.subcategoryId, currentOrder);
-                        // Also update raw data for report consistency if needed, but s.setGroupOrder handles DB
-                      }
-                    }
-                  }
-
-                  if (report.missingFromOrder.length > 0) {
-                    console.log('⚡️ Auto-fixed missing orders for', report.missingFromOrder.length, 'cards.');
-                    alert(`診斷發現 ${report.missingFromOrder.length} 張卡片排序遺失，已自動修復！請重整頁面。`);
-                  } else {
-                    alert('診斷報告已輸出至 Console (F12)。資料庫結構看起來很健康。');
-                  }
-
-                  console.log('=== DB INTEGRITY REPORT ===');
-                  console.log(JSON.stringify(report, null, 2));
-                  console.log('=== FULL RAW DATA DUMP (COPY THIS) ===');
-                  console.log(JSON.stringify(data, null, 2));
-                  alert('完整資料已輸出至 Console (F12)。請複製 "FULL RAW DATA DUMP" 下方的內容。');
-                } catch (e) {
-                  console.error('Debug failed:', e);
-                  alert('診斷失敗');
-                }
-              }}
-            >
-              🐞
-            </button>
           </div>
         </aside>
 
@@ -167,6 +86,8 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
 
 const DataPanel: React.FC = () => {
   const { showToast, setLoading } = useFeedback();
+  // useWebpages/useCategories not needed for logic but good for deps? 
+  // Actually we force reload via window.location.reload so we don't need them
   const svc = React.useMemo(() => createExportImportService({ storage: createStorageService() }), []);
   const [file, setFile] = React.useState<File | null>(null);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
@@ -179,8 +100,12 @@ const DataPanel: React.FC = () => {
       const text = await (file as File).text();
       const storage = createStorageService();
       await (storage as any).importData(text);
-      setInlineMsg({ kind: 'success', text: '匯入成功' });
+      
+      setInlineMsg({ kind: 'success', text: '匯入成功，正在重新載入...' });
       showToast('Import success', 'success');
+      
+      // Force full reload to ensure clean state after full replacement
+      setTimeout(() => window.location.reload(), 800);
     } catch (e: any) {
       const msg = e?.message || 'Import failed';
       setInlineMsg({ kind: 'error', text: msg });
@@ -235,7 +160,8 @@ const DataPanel: React.FC = () => {
             if (f) setFile(f);
           }}
           onClick={() => {
-            if (!file) document.getElementById('import-json-file-modal')?.click();
+            // Always open file dialog on click to allow re-selection
+            document.getElementById('import-json-file-modal')?.click();
           }}
         >
           <div className="flex items-center gap-3">
@@ -261,6 +187,7 @@ const DataPanel: React.FC = () => {
             onChange={(e) => {
               const f = e.currentTarget.files?.[0] ?? null;
               if (f) setFile(f);
+              e.currentTarget.value = ''; // Reset to allow re-selecting same file
             }}
           />
         </div>
@@ -295,6 +222,9 @@ const DataPanel: React.FC = () => {
 };
 
 const CloudSyncPanel: React.FC = () => {
+  // ... (keep CloudSyncPanel as is, it was fine)
+  // To save space in this response, I'll assume the rest of the file remains unchanged as per previous writes.
+  // But wait, write_file overwrites the WHOLE file. I need to include CloudSyncPanel.
   const { actions: pagesActions } = useWebpages();
   const { actions: catActions } = useCategories() as any;
   const { actions: tplActions } = useTemplates();

@@ -34,16 +34,19 @@ export const TemplatesManager: React.FC = () => {
             <h2 className="text-[18px] font-bold mb-1 text-[var(--fg)]">Templates 模板管理</h2>
             <p className="text-[13px] text-[var(--muted)] mb-0">管理書籤卡片的欄位模板，定義資料結構。</p>
           </div>
-          <div className="text-[12px] text-[var(--muted)] px-3 py-1 bg-black/40 rounded-full border border-[var(--border)]">
+          <div className="text-[12px] text-[var(--muted)] px-3 py-1 bg-black/20 rounded-full border border-[var(--border)]">
             {templates.length} 個模板
           </div>
         </div>
 
-        {/* Add Template Section */}
-        <div className="bg-black/20 border border-[var(--border)] rounded-xl p-5 mb-6 shadow-inner">
+        {/* Add Template Section - Gradient Background per Mockup */}
+        <div className="bg-gradient-to-r from-[#181c2266] to-[#282a3666] border border-[var(--border)] rounded-xl p-5 mb-6">
           <div className="flex gap-3 mb-4">
-            <div className="w-9 h-9 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center text-[var(--accent)] shrink-0 border border-[var(--accent)]/20">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            <div 
+              style={{ background: 'rgba(255, 80, 122, 0.1)' }}
+              className="w-[36px] h-[36px] rounded-[8px] flex items-center justify-center text-[var(--accent)] shrink-0 text-lg font-bold"
+            >
+              <span>＋</span>
             </div>
             <div>
               <div className="font-semibold text-[14px] text-[var(--fg)]">建立新模板</div>
@@ -51,16 +54,16 @@ export const TemplatesManager: React.FC = () => {
             </div>
           </div>
           <div className="flex gap-2.5 mb-4">
-            <input type="text" className="flex-1 bg-black/40 border border-[var(--border)] text-[var(--fg)] px-3 py-2 rounded-lg text-[13px] outline-none focus:border-[var(--accent)] transition-all placeholder:text-[var(--muted)]/30" placeholder="模板名稱 (例如：文章)" value={name} onChange={(e) => setName(e.target.value)} />
+            <input type="text" className="flex-1 bg-[var(--input-bg)] border border-[var(--border)] text-[var(--fg)] px-3 py-2 rounded-lg text-[13px] outline-none focus:border-[var(--accent)] transition-all placeholder:text-[var(--muted)]/50" placeholder="模板名稱 (例如：文章)" value={name} onChange={(e) => setName(e.target.value)} />
             <button className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-[13px] font-bold hover:brightness-110 active:scale-95 shadow-sm cursor-pointer transition-all" onClick={async () => {
               if (!name.trim()) return;
               if (templates.some(t => t.name === name.trim())) { setModal({ title: '名稱已存在', content: '已存在同名模板。' }); return; }
               await actions.add(name.trim()); setName(''); showToast('建立成功', 'success');
             }}>建立</button>
           </div>
-          <div className="border-t border-[var(--border)] pt-3 flex gap-2.5 items-center">
+          <div className="border-t border-white/5 pt-3 flex gap-2.5 items-center">
             <span className="text-[12px] text-[var(--muted)] opacity-60">預設:</span>
-            <button className="text-[12px] px-2.5 py-1 rounded border border-[var(--border)] text-[var(--muted)] bg-transparent hover:bg-black/40 hover:text-[var(--fg)] cursor-pointer transition-all" onClick={async () => {
+            <button className="text-[12px] px-2.5 py-1 rounded border border-[var(--border)] text-[var(--muted)] bg-transparent hover:bg-white/5 hover:text-[var(--fg)] cursor-pointer transition-all" onClick={async () => {
               const res = await actions.add('書籍模板');
               if (res?.id) await actions.addFields(res.id, [
                 { key: 'bookTitle', label: '書名', type: 'text' }, { key: 'author', label: '作者', type: 'text' },
@@ -69,7 +72,7 @@ export const TemplatesManager: React.FC = () => {
               ]);
               showToast('建立成功', 'success');
             }}>📚 書籍</button>
-            <button className="text-[12px] px-2.5 py-1 rounded border border-[var(--border)] text-[var(--muted)] bg-transparent hover:bg-black/40 hover:text-[var(--fg)] cursor-pointer transition-all" onClick={async () => {
+            <button className="text-[12px] px-2.5 py-1 rounded border border-[var(--border)] text-[var(--muted)] bg-transparent hover:bg-white/5 hover:text-[var(--fg)] cursor-pointer transition-all" onClick={async () => {
               const res = await actions.add('工具模板');
               if (res?.id) await actions.addFields(res.id, [
                 { key: 'platform', label: '平台', type: 'select', options: ['Web', 'PC'] },
@@ -84,13 +87,15 @@ export const TemplatesManager: React.FC = () => {
         <div className="space-y-3">
           {templates.map((t) => {
             const isOpen = !!expanded[t.id];
+            // Style: var(--surface) background for card, dark overlay for header/body
             return (
-              <div key={t.id} className={`rounded-xl border transition-all overflow-hidden ${isOpen ? 'border-[var(--muted)] bg-black/30 shadow-xl' : 'border-[var(--border)] bg-black/10 hover:border-[var(--muted)]/40'}`}>
-                <div className={`p-3 pl-4 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] ${isOpen ? 'border-b border-[var(--border)] bg-black/20' : ''}`} onClick={() => setExpanded(prev => ({ ...prev, [t.id]: !prev[t.id] }))}>
+              <div key={t.id} className={`rounded-xl border transition-all overflow-hidden bg-[var(--surface)] ${isOpen ? 'border-[var(--muted)] shadow-xl' : 'border-[var(--border)] hover:border-[var(--muted)]/40'}`}>
+                {/* Header: Dark overlay (bg-black/10) */}
+                <div className={`p-3 pl-4 flex items-center justify-between cursor-pointer hover:bg-black/20 bg-black/10 ${isOpen ? 'border-b border-[var(--border)]' : ''}`} onClick={() => setExpanded(prev => ({ ...prev, [t.id]: !prev[t.id] }))}>
                   <div className="flex items-center gap-3">
                     <span className={`text-[var(--muted)] text-[10px] transition-transform ${isOpen ? 'rotate-0' : '-rotate-90'}`}>▼</span>
                     <span className="font-semibold text-[14px] text-[var(--fg)]">{t.name}</span>
-                    <span className="text-[11px] px-1.5 py-0.5 rounded bg-black/40 text-[var(--muted)] border border-[var(--border)]">{(t.fields || []).length} 欄位</span>
+                    <span className="text-[11px] px-1.5 py-0.5 rounded bg-black/20 text-[var(--muted)] border border-[var(--border)]">{(t.fields || []).length} 欄位</span>
                     {usageMap[t.id] > 0 && <span className="text-[11px] px-1.5 py-0.5 rounded bg-[var(--success-bg)] text-[var(--success-text)] border border-[var(--success-border)]">Used: {usageMap[t.id]}</span>}
                   </div>
                   <div onClick={e => e.stopPropagation()}>
@@ -102,7 +107,8 @@ export const TemplatesManager: React.FC = () => {
                   </div>
                 </div>
                 {isOpen && (
-                  <div className="p-4 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                  // Body: Dark overlay (bg-black/10)
+                  <div className="p-4 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200 bg-black/10">
                     <div className="grid grid-cols-[30px_2fr_2fr_1.5fr_60px_60px] gap-2.5 px-2 text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">
                       <div></div><div>KEY</div><div>LABEL</div><div>TYPE</div><div className="text-center">REQ</div><div className="text-center">ACT</div>
                     </div>
@@ -118,20 +124,20 @@ export const TemplatesManager: React.FC = () => {
                         </div>
                       ))}
                     </div>
-                    <div className="mt-4 bg-black/20 border border-[var(--border)] rounded-lg p-4 shadow-inner">
+                    <div className="mt-4 bg-[var(--bg)]/50 border border-[var(--border)] rounded-lg p-4">
                       <div className="text-[12px] font-bold text-[var(--fg)] mb-3 opacity-80">新增欄位</div>
                       <div className="grid grid-cols-[2fr_2fr_1.5fr_auto] gap-2.5 items-end">
                         <div>
                           <div className="text-[10px] text-[var(--muted)] mb-1">KEY</div>
-                          <input className="w-full bg-black/20 border border-[var(--border)] rounded px-2 py-1.5 text-[13px] text-[var(--fg)] outline-none focus:border-[var(--accent)]" placeholder="e.g. price" value={newField[t.id]?.key || ''} onChange={e => setNewField({ ...newField, [t.id]: { ...(newField[t.id] || {}), key: e.target.value } })} />
+                          <input className="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded px-2 py-1.5 text-[13px] text-[var(--fg)] outline-none focus:border-[var(--accent)]" placeholder="e.g. price" value={newField[t.id]?.key || ''} onChange={e => setNewField({ ...newField, [t.id]: { ...(newField[t.id] || {}), key: e.target.value } })} />
                         </div>
                         <div>
                           <div className="text-[10px] text-[var(--muted)] mb-1">LABEL</div>
-                          <input className="w-full bg-black/20 border border-[var(--border)] rounded px-2 py-1.5 text-[13px] text-[var(--fg)] outline-none focus:border-[var(--accent)]" placeholder="顯示名稱" value={newField[t.id]?.label || ''} onChange={e => setNewField({ ...newField, [t.id]: { ...(newField[t.id] || {}), label: e.target.value } })} />
+                          <input className="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded px-2 py-1.5 text-[13px] text-[var(--fg)] outline-none focus:border-[var(--accent)]" placeholder="顯示名稱" value={newField[t.id]?.label || ''} onChange={e => setNewField({ ...newField, [t.id]: { ...(newField[t.id] || {}), label: e.target.value } })} />
                         </div>
                         <div>
                           <div className="text-[10px] text-[var(--muted)] mb-1">TYPE</div>
-                          <select className="w-full bg-black/20 border border-[var(--border)] rounded px-2 py-1.5 text-[13px] text-[var(--fg)] outline-none focus:border-[var(--accent)]" value={newField[t.id]?.type || 'text'} onChange={e => setNewField({ ...newField, [t.id]: { ...(newField[t.id] || {}), type: e.target.value } })}>
+                          <select className="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded px-2 py-1.5 text-[13px] text-[var(--fg)] outline-none focus:border-[var(--accent)]" value={newField[t.id]?.type || 'text'} onChange={e => setNewField({ ...newField, [t.id]: { ...(newField[t.id] || {}), type: e.target.value } })}>
                             {['text', 'number', 'date', 'url', 'select', 'rating', 'tags'].map(opt => <option key={opt} value={opt} className="bg-[var(--panel)]">{opt}</option>)}
                           </select>
                         </div>

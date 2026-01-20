@@ -452,34 +452,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
           }
         } catch {}
         
-        console.log(`[CardGrid] Drop Logic Start. FromId: ${fromId}`);
-        if (!beforeId) {
-          try {
-            const zone = zoneRef.current;
-            const ghostIndicator = zone?.querySelector('[data-testid="ghost-card"]');
-            const ghostWrapper = ghostIndicator?.closest('.toby-card-flex');
-            console.log(`[CardGrid] Ghost Wrapper found? ${!!ghostWrapper}`);
-            
-            if (ghostWrapper) {
-               let next = ghostWrapper.nextElementSibling as HTMLElement | null;
-               while (next && (
-                 !next.getAttribute('data-card-id') || 
-                 next.getAttribute('data-hidden') === 'true'
-               )) {
-                 next = next.nextElementSibling as HTMLElement | null;
-               }
-               beforeId = next?.getAttribute('data-card-id') || '__END__';
-               console.log(`[CardGrid] Calculated beforeId from DOM: ${beforeId}`);
-            }
-          } catch (e) {
-            console.error('[CardGrid] DOM calculation failed', e);
-          }
-        }
-        
-        if (!beforeId) {
-          beforeId = ghostBeforeRef.current;
-          console.log(`[CardGrid] Fallback to ghostBeforeRef: ${beforeId}`);
-        }
+        if (!beforeId) beforeId = ghostBeforeRef.current;
         
         // Fallback calculation if DOM lookups fail
         if (!beforeId) {
@@ -489,10 +462,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
           const list = hiddenCardId ? items.filter((x) => x.id !== hiddenCardId) : items;
           if (idx == null) idx = list.length;
           beforeId = idx >= list.length ? '__END__' : list[idx].id;
-          console.log(`[CardGrid] Final Fallback Calc: idx=${idx}, listLen=${list.length}, beforeId=${beforeId}`);
         }
-        
-        console.log(`[CardGrid] Final Decision: Drop Existing: ${fromId}, Before: ${beforeId}`);
         
         try {
           await onDropExistingCard?.(fromId, beforeId);

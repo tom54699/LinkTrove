@@ -374,8 +374,9 @@ export function createIdbStorageService(): StorageService {
   }
 
   return {
-    // naming preserved for compatibility; use putAll (upsert) to preserve tombstones not in current set
+    // naming preserved for compatibility; replace full set to persist deletions
     saveToLocal: async (data: WebpageData[]) => {
+      await clearStore('webpages');
       await putAll('webpages', data || []);
     },
     loadFromLocal: async () => {
