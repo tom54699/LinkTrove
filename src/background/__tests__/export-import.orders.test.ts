@@ -56,5 +56,23 @@ describe('Export/Import includes per-group orders', () => {
     // Exact order match
     expect(g1Ids).toEqual(['b', 'a', 'c']);
   });
-});
 
+  it('exports empty orders for groups without cards', async () => {
+    const { createStorageService } = await import('../storageService');
+    const s = createStorageService();
+
+    await s.saveToSync([{ id: 'c1', name: 'C1', color: '#888', order: 0 }] as any);
+    const g1 = await (s as any).createSubcategory('c1', 'G1');
+    const g2 = await (s as any).createSubcategory('c1', 'G2');
+    await s.saveToLocal([
+      { id: 'a', title: 'A', url: 'https://a', favicon: '', note: '', category: 'c1', subcategoryId: g1.id, createdAt: nowIso(), updatedAt: nowIso() },
+    ] as any);
+
+    const json = await s.exportData();
+    const data = JSON.parse(json);
+    expect(data.orders && data.orders.subcategories).toBeTruthy();
+    expect(Array.isArray(data.orders.subcategories[g1.id])).toBe(true);
+    expect(Array.isArray(data.orders.subcategories[g2.id])).toBe(true);
+    expect(data.orders.subcategories[g2.id]).toEqual([]);
+  });
+});

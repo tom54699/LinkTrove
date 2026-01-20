@@ -5,6 +5,7 @@ import type {
   StorageService,
 } from '../storageService';
 import { getAll, putAll, setMeta, getMeta, clearStore, tx } from './db';
+import { areOrdersEqual, normalizeGroupOrder } from '../../utils/order-utils';
 
 // Entity limits for UI layout constraints
 export const ENTITY_LIMITS = {
@@ -223,6 +224,51 @@ export function createIdbStorageService(): StorageService {
     try { await setMeta('migratedSubcategoriesV1', true); } catch {}
   }
 
+  async function buildNormalizedOrders(options?: {
+    pages?: WebpageData[];
+    subcategories?: any[];
+    baseOrders?: Record<string, string[]>;
+    persist?: boolean;
+  }): Promise<Record<string, string[]>> {
+    const pages = options?.pages ?? ((await getAll('webpages')) as WebpageData[]);
+    const subcategories =
+      options?.subcategories ??
+      ((await getAll('subcategories' as any).catch(() => [])) as any[]);
+    const baseOrders = options?.baseOrders || {};
+    const persist = !!options?.persist;
+
+    const byGroup = new Map<string, WebpageData[]>();
+    for (const p of pages as any[]) {
+      if ((p as any)?.deleted) continue;
+      const gid = (p as any).subcategoryId as string | undefined;
+      if (!gid) continue;
+      if (!byGroup.has(gid)) byGroup.set(gid, []);
+      byGroup.get(gid)!.push(p as any);
+    }
+
+    const orders: Record<string, string[]> = {};
+    for (const sc of subcategories as any[]) {
+      const gid = sc?.id as string | undefined;
+      if (!gid) continue;
+      const items = byGroup.get(gid) || [];
+      let base: string[] = [];
+      if (gid in baseOrders) {
+        base = Array.isArray(baseOrders[gid]) ? baseOrders[gid] : [];
+      } else {
+        const stored = await getMeta<string[]>(`order.subcat.${gid}`);
+        base = Array.isArray(stored) ? stored : [];
+      }
+      const normalized = normalizeGroupOrder(items, base);
+      orders[gid] = normalized;
+      if (persist && !areOrdersEqual(base, normalized)) {
+        try {
+          await setMeta(`order.subcat.${gid}`, normalized);
+        } catch {}
+      }
+    }
+    return orders;
+  }
+
   async function exportData(): Promise<string> {
     const [webpages, categories, templates, subcategories, organizations] = await Promise.all([
       getAll('webpages'),
@@ -278,15 +324,14 @@ export function createIdbStorageService(): StorageService {
     if (selectedOrganizationId !== undefined)
       settings.selectedOrganizationId = selectedOrganizationId;
     // Export per-group orders
-    const orders: { subcategories: Record<string, string[]> } = { subcategories: {} };
+    let orders: { subcategories: Record<string, string[]> } = { subcategories: {} };
     try {
-      for (const sc of (subcategories as any[])) {
-        const key = `order.subcat.${sc.id}`;
-        try {
-          const vals = (await getMeta<string[]>(key)) || [];
-          if (Array.isArray(vals) && vals.length > 0) orders.subcategories[sc.id] = vals.slice();
-        } catch {}
-      }
+      const normalized = await buildNormalizedOrders({
+        pages: webpages as WebpageData[],
+        subcategories: subcategories as any[],
+        persist: false,
+      });
+      orders = { subcategories: normalized };
     } catch {}
 
     const payload = {
@@ -371,6 +416,22 @@ export function createIdbStorageService(): StorageService {
         } catch {}
       }
     } catch {}
+    try {
+      const baseOrders: Record<string, string[]> = {};
+      for (const sc of subcats as any[]) {
+        const gid = sc?.id as string | undefined;
+        if (!gid) continue;
+        baseOrders[gid] = Array.isArray(ordersSubcats[gid])
+          ? (ordersSubcats[gid] as string[])
+          : [];
+      }
+      await buildNormalizedOrders({
+        pages,
+        subcategories: subcats,
+        baseOrders,
+        persist: true,
+      });
+    } catch {}
   }
 
   return {
@@ -406,6 +467,9 @@ export function createIdbStorageService(): StorageService {
     },
     exportData,
     importData,
+    normalizeOrderMeta: async () => {
+      await buildNormalizedOrders({ persist: true });
+    },
     // Subcategories (groups)
     listSubcategories: async (categoryId: string) => listSubcategoriesImpl(categoryId),
     createSubcategory: async (categoryId: string, name: string) => {

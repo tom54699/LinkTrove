@@ -474,6 +474,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
             {!isCollapsed && (
               <div className="min-h-[40px] px-2 pb-2">
                 <CardGrid
+                  groupId={g.id}
                   items={groupItems}
                   onDropTab={async (tab: any, beforeId?: string) => {
                     setActiveDropGroupId(null);
@@ -492,7 +493,16 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   onDropExistingCard={async (cardId, beforeId) => {
                     setActiveDropGroupId(null);
                     try {
-                      await actions.moveCardToGroup(cardId, g.categoryId, g.id, beforeId);
+                      const isSameGroup = groupItems.some((item) => item.id === cardId);
+                      if (isSameGroup) {
+                        if (!beforeId || beforeId === '__END__') {
+                          await actions.moveToEnd(cardId);
+                        } else {
+                          await actions.reorder(cardId, beforeId);
+                        }
+                      } else {
+                        await actions.moveCardToGroup(cardId, g.categoryId, g.id, beforeId);
+                      }
                       try { broadcastGhostActive(null); } catch {}
                     } catch {
                       try { broadcastGhostActive(null); } catch {}

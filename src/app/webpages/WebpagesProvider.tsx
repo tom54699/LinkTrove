@@ -7,6 +7,8 @@ import {
 import type { WebpageCardData } from './WebpageCard';
 import { useCategories } from '../sidebar/categories';
 
+const logOrderSnapshot = (_tag: string, _list: WebpageCardData[]) => {};
+
 interface CtxValue {
   items: WebpageCardData[];
   actions: {
@@ -86,7 +88,9 @@ export const WebpagesProvider: React.FC<{
 
   const load = React.useCallback(async () => {
     const list = await service.loadWebpages();
-    setItems(list.map(toCard));
+    const mapped = list.map(toCard);
+    setItems(mapped);
+    logOrderSnapshot('load', mapped);
   }, [service]);
 
   const addFromTab = React.useCallback(
@@ -143,7 +147,11 @@ export const WebpagesProvider: React.FC<{
         // 沒有指定 group，直接 prepend 到最前面
         try {
           const newCard = toCard(created);
-          setItems((prev) => [newCard, ...prev]);
+          setItems((prev) => {
+            const next = [newCard, ...prev];
+            logOrderSnapshot('addFromTab', next);
+            return next;
+          });
         } catch {}
       }
       // Prefetch page meta and cache for later auto-fill (best-effort, non-blocking)
@@ -271,7 +279,11 @@ export const WebpagesProvider: React.FC<{
   const deleteOne = React.useCallback(
     async (id: string) => {
       await service.deleteWebpage(id);
-      setItems((prev) => prev.filter((p) => p.id != id));
+      setItems((prev) => {
+        const next = prev.filter((p) => p.id != id);
+        logOrderSnapshot('deleteOne', next);
+        return next;
+      });
     },
     [service, selectedId]
   );
@@ -364,7 +376,9 @@ export const WebpagesProvider: React.FC<{
     async (fromId: string, toId: string) => {
       operationLockRef.current = Date.now(); // 設置操作鎖定
       const saved = await service.reorderWebpages(fromId, toId);
-      setItems(saved.map(toCard));
+      const mapped = saved.map(toCard);
+      setItems(mapped);
+      logOrderSnapshot('reorder', mapped);
       return saved;
     },
     [service]
@@ -374,7 +388,9 @@ export const WebpagesProvider: React.FC<{
     async (id: string) => {
       operationLockRef.current = Date.now(); // 設置操作鎖定
       const saved = await (service as any).moveWebpageToEnd(id);
-      setItems(saved.map(toCard));
+      const mapped = saved.map(toCard);
+      setItems(mapped);
+      logOrderSnapshot('moveToEnd', mapped);
       return saved;
     },
     [service]
@@ -394,7 +410,9 @@ export const WebpagesProvider: React.FC<{
         targetGroupId,
         beforeId
       );
-      setItems(saved.map(toCard));
+      const mapped = saved.map(toCard);
+      setItems(mapped);
+      logOrderSnapshot('moveCardToGroup', mapped);
       return saved;
     },
     [service]

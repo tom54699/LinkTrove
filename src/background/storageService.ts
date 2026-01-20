@@ -98,6 +98,7 @@ export interface StorageService {
 
   // Maintenance/cleanup functions
   cleanupOrphanedOrderMeta?: () => Promise<{ cleanedCount: number; totalOrderKeys: number }>;
+  normalizeOrderMeta?: () => Promise<void>;
 
   // Organizations CRUD / order
   listOrganizations?: () => Promise<OrganizationData[]>;

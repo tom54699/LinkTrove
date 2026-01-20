@@ -16,6 +16,7 @@ export interface StorageLike {
   saveTemplates: (data: TemplateData[]) => Promise<void>;
   exportData: () => Promise<string>;
   importData: (jsonData: string) => Promise<void>;
+  normalizeOrderMeta?: () => Promise<void>;
 }
 
 export interface ExportImportService {
@@ -75,6 +76,10 @@ export function createExportImportService(deps: {
     const incomingSubcats = Array.isArray(parsed?.subcategories)
       ? parsed.subcategories
       : [];
+    const incomingOrders =
+      parsed?.orders && parsed.orders.subcategories && typeof parsed.orders.subcategories === 'object'
+        ? parsed.orders.subcategories
+        : {};
     if (!incomingPages.every(isWebpage))
       throw new Error('Invalid webpages payload');
     if (!incomingCats.every(isCategory))
@@ -148,6 +153,17 @@ export function createExportImportService(deps: {
       if (subcatsToWrite.length)
         await putAll('subcategories' as any, subcatsToWrite);
     } catch {}
+    // Restore per-group orders when present
+    try {
+      for (const s of subcatsToWrite) {
+        const gid = s?.id;
+        if (!gid) continue;
+        const ids = Array.isArray((incomingOrders as any)[gid])
+          ? ((incomingOrders as any)[gid] as string[])
+          : [];
+        try { await setMeta(`order.subcat.${gid}`, ids); } catch {}
+      }
+    } catch {}
     await Promise.all([
       storage.saveToLocal(incomingPages),
       storage.saveToSync(incomingCats),
@@ -191,6 +207,11 @@ export function createExportImportService(deps: {
             settings.selectedCategoryId
           );
         } catch {}
+      }
+    } catch {}
+    try {
+      if (typeof (storage as any).normalizeOrderMeta === 'function') {
+        await (storage as any).normalizeOrderMeta();
       }
     } catch {}
 

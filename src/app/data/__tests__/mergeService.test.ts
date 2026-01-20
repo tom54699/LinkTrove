@@ -231,6 +231,14 @@ describe('mergeLWW', () => {
     it('should use orders from payload with newer exportedAt', () => {
       const local = createEmptyPayload();
       local.exportedAt = '2025-10-13T10:00:00Z'; // newer
+      local.subcategories = [
+        { id: 'g1', categoryId: 'c1', name: 'G1', order: 0, createdAt: 1, updatedAt: 1 },
+      ];
+      local.webpages = [
+        { id: 'w1', title: 'A', url: 'https://a', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:00:00Z', updatedAt: '2025-10-13T09:00:00Z' },
+        { id: 'w2', title: 'B', url: 'https://b', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:01:00Z', updatedAt: '2025-10-13T09:01:00Z' },
+        { id: 'w3', title: 'C', url: 'https://c', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:02:00Z', updatedAt: '2025-10-13T09:02:00Z' },
+      ];
       local.orders = {
         subcategories: {
           g1: ['w1', 'w2', 'w3'],
@@ -239,6 +247,14 @@ describe('mergeLWW', () => {
 
       const remote = createEmptyPayload();
       remote.exportedAt = '2025-10-13T09:00:00Z'; // older
+      remote.subcategories = [
+        { id: 'g1', categoryId: 'c1', name: 'G1', order: 0, createdAt: 1, updatedAt: 1 },
+      ];
+      remote.webpages = [
+        { id: 'w1', title: 'A', url: 'https://a', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:00:00Z', updatedAt: '2025-10-13T09:00:00Z' },
+        { id: 'w2', title: 'B', url: 'https://b', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:01:00Z', updatedAt: '2025-10-13T09:01:00Z' },
+        { id: 'w3', title: 'C', url: 'https://c', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:02:00Z', updatedAt: '2025-10-13T09:02:00Z' },
+      ];
       remote.orders = {
         subcategories: {
           g1: ['w3', 'w2', 'w1'],
@@ -253,6 +269,16 @@ describe('mergeLWW', () => {
     it('should merge orders from both payloads', () => {
       const local = createEmptyPayload();
       local.exportedAt = '2025-10-13T10:00:00Z';
+      local.subcategories = [
+        { id: 'g1', categoryId: 'c1', name: 'G1', order: 0, createdAt: 1, updatedAt: 1 },
+        { id: 'g2', categoryId: 'c1', name: 'G2', order: 1, createdAt: 2, updatedAt: 2 },
+      ];
+      local.webpages = [
+        { id: 'w1', title: 'A', url: 'https://a', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:00:00Z', updatedAt: '2025-10-13T09:00:00Z' },
+        { id: 'w2', title: 'B', url: 'https://b', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:01:00Z', updatedAt: '2025-10-13T09:01:00Z' },
+        { id: 'w3', title: 'C', url: 'https://c', favicon: '', note: '', category: 'c1', subcategoryId: 'g2', createdAt: '2025-10-13T09:02:00Z', updatedAt: '2025-10-13T09:02:00Z' },
+        { id: 'w4', title: 'D', url: 'https://d', favicon: '', note: '', category: 'c1', subcategoryId: 'g2', createdAt: '2025-10-13T09:03:00Z', updatedAt: '2025-10-13T09:03:00Z' },
+      ];
       local.orders = {
         subcategories: {
           g1: ['w1', 'w2'],
@@ -261,6 +287,16 @@ describe('mergeLWW', () => {
 
       const remote = createEmptyPayload();
       remote.exportedAt = '2025-10-13T09:00:00Z';
+      remote.subcategories = [
+        { id: 'g1', categoryId: 'c1', name: 'G1', order: 0, createdAt: 1, updatedAt: 1 },
+        { id: 'g2', categoryId: 'c1', name: 'G2', order: 1, createdAt: 2, updatedAt: 2 },
+      ];
+      remote.webpages = [
+        { id: 'w1', title: 'A', url: 'https://a', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:00:00Z', updatedAt: '2025-10-13T09:00:00Z' },
+        { id: 'w2', title: 'B', url: 'https://b', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:01:00Z', updatedAt: '2025-10-13T09:01:00Z' },
+        { id: 'w3', title: 'C', url: 'https://c', favicon: '', note: '', category: 'c1', subcategoryId: 'g2', createdAt: '2025-10-13T09:02:00Z', updatedAt: '2025-10-13T09:02:00Z' },
+        { id: 'w4', title: 'D', url: 'https://d', favicon: '', note: '', category: 'c1', subcategoryId: 'g2', createdAt: '2025-10-13T09:03:00Z', updatedAt: '2025-10-13T09:03:00Z' },
+      ];
       remote.orders = {
         subcategories: {
           g2: ['w3', 'w4'],
@@ -279,6 +315,13 @@ describe('mergeLWW', () => {
       const timestamp = '2025-10-13T10:00:00Z';
       const local = createEmptyPayload();
       local.exportedAt = timestamp;
+      local.subcategories = [
+        { id: 'g1', categoryId: 'c1', name: 'G1', order: 0, createdAt: 1, updatedAt: 1 },
+      ];
+      local.webpages = [
+        { id: 'w1', title: 'A', url: 'https://a', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:00:00Z', updatedAt: '2025-10-13T09:00:00Z' },
+        { id: 'w2', title: 'B', url: 'https://b', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:01:00Z', updatedAt: '2025-10-13T09:01:00Z' },
+      ];
       local.orders = {
         subcategories: {
           g1: ['w1', 'w2'],
@@ -287,6 +330,13 @@ describe('mergeLWW', () => {
 
       const remote = createEmptyPayload();
       remote.exportedAt = timestamp;
+      remote.subcategories = [
+        { id: 'g1', categoryId: 'c1', name: 'G1', order: 0, createdAt: 1, updatedAt: 1 },
+      ];
+      remote.webpages = [
+        { id: 'w1', title: 'A', url: 'https://a', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:00:00Z', updatedAt: '2025-10-13T09:00:00Z' },
+        { id: 'w2', title: 'B', url: 'https://b', favicon: '', note: '', category: 'c1', subcategoryId: 'g1', createdAt: '2025-10-13T09:01:00Z', updatedAt: '2025-10-13T09:01:00Z' },
+      ];
       remote.orders = {
         subcategories: {
           g1: ['w2', 'w1'],

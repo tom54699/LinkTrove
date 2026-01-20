@@ -8,6 +8,7 @@ import type {
   SubcategoryData,
   OrganizationData,
 } from '../../background/storageService';
+import { normalizeGroupOrder } from '../../utils/order-utils';
 
 export interface ExportPayload {
   schemaVersion: number;
@@ -230,34 +231,29 @@ function mergeOrders(
   localOrders: Record<string, string[]>,
   remoteOrders: Record<string, string[]>,
   localTime: number,
-  remoteTime: number
+  remoteTime: number,
+  webpages: WebpageData[],
+  subcategories: SubcategoryData[]
 ): Record<string, string[]> {
   const merged: Record<string, string[]> = {};
+  const preferRemote = remoteTime > localTime;
+  const byGroup: Record<string, WebpageData[]> = {};
+  for (const page of webpages as any[]) {
+    const gid = (page as any)?.subcategoryId as string | undefined;
+    if (!gid) continue;
+    (byGroup[gid] ||= []).push(page as any);
+  }
 
-  // Collect all group IDs
-  const allGroupIds = new Set([
-    ...Object.keys(localOrders),
-    ...Object.keys(remoteOrders),
-  ]);
-
-  for (const gid of allGroupIds) {
-    const localOrder = localOrders[gid];
-    const remoteOrder = remoteOrders[gid];
-
-    if (!remoteOrder) {
-      // Only in local
-      merged[gid] = localOrder;
-    } else if (!localOrder) {
-      // Only in remote
-      merged[gid] = remoteOrder;
-    } else {
-      // Both exist - use timestamp to decide
-      if (remoteTime > localTime) {
-        merged[gid] = remoteOrder;
-      } else {
-        merged[gid] = localOrder;
-      }
-    }
+  for (const sc of subcategories as any[]) {
+    const gid = sc?.id as string | undefined;
+    if (!gid) continue;
+    const localOrder = Array.isArray(localOrders[gid]) ? localOrders[gid] : [];
+    const remoteOrder = Array.isArray(remoteOrders[gid]) ? remoteOrders[gid] : [];
+    const base = preferRemote ? remoteOrder : localOrder;
+    const other = preferRemote ? localOrder : remoteOrder;
+    const baseSet = new Set(base);
+    const combined = base.concat(other.filter((id) => !baseSet.has(id)));
+    merged[gid] = normalizeGroupOrder(byGroup[gid] || [], combined);
   }
 
   return merged;
@@ -300,7 +296,9 @@ export function mergeLWW(
       local.orders?.subcategories || {},
       remote.orders?.subcategories || {},
       localTime,
-      remoteTime
+      remoteTime,
+      webpages,
+      subcategories
     ),
   };
 

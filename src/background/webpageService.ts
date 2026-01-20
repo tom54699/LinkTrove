@@ -1,5 +1,6 @@
 import { createStorageService, type StorageService, type WebpageData } from './storageService';
 import { getMeta, setMeta } from './idb/db';
+import { areOrdersEqual, normalizeGroupOrder } from '../utils/order-utils';
 
 export interface TabLike {
   id?: number;
@@ -103,49 +104,51 @@ export function createWebpageService(deps?: {
   async function loadWebpages() {
     // 以 IDB 為準（實際環境資料來源），測試環境也有 fake-indexeddb 支援
     let list: WebpageData[] = await storage.loadFromLocal();
-    // Sort within the same subcategory by its order list; otherwise keep storage order
-    const index = new Map(list.map((w, i) => [w.id, i]));
     try {
-      const groupIds = Array.from(
-        new Set((list as any[]).map((w: any) => w.subcategoryId).filter(Boolean))
-      ) as string[];
-      const orders = await Promise.all(groupIds.map((g) => getGroupOrder(g)));
-      const posMap = new Map<string, Map<string, number>>(
-        groupIds.map((g, i) => [g, new Map(orders[i].map((id, j) => [id, j]))])
-      );
+      const noneKey = '__none__';
+      const groups = new Map<string, WebpageData[]>();
+      const groupOrder: string[] = [];
+      for (const w of list as any[]) {
+        const gid = (w as any).subcategoryId || noneKey;
+        if (!groups.has(gid)) {
+          groups.set(gid, []);
+          groupOrder.push(gid);
+        }
+        groups.get(gid)!.push(w);
+      }
 
-      // Build group order mapping for inter-group sorting
-      const groupOrderMap = new Map<string, number>();
-      groupIds.forEach((gid, idx) => groupOrderMap.set(gid, idx));
+      const orderedGroupIds = groupOrder.filter((gid) => gid !== noneKey);
+      const baseOrders = await Promise.all(orderedGroupIds.map((g) => getGroupOrder(g)));
+      const ordersMap = new Map<string, string[]>();
+      for (let i = 0; i < orderedGroupIds.length; i++) {
+        const gid = orderedGroupIds[i];
+        const items = groups.get(gid) || [];
+        const baseOrder = Array.isArray(baseOrders[i]) ? baseOrders[i] : [];
+        const normalized = normalizeGroupOrder(items, baseOrder);
+        ordersMap.set(gid, normalized);
+        if (!areOrdersEqual(baseOrder, normalized)) {
+          await setGroupOrder(gid, normalized);
+        }
+      }
 
-      const sorted = [...list].sort((a: any, b: any) => {
-        const ga = a.subcategoryId;
-        const gb = b.subcategoryId;
-
-        if (ga && gb && ga === gb) {
-          // Same group: use intra-group ordering
-          const pm = posMap.get(ga);
-          const ia = pm?.get(a.id) ?? Number.MAX_SAFE_INTEGER;
-          const ib = pm?.get(b.id) ?? Number.MAX_SAFE_INTEGER;
-          if (ia !== ib) {
-            return ia - ib;
-          }
-        } else if (ga && gb) {
-          // Different groups: use group order
-          const groupOrderA = groupOrderMap.get(ga) ?? Number.MAX_SAFE_INTEGER;
-          const groupOrderB = groupOrderMap.get(gb) ?? Number.MAX_SAFE_INTEGER;
-          if (groupOrderA !== groupOrderB) {
-            return groupOrderA - groupOrderB;
+      const merged: WebpageData[] = [];
+      for (const gid of groupOrder) {
+        const items = groups.get(gid) || [];
+        if (gid === noneKey) {
+          merged.push(...items);
+          continue;
+        }
+        const order = ordersMap.get(gid) || [];
+        const byId = new Map(items.map((it) => [it.id, it]));
+        for (const id of order) {
+          const it = byId.get(id);
+          if (it) {
+            merged.push(it);
           }
         }
+      }
 
-        // Fallback to original storage order
-        const fallbackA = index.get(a.id) ?? 0;
-        const fallbackB = index.get(b.id) ?? 0;
-        return fallbackA - fallbackB;
-      });
-
-      return sorted;
+      return merged;
     } catch {
       return list;
     }

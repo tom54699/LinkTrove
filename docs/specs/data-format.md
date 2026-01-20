@@ -49,6 +49,8 @@
   - 匯入時自動補為 `o_default`。
 - 每個 group（subcategory）內卡片順序：
   - 儲存在 `orders.subcategories[<groupId>]`；匯入時會恢復該順序。
+  - 匯出時所有 group 都會包含對應的順序陣列（即使為空陣列）。
+  - 若順序資訊缺漏或包含不存在的卡片，匯入/同步後會自動正規化（補缺並移除不存在 ID）。
 
 ## Toby 匯入
 

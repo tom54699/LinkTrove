@@ -7,6 +7,7 @@ import { useFeedback } from '../ui/feedback';
 import { MoveSelectedDialog } from './MoveSelectedDialog';
 
 export interface CardGridProps {
+  groupId?: string;
   items?: WebpageCardData[];
   onDropTab?: (tab: TabItemData) => void;
   onDropExistingCard?: (id: string, beforeId?: string) => void;
@@ -29,6 +30,7 @@ export interface CardGridProps {
 }
 
 export const CardGrid: React.FC<CardGridProps> = ({
+  groupId,
   items = [],
   onDropTab,
   onDeleteMany,
@@ -99,6 +101,22 @@ export const CardGrid: React.FC<CardGridProps> = ({
   const [lastDropTitle, setLastDropTitle] = React.useState<string | null>(null);
 
   const prevGiRef = React.useRef<number | null>(null);
+
+  const normalizeBeforeId = React.useCallback(
+    (beforeId: string | '__END__' | null) => {
+      if (!beforeId || beforeId === '__END__') return beforeId;
+      const validIds = new Set(
+        items
+          .filter((x) => x.id !== hiddenCardId && x.id !== draggingCardId)
+          .map((x) => x.id)
+      );
+      if (!validIds.has(beforeId)) {
+        return '__END__';
+      }
+      return beforeId;
+    },
+    [items, hiddenCardId, draggingCardId, groupId]
+  );
   
   const computeGhostIndex = React.useCallback(
     (
@@ -412,6 +430,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
       setGhostType(null);
       setGhostIndex(null);
       setDraggingCardId(null);
+      ghostBeforeRef.current = null;
       prevGiRef.current = null; // Reset hysteresis tracking when leaving group
       try { broadcastGhostActive(null); } catch {}
     }, 50); // 50ms 延遲確認
@@ -452,7 +471,11 @@ export const CardGrid: React.FC<CardGridProps> = ({
           }
         } catch {}
         
-        if (!beforeId) beforeId = ghostBeforeRef.current;
+        if (!beforeId) {
+          beforeId = ghostBeforeRef.current;
+        }
+        const rawBeforeId = beforeId;
+        beforeId = normalizeBeforeId(beforeId);
         
         // Fallback calculation if DOM lookups fail
         if (!beforeId) {
@@ -464,11 +487,14 @@ export const CardGrid: React.FC<CardGridProps> = ({
           beforeId = idx >= list.length ? '__END__' : list[idx].id;
         }
         
+        beforeId = normalizeBeforeId(beforeId);
         try {
           await onDropExistingCard?.(fromId, beforeId);
         } finally {
           // Cleanup - 確保 ghost 一定會清理，即使 async 拋異常
           setGhostTab(null); setGhostType(null); setGhostIndex(null); setDraggingCardId(null);
+          ghostBeforeRef.current = null;
+          prevGiRef.current = null;
           setIsOver(false);
           try { broadcastGhostActive(null); } catch {}
         }
@@ -499,7 +525,11 @@ export const CardGrid: React.FC<CardGridProps> = ({
           }
         } catch {}
         
-        if (!beforeId) beforeId = ghostBeforeRef.current;
+        if (!beforeId) {
+          beforeId = ghostBeforeRef.current;
+        }
+        const rawBeforeId = beforeId;
+        beforeId = normalizeBeforeId(beforeId);
         
         let ret;
         if ((items?.length || 0) > 0) ret = (onDropTab as any)?.(tab, beforeId);
@@ -509,6 +539,8 @@ export const CardGrid: React.FC<CardGridProps> = ({
         
         // Cleanup
         setGhostTab(null); setGhostType(null); setGhostIndex(null); setDraggingCardId(null);
+        ghostBeforeRef.current = null;
+        prevGiRef.current = null;
         setIsOver(false);
         try { broadcastGhostActive(null); } catch {}
         return;
@@ -517,6 +549,8 @@ export const CardGrid: React.FC<CardGridProps> = ({
       showToast('Failed to add tab', 'error');
     }
     setGhostTab(null); setGhostType(null); setGhostIndex(null); setDraggingCardId(null);
+    ghostBeforeRef.current = null;
+    prevGiRef.current = null;
     setIsOver(false);
     try { broadcastGhostActive(null); } catch {}
   };
@@ -585,6 +619,8 @@ export const CardGrid: React.FC<CardGridProps> = ({
                 onDragEnd={node.type === 'card' ? (e) => {
                   (e.currentTarget as HTMLElement).removeAttribute('data-dragging');
                   setDraggingCardId(null); try { setDragWebpage(null); } catch {}
+                  ghostBeforeRef.current = null;
+                  prevGiRef.current = null;
                 } : undefined}
               >
                 {node.type === 'ghost' ? (
