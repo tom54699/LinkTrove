@@ -5,8 +5,10 @@ import { useTemplates } from '../templates/TemplatesProvider';
 import { useWebpages } from '../webpages/WebpagesProvider';
 import { SearchBox } from '../ui/SearchBox';
 import { useFeedback } from '../ui/feedback';
+import { useI18n } from '../i18n';
 
 export const Sidebar: React.FC = () => {
+  const { t } = useI18n();
   const {
     categories,
     selectedId,
@@ -40,19 +42,19 @@ export const Sidebar: React.FC = () => {
       {/* Search */}
       <div className="mb-6 relative overflow-visible">
         <SearchBox
-          placeholder="Search..."
+          placeholder={t('search_placeholder')}
           className="w-full"
         />
       </div>
       {/* COLLECTIONS section header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="text-[11px] uppercase text-[var(--muted)] font-semibold tracking-wider">
-          COLLECTIONS
+          {t('sidebar_collections')}
         </div>
         <div className="flex items-center gap-1">
           <button
             className="text-red-400 hover:text-red-300 text-lg font-semibold"
-            title="Add new collection"
+            title={t('sidebar_add_collection')}
             onClick={() => { try { window.dispatchEvent(new CustomEvent('collections:add-new')); } catch {} }}
           >
             +
@@ -133,7 +135,7 @@ export const Sidebar: React.FC = () => {
               <button
                 type="button"
                 className="text-xs px-1 py-0.5 rounded border border-slate-600 hover:bg-slate-800"
-                title="Edit category"
+                title={t('category_edit_title')}
                 onClick={(e) => {
                   e.stopPropagation();
                   openEditor(c);
@@ -158,17 +160,17 @@ export const Sidebar: React.FC = () => {
             className="rounded border border-slate-700 bg-[var(--panel)] w-[560px] max-w-[95vw]"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
-            aria-label="Edit Category"
+            aria-label={t('category_edit_title')}
           >
             <div className="px-5 py-4 border-b border-slate-700">
-              <div className="text-lg font-semibold">Edit Category</div>
+              <div className="text-lg font-semibold">{t('category_edit_title')}</div>
               <div className="text-xs opacity-70">
-                Update name, color, and default template
+                {t('category_edit_desc')}
               </div>
             </div>
             <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm mb-1">Name</label>
+                <label className="block text-sm mb-1">{t('category_name_label')}</label>
                 <input
                   className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
                   value={editName}
@@ -176,7 +178,7 @@ export const Sidebar: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Color</label>
+                <label className="block text-sm mb-1">{t('category_color_label')}</label>
                 <div className="flex items-center gap-2">
                   <span
                     className="inline-block w-3 h-3 rounded"
@@ -196,16 +198,16 @@ export const Sidebar: React.FC = () => {
                 </div>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm mb-1">Default Template</label>
+                <label className="block text-sm mb-1">{t('category_template_label')}</label>
                 <select
                   className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
                   value={editTpl}
                   onChange={(e) => setEditTpl(e.target.value)}
                 >
-                  <option value="">None</option>
-                  {templates.map((t: any) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
+                  <option value="">{t('category_template_none')}</option>
+                  {templates.map((tpl: any) => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {tpl.name}
                     </option>
                   ))}
                 </select>
@@ -218,16 +220,16 @@ export const Sidebar: React.FC = () => {
                     className="text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30"
                     onClick={() => setConfirmDelete(true)}
                   >
-                    Delete category…
+                    {t('category_delete_btn')}
                   </button>
                 ) : (
                   <div className="flex items-center gap-2 text-xs">
-                    <span className="text-red-300">Confirm deletion?</span>
+                    <span className="text-red-300">{t('category_confirm_delete')}</span>
                     <button
                       className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
                       onClick={() => setConfirmDelete(false)}
                     >
-                      Cancel
+                      {t('btn_cancel')}
                     </button>
                     <button
                       className="px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30"
@@ -237,7 +239,7 @@ export const Sidebar: React.FC = () => {
                         // UI Layer Check: minimum count protection
                         const inSameOrg = categories.filter((c: any) => c.organizationId === editing.organizationId);
                         if (inSameOrg.length <= 1) {
-                          showToast('刪除失敗：至少需要保留一個 Collection', 'error');
+                          showToast(t('category_min_one'), 'error');
                           return;
                         }
 
@@ -245,14 +247,14 @@ export const Sidebar: React.FC = () => {
                           await catActions.deleteCategory(editing.id);
                           setEditing(null);
                           setConfirmDelete(false);
-                          showToast('已刪除 Collection 及其所有資料', 'success');
+                          showToast(t('toast_category_deleted'), 'success');
                         } catch (error) {
                           console.error('Delete category error:', error);
-                          showToast('刪除失敗', 'error');
+                          showToast(t('toast_delete_failed'), 'error');
                         }
                       }}
                     >
-                      Delete
+                      {t('menu_delete')}
                     </button>
                   </div>
                 )}
@@ -265,7 +267,7 @@ export const Sidebar: React.FC = () => {
                     setConfirmDelete(false);
                   }}
                 >
-                  Cancel
+                  {t('btn_cancel')}
                 </button>
                 <button
                   className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30"
@@ -291,7 +293,7 @@ export const Sidebar: React.FC = () => {
                     }
                   }}
                 >
-                  Save
+                  {t('btn_save')}
                 </button>
               </div>
             </div>

@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useI18n } from '../../../i18n';
 
 interface TobyImportDialogProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ export const TobyImportDialog: React.FC<TobyImportDialogProps> = ({
   onCancel,
   onConfirm,
 }) => {
+  const { t } = useI18n();
+
   if (!isOpen) return null;
 
   return (
@@ -31,11 +34,11 @@ export const TobyImportDialog: React.FC<TobyImportDialogProps> = ({
         className="rounded border border-slate-700 bg-[var(--bg)] w-[520px] max-w-[95vw] p-5"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label="Import Toby"
+        aria-label={t('import_toby_title')}
       >
-        <div className="text-lg font-semibold">匯入 Toby 到此 group</div>
+        <div className="text-lg font-semibold">{t('import_toby_title')}</div>
         <div className="mt-2 text-sm opacity-80">
-          檔案：{fileName} {linkCount !== undefined ? `— 連結 ${linkCount}` : ''}
+          {t('import_file_info', [fileName || ''])} {linkCount !== undefined ? `— ${t('import_link_count', [String(linkCount)])}` : ''}
         </div>
         {/* Dedup option removed per request */}
         <div className="mt-4 flex items-center justify-end gap-2">
@@ -43,13 +46,13 @@ export const TobyImportDialog: React.FC<TobyImportDialogProps> = ({
             className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
             onClick={onCancel}
           >
-            取消
+            {t('btn_cancel')}
           </button>
           <button
             className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
             onClick={onConfirm}
           >
-            開始匯入
+            {t('btn_start_import')}
           </button>
         </div>
       </div>

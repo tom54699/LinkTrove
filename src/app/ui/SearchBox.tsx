@@ -4,6 +4,7 @@ import { useCategories } from '../sidebar/categories';
 import { useOrganizations } from '../sidebar/organizations';
 import { createStorageService } from '../../background/storageService';
 import { loadOpenCCConverters } from '../../utils/opencc';
+import { useI18n } from '../i18n';
 
 interface HistoryItem {
   term: string;
@@ -17,7 +18,9 @@ export const SearchBox: React.FC<{
   onNavigateTo?: (id: string, categoryId: string) => void;
   className?: string;
   hotkey?: boolean;
-}> = ({ placeholder = 'Search…', onNavigateTo, className }) => {
+}> = ({ placeholder, onNavigateTo, className }) => {
+  const { t } = useI18n();
+  const searchPlaceholder = placeholder || t('search_placeholder');
   const { items } = useWebpages();
   const { setCurrentCategory, categories } = useCategories() as any;
   const { organizations, selectedOrgId } = useOrganizations();
@@ -335,7 +338,7 @@ export const SearchBox: React.FC<{
       >
         <span className="text-[var(--muted)] group-hover:text-white transition-colors">🔍</span>
         <span className="pr-2 flex-1 text-left text-white transition-colors truncate">
-          {placeholder}
+          {searchPlaceholder}
         </span>
       </button>
 
@@ -403,7 +406,7 @@ export const SearchBox: React.FC<{
                   {history.length > 0 ? (
                     <div>
                       <div className="px-3 py-1 text-[11px] font-bold text-[var(--muted)] uppercase tracking-wider opacity-60">
-                        最近搜尋
+                        {t('search_recent')}
                       </div>
                       <div className="mt-1">
                         {history.map((h, i) => (
@@ -418,15 +421,15 @@ export const SearchBox: React.FC<{
                               {(() => {
                                 const diff = Date.now() - h.time;
                                 const mins = Math.floor(diff / 60000);
-                                if (mins < 1) return 'Just now';
-                                if (mins < 60) return `${mins}m ago`;
+                                if (mins < 1) return t('search_just_now');
+                                if (mins < 60) return t('search_mins_ago', [String(mins)]);
                                 const hours = Math.floor(mins / 60);
-                                if (hours < 24) return `${hours}h ago`;
-                                return `${Math.floor(hours / 24)}d ago`;
+                                if (hours < 24) return t('search_hours_ago', [String(hours)]);
+                                return t('search_days_ago', [String(Math.floor(hours / 24))]);
                               })()}
                             </span>
                             <span className="text-[12px] font-bold opacity-0 group-hover:opacity-100 transition-opacity text-[var(--accent)]">
-                              ↵ 搜尋
+                              {t('search_action_search')}
                             </span>
                           </button>
                         ))}
@@ -434,13 +437,13 @@ export const SearchBox: React.FC<{
                     </div>
                   ) : (
                     <div className="py-8 text-center">
-                      <p className="text-[var(--muted)] text-sm">輸入字句開始搜尋...</p>
+                      <p className="text-[var(--muted)] text-sm">{t('search_type_to_start')}</p>
                     </div>
                   )}
                 </div>
               ) : results.length === 0 ? (
                 <div className="py-12 text-center">
-                  <p className="text-[var(--muted)] text-sm">找不到相關結果 "{q}"</p>
+                  <p className="text-[var(--muted)] text-sm">{t('search_no_results', [q])}</p>
                 </div>
               ) : (
                 <div className="space-y-4 pb-2">
@@ -487,7 +490,7 @@ export const SearchBox: React.FC<{
                                       </div>
                                     </div>
                                     <div className={`text-[12px] font-bold transition-opacity text-[var(--accent)] ${isActive ? 'opacity-100' : 'opacity-0'}`}>
-                                      ↵ 開啟
+                                      {t('search_action_open')}
                                     </div>
                                   </button>
                                 );
@@ -508,11 +511,11 @@ export const SearchBox: React.FC<{
             {/* Modal Footer */}
             <div className="px-4 py-2 border-t border-[var(--card)] bg-[var(--bg)]/30 flex items-center justify-between text-[12px] text-[var(--muted)]">
               <div className="flex gap-3">
-                <span className="flex items-center gap-1"><kbd className="bg-[var(--card)] px-1 rounded border border-[var(--panel)]">↑↓</kbd> 導覽</span>
-                <span className="flex items-center gap-1"><kbd className="bg-[var(--card)] px-1 rounded border border-[var(--panel)]">Enter</kbd> 開啟</span>
+                <span className="flex items-center gap-1"><kbd className="bg-[var(--card)] px-1 rounded border border-[var(--panel)]">↑↓</kbd> {t('search_navigate')}</span>
+                <span className="flex items-center gap-1"><kbd className="bg-[var(--card)] px-1 rounded border border-[var(--panel)]">Enter</kbd> {t('search_open')}</span>
               </div>
               <div style={{ color: orgColor }} className="font-medium">
-                已載入 {visibleResults.length} / {results.length}
+                {t('search_loaded', [String(visibleResults.length), String(results.length)])}
               </div>
             </div>
           </div>

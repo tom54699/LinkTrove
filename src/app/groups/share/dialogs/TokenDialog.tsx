@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useI18n } from '../../../i18n';
 
 interface TokenDialogProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ export const TokenDialog: React.FC<TokenDialogProps> = ({
   onTokenChange,
   onSave,
 }) => {
+  const { t } = useI18n();
+
   if (!isOpen) return null;
 
   return (
@@ -31,29 +34,29 @@ export const TokenDialog: React.FC<TokenDialogProps> = ({
         className="rounded border border-slate-700 bg-[var(--bg)] w-full max-w-md p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold mb-4">設定 GitHub Token</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('token_setup_title')}</h3>
 
         <div className="space-y-4">
           <div>
             <p className="text-sm text-slate-300 mb-3">
-              需要 GitHub Personal Access Token 才能發布分享連結到 Gist
+              {t('token_required_desc')}
             </p>
 
             <div className="text-xs text-slate-400 space-y-2 mb-4">
-              <div>🔗 <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" className="text-blue-400 hover:underline">前往 GitHub 設定頁面</a></div>
-              <div>📝 點擊「Generate new token (classic)」</div>
-              <div>✅ 勾選「gist」權限（僅需此權限）</div>
-              <div>💾 複製產生的 token</div>
+              <div>🔗 <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" className="text-blue-400 hover:underline">{t('token_step1')}</a></div>
+              <div>📝 {t('token_step2')}</div>
+              <div>✅ {t('token_step3')}</div>
+              <div>💾 {t('token_step4')}</div>
             </div>
 
             <div className="px-3 py-2 bg-amber-900/20 border border-amber-700/50 rounded text-xs text-amber-200 mb-4">
-              🔒 安全提示：Token 將加密儲存於瀏覽器擴充功能的安全儲存區，不會被網頁或其他擴充功能存取
+              🔒 {t('token_security_notice')}
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-2">
-              GitHub Personal Access Token
+              {t('token_label')}
             </label>
             <input
               type="password"
@@ -65,7 +68,7 @@ export const TokenDialog: React.FC<TokenDialogProps> = ({
           </div>
 
           <div className="text-xs text-slate-400">
-            Token 將安全地儲存在瀏覽器本機，不會上傳到任何伺服器
+            {t('token_storage_notice')}
           </div>
         </div>
 
@@ -74,14 +77,14 @@ export const TokenDialog: React.FC<TokenDialogProps> = ({
             className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
             onClick={onClose}
           >
-            取消
+            {t('btn_cancel')}
           </button>
           <button
             className="px-3 py-1 rounded border border-green-600 text-green-300 hover:bg-green-950/30 disabled:opacity-50"
             onClick={onSave}
             disabled={!token.trim()}
           >
-            儲存
+            {t('btn_save')}
           </button>
         </div>
       </div>

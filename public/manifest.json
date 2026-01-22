@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "LinkTrove",
+  "name": "__MSG_extName__",
+  "default_locale": "en",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA8KVTdXerdjtKiO1CRxRJJpm57R58vklvKMUfkVStp8zR8d9EkIWzlIilrTCESSJC4TwWe5Sn82tM31ca1BS5jB9wxrSUGjGsQMHbK2ed+n/PdNNBtQtiM2guwCDyq4VCj0EIa/MRqjoSma5mhMZvPy3ZHhyReysEFwrMSyz0QpDi+kYaEEmAGXs4ILrAKND3q0SpJ18/wtSmlD3Ee9zMIRtKjp9XLnZBu0+E/442AM+jeQfId43WBRDlwFKwjGE4TiFcspJRr5d0LZfvaPhTbyFhrs163xag5dwIw5IQDxo6CKEegHYS++LhbPvGqWI8eovKLaPT4WsrXBWYrUWgiwIDAQAB",
   "version": "0.1.0",
-  "description": "Toby-like visual tab manager: drag from Open Tabs to save as cards.",
+  "description": "__MSG_extDescription__",
   "icons": {
     "16": "icon-16.png",
     "48": "icon-48.png",

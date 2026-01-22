@@ -9,6 +9,7 @@ import { useGroupShare } from './share/useGroupShare';
 import { useGroupImport } from './import/useGroupImport';
 import { ShareDialog, TokenDialog, ShareResultDialog } from './share/dialogs';
 import { TobyImportDialog, TobyProgressDialog } from './import/dialogs';
+import { useI18n } from '../i18n';
 
 interface GroupItem {
   id: string;
@@ -18,6 +19,7 @@ interface GroupItem {
 }
 
 export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => {
+  const { t } = useI18n();
   const { showToast } = useFeedback();
   const { items, actions } = useWebpages();
   const [groups, setGroups] = React.useState<GroupItem[]>([]);
@@ -138,9 +140,9 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     try {
       await (svc as any).renameSubcategory?.(id, name.trim() || 'group');
       await load();
-      showToast('已重新命名', 'success');
+      showToast(t('toast_renamed'), 'success');
     } catch {
-      showToast('重新命名失敗', 'error');
+      showToast(t('toast_rename_failed'), 'error');
     }
   };
 
@@ -149,7 +151,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       const latest: GroupItem[] = ((await (svc as any).listSubcategories?.(categoryId)) as any) || [];
       const others = latest.filter((g) => g.id !== id);
       if (others.length === 0) {
-        showToast('刪除失敗：至少需要保留一個 Group', 'error');
+        showToast(t('group_min_one'), 'error');
         return;
       }
       if ((svc as any).deleteSubcategoryAndPages) {
@@ -167,9 +169,9 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       await persistCollapsed(rest);
       await load();
       try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
-      showToast('已刪除 Group 與其書籤', 'success');
+      showToast(t('toast_group_deleted'), 'success');
     } catch {
-      showToast('刪除失敗', 'error');
+      showToast(t('toast_delete_failed'), 'error');
     }
   };
 
@@ -184,7 +186,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     setGroups(next);
     try {
       await (svc as any).reorderSubcategories?.(categoryId, next.map((x) => x.id));
-      showToast('已重新排序', 'success');
+      showToast(t('toast_reordered'), 'success');
     } catch {}
   };
 
@@ -198,10 +200,10 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
         });
         setShowTokenDialog(false);
         setGithubToken('');
-        showToast('GitHub Token 已安全儲存！', 'success');
+        showToast(t('toast_token_saved'), 'success');
         setTimeout(() => publishToGist(), 500);
       } catch {
-        showToast('儲存 Token 失敗', 'error');
+        showToast(t('toast_token_save_failed'), 'error');
       }
     }
   };
@@ -210,9 +212,9 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     if (shareResultUrl) {
       try {
         await navigator.clipboard.writeText(shareResultUrl);
-        showToast('已複製到剪貼簿', 'success');
+        showToast(t('toast_copied'), 'success');
       } catch {
-        showToast('複製失敗', 'error');
+        showToast(t('toast_copy_failed'), 'error');
       }
     }
   };
@@ -230,12 +232,12 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       await (s as any).createSubcategory?.(categoryId, name);
       load();
       try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
-      showToast(`已新增 ${name}`, 'success');
+      showToast(t('toast_added', [name]), 'success');
     } catch (err: any) {
       if (err?.name === 'LimitExceededError' || err?.code === 'LIMIT_EXCEEDED') {
         showToast(err.message, 'error');
       } else {
-        showToast('新增失敗', 'error');
+        showToast(t('toast_add_failed'), 'error');
       }
     }
   };
@@ -283,18 +285,17 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       if (!tab) { try { tab = (getDragTab() as any) || null; } catch { tab = null; } }
       
       if (tab) {
-        // 一步完成：建立卡片 + 設定 subcategoryId + 排序
         await actions.addFromTab(tab as any, {
           categoryId: g.categoryId,
           subcategoryId: g.id,
           beforeId: '__END__',
         });
         try { broadcastGhostActive(null); } catch {}
-        showToast('已從分頁建立並加入 group', 'success');
+        showToast(t('toast_created_from_tab'), 'success');
       }
     } catch {
       try { broadcastGhostActive(null); } catch {}
-      showToast('操作失敗', 'error');
+      showToast(t('toast_operation_failed'), 'error');
     }
   };
 
@@ -321,7 +322,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 className="text-[var(--muted)] hover:text-[var(--text)] transition-transform duration-200"
                 style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
                 onClick={() => persistCollapsed({ ...collapsed, [g.id]: !isCollapsed })}
-                title={isCollapsed ? '展開' : '摺疊'}
+                title={isCollapsed ? t('group_expand') : t('group_collapse')}
               >
                 ▼
               </button>
@@ -355,7 +356,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 {/* Open All Tabs Button */}
                 <button
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[var(--accent)] hover:bg-[var(--accent)]/10 rounded-lg transition-all active:scale-95"
-                  title="開啟全部分頁"
+                  title={t('group_open_all')}
                   onClick={(e) => {
                     e.stopPropagation();
                     groupItems.forEach(item => window.open(item.url, '_blank'));
@@ -372,7 +373,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 {/* Group Settings Button */}
                 <button
                   className="p-2 text-[var(--accent)] hover:bg-[var(--accent)]/10 rounded-lg transition-all active:scale-90"
-                  title="群組設定"
+                  title={t('group_settings')}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (menuFor?.id === g.id) {
@@ -424,48 +425,48 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 align="right"
                 onClose={() => setMenuFor(null)}
                 items={[
-                  { 
-                    key: 'share', 
-                    label: '分享此群組', 
+                  {
+                    key: 'share',
+                    label: t('menu_share_group'),
                     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>,
-                    onSelect: () => { setMenuFor(null); void openShareDialog(g); } 
+                    onSelect: () => { setMenuFor(null); void openShareDialog(g); }
                   },
-                  { 
-                    key: 'import-html', 
-                    label: '匯入 HTML', 
+                  {
+                    key: 'import-html',
+                    label: t('menu_import_html'),
                     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>,
-                    onSelect: () => { setMenuFor(null); try { document.getElementById(`html-file-${g.id}`)?.click(); } catch {} } 
+                    onSelect: () => { setMenuFor(null); try { document.getElementById(`html-file-${g.id}`)?.click(); } catch {} }
                   },
-                  { 
-                    key: 'import-toby', 
-                    label: '匯入 Toby', 
+                  {
+                    key: 'import-toby',
+                    label: t('menu_import_toby'),
                     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>,
-                    onSelect: () => { setMenuFor(null); try { document.getElementById(`toby-file-${g.id}`)?.click(); } catch {} } 
+                    onSelect: () => { setMenuFor(null); try { document.getElementById(`toby-file-${g.id}`)?.click(); } catch {} }
                   },
-                  { 
-                    key: 'rename', 
-                    label: '重新命名', 
+                  {
+                    key: 'rename',
+                    label: t('menu_rename'),
                     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>,
-                    onSelect: () => { setMenuFor(null); setRenaming(g.id); setRenameText(g.name); } 
+                    onSelect: () => { setMenuFor(null); setRenaming(g.id); setRenameText(g.name); }
                   },
-                  { 
-                    key: 'move-up', 
-                    label: '上移', 
+                  {
+                    key: 'move-up',
+                    label: t('menu_move_up'), 
                     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>,
                     onSelect: () => { setMenuFor(null); void move(g.id, -1); } 
                   },
-                  { 
-                    key: 'move-down', 
-                    label: '下移', 
+                  {
+                    key: 'move-down',
+                    label: t('menu_move_down'),
                     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>,
-                    onSelect: () => { setMenuFor(null); void move(g.id, 1); } 
+                    onSelect: () => { setMenuFor(null); void move(g.id, 1); }
                   },
-                  { 
-                    key: 'delete', 
-                    label: '刪除', 
+                  {
+                    key: 'delete',
+                    label: t('menu_delete'),
                     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
                     className: 'text-red-400 hover:text-red-300 hover:bg-red-950/20',
-                    onSelect: () => { setMenuFor(null); setConfirmDeleteGroup(g.id); } 
+                    onSelect: () => { setMenuFor(null); setConfirmDeleteGroup(g.id); }
                   },
                 ]}
               />
@@ -479,15 +480,14 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   onDropTab={async (tab: any, beforeId?: string) => {
                     setActiveDropGroupId(null);
                     try {
-                      // 一步完成：建立卡片 + 設定 subcategoryId + 排序
                       await actions.addFromTab(tab as any, {
                         categoryId: g.categoryId,
                         subcategoryId: g.id,
                         beforeId,
                       });
-                      showToast('已從分頁建立並加入 group', 'success');
+                      showToast(t('toast_created_from_tab'), 'success');
                     } catch {
-                      showToast('建立失敗', 'error');
+                      showToast(t('toast_create_failed'), 'error');
                     }
                   }}
                   onDropExistingCard={async (cardId, beforeId) => {
@@ -506,13 +506,13 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                       try { broadcastGhostActive(null); } catch {}
                     } catch {
                       try { broadcastGhostActive(null); } catch {}
-                      showToast('移動失敗', 'error');
+                      showToast(t('toast_move_failed'), 'error');
                     }
                   }}
-                  onDeleteMany={async (ids) => { await actions.deleteMany(ids); showToast('Deleted selected', 'success'); }}
-                  onDeleteOne={async (id) => { await actions.deleteOne(id); showToast('Deleted', 'success'); }}
-                  onEditDescription={async (id, description) => { await actions.updateDescription(id, description); showToast('Saved note', 'success'); }}
-                  onSave={async (id, patch) => { await actions.updateCard(id, patch); showToast('Saved', 'success'); }}
+                  onDeleteMany={async (ids) => { await actions.deleteMany(ids); showToast(t('toast_deleted'), 'success'); }}
+                  onDeleteOne={async (id) => { await actions.deleteOne(id); showToast(t('toast_deleted'), 'success'); }}
+                  onEditDescription={async (id, description) => { await actions.updateDescription(id, description); showToast(t('toast_saved'), 'success'); }}
+                  onSave={async (id, patch) => { await actions.updateCard(id, patch); showToast(t('toast_saved'), 'success'); }}
                   onUpdateTitle={(id, title) => actions.updateTitle(id, title)}
                   onUpdateUrl={(id, url) => actions.updateUrl(id, url)}
                   onUpdateCategory={(id, cat) => actions.updateCategory(id, cat)}
@@ -525,11 +525,11 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       })}
 
       {/* Add New Group Placeholder */}
-      <button 
+      <button
         className="w-full py-4 border-2 border-dashed border-slate-700 hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 rounded-2xl text-[var(--muted)] hover:text-[var(--accent)] font-semibold transition-all duration-200 flex items-center justify-center gap-2"
         onClick={createNewGroup}
       >
-        <span>+</span> Create New Group
+        <span>+</span> {t('sidebar_add_group')}
       </button>
 
       {confirmDeleteGroup && (
@@ -541,12 +541,12 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
             className="rounded border border-slate-700 bg-[var(--bg)] w-[520px] max-w-[95vw]"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
-            aria-label="Delete Group"
+            aria-label={t('confirm_delete_group_title')}
           >
             <div className="px-5 py-4 border-b border-slate-700">
-              <div className="text-lg font-semibold">刪除 Group</div>
+              <div className="text-lg font-semibold">{t('confirm_delete_group_title')}</div>
               <div className="text-xs opacity-80 mt-1">
-                刪除此 group 以及其底下的書籤？此操作無法復原。
+                {t('confirm_delete_group_desc')}
               </div>
             </div>
             <div className="px-5 py-3 flex items-center justify-end gap-2">
@@ -554,7 +554,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                 className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
                 onClick={() => setConfirmDeleteGroup(null)}
               >
-                取消
+                {t('btn_cancel')}
               </button>
               <button
                 className="px-3 py-1 rounded border border-rose-700 text-rose-300 hover:bg-rose-950/30"
@@ -564,7 +564,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   if (id) await remove(id);
                 }}
               >
-                刪除
+                {t('menu_delete')}
               </button>
             </div>
           </div>

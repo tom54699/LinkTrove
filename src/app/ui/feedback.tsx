@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
+import { useI18n } from '../i18n';
 
 type ToastKind = 'info' | 'success' | 'error';
 
@@ -18,6 +19,7 @@ const Ctx = createContext<FeedbackCtx | null>(null);
 export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const { t } = useI18n();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -44,7 +46,7 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({
           onClick={() => setLoading(false)}
         >
           <div className="rounded border border-slate-700 bg-[var(--bg)] px-4 py-2">
-            Loading...
+            {t('loading')}
           </div>
         </div>
       )}

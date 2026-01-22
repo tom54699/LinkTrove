@@ -1,0 +1,986 @@
+{
+  "extName": {
+    "message": "LinkTrove",
+    "description": "擴充功能名稱"
+  },
+  "extDescription": {
+    "message": "類 Toby 視覺化分頁管理：從開啟分頁拖曳儲存為卡片",
+    "description": "擴充功能描述"
+  },
+
+  "settings_title": {
+    "message": "設定"
+  },
+  "settings_close": {
+    "message": "關閉"
+  },
+
+  "nav_export_import": {
+    "message": "匯出/匯入"
+  },
+  "nav_cloud_sync": {
+    "message": "雲端同步"
+  },
+  "nav_templates": {
+    "message": "模板"
+  },
+  "nav_language": {
+    "message": "語言"
+  },
+
+  "data_title": {
+    "message": "專案備份與還原"
+  },
+  "data_description": {
+    "message": "匯出或還原專案格式 JSON。匯入將取代現有資料，建議先匯出備份。"
+  },
+  "data_export_label": {
+    "message": "匯出備份"
+  },
+  "data_restore_label": {
+    "message": "還原（取代現有資料）"
+  },
+  "data_drop_hint": {
+    "message": "將 JSON 拖放到此處或點擊選取檔案..."
+  },
+  "data_file_selected": {
+    "message": "已選取：$FILE$",
+    "placeholders": {
+      "file": { "content": "$1" }
+    }
+  },
+  "data_import_success": {
+    "message": "匯入成功，正在重新載入..."
+  },
+  "data_export_success": {
+    "message": "備份匯出完成"
+  },
+  "data_export_failed": {
+    "message": "匯出失敗"
+  },
+  "data_confirm_import_title": {
+    "message": "確認匯入資料？"
+  },
+  "data_confirm_import_desc": {
+    "message": "此操作將永久取代您目前的資料與設定。"
+  },
+
+  "import_toby_title": {
+    "message": "匯入 Toby 到此群組"
+  },
+  "import_file_info": {
+    "message": "檔案：$FILE$",
+    "placeholders": {
+      "file": { "content": "$1" }
+    }
+  },
+  "import_link_count": {
+    "message": "$COUNT$ 個連結",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "btn_start_import": {
+    "message": "開始匯入"
+  },
+
+  "cloud_title": {
+    "message": "Google Drive 雲端同步"
+  },
+  "cloud_description": {
+    "message": "使用 Google Drive 儲存備份（私有、不顯示於雲端硬碟）"
+  },
+  "cloud_connected": {
+    "message": "已連線"
+  },
+  "cloud_disconnect": {
+    "message": "中斷連線"
+  },
+  "cloud_disconnected": {
+    "message": "已中斷連線"
+  },
+  "cloud_last_sync": {
+    "message": "最後同步："
+  },
+  "cloud_never": {
+    "message": "從未"
+  },
+  "cloud_connect": {
+    "message": "連線 Google Drive"
+  },
+  "cloud_manual_ops": {
+    "message": "手動操作"
+  },
+  "cloud_backup_now": {
+    "message": "立即備份"
+  },
+  "cloud_merge": {
+    "message": "合併雲端資料"
+  },
+  "cloud_full_restore": {
+    "message": "完全還原"
+  },
+  "cloud_ops_hint": {
+    "message": "備份：上傳本地到雲端 / 合併：保留較新版本 / 完全還原：雲端覆蓋本地"
+  },
+  "cloud_auto_sync": {
+    "message": "自動同步"
+  },
+  "cloud_auto_sync_desc": {
+    "message": "啟用後，本地變更會自動上傳；啟動時自動下載"
+  },
+  "cloud_auto_enabled": {
+    "message": "自動同步已啟用"
+  },
+  "cloud_auto_disabled": {
+    "message": "自動同步已停用"
+  },
+  "cloud_backup_success": {
+    "message": "備份成功"
+  },
+  "cloud_merge_success": {
+    "message": "合併完成"
+  },
+  "cloud_restore_success": {
+    "message": "還原成功"
+  },
+
+  "gc_title": {
+    "message": "垃圾回收 (GC)"
+  },
+  "gc_deleted_items": {
+    "message": "已刪除項目："
+  },
+  "gc_oldest_item": {
+    "message": "最舊項目："
+  },
+  "gc_none": {
+    "message": "無"
+  },
+  "gc_run": {
+    "message": "執行 GC"
+  },
+  "gc_confirm_title": {
+    "message": "確認執行 GC"
+  },
+  "gc_confirm_desc": {
+    "message": "確定要立即清理所有已刪除項目？此操作不可回復。"
+  },
+  "gc_cleaning": {
+    "message": "正在清理已刪除項目..."
+  },
+  "gc_cleaned": {
+    "message": "成功清理 $COUNT$ 個項目",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "gc_nothing": {
+    "message": "無已刪除項目需清理"
+  },
+
+  "snapshot_title": {
+    "message": "本地快照"
+  },
+  "snapshot_empty": {
+    "message": "尚無快照"
+  },
+  "snapshot_before_restore": {
+    "message": "還原前"
+  },
+  "snapshot_before_merge": {
+    "message": "合併前"
+  },
+  "snapshot_manual": {
+    "message": "手動"
+  },
+  "snapshot_pages": {
+    "message": "$COUNT$ 網頁",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "snapshot_restore": {
+    "message": "恢復"
+  },
+  "snapshot_delete": {
+    "message": "刪除"
+  },
+  "snapshot_restore_confirm": {
+    "message": "確定要恢復此快照？當前資料將被替換。"
+  },
+  "snapshot_delete_confirm": {
+    "message": "確定要刪除此快照？"
+  },
+  "snapshot_restored": {
+    "message": "快照恢復成功"
+  },
+  "snapshot_deleted": {
+    "message": "快照刪除成功"
+  },
+
+  "confirm_backup_title": {
+    "message": "確認立即備份"
+  },
+  "confirm_backup_desc": {
+    "message": "確定要將本地資料上傳至雲端？這將覆蓋雲端上的備份。"
+  },
+  "confirm_merge_title": {
+    "message": "確認合併資料"
+  },
+  "confirm_merge_desc": {
+    "message": "確定要合併雲端資料？系統將保留兩端較新的變更。"
+  },
+  "confirm_restore_title": {
+    "message": "確認完全還原"
+  },
+  "confirm_restore_desc": {
+    "message": "確定要完全還原雲端資料？本地資料將被完全覆蓋，但系統會先自動建立本地快照以防萬一。"
+  },
+
+  "dialog_processing": {
+    "message": "正在執行中..."
+  },
+  "dialog_success": {
+    "message": "操作成功"
+  },
+  "dialog_failed": {
+    "message": "操作失敗"
+  },
+  "dialog_close": {
+    "message": "關閉"
+  },
+
+  "btn_cancel": {
+    "message": "取消"
+  },
+  "btn_confirm": {
+    "message": "確認"
+  },
+  "btn_confirm_replace": {
+    "message": "確認並取代"
+  },
+  "btn_confirm_execute": {
+    "message": "確認執行"
+  },
+  "btn_export_json": {
+    "message": "匯出 JSON"
+  },
+  "btn_import_json": {
+    "message": "匯入 JSON"
+  },
+
+  "lang_title": {
+    "message": "語言設定"
+  },
+  "lang_description": {
+    "message": "選擇您偏好的顯示語言"
+  },
+  "lang_select_label": {
+    "message": "顯示語言"
+  },
+  "lang_en": {
+    "message": "English"
+  },
+  "lang_zh_tw": {
+    "message": "繁體中文"
+  },
+  "lang_changed": {
+    "message": "語言已變更"
+  },
+
+  "menu_edit": {
+    "message": "編輯"
+  },
+  "menu_delete": {
+    "message": "刪除"
+  },
+  "menu_move": {
+    "message": "移動"
+  },
+  "menu_share": {
+    "message": "分享"
+  },
+  "menu_rename": {
+    "message": "重新命名"
+  },
+  "menu_move_up": {
+    "message": "上移"
+  },
+  "menu_move_down": {
+    "message": "下移"
+  },
+  "menu_open_all": {
+    "message": "全部開啟"
+  },
+  "menu_import_toby": {
+    "message": "匯入 Toby JSON"
+  },
+  "menu_import_html": {
+    "message": "匯入 HTML 書籤"
+  },
+  "menu_manage_orgs": {
+    "message": "管理 Organizations"
+  },
+  "menu_delete_org": {
+    "message": "刪除 Organization"
+  },
+
+  "toast_saved": {
+    "message": "已儲存"
+  },
+  "toast_deleted": {
+    "message": "已刪除"
+  },
+  "toast_moved": {
+    "message": "已移動"
+  },
+  "toast_moved_cards": {
+    "message": "已移動 $COUNT$ 張卡片",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "toast_deleted_cards": {
+    "message": "已刪除 $COUNT$ 張卡片",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "toast_import_success": {
+    "message": "匯入成功"
+  },
+  "toast_save_failed": {
+    "message": "儲存失敗"
+  },
+  "toast_delete_failed": {
+    "message": "刪除失敗"
+  },
+  "toast_group_added": {
+    "message": "已新增 $NAME$",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "toast_add_failed": {
+    "message": "新增失敗"
+  },
+  "error_select_collection": {
+    "message": "請先選擇一個 Collection"
+  },
+
+  "confirm_delete": {
+    "message": "確定要刪除嗎？"
+  },
+  "confirm_delete_card": {
+    "message": "確定刪除此卡片？"
+  },
+  "confirm_delete_cards": {
+    "message": "確定刪除 $COUNT$ 張卡片？",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+
+  "batch_move": {
+    "message": "移動"
+  },
+  "batch_open_tabs": {
+    "message": "開啟分頁"
+  },
+  "batch_delete": {
+    "message": "刪除"
+  },
+  "batch_selected": {
+    "message": "已選取 $COUNT$ 張",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+
+  "move_dialog_title": {
+    "message": "移動 $COUNT$ 張卡片至",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "move_label_collection": {
+    "message": "收藏集"
+  },
+  "move_select_collection": {
+    "message": "選擇收藏集"
+  },
+  "move_label_group": {
+    "message": "群組"
+  },
+  "move_select_group": {
+    "message": "選擇群組"
+  },
+  "btn_move": {
+    "message": "移動"
+  },
+  "loading": {
+    "message": "載入中..."
+  },
+  "error_something_wrong": {
+    "message": "發生錯誤"
+  },
+
+  "conflict_severity_major": {
+    "message": "⚠️ 重大差異"
+  },
+  "conflict_severity_minor": {
+    "message": "⚠ 輕微差異"
+  },
+  "conflict_severity_none": {
+    "message": "✓ 無差異"
+  },
+  "conflict_enable_auto_sync": {
+    "message": "啟用 Auto Sync"
+  },
+  "conflict_merge_cloud": {
+    "message": "合併雲端資料"
+  },
+  "conflict_diff_detected": {
+    "message": "檢測到本地與雲端資料存在差異："
+  },
+  "conflict_col_item": {
+    "message": "項目"
+  },
+  "conflict_col_local": {
+    "message": "本地"
+  },
+  "conflict_col_cloud": {
+    "message": "雲端"
+  },
+  "conflict_webpages": {
+    "message": "網頁"
+  },
+  "conflict_categories": {
+    "message": "分類"
+  },
+  "conflict_groups": {
+    "message": "群組"
+  },
+  "conflict_warning_major": {
+    "message": "⚠️ 差異較大，建議先備份本地資料後再繼續操作"
+  },
+  "conflict_auto_sync_desc": {
+    "message": "啟用 Auto Sync 後，每次本地變更將自動上傳至雲端。使用 LWW 合併策略：保留本地與雲端較新的版本。"
+  },
+  "conflict_merge_desc": {
+    "message": "合併操作將使用 LWW 策略：比較本地與雲端的時間戳記，保留較新的版本。"
+  },
+  "conflict_btn_enable": {
+    "message": "確定啟用"
+  },
+  "conflict_btn_merge": {
+    "message": "確定合併"
+  },
+  "conflict_btn_backup_first": {
+    "message": "先備份本地資料"
+  },
+
+  "search_placeholder": {
+    "message": "搜尋..."
+  },
+  "search_recent": {
+    "message": "最近搜尋"
+  },
+  "search_just_now": {
+    "message": "剛剛"
+  },
+  "search_mins_ago": {
+    "message": "$MINS$ 分鐘前",
+    "placeholders": {
+      "mins": { "content": "$1" }
+    }
+  },
+  "search_hours_ago": {
+    "message": "$HOURS$ 小時前",
+    "placeholders": {
+      "hours": { "content": "$1" }
+    }
+  },
+  "search_days_ago": {
+    "message": "$DAYS$ 天前",
+    "placeholders": {
+      "days": { "content": "$1" }
+    }
+  },
+  "search_action_search": {
+    "message": "↵ 搜尋"
+  },
+  "search_type_to_start": {
+    "message": "輸入字句開始搜尋..."
+  },
+  "search_no_results": {
+    "message": "找不到相關結果「$QUERY$」",
+    "placeholders": {
+      "query": { "content": "$1" }
+    }
+  },
+  "search_action_open": {
+    "message": "↵ 開啟"
+  },
+  "search_navigate": {
+    "message": "導覽"
+  },
+  "search_open": {
+    "message": "開啟"
+  },
+  "search_loaded": {
+    "message": "已載入 $LOADED$ / $TOTAL$",
+    "placeholders": {
+      "loaded": { "content": "$1" },
+      "total": { "content": "$2" }
+    }
+  },
+
+  "sidebar_collections": {
+    "message": "收藏集"
+  },
+  "sidebar_add_collection": {
+    "message": "新增收藏集"
+  },
+  "sidebar_add_group": {
+    "message": "新增群組"
+  },
+
+  "tabs_panel_title": {
+    "message": "開啟的分頁"
+  },
+  "tabs_window": {
+    "message": "視窗 $NUM$",
+    "placeholders": {
+      "num": { "content": "$1" }
+    }
+  },
+
+  "template_name": {
+    "message": "模板名稱"
+  },
+  "template_add_field": {
+    "message": "新增欄位"
+  },
+  "template_field_key": {
+    "message": "欄位鍵值"
+  },
+  "template_field_label": {
+    "message": "顯示名稱"
+  },
+  "template_save": {
+    "message": "儲存模板"
+  },
+
+  "tpl_manager_title": {
+    "message": "模板管理"
+  },
+  "tpl_manager_desc": {
+    "message": "管理書籤卡片的欄位模板，定義資料結構。"
+  },
+  "tpl_count": {
+    "message": "$COUNT$ 個模板",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_create_new": {
+    "message": "建立新模板"
+  },
+  "tpl_create_hint": {
+    "message": "從空白開始，或選擇預設"
+  },
+  "tpl_name_placeholder": {
+    "message": "模板名稱 (例如：文章)"
+  },
+  "tpl_name_exists": {
+    "message": "名稱已存在"
+  },
+  "tpl_name_exists_desc": {
+    "message": "已存在同名模板。"
+  },
+  "tpl_created": {
+    "message": "建立成功"
+  },
+  "btn_create": {
+    "message": "建立"
+  },
+  "tpl_presets": {
+    "message": "預設:"
+  },
+  "tpl_preset_book": {
+    "message": "📚 書籍"
+  },
+  "tpl_preset_tool": {
+    "message": "🔧 工具"
+  },
+  "tpl_field_count": {
+    "message": "$COUNT$ 欄位",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_usage_count": {
+    "message": "使用中: $COUNT$",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_add_field_section": {
+    "message": "新增欄位"
+  },
+  "tpl_field_display_name": {
+    "message": "顯示名稱"
+  },
+  "tpl_field_added": {
+    "message": "欄位已新增"
+  },
+  "btn_add": {
+    "message": "新增"
+  },
+  "btn_got_it": {
+    "message": "知道了"
+  },
+  "btn_expand": {
+    "message": "展開全部"
+  },
+  "btn_collapse": {
+    "message": "收合全部"
+  },
+  "btn_add_group": {
+    "message": "新增群組"
+  },
+  "tooltip_expand_all": {
+    "message": "展開所有群組"
+  },
+  "tooltip_collapse_all": {
+    "message": "收合所有群組"
+  },
+  "tooltip_add_group": {
+    "message": "新增群組"
+  },
+
+  "share_title": {
+    "message": "分享"
+  },
+  "share_publish": {
+    "message": "發布"
+  },
+  "share_copy_link": {
+    "message": "複製連結"
+  },
+  "share_link_copied": {
+    "message": "連結已複製"
+  },
+
+  "org_switch": {
+    "message": "切換 Organization"
+  },
+  "org_create": {
+    "message": "建立 Organization"
+  },
+  "org_name": {
+    "message": "Organization 名稱"
+  },
+
+  "items_count": {
+    "message": "$COUNT$ 個項目",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "version": {
+    "message": "版本"
+  },
+
+  "toast_renamed": {
+    "message": "已重新命名"
+  },
+  "toast_rename_failed": {
+    "message": "重新命名失敗"
+  },
+  "toast_reordered": {
+    "message": "已重新排序"
+  },
+  "toast_token_saved": {
+    "message": "GitHub Token 已安全儲存！"
+  },
+  "toast_token_save_failed": {
+    "message": "儲存 Token 失敗"
+  },
+  "toast_copied": {
+    "message": "已複製到剪貼簿"
+  },
+  "toast_copy_failed": {
+    "message": "複製失敗"
+  },
+  "toast_added": {
+    "message": "已新增 $NAME$",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "toast_add_failed": {
+    "message": "新增失敗"
+  },
+  "toast_created_from_tab": {
+    "message": "已從分頁建立並加入 group"
+  },
+  "toast_operation_failed": {
+    "message": "操作失敗"
+  },
+  "toast_move_failed": {
+    "message": "移動失敗"
+  },
+  "toast_create_failed": {
+    "message": "建立失敗"
+  },
+  "toast_group_deleted": {
+    "message": "已刪除 Group 與其書籤"
+  },
+
+  "group_expand": {
+    "message": "展開"
+  },
+  "group_collapse": {
+    "message": "摺疊"
+  },
+  "group_open_all": {
+    "message": "開啟全部分頁"
+  },
+  "group_settings": {
+    "message": "群組設定"
+  },
+  "group_min_one": {
+    "message": "至少需要保留一個 Group"
+  },
+
+  "menu_share_group": {
+    "message": "分享此群組"
+  },
+
+  "confirm_delete_group_title": {
+    "message": "刪除 Group"
+  },
+  "confirm_delete_group_desc": {
+    "message": "刪除此 group 以及其底下的書籤？此操作無法復原。"
+  },
+
+  "org_add_new": {
+    "message": "新增 Organization"
+  },
+  "org_import_hint": {
+    "message": "匯入 (Toby/HTML)"
+  },
+  "org_confirm_delete_title": {
+    "message": "確認刪除 Organization"
+  },
+  "org_confirm_delete_desc": {
+    "message": "確定要刪除「$NAME$」嗎？",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "org_delete_warning": {
+    "message": "⚠️ 警告：這將會永久刪除此 Organization 下的所有 Collection、Group 和書籤！"
+  },
+  "org_min_one": {
+    "message": "刪除失敗：至少需要保留一個 Organization"
+  },
+  "toast_org_deleted": {
+    "message": "已刪除 Organization 及其所有資料"
+  },
+  "btn_confirm_delete": {
+    "message": "確認刪除"
+  },
+  "org_manage_title": {
+    "message": "管理 Organizations"
+  },
+  "org_manage_desc": {
+    "message": "可重新命名或刪除組織"
+  },
+  "org_name_label": {
+    "message": "組織名稱"
+  },
+  "org_color_label": {
+    "message": "顏色"
+  },
+  "toast_update_failed": {
+    "message": "更新失敗"
+  },
+  "settings_btn": {
+    "message": "應用程式設定"
+  },
+  "theme_toggle": {
+    "message": "切換主題"
+  },
+
+  "share_settings": {
+    "message": "分享設定"
+  },
+  "share_group_title": {
+    "message": "分享「$NAME$」",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "share_title_label": {
+    "message": "分享標題"
+  },
+  "share_title_placeholder": {
+    "message": "自訂分享頁面的標題"
+  },
+  "share_description_label": {
+    "message": "分享描述"
+  },
+  "share_description_placeholder": {
+    "message": "簡單描述這個分享的內容"
+  },
+  "share_items_count": {
+    "message": "包含 $COUNT$ 個項目",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "share_publish_hint": {
+    "message": "發布分享連結：需要您的 GitHub token，自動上傳到您的 Gist"
+  },
+  "share_download_hint": {
+    "message": "下載 HTML：下載檔案到本機，可手動上傳"
+  },
+  "share_publish_btn": {
+    "message": "發布分享連結"
+  },
+  "share_download_btn": {
+    "message": "下載 HTML"
+  },
+  "share_publish_title": {
+    "message": "發布到 GitHub Gist 並獲得分享連結"
+  },
+
+  "token_setup_title": {
+    "message": "設定 GitHub Token"
+  },
+  "token_required_desc": {
+    "message": "需要 GitHub Personal Access Token 才能發布分享連結到 Gist"
+  },
+  "token_step1": {
+    "message": "前往 GitHub 設定頁面"
+  },
+  "token_step2": {
+    "message": "點擊「Generate new token (classic)」"
+  },
+  "token_step3": {
+    "message": "勾選「gist」權限（僅需此權限）"
+  },
+  "token_step4": {
+    "message": "複製產生的 token"
+  },
+  "token_security_notice": {
+    "message": "安全提示：Token 將加密儲存於瀏覽器擴充功能的安全儲存區，不會被網頁或其他擴充功能存取"
+  },
+  "token_label": {
+    "message": "GitHub Personal Access Token"
+  },
+  "token_storage_notice": {
+    "message": "Token 將安全地儲存在瀏覽器本機，不會上傳到任何伺服器"
+  },
+  "btn_save": {
+    "message": "儲存"
+  },
+
+  "share_link_title": {
+    "message": "分享連結"
+  },
+  "share_link_created": {
+    "message": "分享連結已建立"
+  },
+  "share_link_desc": {
+    "message": "您的分享連結已成功發布到 GitHub Gist，可以複製連結分享給他人："
+  },
+  "share_link_hint": {
+    "message": "提示：連結會在您的 GitHub Gist 中永久保存，可隨時在"
+  },
+  "btn_copy_link": {
+    "message": "複製連結"
+  },
+  "btn_open_link": {
+    "message": "開啟連結"
+  },
+
+  "category_edit_title": {
+    "message": "編輯 Collection"
+  },
+  "category_edit_desc": {
+    "message": "更新名稱、顏色和預設模板"
+  },
+  "category_name_label": {
+    "message": "名稱"
+  },
+  "category_color_label": {
+    "message": "顏色"
+  },
+  "category_template_label": {
+    "message": "預設模板"
+  },
+  "category_template_none": {
+    "message": "無"
+  },
+  "category_delete_btn": {
+    "message": "刪除 Collection..."
+  },
+  "category_confirm_delete": {
+    "message": "確認刪除？"
+  },
+  "category_min_one": {
+    "message": "刪除失敗：至少需要保留一個 Collection"
+  },
+  "toast_category_deleted": {
+    "message": "已刪除 Collection 及其所有資料"
+  },
+
+  "card_no_description": {
+    "message": "尚無描述"
+  },
+  "card_delete_title": {
+    "message": "刪除卡片？"
+  },
+  "card_delete_desc": {
+    "message": "確定要移除此網頁嗎？"
+  },
+  "card_edit_title": {
+    "message": "編輯網頁"
+  },
+  "card_title_label": {
+    "message": "標題"
+  },
+  "card_url_label": {
+    "message": "網址"
+  },
+  "card_note_label": {
+    "message": "備註"
+  },
+  "btn_save_changes": {
+    "message": "儲存變更"
+  },
+
+  "toast_open_tabs_failed": {
+    "message": "開啟分頁失敗"
+  },
+  "toast_add_tab_failed": {
+    "message": "新增分頁失敗"
+  },
+  "drag_tabs_hint": {
+    "message": "將分頁拖曳至此儲存"
+  },
+  "confirm_delete_selected_title": {
+    "message": "確認刪除選取項目"
+  },
+  "confirm_open_tabs": {
+    "message": "確定要開啟 $COUNT$ 個標籤頁嗎？",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  }
+}

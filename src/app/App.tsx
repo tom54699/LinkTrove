@@ -15,6 +15,7 @@ import { WebpagesProvider, useWebpages } from './webpages/WebpagesProvider';
 import { SettingsModal } from './ui/SettingsModal';
 import { useTemplates } from './templates/TemplatesProvider';
 import { GroupsView } from './groups/GroupsView';
+import { LanguageProvider, useI18n } from './i18n';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
@@ -36,6 +37,7 @@ export const AppLayout: React.FC = () => {
     };
   }, [theme, setTheme]);
   return (
+    <LanguageProvider>
     <FeedbackProvider>
       {/* Fallback heading to satisfy initial route tests even before providers ready */}
       <div className="sr-only">LinkTrove Home</div>
@@ -60,6 +62,7 @@ export const AppLayout: React.FC = () => {
         </OpenTabsProvider>
       </ErrorBoundary>
     </FeedbackProvider>
+    </LanguageProvider>
   );
 };
 
@@ -77,6 +80,7 @@ const HomeInner: React.FC = () => {
   // Simplify to a single view; remove density switching
   const [_collapsed, setCollapsed] = React.useState(false);
   const { showToast, setLoading } = useFeedback();
+  const { t } = useI18n();
   const [creatingGroup, setCreatingGroup] = React.useState(false);
   const [showAddCat, setShowAddCat] = React.useState(false);
   const [newCatName, setNewCatName] = React.useState('');
@@ -220,7 +224,7 @@ const HomeInner: React.FC = () => {
 
                 <button
                   className="h-[34px] px-3 bg-transparent border border-transparent rounded-lg text-[13px] font-semibold text-[var(--muted)] flex items-center gap-2 transition-all duration-200 hover:bg-white/5 hover:text-[var(--fg)] hover:border-[var(--accent)]"
-                  title="Expand all groups"
+                  title={t('tooltip_expand_all')}
                   onClick={() => {
                     try {
                       window.dispatchEvent(
@@ -238,12 +242,12 @@ const HomeInner: React.FC = () => {
                     <line x1="21" y1="3" x2="14" y2="10"></line>
                     <line x1="3" y1="21" x2="10" y2="14"></line>
                   </svg>
-                  <span>EXPAND</span>
+                  <span>{t('btn_expand')}</span>
                 </button>
 
                 <button
                   className="h-[34px] px-3 bg-transparent border border-transparent rounded-lg text-[13px] font-semibold text-[var(--muted)] flex items-center gap-2 transition-all duration-200 hover:bg-white/5 hover:text-[var(--fg)] hover:border-[var(--accent)]"
-                  title="Collapse all groups"
+                  title={t('tooltip_collapse_all')}
                   onClick={() => {
                     try {
                       window.dispatchEvent(
@@ -261,13 +265,13 @@ const HomeInner: React.FC = () => {
                     <line x1="14" y1="10" x2="21" y2="3"></line>
                     <line x1="3" y1="21" x2="10" y2="14"></line>
                   </svg>
-                  <span>COLLAPSE</span>
+                  <span>{t('btn_collapse')}</span>
                 </button>
 
                 <button
                   className="h-[34px] px-5 bg-[var(--accent)] text-[var(--accent-contrast)] border-none rounded-lg text-[13px] font-bold flex items-center gap-1.5 transition-all duration-200 hover:brightness-110 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[var(--accent)]/10"
-                  title="Add new group"
-                  aria-label="Add new group"
+                  title={t('tooltip_add_group')}
+                  aria-label={t('tooltip_add_group')}
                   disabled={
                     creatingGroup ||
                     !selectedId ||
@@ -280,7 +284,7 @@ const HomeInner: React.FC = () => {
                       // Check if selectedId belongs to current organization
                       const currentCategory = categories.find((c: any) => c.id === selectedId);
                       if (!currentCategory) {
-                        showToast('請先選擇一個 Collection', 'error');
+                        showToast(t('error_select_collection'), 'error');
                         return;
                       }
 
@@ -295,9 +299,9 @@ const HomeInner: React.FC = () => {
                       while (lower.has(name.toLowerCase())) name = `group ${i++}`;
                       await (s as any).createSubcategory?.(selectedId, name);
                       try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
-                      showToast(`已新增 ${name}`, 'success');
+                      showToast(t('toast_group_added', [name]), 'success');
                     } catch {
-                      showToast('新增失敗', 'error');
+                      showToast(t('toast_add_failed'), 'error');
                     } finally {
                       setCreatingGroup(false);
                     }
@@ -307,7 +311,7 @@ const HomeInner: React.FC = () => {
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                   </svg>
-                  <span>Group</span>
+                  <span>{t('btn_add_group')}</span>
                 </button>
               </div>
             </div>

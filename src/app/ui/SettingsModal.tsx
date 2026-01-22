@@ -7,21 +7,25 @@ import { useWebpages } from '../webpages/WebpagesProvider';
 import { useCategories } from '../sidebar/categories';
 import { useTemplates } from '../templates/TemplatesProvider';
 import type { ConflictInfo } from '../data/conflictDetection';
+import { useI18n, LANGUAGE_OPTIONS, type Language } from '../i18n';
 
 const ConflictDialog = React.lazy(() => import('./ConflictDialog').then(module => ({ default: module.ConflictDialog })));
 
 type Section = 'data' | 'templates';
-// 擴充：Cloud Sync 區塊
-type SectionEx = Section | 'cloud';
+// 擴充：Cloud Sync 區塊、語言設定
+type SectionEx = Section | 'cloud' | 'language';
 
 export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   const [section, setSection] = React.useState<SectionEx>('data');
+  const { t } = useI18n();
+
   if (!open) return null;
 
   const sections: { id: SectionEx; label: string; icon: string }[] = [
-    { id: 'data', label: '匯出/匯入', icon: '📥' },
-    { id: 'cloud', label: 'Cloud Sync', icon: '☁' },
-    { id: 'templates', label: 'Templates', icon: '▦' },
+    { id: 'data', label: t('nav_export_import'), icon: '📥' },
+    { id: 'cloud', label: t('nav_cloud_sync'), icon: '☁' },
+    { id: 'templates', label: t('nav_templates'), icon: '▦' },
+    { id: 'language', label: t('nav_language'), icon: '🌐' },
   ];
 
   return (
@@ -35,7 +39,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
         {/* Sidebar */}
         <aside className="w-[180px] bg-[var(--panel)] border-r border-[var(--border)] py-4 flex flex-col flex-shrink-0">
           <div className="px-5 pb-4 mb-2 font-bold text-sm tracking-tight text-[var(--fg)]">
-            Settings
+            {t('settings_title')}
           </div>
           <nav className="flex flex-col gap-0.5 px-2" aria-label="Settings Sections">
             {sections.map((s) => (
@@ -65,6 +69,8 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
               <DataPanel />
             ) : section === 'cloud' ? (
               <CloudSyncPanel />
+            ) : section === 'language' ? (
+              <LanguagePanel />
             ) : (
               <TemplatesManager />
             )}
@@ -75,7 +81,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
               className="px-4 py-1.5 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--fg)] transition-all"
               onClick={onClose}
             >
-              關閉
+              {t('settings_close')}
             </button>
           </footer>
         </div>
@@ -85,6 +91,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
 };
 
 const DataPanel: React.FC = () => {
+  const { t } = useI18n();
   const { showToast, setLoading } = useFeedback();
   // useWebpages/useCategories not needed for logic but good for deps? 
   // Actually we force reload via window.location.reload so we don't need them
@@ -101,8 +108,8 @@ const DataPanel: React.FC = () => {
       const storage = createStorageService();
       await (storage as any).importData(text);
       
-      setInlineMsg({ kind: 'success', text: '匯入成功，正在重新載入...' });
-      showToast('Import success', 'success');
+      setInlineMsg({ kind: 'success', text: t('data_import_success') });
+      showToast(t('toast_import_success'), 'success');
       
       // Force full reload to ensure clean state after full replacement
       setTimeout(() => window.location.reload(), 800);
@@ -118,12 +125,12 @@ const DataPanel: React.FC = () => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div id="tab-data" className="tab-content">
-        <h2 className="text-[18px] font-bold mb-1 text-[var(--fg)]">專案備份與還原（僅本專案）</h2>
+        <h2 className="text-[18px] font-bold mb-1 text-[var(--fg)]">{t('data_title')}</h2>
         <p className="text-[13px] text-[var(--muted)] mb-5 leading-relaxed">
-          匯出或還原本專案格式 JSON。匯入將取代現有資料，建議先匯出備份。
+          {t('data_description')}
         </p>
 
-        <div className="text-[13px] font-medium mb-1.5 text-[var(--fg)]">匯出備份</div>
+        <div className="text-[13px] font-medium mb-1.5 text-[var(--fg)]">{t('data_export_label')}</div>
         <button 
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[var(--border)] bg-transparent text-[var(--muted)] text-[13px] hover:bg-[var(--surface)] hover:text-[var(--fg)] transition-all cursor-pointer"
           onClick={async () => {
@@ -137,20 +144,20 @@ const DataPanel: React.FC = () => {
               a.download = `linktrove-backup-${new Date().toISOString().split('T')[0]}.json`;
               a.click();
               URL.revokeObjectURL(url);
-              showToast('備份匯出完成', 'success');
+              showToast(t('data_export_success'), 'success');
             } catch {
-              showToast('匯出失敗', 'error');
+              showToast(t('data_export_failed'), 'error');
             } finally {
               setLoading(false);
             }
           }}
         >
-          Export JSON
+          {t('btn_export_json')}
         </button>
 
         <div className="h-px bg-[var(--border)] my-5"></div>
 
-        <div className="text-[13px] font-medium mb-1.5 text-[var(--fg)]">還原（取代現有資料）</div>
+        <div className="text-[13px] font-medium mb-1.5 text-[var(--fg)]">{t('data_restore_label')}</div>
         <div 
           className="border-2 border-dashed border-[var(--border)] rounded-lg p-4 transition-all hover:border-[var(--accent)] hover:bg-[var(--accent-hover)] cursor-pointer"
           onDragOver={(e) => e.preventDefault()}
@@ -166,7 +173,7 @@ const DataPanel: React.FC = () => {
         >
           <div className="flex items-center gap-3">
             <span className="text-[13px] text-[var(--muted)] flex-1 truncate">
-              {file ? `已選取：${file.name}` : '將 JSON 拖放到此處或點擊選取檔案...'}
+              {file ? t('data_file_selected', [file.name]) : t('data_drop_hint')}
             </span>
             <button 
               className="px-4 py-2 rounded-lg bg-[var(--accent)] border border-[var(--accent)] text-white text-[13px] font-bold hover:brightness-110 transition-all active:scale-95 cursor-pointer shadow-sm"
@@ -176,7 +183,7 @@ const DataPanel: React.FC = () => {
                 else setConfirmOpen(true);
               }}
             >
-              Import JSON
+              {t('btn_import_json')}
             </button>
           </div>
           <input
@@ -207,12 +214,12 @@ const DataPanel: React.FC = () => {
         <div className="fixed inset-0 z-[10000] bg-black/70 flex items-center justify-center p-4 backdrop-blur-md" onClick={() => setConfirmOpen(false)}>
           <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[480px] max-w-full shadow-2xl overflow-hidden" onClick={(e)=>e.stopPropagation()} role="dialog">
             <div className="px-5 py-4 border-b border-[var(--border)]">
-              <div className="text-base font-bold text-[var(--fg)]">確認匯入資料？</div>
-              <div className="text-[13px] text-[var(--muted)] mt-1">此操作將永久取代您目前的資料與設定。</div>
+              <div className="text-base font-bold text-[var(--fg)]">{t('data_confirm_import_title')}</div>
+              <div className="text-[13px] text-[var(--muted)] mt-1">{t('data_confirm_import_desc')}</div>
             </div>
             <div className="px-5 py-3 bg-white/5 flex items-center justify-end gap-2">
-              <button className="px-3 py-1.5 rounded-md text-[13px] border border-[var(--border)] text-[var(--muted)] hover:bg-white/5 cursor-pointer" onClick={() => setConfirmOpen(false)}>取消</button>
-              <button className="px-4 py-1.5 rounded-md bg-[var(--accent)] text-white text-[13px] font-bold hover:brightness-110 cursor-pointer shadow-sm active:scale-95" onClick={performImport}>確認並取代</button>
+              <button className="px-3 py-1.5 rounded-md text-[13px] border border-[var(--border)] text-[var(--muted)] hover:bg-white/5 cursor-pointer" onClick={() => setConfirmOpen(false)}>{t('btn_cancel')}</button>
+              <button className="px-4 py-1.5 rounded-md bg-[var(--accent)] text-white text-[13px] font-bold hover:brightness-110 cursor-pointer shadow-sm active:scale-95" onClick={performImport}>{t('btn_confirm_replace')}</button>
             </div>
           </div>
         </div>
@@ -222,9 +229,7 @@ const DataPanel: React.FC = () => {
 };
 
 const CloudSyncPanel: React.FC = () => {
-  // ... (keep CloudSyncPanel as is, it was fine)
-  // To save space in this response, I'll assume the rest of the file remains unchanged as per previous writes.
-  // But wait, write_file overwrites the WHOLE file. I need to include CloudSyncPanel.
+  const { t } = useI18n();
   const { actions: pagesActions } = useWebpages();
   const { actions: catActions } = useCategories() as any;
   const { actions: tplActions } = useTemplates();
@@ -298,7 +303,7 @@ const CloudSyncPanel: React.FC = () => {
       await Promise.all([pagesActions.load(), catActions?.reload?.(), tplActions?.reload?.()]);
       await loadSnapshotsList();
       await loadGCStats(); // Reload GC stats after restore
-      showResult('快照恢復成功');
+      showResult(t('snapshot_restored'));
     } catch (e: any) { setError(String(e?.message || e)); } finally { setLoadingSnapshots(false); }
   }
 
@@ -308,7 +313,7 @@ const CloudSyncPanel: React.FC = () => {
       const snapshotModule = await import('../data/snapshotService');
       await snapshotModule.deleteSnapshot(snapshotId);
       await loadSnapshotsList();
-      showResult('快照刪除成功');
+      showResult(t('snapshot_deleted'));
     } catch (e: any) { setError(String(e?.message || e)); }
   }
 
@@ -321,13 +326,13 @@ const CloudSyncPanel: React.FC = () => {
 
   async function doRunGC() {
     if (!confirmDialog) return;
-    setConfirmDialog({ ...confirmDialog, status: 'processing', progress: '正在清理已刪除項目...' });
+    setConfirmDialog({ ...confirmDialog, status: 'processing', progress: t('gc_cleaning') });
     setLoadingGC(true);
     try {
       const gcModule = await import('../data/gcService');
       const result = await gcModule.runGC(0);
       await loadGCStats();
-      const msg = result.cleaned > 0 ? `成功清理 ${result.cleaned} 個項目` : '無已刪除項目需清理';
+      const msg = result.cleaned > 0 ? t('gc_cleaned', [result.cleaned]) : t('gc_nothing');
       setConfirmDialog(prev => prev ? { ...prev, status: 'success', resultMessage: msg, progress: undefined } : null);
       showResult(msg);
     } catch (e: any) {
@@ -344,23 +349,23 @@ const CloudSyncPanel: React.FC = () => {
       setLast(refreshed.lastSyncedAt);
       setAutoEnabled(!!refreshed.auto);
       setPendingPush(!!refreshed.pendingPush);
-      showResult('已連線 Google Drive');
+      showResult(t('cloud_connected'));
     } catch (e: any) { setError(String(e?.message || e)); }
   }
-  
+
   async function doBackup() {
     if (!confirmDialog) return;
     const s = createStorageService();
     const count = (await s.loadFromLocal()).length;
-    setConfirmDialog({ ...confirmDialog, status: 'processing', progress: `正在備份 ${count} 個書籤...` });
+    setConfirmDialog({ ...confirmDialog, status: 'processing', progress: t('items_count', [count]) + '...' });
     setSyncing(true);
     try {
       const mod = await import('../data/syncService');
       await mod.backupNow();
       const st = mod.getStatus();
       setLast(st.lastSyncedAt);
-      setConfirmDialog(prev => prev ? { ...prev, status: 'success', resultMessage: '備份成功！' } : null);
-      showResult('備份成功');
+      setConfirmDialog(prev => prev ? { ...prev, status: 'success', resultMessage: t('cloud_backup_success') } : null);
+      showResult(t('cloud_backup_success'));
     } catch (e: any) {
       setConfirmDialog(prev => prev ? { ...prev, status: 'error', resultMessage: String(e?.message || e) } : null);
     } finally { setSyncing(false); }
@@ -368,7 +373,7 @@ const CloudSyncPanel: React.FC = () => {
   
   async function doRestore(merge = true) {
     if (!confirmDialog) return;
-    setConfirmDialog({ ...confirmDialog, status: 'processing', progress: merge ? '正在合併資料...' : '正在下載並備份...' });
+    setConfirmDialog({ ...confirmDialog, status: 'processing', progress: t('dialog_processing') });
     setSyncing(true);
     try {
       const mod = await import('../data/syncService');
@@ -379,8 +384,8 @@ const CloudSyncPanel: React.FC = () => {
       await mod.restoreNow(undefined, merge);
       const st = mod.getStatus();
       setLast(st.lastSyncedAt);
-      setConfirmDialog(prev => prev ? { ...prev, status: 'success', resultMessage: merge ? '合併成功！' : '還原成功！' } : null);
-      showResult(merge ? '合併完成' : '還原成功');
+      setConfirmDialog(prev => prev ? { ...prev, status: 'success', resultMessage: merge ? t('cloud_merge_success') : t('cloud_restore_success') } : null);
+      showResult(merge ? t('cloud_merge_success') : t('cloud_restore_success'));
     } catch (e: any) {
       setConfirmDialog(prev => prev ? { ...prev, status: 'error', resultMessage: String(e?.message || e) } : null);
     } finally { setSyncing(false); }
@@ -389,76 +394,76 @@ const CloudSyncPanel: React.FC = () => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div id="tab-cloud" className="tab-content">
-        <h2 className="text-[18px] font-bold mb-1 text-[var(--fg)]">Google Drive 雲端同步</h2>
-        <p className="text-[13px] text-[var(--muted)] mb-5 leading-relaxed">使用 Google Drive 儲存備份（私有、不顯示於雲端硬碟）</p>
+        <h2 className="text-[18px] font-bold mb-1 text-[var(--fg)]">{t('cloud_title')}</h2>
+        <p className="text-[13px] text-[var(--muted)] mb-5 leading-relaxed">{t('cloud_description')}</p>
 
         <div className="flex items-center gap-3 mb-5">
           {connected ? (
             <>
-              <div className="inline-flex items-center px-2 py-0.5 rounded text-[12px] bg-[var(--success-bg)] border border-[var(--success-border)] text-[var(--success-text)]">已連線</div>
+              <div className="inline-flex items-center px-2 py-0.5 rounded text-[12px] bg-[var(--success-bg)] border border-[var(--success-border)] text-[var(--success-text)]">{t('cloud_connected')}</div>
               <button className="text-[13px] px-2 py-1 rounded border border-[var(--border)] text-[var(--muted)] bg-transparent hover:bg-[var(--surface)] transition-all cursor-pointer" onClick={async () => {
                 const mod = await import('../data/syncService');
-                await mod.disconnect(); setConnected(false); setAutoEnabled(false); showResult('已中斷連線');
-              }}>中斷連線</button>
-              <span className="text-[12px] opacity-60 ml-auto text-[var(--muted)]">最後同步：{last ? new Date(last).toLocaleString('zh-TW', { hour12: false }) : '從未'}</span>
+                await mod.disconnect(); setConnected(false); setAutoEnabled(false); showResult(t('cloud_disconnected'));
+              }}>{t('cloud_disconnect')}</button>
+              <span className="text-[12px] opacity-60 ml-auto text-[var(--muted)]">{t('cloud_last_sync')}{last ? new Date(last).toLocaleString('zh-TW', { hour12: false }) : t('cloud_never')}</span>
             </>
           ) : (
-            <button className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[var(--accent)] bg-[var(--accent)] text-white text-[13px] font-bold hover:opacity-90 transition-all cursor-pointer" onClick={doConnect}>連線 Google Drive</button>
+            <button className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[var(--accent)] bg-[var(--accent)] text-white text-[13px] font-bold hover:opacity-90 transition-all cursor-pointer" onClick={doConnect}>{t('cloud_connect')}</button>
           )}
         </div>
 
         {connected && (
           <>
             <div className="h-px bg-[var(--border)] my-5"></div>
-            <div className="text-[13px] font-medium mb-2 text-[var(--fg)]">手動操作</div>
+            <div className="text-[13px] font-medium mb-2 text-[var(--fg)]">{t('cloud_manual_ops')}</div>
             <div className="flex gap-2 mb-2 items-center">
-              <button className="text-[13px] px-3 py-1.5 rounded-md border border-[var(--border)] bg-transparent text-[var(--muted)] hover:bg-[var(--surface)] transition-all cursor-pointer" disabled={syncing} onClick={() => setConfirmDialog({ type: 'backup', status: 'idle' })}>立即備份</button>
-              <button className="text-[13px] px-3 py-1.5 rounded-md border border-[var(--accent)] text-[var(--accent)] bg-transparent hover:bg-[var(--accent-hover)] transition-all cursor-pointer" disabled={syncing} onClick={() => setConfirmDialog({ type: 'merge', status: 'idle' })}>合併雲端資料</button>
-              <button className="text-[13px] px-3 py-1.5 rounded-md border border-[var(--border)] text-[var(--muted)] bg-transparent hover:bg-[var(--surface)] transition-all cursor-pointer" disabled={syncing} onClick={() => setConfirmDialog({ type: 'restore-cloud', status: 'idle' })}>完全還原</button>
+              <button className="text-[13px] px-3 py-1.5 rounded-md border border-[var(--border)] bg-transparent text-[var(--muted)] hover:bg-[var(--surface)] transition-all cursor-pointer" disabled={syncing} onClick={() => setConfirmDialog({ type: 'backup', status: 'idle' })}>{t('cloud_backup_now')}</button>
+              <button className="text-[13px] px-3 py-1.5 rounded-md border border-[var(--accent)] text-[var(--accent)] bg-transparent hover:bg-[var(--accent-hover)] transition-all cursor-pointer" disabled={syncing} onClick={() => setConfirmDialog({ type: 'merge', status: 'idle' })}>{t('cloud_merge')}</button>
+              <button className="text-[13px] px-3 py-1.5 rounded-md border border-[var(--border)] text-[var(--muted)] bg-transparent hover:bg-[var(--surface)] transition-all cursor-pointer" disabled={syncing} onClick={() => setConfirmDialog({ type: 'restore-cloud', status: 'idle' })}>{t('cloud_full_restore')}</button>
               {actionResult && <span className="text-[12px] text-[var(--success-text)] ml-2 animate-in fade-in duration-300">✓ {actionResult.text}</span>}
             </div>
-            <div className="text-[11px] text-[var(--muted)] opacity-60">備份：上傳本地到雲端 / 合併：保留較新版本 / 完全還原：雲端覆蓋本地</div>
+            <div className="text-[11px] text-[var(--muted)] opacity-60">{t('cloud_ops_hint')}</div>
 
             <div className="h-px bg-[var(--border)] my-5"></div>
             <label className="flex gap-2.5 cursor-pointer items-start">
               <input type="checkbox" checked={autoEnabled} onChange={async (e) => {
                 const mod = await import('../data/syncService');
-                await mod.setAutoSync(e.target.checked); setAutoEnabled(e.target.checked); showResult(e.target.checked ? '自動同步已啟用' : '自動同步已停用');
+                await mod.setAutoSync(e.target.checked); setAutoEnabled(e.target.checked); showResult(e.target.checked ? t('cloud_auto_enabled') : t('cloud_auto_disabled'));
               }} style={{ accentColor: 'var(--accent)' }} className="mt-0.5" />
               <div>
-                <div className="text-[13px] font-medium text-[var(--fg)] leading-none mb-1.5">自動同步</div>
-                <div className="text-[12px] opacity-70 text-[var(--muted)]">啟用後，本地變更會自動上傳；啟動時自動下載</div>
+                <div className="text-[13px] font-medium text-[var(--fg)] leading-none mb-1.5">{t('cloud_auto_sync')}</div>
+                <div className="text-[12px] opacity-70 text-[var(--muted)]">{t('cloud_auto_sync_desc')}</div>
               </div>
             </label>
           </>
         )}
 
         <div className="h-px bg-[var(--border)] my-5"></div>
-        <div className="text-[13px] font-medium mb-1.5 text-[var(--fg)]">垃圾回收 (GC)</div>
+        <div className="text-[13px] font-medium mb-1.5 text-[var(--fg)]">{t('gc_title')}</div>
         <div className="bg-white/[0.03] border border-[var(--border)] rounded-md p-3 text-[12px] mb-2.5">
-          <div className="flex justify-between mb-1"><span className="opacity-70">已刪除項目：</span><span>{gcStats?.totalTombstones ?? 0} 個</span></div>
-          <div className="flex justify-between"><span className="opacity-70">最舊項目：</span><span>{gcStats?.oldestTombstone ? new Date(gcStats.oldestTombstone).toLocaleDateString('zh-TW') : '無'}</span></div>
+          <div className="flex justify-between mb-1"><span className="opacity-70">{t('gc_deleted_items')}</span><span>{gcStats?.totalTombstones ?? 0}</span></div>
+          <div className="flex justify-between"><span className="opacity-70">{t('gc_oldest_item')}</span><span>{gcStats?.oldestTombstone ? new Date(gcStats.oldestTombstone).toLocaleDateString('zh-TW') : t('gc_none')}</span></div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="text-[13px] px-3 py-1.5 rounded-md border border-[var(--border)] bg-transparent text-[var(--muted)] hover:bg-[var(--surface)] transition-all cursor-pointer disabled:opacity-50" disabled={loadingGC || !gcStats?.totalTombstones} onClick={() => setConfirmDialog({ type: 'gc', status: 'idle' })}>執行 GC</button>
-          {actionResult && actionResult.text.includes('清理') && <span className="text-[12px] text-[var(--success-text)]">✓ {actionResult.text}</span>}
+          <button className="text-[13px] px-3 py-1.5 rounded-md border border-[var(--border)] bg-transparent text-[var(--muted)] hover:bg-[var(--surface)] transition-all cursor-pointer disabled:opacity-50" disabled={loadingGC || !gcStats?.totalTombstones} onClick={() => setConfirmDialog({ type: 'gc', status: 'idle' })}>{t('gc_run')}</button>
+          {actionResult && <span className="text-[12px] text-[var(--success-text)]">✓ {actionResult.text}</span>}
         </div>
 
         <div className="h-px bg-[var(--border)] my-5"></div>
-        <div className="text-[13px] font-medium mb-1.5 text-[var(--fg)]">本地快照</div>
+        <div className="text-[13px] font-medium mb-1.5 text-[var(--fg)]">{t('snapshot_title')}</div>
         {snapshots.length === 0 ? (
-          <div className="text-[12px] text-[var(--muted)] opacity-60 p-3 bg-white/[0.03] border border-[var(--border)] rounded-md">尚無快照</div>
+          <div className="text-[12px] text-[var(--muted)] opacity-60 p-3 bg-white/[0.03] border border-[var(--border)] rounded-md">{t('snapshot_empty')}</div>
         ) : (
           <div className="space-y-2">
             {snapshots.map((s) => (
               <div key={s.id} className="bg-white/[0.03] border border-[var(--border)] rounded-md p-2.5 flex justify-between items-center">
                 <div>
                   <div className="text-[12px] font-semibold">{new Date(s.createdAt).toLocaleString('zh-TW', { hour12: false })}</div>
-                  <div className="text-[11px] opacity-60">{s.reason === 'before-restore' ? '還原前' : s.reason === 'before-merge' ? '合併前' : '手動'} · {s.summary.webpages} 網頁</div>
+                  <div className="text-[11px] opacity-60">{s.reason === 'before-restore' ? t('snapshot_before_restore') : s.reason === 'before-merge' ? t('snapshot_before_merge') : t('snapshot_manual')} · {t('snapshot_pages', [s.summary.webpages])}</div>
                 </div>
                 <div className="flex gap-1.5">
-                  <button className="text-[11px] px-2 py-1 rounded border border-[var(--accent)] text-[var(--accent)] bg-transparent hover:bg-[var(--accent-hover)] cursor-pointer" onClick={() => setConfirmDialog({ type: 'restore-snapshot', snapshotId: s.id, status: 'idle' })}>恢復</button>
-                  <button className="text-[11px] px-2 py-1 rounded border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] cursor-pointer" onClick={() => setConfirmDialog({ type: 'delete-snapshot', snapshotId: s.id, status: 'idle' })}>刪除</button>
+                  <button className="text-[11px] px-2 py-1 rounded border border-[var(--accent)] text-[var(--accent)] bg-transparent hover:bg-[var(--accent-hover)] cursor-pointer" onClick={() => setConfirmDialog({ type: 'restore-snapshot', snapshotId: s.id, status: 'idle' })}>{t('snapshot_restore')}</button>
+                  <button className="text-[11px] px-2 py-1 rounded border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] cursor-pointer" onClick={() => setConfirmDialog({ type: 'delete-snapshot', snapshotId: s.id, status: 'idle' })}>{t('snapshot_delete')}</button>
                 </div>
               </div>
             ))}
@@ -471,42 +476,80 @@ const CloudSyncPanel: React.FC = () => {
           <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[460px] max-w-[95vw]" onClick={(e) => e.stopPropagation()} role="dialog">
             <div className="px-5 py-4 border-b border-[var(--border)]">
               <div className="text-base font-bold">
-                {confirmDialog.type === 'gc' ? '確認執行 GC' : confirmDialog.type === 'backup' ? '確認立即備份' : confirmDialog.type === 'merge' ? '確認合併資料' : confirmDialog.type === 'restore-cloud' ? '確認完全還原' : '確認操作'}
+                {confirmDialog.type === 'gc' ? t('gc_confirm_title') : confirmDialog.type === 'backup' ? t('confirm_backup_title') : confirmDialog.type === 'merge' ? t('confirm_merge_title') : confirmDialog.type === 'restore-cloud' ? t('confirm_restore_title') : t('btn_confirm')}
               </div>
             </div>
             <div className="px-5 py-5 text-[13px] text-[var(--muted)] leading-relaxed">
               {confirmDialog.status === 'processing' ? (
-                <div className="flex flex-col items-center py-4"><div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mb-3"></div><div>{confirmDialog.progress || '正在執行中...'}</div></div>
+                <div className="flex flex-col items-center py-4"><div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mb-3"></div><div>{confirmDialog.progress || t('dialog_processing')}</div></div>
               ) : confirmDialog.status === 'success' ? (
-                <div className="py-4 text-center"><div className="text-[var(--success-text)] font-bold mb-1">操作成功</div><div className="text-[12px] opacity-80">{confirmDialog.resultMessage}</div></div>
+                <div className="py-4 text-center"><div className="text-[var(--success-text)] font-bold mb-1">{t('dialog_success')}</div><div className="text-[12px] opacity-80">{confirmDialog.resultMessage}</div></div>
               ) : confirmDialog.status === 'error' ? (
-                <div className="py-4 text-center"><div className="text-red-400 font-bold mb-1">操作失敗</div><div className="text-[12px] opacity-80">{confirmDialog.resultMessage}</div></div>
+                <div className="py-4 text-center"><div className="text-red-400 font-bold mb-1">{t('dialog_failed')}</div><div className="text-[12px] opacity-80">{confirmDialog.resultMessage}</div></div>
               ) : (
                 <>
-                  {confirmDialog.type === 'gc' && '確定要立即清理所有已刪除項目？此操作不可回復。'}
-                  {confirmDialog.type === 'backup' && '確定要將本地資料上傳至雲端？这将覆蓋雲端上的備份。'}
-                  {confirmDialog.type === 'merge' && '確定要合併雲端資料？系統將保留兩端較新的變更。'}
-                  {confirmDialog.type === 'restore-cloud' && '確定要完全還原雲端資料？⚠️ 本地資料將被完全覆蓋，但系統會先自動建立本地快照以防萬一。'}
-                  {confirmDialog.type === 'restore-snapshot' && '確定要恢復此快照？當前資料將被替換。'}
-                  {confirmDialog.type === 'delete-snapshot' && '確定要刪除此快照？'}
+                  {confirmDialog.type === 'gc' && t('gc_confirm_desc')}
+                  {confirmDialog.type === 'backup' && t('confirm_backup_desc')}
+                  {confirmDialog.type === 'merge' && t('confirm_merge_desc')}
+                  {confirmDialog.type === 'restore-cloud' && t('confirm_restore_desc')}
+                  {confirmDialog.type === 'restore-snapshot' && t('snapshot_restore_confirm')}
+                  {confirmDialog.type === 'delete-snapshot' && t('snapshot_delete_confirm')}
                 </>
               )}
             </div>
             <div className="px-5 py-3 border-t border-[var(--border)] bg-white/5 flex justify-end gap-2">
               {confirmDialog.status === 'idle' ? (
                 <>
-                  <button className="px-3 py-1.5 rounded-md text-[13px] border border-[var(--border)] text-[var(--muted)] hover:bg-white/5 cursor-pointer" onClick={() => setConfirmDialog(null)}>取消</button>
+                  <button className="px-3 py-1.5 rounded-md text-[13px] border border-[var(--border)] text-[var(--muted)] hover:bg-white/5 cursor-pointer" onClick={() => setConfirmDialog(null)}>{t('btn_cancel')}</button>
                   <button className={`px-3 py-1.5 rounded-md text-[13px] border text-white font-bold cursor-pointer ${confirmDialog.type === 'restore-cloud' || confirmDialog.type === 'delete-snapshot' ? 'bg-red-600 border-red-600' : 'bg-[var(--accent)] border-[var(--accent)]'}`} onClick={() => {
                     if (confirmDialog.type === 'gc') doRunGC(); else if (confirmDialog.type === 'backup') doBackup(); else if (confirmDialog.type === 'merge') doRestore(true); else if (confirmDialog.type === 'restore-cloud') doRestore(false); else if (confirmDialog.type === 'restore-snapshot' && confirmDialog.snapshotId) doRestoreSnapshot(confirmDialog.snapshotId); else if (confirmDialog.type === 'delete-snapshot' && confirmDialog.snapshotId) doDeleteSnapshot(confirmDialog.snapshotId);
-                  }}>確認執行</button>
+                  }}>{t('btn_confirm_execute')}</button>
                 </>
               ) : confirmDialog.status !== 'processing' ? (
-                <button className="px-4 py-1.5 rounded-md text-[13px] border border-[var(--border)] bg-[var(--surface)] text-[var(--fg)] cursor-pointer" onClick={() => setConfirmDialog(null)}>關閉</button>
-              ) : <button className="px-3 py-1.5 rounded-md text-[13px] border border-[var(--border)] text-[var(--muted)] opacity-50 cursor-not-allowed">執行中...</button>}
+                <button className="px-4 py-1.5 rounded-md text-[13px] border border-[var(--border)] bg-[var(--surface)] text-[var(--fg)] cursor-pointer" onClick={() => setConfirmDialog(null)}>{t('dialog_close')}</button>
+              ) : <button className="px-3 py-1.5 rounded-md text-[13px] border border-[var(--border)] text-[var(--muted)] opacity-50 cursor-not-allowed">{t('dialog_processing')}</button>}
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const LanguagePanel: React.FC = () => {
+  const { t, language, setLanguage } = useI18n();
+  const { showToast } = useFeedback();
+
+  const handleLanguageChange = async (newLang: Language) => {
+    await setLanguage(newLang);
+    showToast(t('lang_changed'), 'success');
+  };
+
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div>
+        <h2 className="text-[18px] font-bold mb-1 text-[var(--fg)]">{t('lang_title')}</h2>
+        <p className="text-[13px] text-[var(--muted)] mb-5 leading-relaxed">
+          {t('lang_description')}
+        </p>
+
+        <div className="text-[13px] font-medium mb-2 text-[var(--fg)]">{t('lang_select_label')}</div>
+        <div className="flex gap-3">
+          {LANGUAGE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              className={`px-4 py-2.5 rounded-lg border text-[14px] transition-all ${
+                language === option.value
+                  ? 'border-[var(--accent)] bg-[var(--accent)] text-white font-medium shadow-sm'
+                  : 'border-[var(--border)] bg-transparent text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--fg)]'
+              }`}
+              onClick={() => handleLanguageChange(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

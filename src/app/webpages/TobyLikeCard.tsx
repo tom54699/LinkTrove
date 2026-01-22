@@ -4,6 +4,7 @@ import '../../styles/toby-like.css';
 import { ContextMenu } from '../ui/ContextMenu';
 import { useCategories } from '../sidebar/categories';
 import { useTemplates } from '../templates/TemplatesProvider';
+import { useI18n } from '../i18n';
 
 export interface TobyLikeCardProps {
   title: string;
@@ -53,6 +54,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   onSave,
   ghost,
 }) => {
+  const { t } = useI18n();
   const [confirming, setConfirming] = React.useState(false);
   const [showModal, setShowModal] = React.useState(false);
   const [titleValue, setTitleValue] = React.useState(title);
@@ -164,14 +166,14 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
           {/* Bottom Section: Description */}
           <div className="block-b" style={{ width: '100%' }}>
             <p className="description" style={{ fontSize: '13px', color: 'var(--text)', opacity: 0.85, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }} title={description}>
-              {description || "No description provided."}
+              {description || t('card_no_description')}
             </p>
           </div>
         </div>
 
         {/* Delete Bubble (Original Style) */}
         {!ghost && (
-          <button className="delete-btn" title="刪除" onClick={(e) => { e.stopPropagation(); setConfirming(true); }}>
+          <button className="delete-btn" title={t('menu_delete')} onClick={(e) => { e.stopPropagation(); setConfirming(true); }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"></path></svg>
           </button>
         )}
@@ -179,10 +181,10 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
         {/* Action Sticker (Original Style) */}
         {!ghost && (
           <div className="actions" onClick={(e) => e.stopPropagation()}>
-            <button className="action-btn" title="編輯" onClick={() => { setShowModal(true); onModalOpenChange?.(true); }}>
+            <button className="action-btn" title={t('menu_edit')} onClick={() => { setShowModal(true); onModalOpenChange?.(true); }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"></path><path d="M13.5 6.5l4 4"></path></svg>
             </button>
-            <button className="action-btn" title="移動" onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setMoveMenuPos({ x: r.left, y: r.bottom + 8 }); }}>
+            <button className="action-btn" title={t('menu_move')} onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setMoveMenuPos({ x: r.left, y: r.bottom + 8 }); }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 15l6 -6"></path><path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464"></path><path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463"></path></svg>
             </button>
           </div>
@@ -193,11 +195,11 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
       {confirming && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4" onClick={() => setConfirming(false)}>
           <div className="bg-[var(--panel)] border border-white/10 rounded-xl p-5 shadow-2xl max-w-xs w-full" onClick={(e) => e.stopPropagation()}>
-            <h4 className="text-lg font-bold mb-2 text-[var(--text)]">Delete Card?</h4>
-            <p className="text-sm text-[var(--muted)] mb-6">Are you sure you want to remove this webpage?</p>
+            <h4 className="text-lg font-bold mb-2 text-[var(--text)]">{t('card_delete_title')}</h4>
+            <p className="text-sm text-[var(--muted)] mb-6">{t('card_delete_desc')}</p>
             <div className="flex gap-2 justify-end">
-              <button className="px-4 py-2 text-sm font-semibold rounded-lg border border-white/10 text-[var(--text)] hover:bg-white/5 transition-colors" onClick={() => setConfirming(false)}>Cancel</button>
-              <button className="px-4 py-2 text-sm font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors" onClick={() => { setConfirming(false); onDelete?.(); }}>Delete</button>
+              <button className="px-4 py-2 text-sm font-semibold rounded-lg border border-white/10 text-[var(--text)] hover:bg-white/5 transition-colors" onClick={() => setConfirming(false)}>{t('btn_cancel')}</button>
+              <button className="px-4 py-2 text-sm font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors" onClick={() => { setConfirming(false); onDelete?.(); }}>{t('menu_delete')}</button>
             </div>
           </div>
         </div>,
@@ -222,18 +224,18 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <header className="px-6 py-4 border-b border-white/5 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-[var(--text)]">Edit Webpage</h3>
+              <h3 className="text-lg font-bold text-[var(--text)]">{t('card_edit_title')}</h3>
               <button className="text-[var(--muted)] hover:text-[var(--text)]" onClick={() => { setShowModal(false); onModalOpenChange?.(false); }}>✕</button>
             </header>
             <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">Title</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={titleValue} onChange={(e) => { setTitleValue(e.target.value); triggerAutoSave(); }} /></div>
-              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">URL</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={urlValue} onChange={(e) => { setUrlValue(e.target.value); triggerAutoSave(); }} /></div>
-              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">Note</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={descValue} onChange={(e) => { setDescValue(e.target.value); triggerAutoSave(); }} /></div>
+              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{t('card_title_label')}</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={titleValue} onChange={(e) => { setTitleValue(e.target.value); triggerAutoSave(); }} /></div>
+              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{t('card_url_label')}</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={urlValue} onChange={(e) => { setUrlValue(e.target.value); triggerAutoSave(); }} /></div>
+              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{t('card_note_label')}</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={descValue} onChange={(e) => { setDescValue(e.target.value); triggerAutoSave(); }} /></div>
               <TemplateFields categoryId={categoryId || 'default'} meta={metaValue} onChange={(newMeta) => { setMetaValue(newMeta); triggerAutoSave(); }} />
             </div>
             <footer className="px-6 py-4 bg-white/5 border-t border-white/5 flex justify-end gap-2">
-              <button className="px-4 py-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--text)]" onClick={() => { setShowModal(false); onModalOpenChange?.(false); }}>Cancel</button>
-              <button className="px-6 py-2 text-sm font-bold bg-[var(--accent)] text-white rounded-lg hover:brightness-110" onClick={() => { const patch: any = { title: titleValue.trim(), description: descValue, url: urlValue.trim(), meta: metaValue }; if (onSave) onSave(patch); setShowModal(false); onModalOpenChange?.(false); }}>Save Changes</button>
+              <button className="px-4 py-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--text)]" onClick={() => { setShowModal(false); onModalOpenChange?.(false); }}>{t('btn_cancel')}</button>
+              <button className="px-6 py-2 text-sm font-bold bg-[var(--accent)] text-white rounded-lg hover:brightness-110" onClick={() => { const patch: any = { title: titleValue.trim(), description: descValue, url: urlValue.trim(), meta: metaValue }; if (onSave) onSave(patch); setShowModal(false); onModalOpenChange?.(false); }}>{t('btn_save_changes')}</button>
             </footer>
           </div>
         </div>,

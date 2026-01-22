@@ -5,6 +5,7 @@ import type { TabItemData } from '../tabs/types';
 import { getDragTab, getDragWebpage, setDragWebpage, broadcastGhostActive } from '../dnd/dragContext';
 import { useFeedback } from '../ui/feedback';
 import { MoveSelectedDialog } from './MoveSelectedDialog';
+import { useI18n } from '../i18n';
 
 export interface CardGridProps {
   groupId?: string;
@@ -43,6 +44,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
   onUpdateCategory,
   onUpdateMeta,
 }) => {
+  const { t } = useI18n();
   const [isOver, setIsOver] = React.useState(false);
   const { showToast } = useFeedback();
   const [selected, setSelected] = React.useState<Record<string, boolean>>({});
@@ -69,7 +71,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
       selectedItems.forEach((item) => { window.open(item.url, '_blank'); });
       clearSelection();
       setShowOpenTabsConfirm(false);
-    } catch { showToast('Failed to open tabs', 'error'); }
+    } catch { showToast(t('toast_open_tabs_failed'), 'error'); }
   };
 
   const handleBatchMove = async (categoryId: string, subcategoryId: string) => {
@@ -86,8 +88,8 @@ export const CardGrid: React.FC<CardGridProps> = ({
         await (svc as any).updateCardSubcategory?.(cardId, subcategoryId);
       }
       
-      setShowMoveDialog(false); clearSelection(); showToast(`已移動 ${selectedIds.length} 張卡片`, 'success');
-    } catch { showToast('移動失敗', 'error'); }
+      setShowMoveDialog(false); clearSelection(); showToast(t('toast_moved_cards', [String(selectedIds.length)]), 'success');
+    } catch { showToast(t('toast_move_failed'), 'error'); }
   };
 
   const [dragDisabled, setDragDisabled] = React.useState(false);
@@ -572,7 +574,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
         return;
       }
     } catch {
-      showToast('Failed to add tab', 'error');
+      showToast(t('toast_add_tab_failed'), 'error');
     }
     setGhostTab(null); setGhostType(null); setGhostIndex(null); setDraggingCardId(null);
     ghostBeforeRef.current = null;
@@ -586,10 +588,10 @@ export const CardGrid: React.FC<CardGridProps> = ({
     <div>
       {selectedCount > 0 && (
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-[var(--panel)] border border-slate-700 rounded-lg shadow-2xl px-4 py-3 flex items-center gap-4">
-          <p className="text-sm font-medium opacity-90">({selectedCount} {selectedCount === 1 ? 'tab' : 'tabs'} selected)</p>
-          <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-slate-600 hover:bg-slate-800 transition-colors" onClick={() => setShowMoveDialog(true)}>MOVE</button>
-          <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-slate-600 hover:bg-slate-800 transition-colors" onClick={handleOpenTabs}>Open tabs</button>
-          <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-red-600 text-red-300 hover:bg-red-950/30 transition-colors" onClick={() => { (document.activeElement as HTMLElement | null)?.blur?.(); setConfirming(true); }}>DELETE</button>
+          <p className="text-sm font-medium opacity-90">{t('batch_selected', [String(selectedCount)])}</p>
+          <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-slate-600 hover:bg-slate-800 transition-colors" onClick={() => setShowMoveDialog(true)}>{t('batch_move')}</button>
+          <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-slate-600 hover:bg-slate-800 transition-colors" onClick={handleOpenTabs}>{t('batch_open_tabs')}</button>
+          <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-red-600 text-red-300 hover:bg-red-950/30 transition-colors" onClick={() => { (document.activeElement as HTMLElement | null)?.blur?.(); setConfirming(true); }}>{t('batch_delete')}</button>
           <button type="button" className="ml-2 p-1 hover:bg-slate-800 rounded transition-colors" onClick={clearSelection} aria-label="Close">✕</button>
         </div>
       )}
@@ -604,7 +606,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
       >
         {lastDropTitle && <span className="sr-only" aria-hidden="true">{lastDropTitle}</span>}
         {items.length === 0 && !((ghostTab != null || ghostType != null) && ghostIndex != null) ? (
-          <div className="py-12 text-center text-[var(--muted)] opacity-50 font-medium">Drag tabs here to save</div>
+          <div className="py-12 text-center text-[var(--muted)] opacity-50 font-medium">{t('drag_tabs_hint')}</div>
         ) : (
           <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', maxWidth: '1200px' }}>
             {(() => {
@@ -696,22 +698,22 @@ export const CardGrid: React.FC<CardGridProps> = ({
       </div>
       {confirming && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirming(false)}>
-          <div className="rounded border border-slate-700 bg-[var(--bg)] p-4" role="dialog" aria-label="Confirm Delete Selected" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-3 font-medium">Confirm Delete Selected</div>
+          <div className="rounded border border-slate-700 bg-[var(--bg)] p-4" role="dialog" aria-label={t('confirm_delete_selected_title')} onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3 font-medium">{t('confirm_delete_selected_title')}</div>
             <div className="flex gap-2 justify-end">
-              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => setConfirming(false)}>Cancel</button>
-              <button className="px-3 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={() => { const ids = Object.entries(selected).filter(([, v]) => v).map(([key]) => key); setConfirming(false); clearSelection(); onDeleteMany?.(ids); }}>Delete</button>
+              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => setConfirming(false)}>{t('btn_cancel')}</button>
+              <button className="px-3 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={() => { const ids = Object.entries(selected).filter(([, v]) => v).map(([key]) => key); setConfirming(false); clearSelection(); onDeleteMany?.(ids); }}>{t('menu_delete')}</button>
             </div>
           </div>
         </div>
       )}
       {showOpenTabsConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowOpenTabsConfirm(false)}>
-          <div className="rounded border border-slate-700 bg-[var(--bg)] p-4" role="dialog" aria-label="Confirm Open Tabs" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-3 font-medium">確定要開啟 {selectedCount} 個標籤頁嗎？</div>
+          <div className="rounded border border-slate-700 bg-[var(--bg)] p-4" role="dialog" aria-label={t('confirm_open_tabs', [String(selectedCount)])} onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3 font-medium">{t('confirm_open_tabs', [String(selectedCount)])}</div>
             <div className="flex gap-2 justify-end">
-              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => setShowOpenTabsConfirm(false)}>Cancel</button>
-              <button className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]" onClick={executeOpenTabs}>Confirm</button>
+              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => setShowOpenTabsConfirm(false)}>{t('btn_cancel')}</button>
+              <button className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]" onClick={executeOpenTabs}>{t('btn_confirm')}</button>
             </div>
           </div>
         </div>

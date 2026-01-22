@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCategories } from '../sidebar/categories';
 import { createStorageService } from '../../background/storageService';
+import { useI18n } from '../i18n';
 
 export interface MoveSelectedDialogProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
   onClose,
   onMove,
 }) => {
+  const { t } = useI18n();
   const { categories } = useCategories();
   const [selectedCategoryId, setSelectedCategoryId] = React.useState<string>('');
   const [selectedSubcategoryId, setSelectedSubcategoryId] = React.useState<string>('');
@@ -99,7 +101,7 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h2 id="move-dialog-title" className="text-lg font-medium">
-            Move {selectedCount} Card{selectedCount !== 1 ? 's' : ''} to
+            {t('move_dialog_title', [String(selectedCount)])}
           </h2>
           <button
             type="button"
@@ -132,7 +134,7 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
               htmlFor="collection-selector"
               className="block text-sm font-medium mb-2 opacity-90"
             >
-              Collection
+              {t('move_label_collection')}
             </label>
             <div className="relative">
               <select
@@ -141,7 +143,7 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
                 value={selectedCategoryId}
                 onChange={(e) => setSelectedCategoryId(e.target.value)}
               >
-                <option value="">Select a Collection</option>
+                <option value="">{t('move_select_collection')}</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
@@ -173,7 +175,7 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
               htmlFor="group-selector"
               className="block text-sm font-medium mb-2 opacity-90"
             >
-              Group
+              {t('move_label_group')}
             </label>
             <div className="relative">
               <select
@@ -184,7 +186,7 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
                 disabled={!selectedCategoryId || loading || subcategories.length === 0}
               >
                 <option value="">
-                  {loading ? 'Loading...' : 'Select a Group'}
+                  {loading ? t('loading') : t('move_select_group')}
                 </option>
                 {subcategories
                   .sort((a, b) => (a.order || 0) - (b.order || 0))
@@ -221,7 +223,7 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
             className="px-4 py-2 text-sm rounded border border-slate-600 hover:bg-slate-800 transition-colors"
             onClick={onClose}
           >
-            Cancel
+            {t('btn_cancel')}
           </button>
           <button
             type="button"
@@ -229,7 +231,7 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
             onClick={handleMove}
             disabled={!selectedCategoryId || !selectedSubcategoryId}
           >
-            Move
+            {t('btn_move')}
           </button>
         </div>
       </div>

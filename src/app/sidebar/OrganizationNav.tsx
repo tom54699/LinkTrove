@@ -2,8 +2,10 @@ import React from 'react';
 import { useOrganizations } from './organizations';
 import { ContextMenu } from '../ui/ContextMenu';
 import { useFeedback } from '../ui/feedback';
+import { useI18n } from '../i18n';
 
 export const OrganizationNav: React.FC = () => {
+  const { t } = useI18n();
   const { organizations, selectedOrgId, setCurrentOrganization, actions } = useOrganizations();
   const { showToast } = useFeedback();
   const [importMenuOpen, setImportMenuOpen] = React.useState(false);
@@ -51,7 +53,7 @@ export const OrganizationNav: React.FC = () => {
         <button
           className="w-12 h-12 rounded-full border-2 border-dashed border-slate-500 flex items-center justify-center text-slate-400 hover:border-slate-300 hover:text-slate-300 transition-colors"
           onClick={() => { try { window.dispatchEvent(new CustomEvent('organizations:add-new')); } catch {} }}
-          title="Add new organization"
+          title={t('org_add_new')}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -62,7 +64,7 @@ export const OrganizationNav: React.FC = () => {
         <button
           className="w-12 h-12 rounded-full border border-slate-600 flex items-center justify-center text-slate-300 hover:text-white hover:border-slate-400 transition-colors"
           onClick={() => setManageDialogOpen(true)}
-          title="管理 Organizations"
+          title={t('menu_manage_orgs')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 3.487l3.651 3.651m-2.122-2.122L7.5 15.91l-4 1 1-4L15.74 1.365a1.5 1.5 0 012.122 0zM19 16.5V19a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2.5" />
@@ -75,7 +77,7 @@ export const OrganizationNav: React.FC = () => {
         {/* Import button */}
         <button
           className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-300 hover:bg-slate-700 transition-colors relative"
-          title="匯入 (Toby/HTML)"
+          title={t('org_import_hint')}
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             setImportMenuPos({ x: rect.right + 8, y: rect.top });
@@ -96,7 +98,7 @@ export const OrganizationNav: React.FC = () => {
             items={[
               {
                 key: 'toby',
-                label: '匯入 Toby JSON',
+                label: t('menu_import_toby'),
                 onSelect: () => {
                   setImportMenuOpen(false);
                   try { window.dispatchEvent(new CustomEvent('collections:import-toby-new')); } catch {}
@@ -104,7 +106,7 @@ export const OrganizationNav: React.FC = () => {
               },
               {
                 key: 'html',
-                label: '匯入 HTML 書籤',
+                label: t('menu_import_html'),
                 onSelect: () => {
                   setImportMenuOpen(false);
                   try { window.dispatchEvent(new CustomEvent('collections:import-html-new')); } catch {}
@@ -123,7 +125,7 @@ export const OrganizationNav: React.FC = () => {
             items={[
               {
                 key: 'delete',
-                label: '刪除 Organization',
+                label: t('menu_delete_org'),
                 className: 'text-red-400 hover:bg-red-950/30',
                 onSelect: () => {
                   setConfirmDeleteOrg(orgMenuOpen);
@@ -144,17 +146,17 @@ export const OrganizationNav: React.FC = () => {
               className="rounded border border-slate-700 bg-[var(--bg)] w-[520px] max-w-[95vw]"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
-              aria-label="Delete Organization"
+              aria-label={t('org_confirm_delete_title')}
             >
               <div className="p-4 border-b border-slate-700">
-                <h3 className="text-lg font-semibold">確認刪除 Organization</h3>
+                <h3 className="text-lg font-semibold">{t('org_confirm_delete_title')}</h3>
               </div>
               <div className="p-4">
                 <p className="text-slate-300 mb-2">
-                  確定要刪除「{organizations.find(o => o.id === confirmDeleteOrg)?.name}」嗎？
+                  {t('org_confirm_delete_desc', [organizations.find(o => o.id === confirmDeleteOrg)?.name || ''])}
                 </p>
                 <p className="text-red-400 text-sm">
-                  ⚠️ 警告：這將會永久刪除此 Organization 下的所有 Collection、Group 和書籤！
+                  ⚠️ {t('org_delete_warning')}
                 </p>
               </div>
               <div className="p-4 border-t border-slate-700 flex gap-2 justify-end">
@@ -162,7 +164,7 @@ export const OrganizationNav: React.FC = () => {
                   className="px-4 py-2 rounded border border-slate-600 hover:bg-slate-800"
                   onClick={() => setConfirmDeleteOrg(null)}
                 >
-                  取消
+                  {t('btn_cancel')}
                 </button>
                 <button
                   className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white"
@@ -172,20 +174,20 @@ export const OrganizationNav: React.FC = () => {
 
                     // UI Layer Check: minimum count protection
                     if (organizations.length <= 1) {
-                      showToast('刪除失敗：至少需要保留一個 Organization', 'error');
+                      showToast(t('org_min_one'), 'error');
                       return;
                     }
 
                     try {
                       await actions.remove(orgId);
-                      showToast('已刪除 Organization 及其所有資料', 'success');
+                      showToast(t('toast_org_deleted'), 'success');
                     } catch (error) {
                       console.error('Delete organization error:', error);
-                      showToast('刪除失敗', 'error');
+                      showToast(t('toast_delete_failed'), 'error');
                     }
                   }}
                 >
-                  確認刪除
+                  {t('btn_confirm_delete')}
                 </button>
               </div>
             </div>
@@ -202,18 +204,18 @@ export const OrganizationNav: React.FC = () => {
               className="rounded border border-slate-700 bg-[var(--bg)] w-[620px] max-w-[95vw]"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
-              aria-label="Manage Organizations"
+              aria-label={t('org_manage_title')}
             >
               <div className="px-5 py-4 border-b border-slate-700 flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-lg font-semibold">管理 Organizations</div>
-                  <div className="text-xs opacity-80 mt-1">可重新命名或刪除組織</div>
+                  <div className="text-lg font-semibold">{t('org_manage_title')}</div>
+                  <div className="text-xs opacity-80 mt-1">{t('org_manage_desc')}</div>
                 </div>
                 <button
                   className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800 text-sm"
                   onClick={() => setManageDialogOpen(false)}
                 >
-                  關閉
+                  {t('dialog_close')}
                 </button>
               </div>
               <div className="max-h-[60vh] overflow-y-auto">
@@ -234,7 +236,7 @@ export const OrganizationNav: React.FC = () => {
                           {org.name.slice(0, 2).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <label className="block text-xs text-slate-400 mb-1">組織名稱</label>
+                          <label className="block text-xs text-slate-400 mb-1">{t('org_name_label')}</label>
                           <input
                             className="w-full rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm"
                             value={draftName}
@@ -256,12 +258,12 @@ export const OrganizationNav: React.FC = () => {
                                 await actions.rename(org.id, nextName);
                               } catch (error) {
                                 console.error('Update organization error:', error);
-                                showToast('更新失敗', 'error');
+                                showToast(t('toast_update_failed'), 'error');
                               }
                             }}
                           />
                           <div className="mt-2 flex items-center gap-2">
-                            <label className="text-xs text-slate-400">顏色</label>
+                            <label className="text-xs text-slate-400">{t('org_color_label')}</label>
                             <input
                               type="color"
                               className="h-7 w-10 rounded border border-slate-700 bg-slate-900"
@@ -274,10 +276,10 @@ export const OrganizationNav: React.FC = () => {
                                   await actions.updateColor(org.id, nextColor);
                                 } catch (error) {
                                   console.error('Update organization error:', error);
-                                  showToast('更新失敗', 'error');
+                                  showToast(t('toast_update_failed'), 'error');
                                 }
                               }}
-                              aria-label="組織顏色"
+                              aria-label={t('org_color_label')}
                             />
                             <span className="text-xs text-slate-400">{draftColor}</span>
                           </div>
@@ -287,7 +289,7 @@ export const OrganizationNav: React.FC = () => {
                             className="px-3 py-1 rounded border border-rose-700 text-rose-300 hover:bg-rose-950/30 text-sm"
                             onClick={() => setConfirmDeleteOrg(org.id)}
                           >
-                            刪除
+                            {t('menu_delete')}
                           </button>
                         </div>
                       </div>
@@ -302,7 +304,7 @@ export const OrganizationNav: React.FC = () => {
         {/* App Settings */}
         <button
           className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-300 hover:bg-slate-700 transition-colors"
-          title="App Settings"
+          title={t('settings_btn')}
           onClick={() => { try { window.dispatchEvent(new CustomEvent('app:open-settings')); } catch {} }}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -314,7 +316,7 @@ export const OrganizationNav: React.FC = () => {
         {/* Toggle Theme */}
         <button
           className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-300 hover:bg-slate-700 transition-colors"
-          title="Toggle Theme"
+          title={t('theme_toggle')}
           onClick={() => { try { window.dispatchEvent(new CustomEvent('app:toggle-theme')); } catch {} }}
         >
           <svg className="w-5 h-5 text-violet-300" fill="currentColor" viewBox="0 0 24 24">
