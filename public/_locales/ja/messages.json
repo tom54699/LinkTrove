@@ -1,0 +1,1004 @@
+{
+  "extName": {
+    "message": "LinkTrove",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Toby風ビジュアルタブマネージャー：開いているタブからドラッグしてカードとして保存。",
+    "description": "Extension description"
+  },
+
+  "settings_title": {
+    "message": "設定"
+  },
+  "settings_close": {
+    "message": "閉じる"
+  },
+
+  "nav_export_import": {
+    "message": "エクスポート/インポート"
+  },
+  "nav_cloud_sync": {
+    "message": "クラウド同期"
+  },
+  "nav_templates": {
+    "message": "テンプレート"
+  },
+  "nav_language": {
+    "message": "言語"
+  },
+
+  "data_title": {
+    "message": "プロジェクトのバックアップと復元"
+  },
+  "data_description": {
+    "message": "プロジェクトデータをJSONとしてエクスポートまたは復元します。インポートすると既存のデータが置き換えられます。"
+  },
+  "data_export_label": {
+    "message": "バックアップをエクスポート"
+  },
+  "data_restore_label": {
+    "message": "復元（データを置換）"
+  },
+  "data_drop_hint": {
+    "message": "JSONファイルをここにドロップするか、クリックして選択..."
+  },
+  "data_file_selected": {
+    "message": "選択済み: $FILE$",
+    "placeholders": {
+      "file": { "content": "$1" }
+    }
+  },
+  "data_import_success": {
+    "message": "インポート成功、リロード中..."
+  },
+  "data_export_success": {
+    "message": "バックアップをエクスポートしました"
+  },
+  "data_export_failed": {
+    "message": "エクスポート失敗"
+  },
+  "data_confirm_import_title": {
+    "message": "インポートを確認しますか？"
+  },
+  "data_confirm_import_desc": {
+    "message": "これにより、現在のデータと設定が完全に置き換えられます。"
+  },
+
+  "import_toby_title": {
+    "message": "Tobyをこのグループにインポート"
+  },
+  "import_file_info": {
+    "message": "ファイル: $FILE$",
+    "placeholders": {
+      "file": { "content": "$1" }
+    }
+  },
+  "import_link_count": {
+    "message": "$COUNT$ 件のリンク",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "btn_start_import": {
+    "message": "インポート開始"
+  },
+
+  "cloud_title": {
+    "message": "Google Driveクラウド同期"
+  },
+  "cloud_description": {
+    "message": "Google Driveをバックアップストレージとして使用（プライベート、Driveから非表示）"
+  },
+  "cloud_connected": {
+    "message": "接続済み"
+  },
+  "cloud_disconnect": {
+    "message": "切断"
+  },
+  "cloud_disconnected": {
+    "message": "未接続"
+  },
+  "cloud_last_sync": {
+    "message": "最終同期:"
+  },
+  "cloud_never": {
+    "message": "なし"
+  },
+  "cloud_connect": {
+    "message": "Google Driveに接続"
+  },
+  "cloud_manual_ops": {
+    "message": "手動操作"
+  },
+  "cloud_backup_now": {
+    "message": "今すぐバックアップ"
+  },
+  "cloud_merge": {
+    "message": "クラウドデータをマージ"
+  },
+  "cloud_full_restore": {
+    "message": "完全復元"
+  },
+  "cloud_ops_hint": {
+    "message": "バックアップ: ローカルをクラウドにアップロード / マージ: 新しい方を保持 / 完全復元: クラウドがローカルを上書き"
+  },
+  "cloud_auto_sync": {
+    "message": "自動同期"
+  },
+  "cloud_auto_sync_desc": {
+    "message": "有効にすると、ローカルの変更が自動アップロードされ、起動時にダウンロードされます"
+  },
+  "cloud_auto_enabled": {
+    "message": "自動同期が有効"
+  },
+  "cloud_auto_disabled": {
+    "message": "自動同期が無効"
+  },
+  "cloud_backup_success": {
+    "message": "バックアップ成功"
+  },
+  "cloud_merge_success": {
+    "message": "マージ完了"
+  },
+  "cloud_restore_success": {
+    "message": "復元成功"
+  },
+
+  "gc_title": {
+    "message": "ガベージコレクション (GC)"
+  },
+  "gc_deleted_items": {
+    "message": "削除済みアイテム:"
+  },
+  "gc_oldest_item": {
+    "message": "最古のアイテム:"
+  },
+  "gc_none": {
+    "message": "なし"
+  },
+  "gc_run": {
+    "message": "GCを実行"
+  },
+  "gc_confirm_title": {
+    "message": "GC実行を確認"
+  },
+  "gc_confirm_desc": {
+    "message": "削除済みアイテムを完全にクリーンしますか？この操作は元に戻せません。"
+  },
+  "gc_cleaning": {
+    "message": "削除済みアイテムをクリーニング中..."
+  },
+  "gc_cleaned": {
+    "message": "$COUNT$ 件をクリーンしました",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "gc_nothing": {
+    "message": "クリーンする削除済みアイテムがありません"
+  },
+
+  "snapshot_title": {
+    "message": "ローカルスナップショット"
+  },
+  "snapshot_empty": {
+    "message": "スナップショットがありません"
+  },
+  "snapshot_before_restore": {
+    "message": "復元前"
+  },
+  "snapshot_before_merge": {
+    "message": "マージ前"
+  },
+  "snapshot_manual": {
+    "message": "手動"
+  },
+  "snapshot_pages": {
+    "message": "$COUNT$ ページ",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "snapshot_restore": {
+    "message": "復元"
+  },
+  "snapshot_delete": {
+    "message": "削除"
+  },
+  "snapshot_restore_confirm": {
+    "message": "このスナップショットを復元しますか？現在のデータは置き換えられます。"
+  },
+  "snapshot_delete_confirm": {
+    "message": "このスナップショットを削除しますか？"
+  },
+  "snapshot_restored": {
+    "message": "スナップショットを復元しました"
+  },
+  "snapshot_deleted": {
+    "message": "スナップショットを削除しました"
+  },
+
+  "confirm_backup_title": {
+    "message": "バックアップを確認"
+  },
+  "confirm_backup_desc": {
+    "message": "ローカルデータをクラウドにアップロードしますか？クラウドバックアップは上書きされます。"
+  },
+  "confirm_merge_title": {
+    "message": "マージを確認"
+  },
+  "confirm_merge_desc": {
+    "message": "クラウドデータをマージしますか？システムは両側から新しい変更を保持します。"
+  },
+  "confirm_restore_title": {
+    "message": "完全復元を確認"
+  },
+  "confirm_restore_desc": {
+    "message": "クラウドデータを完全に復元しますか？ローカルデータは置き換えられます。最初にスナップショットが作成されます。"
+  },
+
+  "dialog_processing": {
+    "message": "処理中..."
+  },
+  "dialog_success": {
+    "message": "操作成功"
+  },
+  "dialog_failed": {
+    "message": "操作失敗"
+  },
+  "dialog_close": {
+    "message": "閉じる"
+  },
+
+  "btn_cancel": {
+    "message": "キャンセル"
+  },
+  "btn_confirm": {
+    "message": "確認"
+  },
+  "btn_confirm_replace": {
+    "message": "確認して置換"
+  },
+  "btn_confirm_execute": {
+    "message": "確認"
+  },
+  "btn_export_json": {
+    "message": "JSONエクスポート"
+  },
+  "btn_import_json": {
+    "message": "JSONインポート"
+  },
+
+  "lang_title": {
+    "message": "言語設定"
+  },
+  "lang_description": {
+    "message": "表示言語を選択してください"
+  },
+  "lang_select_label": {
+    "message": "表示言語"
+  },
+  "lang_en": {
+    "message": "English"
+  },
+  "lang_zh_tw": {
+    "message": "繁體中文"
+  },
+  "lang_ja": {
+    "message": "日本語"
+  },
+  "lang_changed": {
+    "message": "言語を変更しました"
+  },
+
+  "menu_edit": {
+    "message": "編集"
+  },
+  "menu_delete": {
+    "message": "削除"
+  },
+  "menu_move": {
+    "message": "移動"
+  },
+  "menu_share": {
+    "message": "共有"
+  },
+  "menu_rename": {
+    "message": "名前変更"
+  },
+  "menu_move_up": {
+    "message": "上に移動"
+  },
+  "menu_move_down": {
+    "message": "下に移動"
+  },
+  "menu_open_all": {
+    "message": "すべて開く"
+  },
+  "menu_import_toby": {
+    "message": "Toby JSONをインポート"
+  },
+  "menu_import_html": {
+    "message": "HTMLブックマークをインポート"
+  },
+  "menu_manage_orgs": {
+    "message": "組織を管理"
+  },
+  "menu_delete_org": {
+    "message": "組織を削除"
+  },
+
+  "toast_saved": {
+    "message": "保存しました"
+  },
+  "toast_deleted": {
+    "message": "削除しました"
+  },
+  "toast_moved": {
+    "message": "移動しました"
+  },
+  "toast_moved_cards": {
+    "message": "$COUNT$ 枚のカードを移動しました",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "toast_deleted_cards": {
+    "message": "$COUNT$ 枚のカードを削除しました",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "toast_import_success": {
+    "message": "インポート成功"
+  },
+  "toast_save_failed": {
+    "message": "保存失敗"
+  },
+  "toast_delete_failed": {
+    "message": "削除失敗"
+  },
+  "toast_group_added": {
+    "message": "$NAME$ を追加しました",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "toast_add_failed": {
+    "message": "追加失敗"
+  },
+  "error_select_collection": {
+    "message": "先にコレクションを選択してください"
+  },
+
+  "confirm_delete": {
+    "message": "削除を確認しますか？"
+  },
+  "confirm_delete_card": {
+    "message": "このカードを削除しますか？"
+  },
+  "confirm_delete_cards": {
+    "message": "$COUNT$ 枚のカードを削除しますか？",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+
+  "batch_move": {
+    "message": "移動"
+  },
+  "batch_open_tabs": {
+    "message": "タブで開く"
+  },
+  "batch_delete": {
+    "message": "削除"
+  },
+  "batch_selected": {
+    "message": "$COUNT$ 件選択中",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+
+  "move_dialog_title": {
+    "message": "$COUNT$ 枚のカードを移動",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "move_label_collection": {
+    "message": "コレクション"
+  },
+  "move_select_collection": {
+    "message": "コレクションを選択"
+  },
+  "move_label_group": {
+    "message": "グループ"
+  },
+  "move_select_group": {
+    "message": "グループを選択"
+  },
+  "btn_move": {
+    "message": "移動"
+  },
+  "loading": {
+    "message": "読み込み中..."
+  },
+  "error_something_wrong": {
+    "message": "エラーが発生しました。"
+  },
+
+  "conflict_severity_major": {
+    "message": "⚠️ 大きな差異"
+  },
+  "conflict_severity_minor": {
+    "message": "⚠ 小さな差異"
+  },
+  "conflict_severity_none": {
+    "message": "✓ 差異なし"
+  },
+  "conflict_enable_auto_sync": {
+    "message": "自動同期を有効にする"
+  },
+  "conflict_merge_cloud": {
+    "message": "クラウドデータをマージ"
+  },
+  "conflict_diff_detected": {
+    "message": "ローカルとクラウドのデータに差異が検出されました:"
+  },
+  "conflict_col_item": {
+    "message": "項目"
+  },
+  "conflict_col_local": {
+    "message": "ローカル"
+  },
+  "conflict_col_cloud": {
+    "message": "クラウド"
+  },
+  "conflict_webpages": {
+    "message": "ウェブページ"
+  },
+  "conflict_categories": {
+    "message": "カテゴリー"
+  },
+  "conflict_groups": {
+    "message": "グループ"
+  },
+  "conflict_warning_major": {
+    "message": "⚠️ 大きな差異が検出されました。まずローカルデータをバックアップすることをお勧めします。"
+  },
+  "conflict_auto_sync_desc": {
+    "message": "自動同期を有効にすると、ローカルの変更が自動的にクラウドにアップロードされます。LWWマージ戦略を使用: ローカルとクラウドの新しいバージョンを保持します。"
+  },
+  "conflict_merge_desc": {
+    "message": "マージはLWW戦略を使用: タイムスタンプを比較して新しいバージョンを保持します。"
+  },
+  "conflict_btn_enable": {
+    "message": "有効にする"
+  },
+  "conflict_btn_merge": {
+    "message": "マージを確認"
+  },
+  "conflict_btn_backup_first": {
+    "message": "まずローカルをバックアップ"
+  },
+
+  "search_placeholder": {
+    "message": "検索..."
+  },
+  "search_recent": {
+    "message": "最近の検索"
+  },
+  "search_just_now": {
+    "message": "たった今"
+  },
+  "search_mins_ago": {
+    "message": "$MINS$分前",
+    "placeholders": {
+      "mins": { "content": "$1" }
+    }
+  },
+  "search_hours_ago": {
+    "message": "$HOURS$時間前",
+    "placeholders": {
+      "hours": { "content": "$1" }
+    }
+  },
+  "search_days_ago": {
+    "message": "$DAYS$日前",
+    "placeholders": {
+      "days": { "content": "$1" }
+    }
+  },
+  "search_action_search": {
+    "message": "↵ 検索"
+  },
+  "search_type_to_start": {
+    "message": "入力して検索を開始..."
+  },
+  "search_no_results": {
+    "message": "「$QUERY$」の検索結果がありません",
+    "placeholders": {
+      "query": { "content": "$1" }
+    }
+  },
+  "search_action_open": {
+    "message": "↵ 開く"
+  },
+  "search_navigate": {
+    "message": "ナビゲート"
+  },
+  "search_open": {
+    "message": "開く"
+  },
+  "search_loaded": {
+    "message": "$LOADED$ / $TOTAL$ 件読み込み済み",
+    "placeholders": {
+      "loaded": { "content": "$1" },
+      "total": { "content": "$2" }
+    }
+  },
+
+  "sidebar_collections": {
+    "message": "コレクション"
+  },
+  "sidebar_add_collection": {
+    "message": "コレクションを追加"
+  },
+  "sidebar_add_group": {
+    "message": "グループを追加"
+  },
+
+  "tabs_panel_title": {
+    "message": "開いているタブ"
+  },
+  "tabs_window": {
+    "message": "ウィンドウ $NUM$",
+    "placeholders": {
+      "num": { "content": "$1" }
+    }
+  },
+
+  "template_name": {
+    "message": "テンプレート名"
+  },
+  "template_add_field": {
+    "message": "フィールドを追加"
+  },
+  "template_field_key": {
+    "message": "フィールドキー"
+  },
+  "template_field_label": {
+    "message": "表示ラベル"
+  },
+  "template_save": {
+    "message": "テンプレートを保存"
+  },
+
+  "tpl_manager_title": {
+    "message": "テンプレート管理"
+  },
+  "tpl_manager_desc": {
+    "message": "カードフィールドテンプレートを管理し、データ構造を定義します。"
+  },
+  "tpl_count": {
+    "message": "$COUNT$ 件のテンプレート",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_create_new": {
+    "message": "新規テンプレート作成"
+  },
+  "tpl_create_hint": {
+    "message": "空白から開始するか、プリセットを選択"
+  },
+  "tpl_name_placeholder": {
+    "message": "テンプレート名（例：記事）"
+  },
+  "tpl_name_exists": {
+    "message": "名前が既に存在します"
+  },
+  "tpl_name_exists_desc": {
+    "message": "この名前のテンプレートは既に存在します。"
+  },
+  "tpl_created": {
+    "message": "テンプレートを作成しました"
+  },
+  "btn_create": {
+    "message": "作成"
+  },
+  "tpl_presets": {
+    "message": "プリセット:"
+  },
+  "tpl_preset_book": {
+    "message": "📚 本"
+  },
+  "tpl_preset_tool": {
+    "message": "🔧 ツール"
+  },
+  "tpl_field_count": {
+    "message": "$COUNT$ 件のフィールド",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_usage_count": {
+    "message": "使用数: $COUNT$",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_add_field_section": {
+    "message": "フィールドを追加"
+  },
+  "tpl_field_display_name": {
+    "message": "表示名"
+  },
+  "tpl_field_added": {
+    "message": "フィールドを追加しました"
+  },
+  "btn_add": {
+    "message": "追加"
+  },
+  "btn_got_it": {
+    "message": "OK"
+  },
+  "btn_expand": {
+    "message": "展開"
+  },
+  "btn_collapse": {
+    "message": "折りたたむ"
+  },
+  "btn_add_group": {
+    "message": "グループ"
+  },
+  "tooltip_expand_all": {
+    "message": "すべてのグループを展開"
+  },
+  "tooltip_collapse_all": {
+    "message": "すべてのグループを折りたたむ"
+  },
+  "tooltip_add_group": {
+    "message": "新規グループを追加"
+  },
+
+  "share_title": {
+    "message": "共有"
+  },
+  "share_publish": {
+    "message": "公開"
+  },
+  "share_copy_link": {
+    "message": "リンクをコピー"
+  },
+  "share_link_copied": {
+    "message": "リンクをコピーしました"
+  },
+
+  "org_switch": {
+    "message": "組織を切り替え"
+  },
+  "org_create": {
+    "message": "組織を作成"
+  },
+  "org_name": {
+    "message": "組織名"
+  },
+
+  "items_count": {
+    "message": "$COUNT$ 件",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "version": {
+    "message": "バージョン"
+  },
+
+  "toast_renamed": {
+    "message": "名前を変更しました"
+  },
+  "toast_rename_failed": {
+    "message": "名前変更失敗"
+  },
+  "toast_reordered": {
+    "message": "並び替えました"
+  },
+  "toast_token_saved": {
+    "message": "GitHubトークンを保存しました！"
+  },
+  "toast_token_save_failed": {
+    "message": "トークン保存失敗"
+  },
+  "toast_copied": {
+    "message": "クリップボードにコピーしました"
+  },
+  "toast_copy_failed": {
+    "message": "コピー失敗"
+  },
+  "toast_added": {
+    "message": "$NAME$ を追加しました",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "toast_created_from_tab": {
+    "message": "タブから作成してグループに追加しました"
+  },
+  "toast_operation_failed": {
+    "message": "操作失敗"
+  },
+  "toast_move_failed": {
+    "message": "移動失敗"
+  },
+  "toast_create_failed": {
+    "message": "作成失敗"
+  },
+  "toast_group_deleted": {
+    "message": "グループとそのブックマークを削除しました"
+  },
+
+  "group_expand": {
+    "message": "展開"
+  },
+  "group_collapse": {
+    "message": "折りたたむ"
+  },
+  "group_open_all": {
+    "message": "すべてのタブを開く"
+  },
+  "group_settings": {
+    "message": "グループ設定"
+  },
+  "group_min_one": {
+    "message": "少なくとも1つのグループが必要です"
+  },
+
+  "menu_share_group": {
+    "message": "このグループを共有"
+  },
+
+  "confirm_delete_group_title": {
+    "message": "グループを削除"
+  },
+  "confirm_delete_group_desc": {
+    "message": "このグループとそのブックマークを削除しますか？この操作は元に戻せません。"
+  },
+
+  "org_add_new": {
+    "message": "新規組織を追加"
+  },
+  "org_import_hint": {
+    "message": "インポート (Toby/HTML)"
+  },
+  "org_confirm_delete_title": {
+    "message": "組織の削除を確認"
+  },
+  "org_confirm_delete_desc": {
+    "message": "「$NAME$」を削除してもよろしいですか？",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "org_delete_warning": {
+    "message": "警告: この組織配下のすべてのコレクション、グループ、ブックマークが完全に削除されます！"
+  },
+  "org_min_one": {
+    "message": "削除失敗: 少なくとも1つの組織が必要です"
+  },
+  "toast_org_deleted": {
+    "message": "組織とすべてのデータを削除しました"
+  },
+  "btn_confirm_delete": {
+    "message": "削除を確認"
+  },
+  "org_manage_title": {
+    "message": "組織を管理"
+  },
+  "org_manage_desc": {
+    "message": "組織の名前変更または削除"
+  },
+  "org_name_label": {
+    "message": "組織名"
+  },
+  "org_color_label": {
+    "message": "色"
+  },
+  "toast_update_failed": {
+    "message": "更新失敗"
+  },
+  "settings_btn": {
+    "message": "アプリ設定"
+  },
+  "theme_toggle": {
+    "message": "テーマ切り替え"
+  },
+
+  "share_settings": {
+    "message": "共有設定"
+  },
+  "share_group_title": {
+    "message": "「$NAME$」を共有",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "share_title_label": {
+    "message": "共有タイトル"
+  },
+  "share_title_placeholder": {
+    "message": "共有ページのタイトルをカスタマイズ"
+  },
+  "share_description_label": {
+    "message": "共有の説明"
+  },
+  "share_description_placeholder": {
+    "message": "この共有について簡単に説明"
+  },
+  "share_items_count": {
+    "message": "$COUNT$ 件を含む",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "share_publish_hint": {
+    "message": "リンクを公開: GitHubトークンが必要、自動的にGistにアップロード"
+  },
+  "share_download_hint": {
+    "message": "HTMLをダウンロード: ファイルをローカルにダウンロード、手動でアップロード"
+  },
+  "share_publish_btn": {
+    "message": "リンクを公開"
+  },
+  "share_download_btn": {
+    "message": "HTMLをダウンロード"
+  },
+  "share_publish_title": {
+    "message": "GitHub Gistに公開して共有リンクを取得"
+  },
+
+  "token_setup_title": {
+    "message": "GitHubトークンを設定"
+  },
+  "token_required_desc": {
+    "message": "共有リンクをGistに公開するにはGitHub Personal Access Tokenが必要です"
+  },
+  "token_step1": {
+    "message": "GitHub設定ページに移動"
+  },
+  "token_step2": {
+    "message": "「Generate new token (classic)」をクリック"
+  },
+  "token_step3": {
+    "message": "「gist」権限をチェック（これだけ必要）"
+  },
+  "token_step4": {
+    "message": "生成されたトークンをコピー"
+  },
+  "token_security_notice": {
+    "message": "セキュリティ注意: トークンは暗号化されてブラウザ拡張機能の安全なストレージに保存され、ウェブページや他の拡張機能からアクセスできません"
+  },
+  "token_label": {
+    "message": "GitHub Personal Access Token"
+  },
+  "token_storage_notice": {
+    "message": "トークンはブラウザにローカルで安全に保存され、サーバーにはアップロードされません"
+  },
+  "btn_save": {
+    "message": "保存"
+  },
+
+  "share_link_title": {
+    "message": "共有リンク"
+  },
+  "share_link_created": {
+    "message": "共有リンクを作成しました"
+  },
+  "share_link_desc": {
+    "message": "共有リンクがGitHub Gistに公開されました。リンクをコピーして他の人と共有:"
+  },
+  "share_link_hint": {
+    "message": "ヒント: リンクはGitHub Gistに永続的に保存され、いつでも管理できます"
+  },
+  "btn_copy_link": {
+    "message": "リンクをコピー"
+  },
+  "btn_open_link": {
+    "message": "リンクを開く"
+  },
+
+  "category_edit_title": {
+    "message": "カテゴリーを編集"
+  },
+  "category_edit_desc": {
+    "message": "名前、色、デフォルトテンプレートを更新"
+  },
+  "category_name_label": {
+    "message": "名前"
+  },
+  "category_color_label": {
+    "message": "色"
+  },
+  "category_template_label": {
+    "message": "デフォルトテンプレート"
+  },
+  "category_template_none": {
+    "message": "なし"
+  },
+  "category_delete_btn": {
+    "message": "カテゴリーを削除..."
+  },
+  "category_confirm_delete": {
+    "message": "削除を確認しますか？"
+  },
+  "category_min_one": {
+    "message": "削除失敗: 少なくとも1つのコレクションが必要です"
+  },
+  "toast_category_deleted": {
+    "message": "コレクションとすべてのデータを削除しました"
+  },
+
+  "card_no_description": {
+    "message": "説明がありません。"
+  },
+  "card_delete_title": {
+    "message": "カードを削除しますか？"
+  },
+  "card_delete_desc": {
+    "message": "このウェブページを削除してもよろしいですか？"
+  },
+  "card_edit_title": {
+    "message": "ウェブページを編集"
+  },
+  "card_title_label": {
+    "message": "タイトル"
+  },
+  "card_url_label": {
+    "message": "URL"
+  },
+  "card_note_label": {
+    "message": "メモ"
+  },
+  "btn_save_changes": {
+    "message": "変更を保存"
+  },
+
+  "toast_open_tabs_failed": {
+    "message": "タブを開けませんでした"
+  },
+  "toast_add_tab_failed": {
+    "message": "タブを追加できませんでした"
+  },
+  "drag_tabs_hint": {
+    "message": "タブをここにドラッグして保存"
+  },
+  "confirm_delete_selected_title": {
+    "message": "選択したものを削除"
+  },
+  "confirm_open_tabs": {
+    "message": "$COUNT$ 個のタブを開きますか？",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "context_save_page": {
+    "message": "ページをLinkTroveに保存"
+  },
+  "context_save_link": {
+    "message": "リンクをLinkTroveに保存"
+  },
+  "context_save_selection": {
+    "message": "選択をLinkTroveに保存"
+  },
+  "context_save_no_groups": {
+    "message": "利用可能なグループがありません"
+  },
+  "context_save_open_app": {
+    "message": "LinkTroveを開く"
+  },
+  "context_save_no_organizations": {
+    "message": "組織がまだありません"
+  }
+}

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
-export type Language = 'en' | 'zh_TW';
+export type Language = 'en' | 'zh_TW' | 'ja';
 
 interface LanguageContextValue {
   language: Language;
@@ -11,12 +11,13 @@ interface LanguageContextValue {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 // Supported languages
-const SUPPORTED_LANGUAGES: Language[] = ['en', 'zh_TW'];
+const SUPPORTED_LANGUAGES: Language[] = ['en', 'zh_TW', 'ja'];
 
 // Cache for loaded messages
 const messagesCache: Record<Language, Record<string, { message: string; placeholders?: Record<string, { content: string }> }>> = {
   en: {},
   zh_TW: {},
+  ja: {},
 };
 
 // Normalize browser locale format (zh-TW → zh_TW)
@@ -182,4 +183,5 @@ export function useI18n(): LanguageContextValue {
 export const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' },
   { value: 'zh_TW', label: '繁體中文' },
+  { value: 'ja', label: '日本語' },
 ];

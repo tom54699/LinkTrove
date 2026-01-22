@@ -285,6 +285,9 @@
   "lang_zh_tw": {
     "message": "繁體中文"
   },
+  "lang_ja": {
+    "message": "日本語"
+  },
   "lang_changed": {
     "message": "Language changed"
   },
@@ -982,5 +985,23 @@
     "placeholders": {
       "count": { "content": "$1" }
     }
+  },
+  "context_save_page": {
+    "message": "Save page to LinkTrove"
+  },
+  "context_save_link": {
+    "message": "Save link to LinkTrove"
+  },
+  "context_save_selection": {
+    "message": "Save selection to LinkTrove"
+  },
+  "context_save_no_groups": {
+    "message": "No groups available"
+  },
+  "context_save_open_app": {
+    "message": "Open LinkTrove"
+  },
+  "context_save_no_organizations": {
+    "message": "No organizations yet"
   }
 }

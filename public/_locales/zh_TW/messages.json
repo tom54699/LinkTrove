@@ -285,6 +285,9 @@
   "lang_zh_tw": {
     "message": "繁體中文"
   },
+  "lang_ja": {
+    "message": "日本語"
+  },
   "lang_changed": {
     "message": "語言已變更"
   },
@@ -982,5 +985,23 @@
     "placeholders": {
       "count": { "content": "$1" }
     }
+  },
+  "context_save_page": {
+    "message": "保存此分頁到 LinkTrove"
+  },
+  "context_save_link": {
+    "message": "保存此連結到 LinkTrove"
+  },
+  "context_save_selection": {
+    "message": "保存選取文字到 LinkTrove"
+  },
+  "context_save_no_groups": {
+    "message": "沒有可用的群組"
+  },
+  "context_save_open_app": {
+    "message": "開啟 LinkTrove"
+  },
+  "context_save_no_organizations": {
+    "message": "目前沒有任何組織"
   }
 }
