@@ -78,6 +78,14 @@ body {
   color: var(--fg);
 }
 
+button,
+input[type='button'],
+input[type='submit'],
+input[type='reset'],
+[role='button']:not(a) {
+  user-select: none;
+}
+
 /* Hide scrollbar utility */
 .hide-scrollbar {
   scrollbar-width: none; /* Firefox */
@@ -87,4 +95,3 @@ body {
 .hide-scrollbar::-webkit-scrollbar {
   display: none; /* WebKit */
 }
-

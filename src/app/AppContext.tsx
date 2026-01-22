@@ -42,6 +42,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch {}
   }, [theme]);
 
+  React.useEffect(() => {
+    const onContextMenu = (event: Event) => {
+      event.preventDefault();
+    };
+    document.addEventListener('contextmenu', onContextMenu, true);
+    return () => {
+      document.removeEventListener('contextmenu', onContextMenu, true);
+    };
+  }, []);
+
   const value = useMemo(() => ({ theme, setTheme }), [theme]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 };

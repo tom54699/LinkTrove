@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkTrove Login Experience Demo</title>
+    <style>
+        :root {
+            --bg: #1a1b26;
+            --panel: #24283b;
+            --accent: #7aa2f7;
+            --text: #a9b1d6;
+            --muted: #565f89;
+            --error: #f7768e;
+            --success: #9ece6a;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- 1. Liquid Background --- */
+        .liquid-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.4;
+            animation: float 10s infinite ease-in-out alternate;
+        }
+        .blob:nth-child(1) { width: 400px; height: 400px; background: #7aa2f7; top: -100px; left: -100px; }
+        .blob:nth-child(2) { width: 300px; height: 300px; background: #bb9af7; bottom: -50px; right: -50px; animation-delay: -5s; }
+        .blob:nth-child(3) { width: 200px; height: 200px; background: #f7768e; top: 40%; left: 40%; filter: blur(40px); opacity: 0.2; animation-duration: 15s; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, 20px) scale(1.1); }
+        }
+
+        /* --- Login Card & Staggered Entry --- */
+        .login-card {
+            position: relative;
+            z-index: 1;
+            background: rgba(36, 40, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            width: 360px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .anim-entry {
+            opacity: 0;
+            animation: fadeInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .anim-entry:nth-child(1) { animation-delay: 0.1s; } /* Logo */
+        .anim-entry:nth-child(2) { animation-delay: 0.2s; } /* Title */
+        .anim-entry:nth-child(3) { animation-delay: 0.3s; } /* Input 1 */
+        .anim-entry:nth-child(4) { animation-delay: 0.4s; } /* Input 2 */
+        .anim-entry:nth-child(5) { animation-delay: 0.5s; } /* Button */
+        .anim-entry:nth-child(6) { animation-delay: 0.6s; } /* Footer */
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo {
+            font-size: 40px; margin-bottom: 10px; display: inline-block;
+            background: linear-gradient(45deg, #7aa2f7, #bb9af7);
+            -webkit-background-clip: text; color: transparent; font-weight: 900;
+        }
+        h2 { margin: 0 0 30px 0; font-size: 16px; color: var(--muted); font-weight: normal; }
+
+        /* --- Floating Input --- */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .input-field {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+        .input-field:focus {
+            border-color: var(--accent);
+            background: rgba(0,0,0,0.3);
+            box-shadow: 0 0 0 3px rgba(122, 162, 247, 0.2);
+        }
+        .input-label {
+            position: absolute;
+            left: 15px;
+            top: 14px;
+            font-size: 14px;
+            color: var(--muted);
+            pointer-events: none;
+            transition: 0.3s;
+        }
+        .input-field:focus ~ .input-label,
+        .input-field:not(:placeholder-shown) ~ .input-label {
+            top: -10px;
+            left: 10px;
+            font-size: 11px;
+            color: var(--accent);
+            background: var(--panel);
+            padding: 0 5px;
+            border-radius: 4px;
+        }
+
+        /* --- Password Extras --- */
+        .peek-btn {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            cursor: pointer;
+            color: var(--muted);
+            font-size: 18px;
+            transition: 0.2s;
+        }
+        .peek-btn:hover { color: var(--text); }
+
+        /* Dot Jump Animation */
+        .dot-jump-wrap {
+            position: absolute; right: 40px; top: 18px; display: flex; gap: 3px; pointer-events: none;
+        }
+        .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; opacity: 0; }
+        .dot.jump { animation: dotPop 0.3s forwards; }
+        @keyframes dotPop { 0% { transform: translateY(0); opacity: 1; } 50% { transform: translateY(-8px); } 100% { transform: translateY(0); opacity: 0; } }
+
+        /* --- Morph Button --- */
+        .login-btn {
+            width: 100%;
+            height: 48px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(122, 162, 247, 0.4); }
+        .login-btn:active { transform: scale(0.98); }
+
+        .login-btn.loading {
+            width: 48px;
+            border-radius: 50%;
+            color: transparent;
+            pointer-events: none;
+        }
+        .login-btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px; height: 20px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            top: 12px; left: 12px;
+            animation: spin 0.8s linear infinite;
+        }
+        .login-btn.success {
+            width: 100%;
+            background: var(--success);
+            color: white;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- Shake Error --- */
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); } 30%, 50%, 70% { transform: translateX(-6px); } 40%, 60% { transform: translateX(6px); } }
+        .input-group.error .input-field { border-color: var(--error); }
+        .input-group.error .input-label { color: var(--error); }
+
+        /* --- Success Curtain --- */
+        .curtain {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); z-index: 10;
+            transform: translateY(100%);
+            transition: transform 0.8s cubic-bezier(0.7, 0, 0.3, 1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; font-weight: bold; color: var(--accent);
+        }
+        .curtain.active { transform: translateY(0); }
+
+        .links { margin-top: 20px; font-size: 13px; color: var(--muted); }
+        .links a { color: var(--accent); text-decoration: none; margin: 0 5px; }
+        .links a:hover { text-decoration: underline; }
+
+    </style>
+</head>
+<body>
+
+    <!-- 1. Liquid Background -->
+    <div class="liquid-bg">
+        <div class="blob"></div>
+        <div class="blob"></div>
+        <div class="blob"></div>
+    </div>
+
+    <!-- Login Card -->
+    <div class="login-card" id="card">
+        <div class="anim-entry logo">LinkTrove</div>
+        <div class="anim-entry"><h2>Welcome Back!</h2></div>
+
+        <!-- Email Input -->
+        <div class="anim-entry input-group" id="emailGroup">
+            <input type="text" class="input-field" id="email" placeholder=" " autocomplete="off">
+            <label class="input-label">Email Address</label>
+        </div>
+
+        <!-- Password Input -->
+        <div class="anim-entry input-group" id="passGroup">
+            <input type="password" class="input-field" id="password" placeholder=" " oninput="playDot()">
+            <label class="input-label">Password</label>
+            <div class="peek-btn" onclick="togglePass()">👁</div>
+            <div class="dot-jump-wrap" id="dots"></div>
+        </div>
+
+        <!-- Button -->
+        <div class="anim-entry">
+            <button class="login-btn" id="btn" onclick="login()">Sign In</button>
+        </div>
+
+        <div class="anim-entry links">
+            <a href="#">Forgot Password?</a> • <a href="#">Create Account</a>
+        </div>
+    </div>
+
+    <!-- Success Transition -->
+    <div class="curtain" id="curtain">
+        <div>Welcome Home</div>
+    </div>
+
+    <script>
+        // 4. Peek Password
+        function togglePass() {
+            const input = document.getElementById('password');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        // 5. Dot Jump Animation
+        function playDot() {
+            const wrap = document.getElementById('dots');
+            const dot = document.createElement('div');
+            dot.className = 'dot jump';
+            wrap.appendChild(dot);
+            setTimeout(() => dot.remove(), 300);
+        }
+
+        // Login Logic
+        function login() {
+            const btn = document.getElementById('btn');
+            const email = document.getElementById('email');
+            const pass = document.getElementById('password');
+            const emailGroup = document.getElementById('emailGroup');
+            const passGroup = document.getElementById('passGroup');
+            const card = document.getElementById('card');
+
+            // Reset errors
+            emailGroup.classList.remove('error');
+            passGroup.classList.remove('error');
+            card.classList.remove('shake');
+
+            // 6. Morph to Loading
+            btn.classList.add('loading');
+
+            // Simulate API
+            setTimeout(() => {
+                // Mock Validation
+                if (!email.value || !pass.value) {
+                    btn.classList.remove('loading');
+                    card.classList.add('shake'); // 7. Shake Error
+                    if(!email.value) emailGroup.classList.add('error');
+                    if(!pass.value) passGroup.classList.add('error');
+                    setTimeout(() => card.classList.remove('shake'), 400);
+                } else {
+                    // Success
+                    btn.classList.remove('loading');
+                    btn.classList.add('success');
+                    btn.innerText = 'Success!';
+                    
+                    // 8. Curtain Reveal
+                    setTimeout(() => {
+                        document.getElementById('curtain').classList.add('active');
+                    }, 500);
+                }
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
