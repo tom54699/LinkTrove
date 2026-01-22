@@ -1,0 +1,1010 @@
+{
+  "extName": {
+    "message": "LinkTrove",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Toby 스타일 비주얼 탭 관리자: 열린 탭에서 드래그하여 카드로 저장.",
+    "description": "Extension description"
+  },
+
+  "settings_title": {
+    "message": "설정"
+  },
+  "settings_close": {
+    "message": "닫기"
+  },
+
+  "nav_export_import": {
+    "message": "내보내기/가져오기"
+  },
+  "nav_cloud_sync": {
+    "message": "클라우드 동기화"
+  },
+  "nav_templates": {
+    "message": "템플릿"
+  },
+  "nav_language": {
+    "message": "언어"
+  },
+
+  "data_title": {
+    "message": "프로젝트 백업 및 복원"
+  },
+  "data_description": {
+    "message": "프로젝트 데이터를 JSON으로 내보내거나 복원합니다. 가져오기 시 기존 데이터가 대체됩니다."
+  },
+  "data_export_label": {
+    "message": "백업 내보내기"
+  },
+  "data_restore_label": {
+    "message": "복원 (데이터 대체)"
+  },
+  "data_drop_hint": {
+    "message": "JSON 파일을 여기에 드롭하거나 클릭하여 선택..."
+  },
+  "data_file_selected": {
+    "message": "선택됨: $FILE$",
+    "placeholders": {
+      "file": { "content": "$1" }
+    }
+  },
+  "data_import_success": {
+    "message": "가져오기 성공, 새로고침 중..."
+  },
+  "data_export_success": {
+    "message": "백업을 내보냈습니다"
+  },
+  "data_export_failed": {
+    "message": "내보내기 실패"
+  },
+  "data_confirm_import_title": {
+    "message": "가져오기 확인?"
+  },
+  "data_confirm_import_desc": {
+    "message": "현재 데이터와 설정이 영구적으로 대체됩니다."
+  },
+
+  "import_toby_title": {
+    "message": "이 그룹에 Toby 가져오기"
+  },
+  "import_file_info": {
+    "message": "파일: $FILE$",
+    "placeholders": {
+      "file": { "content": "$1" }
+    }
+  },
+  "import_link_count": {
+    "message": "$COUNT$개 링크",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "btn_start_import": {
+    "message": "가져오기 시작"
+  },
+
+  "cloud_title": {
+    "message": "Google Drive 클라우드 동기화"
+  },
+  "cloud_description": {
+    "message": "Google Drive를 백업 저장소로 사용 (비공개, Drive에서 숨김)"
+  },
+  "cloud_connected": {
+    "message": "연결됨"
+  },
+  "cloud_disconnect": {
+    "message": "연결 해제"
+  },
+  "cloud_disconnected": {
+    "message": "연결 안됨"
+  },
+  "cloud_last_sync": {
+    "message": "마지막 동기화:"
+  },
+  "cloud_never": {
+    "message": "없음"
+  },
+  "cloud_connect": {
+    "message": "Google Drive 연결"
+  },
+  "cloud_manual_ops": {
+    "message": "수동 작업"
+  },
+  "cloud_backup_now": {
+    "message": "지금 백업"
+  },
+  "cloud_merge": {
+    "message": "클라우드 데이터 병합"
+  },
+  "cloud_full_restore": {
+    "message": "전체 복원"
+  },
+  "cloud_ops_hint": {
+    "message": "백업: 로컬을 클라우드에 업로드 / 병합: 최신 유지 / 전체 복원: 클라우드가 로컬 덮어쓰기"
+  },
+  "cloud_auto_sync": {
+    "message": "자동 동기화"
+  },
+  "cloud_auto_sync_desc": {
+    "message": "활성화 시 로컬 변경 사항이 자동 업로드되고 시작 시 다운로드됩니다"
+  },
+  "cloud_auto_enabled": {
+    "message": "자동 동기화 활성화됨"
+  },
+  "cloud_auto_disabled": {
+    "message": "자동 동기화 비활성화됨"
+  },
+  "cloud_backup_success": {
+    "message": "백업 성공"
+  },
+  "cloud_merge_success": {
+    "message": "병합 완료"
+  },
+  "cloud_restore_success": {
+    "message": "복원 성공"
+  },
+
+  "gc_title": {
+    "message": "가비지 컬렉션 (GC)"
+  },
+  "gc_deleted_items": {
+    "message": "삭제된 항목:"
+  },
+  "gc_oldest_item": {
+    "message": "가장 오래된 항목:"
+  },
+  "gc_none": {
+    "message": "없음"
+  },
+  "gc_run": {
+    "message": "GC 실행"
+  },
+  "gc_confirm_title": {
+    "message": "GC 실행 확인"
+  },
+  "gc_confirm_desc": {
+    "message": "삭제된 항목을 영구적으로 정리하시겠습니까? 이 작업은 취소할 수 없습니다."
+  },
+  "gc_cleaning": {
+    "message": "삭제된 항목 정리 중..."
+  },
+  "gc_cleaned": {
+    "message": "$COUNT$개 항목을 정리했습니다",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "gc_nothing": {
+    "message": "정리할 삭제된 항목이 없습니다"
+  },
+
+  "snapshot_title": {
+    "message": "로컬 스냅샷"
+  },
+  "snapshot_empty": {
+    "message": "스냅샷 없음"
+  },
+  "snapshot_before_restore": {
+    "message": "복원 전"
+  },
+  "snapshot_before_merge": {
+    "message": "병합 전"
+  },
+  "snapshot_manual": {
+    "message": "수동"
+  },
+  "snapshot_pages": {
+    "message": "$COUNT$개 페이지",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "snapshot_restore": {
+    "message": "복원"
+  },
+  "snapshot_delete": {
+    "message": "삭제"
+  },
+  "snapshot_restore_confirm": {
+    "message": "이 스냅샷을 복원하시겠습니까? 현재 데이터가 대체됩니다."
+  },
+  "snapshot_delete_confirm": {
+    "message": "이 스냅샷을 삭제하시겠습니까?"
+  },
+  "snapshot_restored": {
+    "message": "스냅샷 복원됨"
+  },
+  "snapshot_deleted": {
+    "message": "스냅샷 삭제됨"
+  },
+
+  "confirm_backup_title": {
+    "message": "백업 확인"
+  },
+  "confirm_backup_desc": {
+    "message": "로컬 데이터를 클라우드에 업로드하시겠습니까? 클라우드 백업이 덮어쓰기됩니다."
+  },
+  "confirm_merge_title": {
+    "message": "병합 확인"
+  },
+  "confirm_merge_desc": {
+    "message": "클라우드 데이터를 병합하시겠습니까? 시스템이 양쪽에서 최신 변경 사항을 유지합니다."
+  },
+  "confirm_restore_title": {
+    "message": "전체 복원 확인"
+  },
+  "confirm_restore_desc": {
+    "message": "클라우드 데이터를 완전히 복원하시겠습니까? 로컬 데이터가 대체됩니다. 먼저 스냅샷이 생성됩니다."
+  },
+
+  "dialog_processing": {
+    "message": "처리 중..."
+  },
+  "dialog_success": {
+    "message": "작업 성공"
+  },
+  "dialog_failed": {
+    "message": "작업 실패"
+  },
+  "dialog_close": {
+    "message": "닫기"
+  },
+
+  "btn_cancel": {
+    "message": "취소"
+  },
+  "btn_confirm": {
+    "message": "확인"
+  },
+  "btn_confirm_replace": {
+    "message": "확인 및 대체"
+  },
+  "btn_confirm_execute": {
+    "message": "확인"
+  },
+  "btn_export_json": {
+    "message": "JSON 내보내기"
+  },
+  "btn_import_json": {
+    "message": "JSON 가져오기"
+  },
+
+  "lang_title": {
+    "message": "언어 설정"
+  },
+  "lang_description": {
+    "message": "선호하는 표시 언어를 선택하세요"
+  },
+  "lang_select_label": {
+    "message": "표시 언어"
+  },
+  "lang_en": {
+    "message": "English"
+  },
+  "lang_zh_tw": {
+    "message": "繁體中文"
+  },
+  "lang_zh_cn": {
+    "message": "简体中文"
+  },
+  "lang_ja": {
+    "message": "日本語"
+  },
+  "lang_ko": {
+    "message": "한국어"
+  },
+  "lang_changed": {
+    "message": "언어가 변경되었습니다"
+  },
+
+  "menu_edit": {
+    "message": "편집"
+  },
+  "menu_delete": {
+    "message": "삭제"
+  },
+  "menu_move": {
+    "message": "이동"
+  },
+  "menu_share": {
+    "message": "공유"
+  },
+  "menu_rename": {
+    "message": "이름 변경"
+  },
+  "menu_move_up": {
+    "message": "위로 이동"
+  },
+  "menu_move_down": {
+    "message": "아래로 이동"
+  },
+  "menu_open_all": {
+    "message": "모두 열기"
+  },
+  "menu_import_toby": {
+    "message": "Toby JSON 가져오기"
+  },
+  "menu_import_html": {
+    "message": "HTML 북마크 가져오기"
+  },
+  "menu_manage_orgs": {
+    "message": "조직 관리"
+  },
+  "menu_delete_org": {
+    "message": "조직 삭제"
+  },
+
+  "toast_saved": {
+    "message": "저장됨"
+  },
+  "toast_deleted": {
+    "message": "삭제됨"
+  },
+  "toast_moved": {
+    "message": "이동됨"
+  },
+  "toast_moved_cards": {
+    "message": "$COUNT$개 카드 이동됨",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "toast_deleted_cards": {
+    "message": "$COUNT$개 카드 삭제됨",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "toast_import_success": {
+    "message": "가져오기 성공"
+  },
+  "toast_save_failed": {
+    "message": "저장 실패"
+  },
+  "toast_delete_failed": {
+    "message": "삭제 실패"
+  },
+  "toast_group_added": {
+    "message": "$NAME$ 추가됨",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "toast_add_failed": {
+    "message": "추가 실패"
+  },
+  "error_select_collection": {
+    "message": "먼저 컬렉션을 선택하세요"
+  },
+
+  "confirm_delete": {
+    "message": "삭제 확인?"
+  },
+  "confirm_delete_card": {
+    "message": "이 카드를 삭제하시겠습니까?"
+  },
+  "confirm_delete_cards": {
+    "message": "$COUNT$개 카드를 삭제하시겠습니까?",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+
+  "batch_move": {
+    "message": "이동"
+  },
+  "batch_open_tabs": {
+    "message": "탭 열기"
+  },
+  "batch_delete": {
+    "message": "삭제"
+  },
+  "batch_selected": {
+    "message": "$COUNT$개 선택됨",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+
+  "move_dialog_title": {
+    "message": "$COUNT$개 카드 이동",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "move_label_collection": {
+    "message": "컬렉션"
+  },
+  "move_select_collection": {
+    "message": "컬렉션 선택"
+  },
+  "move_label_group": {
+    "message": "그룹"
+  },
+  "move_select_group": {
+    "message": "그룹 선택"
+  },
+  "btn_move": {
+    "message": "이동"
+  },
+  "loading": {
+    "message": "로딩 중..."
+  },
+  "error_something_wrong": {
+    "message": "오류가 발생했습니다."
+  },
+
+  "conflict_severity_major": {
+    "message": "⚠️ 큰 차이"
+  },
+  "conflict_severity_minor": {
+    "message": "⚠ 작은 차이"
+  },
+  "conflict_severity_none": {
+    "message": "✓ 차이 없음"
+  },
+  "conflict_enable_auto_sync": {
+    "message": "자동 동기화 활성화"
+  },
+  "conflict_merge_cloud": {
+    "message": "클라우드 데이터 병합"
+  },
+  "conflict_diff_detected": {
+    "message": "로컬과 클라우드 데이터 간 차이가 감지되었습니다:"
+  },
+  "conflict_col_item": {
+    "message": "항목"
+  },
+  "conflict_col_local": {
+    "message": "로컬"
+  },
+  "conflict_col_cloud": {
+    "message": "클라우드"
+  },
+  "conflict_webpages": {
+    "message": "웹페이지"
+  },
+  "conflict_categories": {
+    "message": "카테고리"
+  },
+  "conflict_groups": {
+    "message": "그룹"
+  },
+  "conflict_warning_major": {
+    "message": "⚠️ 큰 차이가 감지되었습니다. 먼저 로컬 데이터를 백업하는 것이 좋습니다."
+  },
+  "conflict_auto_sync_desc": {
+    "message": "자동 동기화를 활성화하면 로컬 변경 사항이 자동으로 클라우드에 업로드됩니다. LWW 병합 전략 사용: 로컬과 클라우드 간 최신 버전을 유지합니다."
+  },
+  "conflict_merge_desc": {
+    "message": "병합은 LWW 전략을 사용합니다: 타임스탬프를 비교하여 최신 버전을 유지합니다."
+  },
+  "conflict_btn_enable": {
+    "message": "활성화 확인"
+  },
+  "conflict_btn_merge": {
+    "message": "병합 확인"
+  },
+  "conflict_btn_backup_first": {
+    "message": "먼저 로컬 백업"
+  },
+
+  "search_placeholder": {
+    "message": "검색..."
+  },
+  "search_recent": {
+    "message": "최근 검색"
+  },
+  "search_just_now": {
+    "message": "방금"
+  },
+  "search_mins_ago": {
+    "message": "$MINS$분 전",
+    "placeholders": {
+      "mins": { "content": "$1" }
+    }
+  },
+  "search_hours_ago": {
+    "message": "$HOURS$시간 전",
+    "placeholders": {
+      "hours": { "content": "$1" }
+    }
+  },
+  "search_days_ago": {
+    "message": "$DAYS$일 전",
+    "placeholders": {
+      "days": { "content": "$1" }
+    }
+  },
+  "search_action_search": {
+    "message": "↵ 검색"
+  },
+  "search_type_to_start": {
+    "message": "검색어를 입력하세요..."
+  },
+  "search_no_results": {
+    "message": "\"$QUERY$\" 검색 결과 없음",
+    "placeholders": {
+      "query": { "content": "$1" }
+    }
+  },
+  "search_action_open": {
+    "message": "↵ 열기"
+  },
+  "search_navigate": {
+    "message": "탐색"
+  },
+  "search_open": {
+    "message": "열기"
+  },
+  "search_loaded": {
+    "message": "$LOADED$ / $TOTAL$ 로드됨",
+    "placeholders": {
+      "loaded": { "content": "$1" },
+      "total": { "content": "$2" }
+    }
+  },
+
+  "sidebar_collections": {
+    "message": "컬렉션"
+  },
+  "sidebar_add_collection": {
+    "message": "컬렉션 추가"
+  },
+  "sidebar_add_group": {
+    "message": "그룹 추가"
+  },
+
+  "tabs_panel_title": {
+    "message": "열린 탭"
+  },
+  "tabs_window": {
+    "message": "창 $NUM$",
+    "placeholders": {
+      "num": { "content": "$1" }
+    }
+  },
+
+  "template_name": {
+    "message": "템플릿 이름"
+  },
+  "template_add_field": {
+    "message": "필드 추가"
+  },
+  "template_field_key": {
+    "message": "필드 키"
+  },
+  "template_field_label": {
+    "message": "표시 라벨"
+  },
+  "template_save": {
+    "message": "템플릿 저장"
+  },
+
+  "tpl_manager_title": {
+    "message": "템플릿 관리"
+  },
+  "tpl_manager_desc": {
+    "message": "카드 필드 템플릿을 관리하고 데이터 구조를 정의합니다."
+  },
+  "tpl_count": {
+    "message": "$COUNT$개 템플릿",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_create_new": {
+    "message": "새 템플릿 만들기"
+  },
+  "tpl_create_hint": {
+    "message": "빈 템플릿 시작 또는 프리셋 선택"
+  },
+  "tpl_name_placeholder": {
+    "message": "템플릿 이름 (예: 기사)"
+  },
+  "tpl_name_exists": {
+    "message": "이름이 이미 존재합니다"
+  },
+  "tpl_name_exists_desc": {
+    "message": "이 이름의 템플릿이 이미 존재합니다."
+  },
+  "tpl_created": {
+    "message": "템플릿 생성됨"
+  },
+  "btn_create": {
+    "message": "만들기"
+  },
+  "tpl_presets": {
+    "message": "프리셋:"
+  },
+  "tpl_preset_book": {
+    "message": "📚 책"
+  },
+  "tpl_preset_tool": {
+    "message": "🔧 도구"
+  },
+  "tpl_field_count": {
+    "message": "$COUNT$개 필드",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_usage_count": {
+    "message": "사용 횟수: $COUNT$",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_add_field_section": {
+    "message": "필드 추가"
+  },
+  "tpl_field_display_name": {
+    "message": "표시 이름"
+  },
+  "tpl_field_added": {
+    "message": "필드 추가됨"
+  },
+  "btn_add": {
+    "message": "추가"
+  },
+  "btn_got_it": {
+    "message": "확인"
+  },
+  "btn_expand": {
+    "message": "펼치기"
+  },
+  "btn_collapse": {
+    "message": "접기"
+  },
+  "btn_add_group": {
+    "message": "그룹"
+  },
+  "tooltip_expand_all": {
+    "message": "모든 그룹 펼치기"
+  },
+  "tooltip_collapse_all": {
+    "message": "모든 그룹 접기"
+  },
+  "tooltip_add_group": {
+    "message": "새 그룹 추가"
+  },
+
+  "share_title": {
+    "message": "공유"
+  },
+  "share_publish": {
+    "message": "게시"
+  },
+  "share_copy_link": {
+    "message": "링크 복사"
+  },
+  "share_link_copied": {
+    "message": "링크 복사됨"
+  },
+
+  "org_switch": {
+    "message": "조직 전환"
+  },
+  "org_create": {
+    "message": "조직 만들기"
+  },
+  "org_name": {
+    "message": "조직 이름"
+  },
+
+  "items_count": {
+    "message": "$COUNT$개 항목",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "version": {
+    "message": "버전"
+  },
+
+  "toast_renamed": {
+    "message": "이름 변경됨"
+  },
+  "toast_rename_failed": {
+    "message": "이름 변경 실패"
+  },
+  "toast_reordered": {
+    "message": "순서 변경됨"
+  },
+  "toast_token_saved": {
+    "message": "GitHub 토큰 저장됨!"
+  },
+  "toast_token_save_failed": {
+    "message": "토큰 저장 실패"
+  },
+  "toast_copied": {
+    "message": "클립보드에 복사됨"
+  },
+  "toast_copy_failed": {
+    "message": "복사 실패"
+  },
+  "toast_added": {
+    "message": "$NAME$ 추가됨",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "toast_created_from_tab": {
+    "message": "탭에서 생성하여 그룹에 추가됨"
+  },
+  "toast_operation_failed": {
+    "message": "작업 실패"
+  },
+  "toast_move_failed": {
+    "message": "이동 실패"
+  },
+  "toast_create_failed": {
+    "message": "생성 실패"
+  },
+  "toast_group_deleted": {
+    "message": "그룹과 북마크 삭제됨"
+  },
+
+  "group_expand": {
+    "message": "펼치기"
+  },
+  "group_collapse": {
+    "message": "접기"
+  },
+  "group_open_all": {
+    "message": "모든 탭 열기"
+  },
+  "group_settings": {
+    "message": "그룹 설정"
+  },
+  "group_min_one": {
+    "message": "최소 하나의 그룹이 필요합니다"
+  },
+
+  "menu_share_group": {
+    "message": "이 그룹 공유"
+  },
+
+  "confirm_delete_group_title": {
+    "message": "그룹 삭제"
+  },
+  "confirm_delete_group_desc": {
+    "message": "이 그룹과 북마크를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다."
+  },
+
+  "org_add_new": {
+    "message": "새 조직 추가"
+  },
+  "org_import_hint": {
+    "message": "가져오기 (Toby/HTML)"
+  },
+  "org_confirm_delete_title": {
+    "message": "조직 삭제 확인"
+  },
+  "org_confirm_delete_desc": {
+    "message": "\"$NAME$\"을(를) 삭제하시겠습니까?",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "org_delete_warning": {
+    "message": "경고: 이 조직의 모든 컬렉션, 그룹, 북마크가 영구 삭제됩니다!"
+  },
+  "org_min_one": {
+    "message": "삭제 실패: 최소 하나의 조직이 필요합니다"
+  },
+  "toast_org_deleted": {
+    "message": "조직과 모든 데이터 삭제됨"
+  },
+  "btn_confirm_delete": {
+    "message": "삭제 확인"
+  },
+  "org_manage_title": {
+    "message": "조직 관리"
+  },
+  "org_manage_desc": {
+    "message": "조직 이름 변경 또는 삭제"
+  },
+  "org_name_label": {
+    "message": "조직 이름"
+  },
+  "org_color_label": {
+    "message": "색상"
+  },
+  "toast_update_failed": {
+    "message": "업데이트 실패"
+  },
+  "settings_btn": {
+    "message": "앱 설정"
+  },
+  "theme_toggle": {
+    "message": "테마 전환"
+  },
+
+  "share_settings": {
+    "message": "공유 설정"
+  },
+  "share_group_title": {
+    "message": "\"$NAME$\" 공유",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "share_title_label": {
+    "message": "공유 제목"
+  },
+  "share_title_placeholder": {
+    "message": "공유 페이지 제목 사용자 지정"
+  },
+  "share_description_label": {
+    "message": "공유 설명"
+  },
+  "share_description_placeholder": {
+    "message": "이 공유에 대해 간략히 설명"
+  },
+  "share_items_count": {
+    "message": "$COUNT$개 항목 포함",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "share_publish_hint": {
+    "message": "링크 게시: GitHub 토큰 필요, Gist에 자동 업로드"
+  },
+  "share_download_hint": {
+    "message": "HTML 다운로드: 파일을 로컬에 다운로드, 수동 업로드"
+  },
+  "share_publish_btn": {
+    "message": "링크 게시"
+  },
+  "share_download_btn": {
+    "message": "HTML 다운로드"
+  },
+  "share_publish_title": {
+    "message": "GitHub Gist에 게시하고 공유 링크 받기"
+  },
+
+  "token_setup_title": {
+    "message": "GitHub 토큰 설정"
+  },
+  "token_required_desc": {
+    "message": "공유 링크를 Gist에 게시하려면 GitHub Personal Access Token이 필요합니다"
+  },
+  "token_step1": {
+    "message": "GitHub 설정 페이지로 이동"
+  },
+  "token_step2": {
+    "message": "\"Generate new token (classic)\" 클릭"
+  },
+  "token_step3": {
+    "message": "\"gist\" 권한 체크 (이것만 필요)"
+  },
+  "token_step4": {
+    "message": "생성된 토큰 복사"
+  },
+  "token_security_notice": {
+    "message": "보안 안내: 토큰은 암호화되어 브라우저 확장 프로그램의 안전한 저장소에 저장되며, 웹 페이지나 다른 확장 프로그램에서 접근할 수 없습니다"
+  },
+  "token_label": {
+    "message": "GitHub Personal Access Token"
+  },
+  "token_storage_notice": {
+    "message": "토큰은 브라우저에 안전하게 로컬 저장되며, 서버에 업로드되지 않습니다"
+  },
+  "btn_save": {
+    "message": "저장"
+  },
+
+  "share_link_title": {
+    "message": "공유 링크"
+  },
+  "share_link_created": {
+    "message": "공유 링크 생성됨"
+  },
+  "share_link_desc": {
+    "message": "공유 링크가 GitHub Gist에 게시되었습니다. 링크를 복사하여 공유하세요:"
+  },
+  "share_link_hint": {
+    "message": "팁: 링크는 GitHub Gist에 영구 저장되며 언제든 관리할 수 있습니다"
+  },
+  "btn_copy_link": {
+    "message": "링크 복사"
+  },
+  "btn_open_link": {
+    "message": "링크 열기"
+  },
+
+  "category_edit_title": {
+    "message": "카테고리 편집"
+  },
+  "category_edit_desc": {
+    "message": "이름, 색상, 기본 템플릿 업데이트"
+  },
+  "category_name_label": {
+    "message": "이름"
+  },
+  "category_color_label": {
+    "message": "색상"
+  },
+  "category_template_label": {
+    "message": "기본 템플릿"
+  },
+  "category_template_none": {
+    "message": "없음"
+  },
+  "category_delete_btn": {
+    "message": "카테고리 삭제..."
+  },
+  "category_confirm_delete": {
+    "message": "삭제 확인?"
+  },
+  "category_min_one": {
+    "message": "삭제 실패: 최소 하나의 컬렉션이 필요합니다"
+  },
+  "toast_category_deleted": {
+    "message": "컬렉션과 모든 데이터 삭제됨"
+  },
+
+  "card_no_description": {
+    "message": "설명이 없습니다."
+  },
+  "card_delete_title": {
+    "message": "카드 삭제?"
+  },
+  "card_delete_desc": {
+    "message": "이 웹페이지를 삭제하시겠습니까?"
+  },
+  "card_edit_title": {
+    "message": "웹페이지 편집"
+  },
+  "card_title_label": {
+    "message": "제목"
+  },
+  "card_url_label": {
+    "message": "URL"
+  },
+  "card_note_label": {
+    "message": "메모"
+  },
+  "btn_save_changes": {
+    "message": "변경 사항 저장"
+  },
+
+  "toast_open_tabs_failed": {
+    "message": "탭 열기 실패"
+  },
+  "toast_add_tab_failed": {
+    "message": "탭 추가 실패"
+  },
+  "drag_tabs_hint": {
+    "message": "탭을 여기로 드래그하여 저장"
+  },
+  "confirm_delete_selected_title": {
+    "message": "선택 항목 삭제 확인"
+  },
+  "confirm_open_tabs": {
+    "message": "$COUNT$개 탭을 여시겠습니까?",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "context_save_page": {
+    "message": "페이지를 LinkTrove에 저장"
+  },
+  "context_save_link": {
+    "message": "링크를 LinkTrove에 저장"
+  },
+  "context_save_selection": {
+    "message": "선택을 LinkTrove에 저장"
+  },
+  "context_save_no_groups": {
+    "message": "사용 가능한 그룹 없음"
+  },
+  "context_save_open_app": {
+    "message": "LinkTrove 열기"
+  },
+  "context_save_no_organizations": {
+    "message": "아직 조직이 없습니다"
+  }
+}

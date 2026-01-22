@@ -288,6 +288,12 @@
   "lang_ja": {
     "message": "日本語"
   },
+  "lang_zh_cn": {
+    "message": "简体中文"
+  },
+  "lang_ko": {
+    "message": "한국어"
+  },
   "lang_changed": {
     "message": "Language changed"
   },

@@ -1,0 +1,1010 @@
+{
+  "extName": {
+    "message": "LinkTrove",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Toby风格可视化标签管理器：从打开的标签页拖放保存为卡片。",
+    "description": "Extension description"
+  },
+
+  "settings_title": {
+    "message": "设置"
+  },
+  "settings_close": {
+    "message": "关闭"
+  },
+
+  "nav_export_import": {
+    "message": "导出/导入"
+  },
+  "nav_cloud_sync": {
+    "message": "云端同步"
+  },
+  "nav_templates": {
+    "message": "模板"
+  },
+  "nav_language": {
+    "message": "语言"
+  },
+
+  "data_title": {
+    "message": "项目备份与恢复"
+  },
+  "data_description": {
+    "message": "将项目数据导出或恢复为 JSON。导入将替换现有数据。"
+  },
+  "data_export_label": {
+    "message": "导出备份"
+  },
+  "data_restore_label": {
+    "message": "恢复（替换数据）"
+  },
+  "data_drop_hint": {
+    "message": "拖放 JSON 文件到此处或点击选择..."
+  },
+  "data_file_selected": {
+    "message": "已选择: $FILE$",
+    "placeholders": {
+      "file": { "content": "$1" }
+    }
+  },
+  "data_import_success": {
+    "message": "导入成功，正在重新加载..."
+  },
+  "data_export_success": {
+    "message": "备份已导出"
+  },
+  "data_export_failed": {
+    "message": "导出失败"
+  },
+  "data_confirm_import_title": {
+    "message": "确认导入？"
+  },
+  "data_confirm_import_desc": {
+    "message": "此操作将永久替换您当前的数据和设置。"
+  },
+
+  "import_toby_title": {
+    "message": "导入 Toby 到此群组"
+  },
+  "import_file_info": {
+    "message": "文件: $FILE$",
+    "placeholders": {
+      "file": { "content": "$1" }
+    }
+  },
+  "import_link_count": {
+    "message": "$COUNT$ 个链接",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "btn_start_import": {
+    "message": "开始导入"
+  },
+
+  "cloud_title": {
+    "message": "Google Drive 云端同步"
+  },
+  "cloud_description": {
+    "message": "使用 Google Drive 作为备份存储（私有，在 Drive 中隐藏）"
+  },
+  "cloud_connected": {
+    "message": "已连接"
+  },
+  "cloud_disconnect": {
+    "message": "断开连接"
+  },
+  "cloud_disconnected": {
+    "message": "未连接"
+  },
+  "cloud_last_sync": {
+    "message": "上次同步:"
+  },
+  "cloud_never": {
+    "message": "从未"
+  },
+  "cloud_connect": {
+    "message": "连接 Google Drive"
+  },
+  "cloud_manual_ops": {
+    "message": "手动操作"
+  },
+  "cloud_backup_now": {
+    "message": "立即备份"
+  },
+  "cloud_merge": {
+    "message": "合并云端数据"
+  },
+  "cloud_full_restore": {
+    "message": "完整恢复"
+  },
+  "cloud_ops_hint": {
+    "message": "备份: 上传本地到云端 / 合并: 保留较新的 / 完整恢复: 云端覆盖本地"
+  },
+  "cloud_auto_sync": {
+    "message": "自动同步"
+  },
+  "cloud_auto_sync_desc": {
+    "message": "启用后，本地更改自动上传；启动时下载"
+  },
+  "cloud_auto_enabled": {
+    "message": "自动同步已启用"
+  },
+  "cloud_auto_disabled": {
+    "message": "自动同步已禁用"
+  },
+  "cloud_backup_success": {
+    "message": "备份成功"
+  },
+  "cloud_merge_success": {
+    "message": "合并完成"
+  },
+  "cloud_restore_success": {
+    "message": "恢复成功"
+  },
+
+  "gc_title": {
+    "message": "垃圾回收 (GC)"
+  },
+  "gc_deleted_items": {
+    "message": "已删除项目:"
+  },
+  "gc_oldest_item": {
+    "message": "最旧项目:"
+  },
+  "gc_none": {
+    "message": "无"
+  },
+  "gc_run": {
+    "message": "运行 GC"
+  },
+  "gc_confirm_title": {
+    "message": "确认运行 GC"
+  },
+  "gc_confirm_desc": {
+    "message": "永久清理所有已删除项目？此操作无法撤销。"
+  },
+  "gc_cleaning": {
+    "message": "正在清理已删除项目..."
+  },
+  "gc_cleaned": {
+    "message": "已清理 $COUNT$ 个项目",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "gc_nothing": {
+    "message": "没有需要清理的已删除项目"
+  },
+
+  "snapshot_title": {
+    "message": "本地快照"
+  },
+  "snapshot_empty": {
+    "message": "暂无快照"
+  },
+  "snapshot_before_restore": {
+    "message": "恢复前"
+  },
+  "snapshot_before_merge": {
+    "message": "合并前"
+  },
+  "snapshot_manual": {
+    "message": "手动"
+  },
+  "snapshot_pages": {
+    "message": "$COUNT$ 个页面",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "snapshot_restore": {
+    "message": "恢复"
+  },
+  "snapshot_delete": {
+    "message": "删除"
+  },
+  "snapshot_restore_confirm": {
+    "message": "恢复此快照？当前数据将被替换。"
+  },
+  "snapshot_delete_confirm": {
+    "message": "删除此快照？"
+  },
+  "snapshot_restored": {
+    "message": "快照已恢复"
+  },
+  "snapshot_deleted": {
+    "message": "快照已删除"
+  },
+
+  "confirm_backup_title": {
+    "message": "确认备份"
+  },
+  "confirm_backup_desc": {
+    "message": "上传本地数据到云端？这将覆盖云端备份。"
+  },
+  "confirm_merge_title": {
+    "message": "确认合并"
+  },
+  "confirm_merge_desc": {
+    "message": "合并云端数据？系统将保留双方较新的更改。"
+  },
+  "confirm_restore_title": {
+    "message": "确认完整恢复"
+  },
+  "confirm_restore_desc": {
+    "message": "完整恢复云端数据？本地数据将被替换。将先创建快照。"
+  },
+
+  "dialog_processing": {
+    "message": "处理中..."
+  },
+  "dialog_success": {
+    "message": "操作成功"
+  },
+  "dialog_failed": {
+    "message": "操作失败"
+  },
+  "dialog_close": {
+    "message": "关闭"
+  },
+
+  "btn_cancel": {
+    "message": "取消"
+  },
+  "btn_confirm": {
+    "message": "确认"
+  },
+  "btn_confirm_replace": {
+    "message": "确认并替换"
+  },
+  "btn_confirm_execute": {
+    "message": "确认"
+  },
+  "btn_export_json": {
+    "message": "导出 JSON"
+  },
+  "btn_import_json": {
+    "message": "导入 JSON"
+  },
+
+  "lang_title": {
+    "message": "语言设置"
+  },
+  "lang_description": {
+    "message": "选择您偏好的显示语言"
+  },
+  "lang_select_label": {
+    "message": "显示语言"
+  },
+  "lang_en": {
+    "message": "English"
+  },
+  "lang_zh_tw": {
+    "message": "繁體中文"
+  },
+  "lang_zh_cn": {
+    "message": "简体中文"
+  },
+  "lang_ja": {
+    "message": "日本語"
+  },
+  "lang_ko": {
+    "message": "한국어"
+  },
+  "lang_changed": {
+    "message": "语言已更改"
+  },
+
+  "menu_edit": {
+    "message": "编辑"
+  },
+  "menu_delete": {
+    "message": "删除"
+  },
+  "menu_move": {
+    "message": "移动"
+  },
+  "menu_share": {
+    "message": "分享"
+  },
+  "menu_rename": {
+    "message": "重命名"
+  },
+  "menu_move_up": {
+    "message": "上移"
+  },
+  "menu_move_down": {
+    "message": "下移"
+  },
+  "menu_open_all": {
+    "message": "全部打开"
+  },
+  "menu_import_toby": {
+    "message": "导入 Toby JSON"
+  },
+  "menu_import_html": {
+    "message": "导入 HTML 书签"
+  },
+  "menu_manage_orgs": {
+    "message": "管理组织"
+  },
+  "menu_delete_org": {
+    "message": "删除组织"
+  },
+
+  "toast_saved": {
+    "message": "已保存"
+  },
+  "toast_deleted": {
+    "message": "已删除"
+  },
+  "toast_moved": {
+    "message": "已移动"
+  },
+  "toast_moved_cards": {
+    "message": "已移动 $COUNT$ 张卡片",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "toast_deleted_cards": {
+    "message": "已删除 $COUNT$ 张卡片",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "toast_import_success": {
+    "message": "导入成功"
+  },
+  "toast_save_failed": {
+    "message": "保存失败"
+  },
+  "toast_delete_failed": {
+    "message": "删除失败"
+  },
+  "toast_group_added": {
+    "message": "已添加 $NAME$",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "toast_add_failed": {
+    "message": "添加失败"
+  },
+  "error_select_collection": {
+    "message": "请先选择一个收藏集"
+  },
+
+  "confirm_delete": {
+    "message": "确认删除？"
+  },
+  "confirm_delete_card": {
+    "message": "删除此卡片？"
+  },
+  "confirm_delete_cards": {
+    "message": "删除 $COUNT$ 张卡片？",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+
+  "batch_move": {
+    "message": "移动"
+  },
+  "batch_open_tabs": {
+    "message": "打开标签页"
+  },
+  "batch_delete": {
+    "message": "删除"
+  },
+  "batch_selected": {
+    "message": "已选择 $COUNT$ 项",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+
+  "move_dialog_title": {
+    "message": "移动 $COUNT$ 张卡片到",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "move_label_collection": {
+    "message": "收藏集"
+  },
+  "move_select_collection": {
+    "message": "选择收藏集"
+  },
+  "move_label_group": {
+    "message": "群组"
+  },
+  "move_select_group": {
+    "message": "选择群组"
+  },
+  "btn_move": {
+    "message": "移动"
+  },
+  "loading": {
+    "message": "加载中..."
+  },
+  "error_something_wrong": {
+    "message": "出错了。"
+  },
+
+  "conflict_severity_major": {
+    "message": "⚠️ 重大差异"
+  },
+  "conflict_severity_minor": {
+    "message": "⚠ 轻微差异"
+  },
+  "conflict_severity_none": {
+    "message": "✓ 无差异"
+  },
+  "conflict_enable_auto_sync": {
+    "message": "启用自动同步"
+  },
+  "conflict_merge_cloud": {
+    "message": "合并云端数据"
+  },
+  "conflict_diff_detected": {
+    "message": "检测到本地和云端数据存在差异:"
+  },
+  "conflict_col_item": {
+    "message": "项目"
+  },
+  "conflict_col_local": {
+    "message": "本地"
+  },
+  "conflict_col_cloud": {
+    "message": "云端"
+  },
+  "conflict_webpages": {
+    "message": "网页"
+  },
+  "conflict_categories": {
+    "message": "分类"
+  },
+  "conflict_groups": {
+    "message": "群组"
+  },
+  "conflict_warning_major": {
+    "message": "⚠️ 检测到较大差异。建议先备份本地数据。"
+  },
+  "conflict_auto_sync_desc": {
+    "message": "启用自动同步后，本地更改将自动上传到云端。使用 LWW 合并策略：保留本地和云端之间较新的版本。"
+  },
+  "conflict_merge_desc": {
+    "message": "合并使用 LWW 策略：比较时间戳并保留较新的版本。"
+  },
+  "conflict_btn_enable": {
+    "message": "确认启用"
+  },
+  "conflict_btn_merge": {
+    "message": "确认合并"
+  },
+  "conflict_btn_backup_first": {
+    "message": "先备份本地"
+  },
+
+  "search_placeholder": {
+    "message": "搜索..."
+  },
+  "search_recent": {
+    "message": "最近搜索"
+  },
+  "search_just_now": {
+    "message": "刚刚"
+  },
+  "search_mins_ago": {
+    "message": "$MINS$ 分钟前",
+    "placeholders": {
+      "mins": { "content": "$1" }
+    }
+  },
+  "search_hours_ago": {
+    "message": "$HOURS$ 小时前",
+    "placeholders": {
+      "hours": { "content": "$1" }
+    }
+  },
+  "search_days_ago": {
+    "message": "$DAYS$ 天前",
+    "placeholders": {
+      "days": { "content": "$1" }
+    }
+  },
+  "search_action_search": {
+    "message": "↵ 搜索"
+  },
+  "search_type_to_start": {
+    "message": "输入开始搜索..."
+  },
+  "search_no_results": {
+    "message": "未找到「$QUERY$」的结果",
+    "placeholders": {
+      "query": { "content": "$1" }
+    }
+  },
+  "search_action_open": {
+    "message": "↵ 打开"
+  },
+  "search_navigate": {
+    "message": "导航"
+  },
+  "search_open": {
+    "message": "打开"
+  },
+  "search_loaded": {
+    "message": "已加载 $LOADED$ / $TOTAL$",
+    "placeholders": {
+      "loaded": { "content": "$1" },
+      "total": { "content": "$2" }
+    }
+  },
+
+  "sidebar_collections": {
+    "message": "收藏集"
+  },
+  "sidebar_add_collection": {
+    "message": "添加收藏集"
+  },
+  "sidebar_add_group": {
+    "message": "添加群组"
+  },
+
+  "tabs_panel_title": {
+    "message": "打开的标签页"
+  },
+  "tabs_window": {
+    "message": "窗口 $NUM$",
+    "placeholders": {
+      "num": { "content": "$1" }
+    }
+  },
+
+  "template_name": {
+    "message": "模板名称"
+  },
+  "template_add_field": {
+    "message": "添加字段"
+  },
+  "template_field_key": {
+    "message": "字段键"
+  },
+  "template_field_label": {
+    "message": "显示标签"
+  },
+  "template_save": {
+    "message": "保存模板"
+  },
+
+  "tpl_manager_title": {
+    "message": "模板管理"
+  },
+  "tpl_manager_desc": {
+    "message": "管理卡片字段模板，定义数据结构。"
+  },
+  "tpl_count": {
+    "message": "$COUNT$ 个模板",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_create_new": {
+    "message": "创建新模板"
+  },
+  "tpl_create_hint": {
+    "message": "从空白开始或选择预设"
+  },
+  "tpl_name_placeholder": {
+    "message": "模板名称（例如：文章）"
+  },
+  "tpl_name_exists": {
+    "message": "名称已存在"
+  },
+  "tpl_name_exists_desc": {
+    "message": "此名称的模板已存在。"
+  },
+  "tpl_created": {
+    "message": "模板已创建"
+  },
+  "btn_create": {
+    "message": "创建"
+  },
+  "tpl_presets": {
+    "message": "预设:"
+  },
+  "tpl_preset_book": {
+    "message": "📚 书籍"
+  },
+  "tpl_preset_tool": {
+    "message": "🔧 工具"
+  },
+  "tpl_field_count": {
+    "message": "$COUNT$ 个字段",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_usage_count": {
+    "message": "使用次数: $COUNT$",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_add_field_section": {
+    "message": "添加字段"
+  },
+  "tpl_field_display_name": {
+    "message": "显示名称"
+  },
+  "tpl_field_added": {
+    "message": "字段已添加"
+  },
+  "btn_add": {
+    "message": "添加"
+  },
+  "btn_got_it": {
+    "message": "好的"
+  },
+  "btn_expand": {
+    "message": "展开"
+  },
+  "btn_collapse": {
+    "message": "折叠"
+  },
+  "btn_add_group": {
+    "message": "群组"
+  },
+  "tooltip_expand_all": {
+    "message": "展开所有群组"
+  },
+  "tooltip_collapse_all": {
+    "message": "折叠所有群组"
+  },
+  "tooltip_add_group": {
+    "message": "添加新群组"
+  },
+
+  "share_title": {
+    "message": "分享"
+  },
+  "share_publish": {
+    "message": "发布"
+  },
+  "share_copy_link": {
+    "message": "复制链接"
+  },
+  "share_link_copied": {
+    "message": "链接已复制"
+  },
+
+  "org_switch": {
+    "message": "切换组织"
+  },
+  "org_create": {
+    "message": "创建组织"
+  },
+  "org_name": {
+    "message": "组织名称"
+  },
+
+  "items_count": {
+    "message": "$COUNT$ 项",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "version": {
+    "message": "版本"
+  },
+
+  "toast_renamed": {
+    "message": "已重命名"
+  },
+  "toast_rename_failed": {
+    "message": "重命名失败"
+  },
+  "toast_reordered": {
+    "message": "已重新排序"
+  },
+  "toast_token_saved": {
+    "message": "GitHub Token 已保存！"
+  },
+  "toast_token_save_failed": {
+    "message": "Token 保存失败"
+  },
+  "toast_copied": {
+    "message": "已复制到剪贴板"
+  },
+  "toast_copy_failed": {
+    "message": "复制失败"
+  },
+  "toast_added": {
+    "message": "已添加 $NAME$",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "toast_created_from_tab": {
+    "message": "已从标签页创建并添加到群组"
+  },
+  "toast_operation_failed": {
+    "message": "操作失败"
+  },
+  "toast_move_failed": {
+    "message": "移动失败"
+  },
+  "toast_create_failed": {
+    "message": "创建失败"
+  },
+  "toast_group_deleted": {
+    "message": "已删除群组及其书签"
+  },
+
+  "group_expand": {
+    "message": "展开"
+  },
+  "group_collapse": {
+    "message": "折叠"
+  },
+  "group_open_all": {
+    "message": "打开所有标签页"
+  },
+  "group_settings": {
+    "message": "群组设置"
+  },
+  "group_min_one": {
+    "message": "至少需要一个群组"
+  },
+
+  "menu_share_group": {
+    "message": "分享此群组"
+  },
+
+  "confirm_delete_group_title": {
+    "message": "删除群组"
+  },
+  "confirm_delete_group_desc": {
+    "message": "删除此群组及其书签？此操作无法撤销。"
+  },
+
+  "org_add_new": {
+    "message": "添加新组织"
+  },
+  "org_import_hint": {
+    "message": "导入 (Toby/HTML)"
+  },
+  "org_confirm_delete_title": {
+    "message": "确认删除组织"
+  },
+  "org_confirm_delete_desc": {
+    "message": "确定要删除「$NAME$」吗？",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "org_delete_warning": {
+    "message": "警告: 此组织下的所有收藏集、群组和书签将被永久删除！"
+  },
+  "org_min_one": {
+    "message": "删除失败: 至少需要一个组织"
+  },
+  "toast_org_deleted": {
+    "message": "已删除组织及所有数据"
+  },
+  "btn_confirm_delete": {
+    "message": "确认删除"
+  },
+  "org_manage_title": {
+    "message": "管理组织"
+  },
+  "org_manage_desc": {
+    "message": "重命名或删除组织"
+  },
+  "org_name_label": {
+    "message": "组织名称"
+  },
+  "org_color_label": {
+    "message": "颜色"
+  },
+  "toast_update_failed": {
+    "message": "更新失败"
+  },
+  "settings_btn": {
+    "message": "应用设置"
+  },
+  "theme_toggle": {
+    "message": "切换主题"
+  },
+
+  "share_settings": {
+    "message": "分享设置"
+  },
+  "share_group_title": {
+    "message": "分享「$NAME$」",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "share_title_label": {
+    "message": "分享标题"
+  },
+  "share_title_placeholder": {
+    "message": "自定义分享页面标题"
+  },
+  "share_description_label": {
+    "message": "分享描述"
+  },
+  "share_description_placeholder": {
+    "message": "简要描述此分享"
+  },
+  "share_items_count": {
+    "message": "包含 $COUNT$ 项",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "share_publish_hint": {
+    "message": "发布链接: 需要 GitHub Token，自动上传到 Gist"
+  },
+  "share_download_hint": {
+    "message": "下载 HTML: 下载文件到本地，手动上传"
+  },
+  "share_publish_btn": {
+    "message": "发布链接"
+  },
+  "share_download_btn": {
+    "message": "下载 HTML"
+  },
+  "share_publish_title": {
+    "message": "发布到 GitHub Gist 并获取分享链接"
+  },
+
+  "token_setup_title": {
+    "message": "设置 GitHub Token"
+  },
+  "token_required_desc": {
+    "message": "需要 GitHub Personal Access Token 才能发布分享链接到 Gist"
+  },
+  "token_step1": {
+    "message": "前往 GitHub 设置页面"
+  },
+  "token_step2": {
+    "message": "点击「Generate new token (classic)」"
+  },
+  "token_step3": {
+    "message": "勾选「gist」权限（仅需此项）"
+  },
+  "token_step4": {
+    "message": "复制生成的 Token"
+  },
+  "token_security_notice": {
+    "message": "安全说明: Token 将加密存储在浏览器扩展的安全存储中，网页或其他扩展无法访问"
+  },
+  "token_label": {
+    "message": "GitHub Personal Access Token"
+  },
+  "token_storage_notice": {
+    "message": "Token 将安全地存储在本地浏览器中，不会上传到任何服务器"
+  },
+  "btn_save": {
+    "message": "保存"
+  },
+
+  "share_link_title": {
+    "message": "分享链接"
+  },
+  "share_link_created": {
+    "message": "分享链接已创建"
+  },
+  "share_link_desc": {
+    "message": "您的分享链接已发布到 GitHub Gist。复制链接分享给他人:"
+  },
+  "share_link_hint": {
+    "message": "提示: 链接将永久存储在您的 GitHub Gist 中，可随时管理"
+  },
+  "btn_copy_link": {
+    "message": "复制链接"
+  },
+  "btn_open_link": {
+    "message": "打开链接"
+  },
+
+  "category_edit_title": {
+    "message": "编辑分类"
+  },
+  "category_edit_desc": {
+    "message": "更新名称、颜色和默认模板"
+  },
+  "category_name_label": {
+    "message": "名称"
+  },
+  "category_color_label": {
+    "message": "颜色"
+  },
+  "category_template_label": {
+    "message": "默认模板"
+  },
+  "category_template_none": {
+    "message": "无"
+  },
+  "category_delete_btn": {
+    "message": "删除分类..."
+  },
+  "category_confirm_delete": {
+    "message": "确认删除？"
+  },
+  "category_min_one": {
+    "message": "删除失败: 至少需要一个收藏集"
+  },
+  "toast_category_deleted": {
+    "message": "已删除收藏集及所有数据"
+  },
+
+  "card_no_description": {
+    "message": "暂无描述。"
+  },
+  "card_delete_title": {
+    "message": "删除卡片？"
+  },
+  "card_delete_desc": {
+    "message": "确定要移除此网页吗？"
+  },
+  "card_edit_title": {
+    "message": "编辑网页"
+  },
+  "card_title_label": {
+    "message": "标题"
+  },
+  "card_url_label": {
+    "message": "网址"
+  },
+  "card_note_label": {
+    "message": "备注"
+  },
+  "btn_save_changes": {
+    "message": "保存更改"
+  },
+
+  "toast_open_tabs_failed": {
+    "message": "打开标签页失败"
+  },
+  "toast_add_tab_failed": {
+    "message": "添加标签页失败"
+  },
+  "drag_tabs_hint": {
+    "message": "拖放标签页到此处保存"
+  },
+  "confirm_delete_selected_title": {
+    "message": "确认删除选中项"
+  },
+  "confirm_open_tabs": {
+    "message": "打开 $COUNT$ 个标签页？",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "context_save_page": {
+    "message": "保存页面到 LinkTrove"
+  },
+  "context_save_link": {
+    "message": "保存链接到 LinkTrove"
+  },
+  "context_save_selection": {
+    "message": "保存选中内容到 LinkTrove"
+  },
+  "context_save_no_groups": {
+    "message": "没有可用的群组"
+  },
+  "context_save_open_app": {
+    "message": "打开 LinkTrove"
+  },
+  "context_save_no_organizations": {
+    "message": "还没有组织"
+  }
+}
