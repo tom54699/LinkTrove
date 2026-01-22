@@ -20,7 +20,9 @@
       "Bash(openspec validate:*)",
       "Bash(openspec archive:*)",
       "Bash(openspec show:*)",
-      "Skill(openspec:proposal)"
+      "Skill(openspec:proposal)",
+      "Bash(xargs grep -l [u4E00-u9FFF])",
+      "Bash(npm run lint:*)"
     ],
     "deny": []
   }

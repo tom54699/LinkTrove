@@ -176,27 +176,47 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
       // Restore selected category for this organization
       let want: string | undefined;
       try {
-        // 先試 chrome.storage.local，其次讀取 IDB meta 作為備援
+        // 優先讀取該 Organization 上次停留的 Collection (格式: selectedCategoryId:orgId)
+        // 其次讀取全域 selectedCategoryId (backward compat)
+        // 最後讀取 IDB meta
         let persisted: string | undefined;
+        const key = `selectedCategoryId:${selectedOrgId}`;
+        
         try {
           const got: any = await new Promise((resolve) => {
-            try { chrome.storage?.local?.get?.({ selectedCategoryId: '' }, resolve); } catch { resolve({}); }
+            try { chrome.storage?.local?.get?.([key, 'selectedCategoryId'], resolve); } catch { resolve({}); }
           });
-          if (got && typeof got.selectedCategoryId === 'string') persisted = got.selectedCategoryId || undefined;
+          
+          if (got && typeof got[key] === 'string') {
+            persisted = got[key];
+          } else if (got && typeof got.selectedCategoryId === 'string') {
+            // Fallback for first migration or single-org users
+            persisted = got.selectedCategoryId;
+          }
         } catch {}
+
         if (!persisted) {
-          try { persisted = (await getMeta<string>('settings.selectedCategoryId')) || undefined; } catch {}
+          try { persisted = (await getMeta<string>(`settings.${key}`)) || (await getMeta<string>('settings.selectedCategoryId')) || undefined; } catch {}
         }
+        
         const listInOrg = ordered as any[];
         const has = (id?: string) => !!id && listInOrg.some((c) => c.id === id);
+        
         // 預設使用第一個可用的分類或 default
         want = has(persisted)
           ? persisted!
           : has(selectedIdRef.current)
             ? selectedIdRef.current
             : listInOrg[0]?.id || 'default';
+            
         setSelectedId(want);
-        try { chrome.storage?.local?.set?.({ selectedCategoryId: want }); } catch {}
+        // Sync back to storage immediately to ensure consistency
+        try { 
+          chrome.storage?.local?.set?.({ 
+            [key]: want,
+            selectedCategoryId: want // Keep global for legacy compat
+          }); 
+        } catch {}
       } catch {}
       try { if (hasOrgProvider) setReady(true); } catch {}
     })();
@@ -300,7 +320,13 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         if (selectedId === id) {
           const fallback = next[0]?.id || '';
           setSelectedId(fallback);
-          try { chrome.storage?.local?.set?.({ selectedCategoryId: fallback }); } catch {}
+          try { 
+            const key = `selectedCategoryId:${toDelete?.organizationId || selectedOrgId}`;
+            chrome.storage?.local?.set?.({ 
+              [key]: fallback,
+              selectedCategoryId: fallback 
+            }); 
+          } catch {}
         }
         // Also delete webpages under this category
         try {
@@ -358,9 +384,14 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
   const setCurrentCategory = (id: string) => {
     setSelectedId(id);
     try {
-      chrome.storage?.local?.set?.({ selectedCategoryId: id });
+      const key = `selectedCategoryId:${selectedOrgId}`;
+      chrome.storage?.local?.set?.({ 
+        [key]: id,
+        selectedCategoryId: id 
+      });
     } catch {}
     try {
+      setMeta(`settings.selectedCategoryId:${selectedOrgId}`, id);
       setMeta('settings.selectedCategoryId', id);
     } catch {}
   };
