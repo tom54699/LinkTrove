@@ -2,6 +2,16 @@ import React from 'react';
 import { describe, it, beforeEach, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 // Mocks
 vi.mock('../../sidebar/categories', () => ({
   useCategories: () => ({

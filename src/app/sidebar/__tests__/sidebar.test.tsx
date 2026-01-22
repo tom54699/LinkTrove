@@ -1,9 +1,19 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ThreeColumnLayout } from '../../layout/ThreeColumn';
 import { CategoriesProvider, useCategories } from '../categories';
 import { Sidebar } from '../sidebar';
+
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
 
 function setupChromeStub() {
   const g: any = globalThis as any;

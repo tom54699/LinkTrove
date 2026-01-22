@@ -2,6 +2,16 @@ import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 const reorderSpy = vi.fn();
 const updateCategorySpy = vi.fn();
 const addFromTabSpy = vi.fn();
@@ -29,6 +39,7 @@ vi.mock('../../templates/TemplatesProvider', () => ({
 
 vi.mock('../../webpages/WebpagesProvider', () => ({
   useWebpages: () => ({
+    items: [],
     actions: {
       updateCategory: updateCategorySpy,
       addFromTab: addFromTabSpy,

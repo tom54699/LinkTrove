@@ -1,9 +1,19 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from '../app/AppContext';
 import { AppLayout, Home } from '../app/App';
+
+vi.mock('../app/i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
 
 function renderApp(path: string = '/') {
   return render(

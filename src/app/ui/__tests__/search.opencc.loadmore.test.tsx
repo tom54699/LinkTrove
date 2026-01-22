@@ -5,6 +5,16 @@ import { SearchBox } from '../SearchBox';
 
 let mockItems: any[] = [];
 
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 vi.mock('../../webpages/WebpagesProvider', async () => {
   return {
     useWebpages: () => ({

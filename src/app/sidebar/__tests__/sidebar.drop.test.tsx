@@ -2,11 +2,21 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 const updateCategory = vi.fn();
 const addFromTab = vi.fn().mockResolvedValue('new_id');
 
 vi.mock('../../webpages/WebpagesProvider', () => ({
-  useWebpages: () => ({ actions: { updateCategory, addFromTab } }),
+  useWebpages: () => ({ items: [], actions: { updateCategory, addFromTab } }),
 }));
 
 vi.mock('../categories', () => ({

@@ -80,22 +80,10 @@ describe('Categories Organization Memory', () => {
 
   it('should remember selected category per organization', async () => {
     // Setup mock categories for Org A
-    mockTx.mockImplementation((store: any, mode: any, fn: any) => {
-      return fn({
-        objectStore: () => ({
-          index: () => ({
-            getAll: () => ({
-              onsuccess: null,
-              result: [
-                { id: 'cat_A1', name: 'Cat A1', organizationId: 'org_A', order: 0 },
-                { id: 'cat_A2', name: 'Cat A2', organizationId: 'org_A', order: 1 }
-              ]
-            })
-          }),
-          getAll: () => ({ onsuccess: null, result: [] }),
-        })
-      });
-    });
+    mockTx.mockResolvedValue([
+      { id: 'cat_A1', name: 'Cat A1', organizationId: 'org_A', order: 0 },
+      { id: 'cat_A2', name: 'Cat A2', organizationId: 'org_A', order: 1 },
+    ]);
 
     let currentState: any = null;
     render(

@@ -5,6 +5,16 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import { GroupsView } from '../GroupsView';
 import { putAll, getAll, tx } from '../../../background/idb/db';
 
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 // Mock dependencies
 const showToastMock = vi.fn();
 
@@ -125,19 +135,19 @@ describe('GroupsView Delete Protection', () => {
       expect(screen.getByText('Group 1')).toBeInTheDocument();
     });
 
-    const moreButtons = screen.getAllByTitle('群組設定');
+    const moreButtons = screen.getAllByTitle('group_settings');
     fireEvent.click(moreButtons[0]);
 
-    const deleteOption = await screen.findByText('刪除');
+    const deleteOption = await screen.findByText('menu_delete');
     fireEvent.click(deleteOption);
 
     const dialog = await screen.findByRole('dialog');
-    const confirmDelete = within(dialog).getByRole('button', { name: '刪除' });
+    const confirmDelete = within(dialog).getByRole('button', { name: 'menu_delete' });
     fireEvent.click(confirmDelete);
 
     // Should show error toast
     await waitFor(() => {
-      expect(showToastMock).toHaveBeenCalledWith('刪除失敗：至少需要保留一個 Group', 'error');
+      expect(showToastMock).toHaveBeenCalledWith('group_min_one', 'error');
     });
 
     // Group should still exist in database
@@ -163,19 +173,19 @@ describe('GroupsView Delete Protection', () => {
       expect(screen.getByText('Group 2')).toBeInTheDocument();
     });
 
-    const moreButtons = screen.getAllByTitle('群組設定');
+    const moreButtons = screen.getAllByTitle('group_settings');
     fireEvent.click(moreButtons[0]);
 
-    const deleteOption = await screen.findByText('刪除');
+    const deleteOption = await screen.findByText('menu_delete');
     fireEvent.click(deleteOption);
 
     const dialog = await screen.findByRole('dialog');
-    const confirmDelete = within(dialog).getByRole('button', { name: '刪除' });
+    const confirmDelete = within(dialog).getByRole('button', { name: 'menu_delete' });
     fireEvent.click(confirmDelete);
 
     // Should show success toast
     await waitFor(() => {
-      expect(showToastMock).toHaveBeenCalledWith('已刪除 Group 與其書籤', 'success');
+      expect(showToastMock).toHaveBeenCalledWith('toast_group_deleted', 'success');
     });
 
     // One group should be deleted
@@ -207,14 +217,14 @@ describe('GroupsView Delete Protection', () => {
       expect(screen.getByText('Group 1')).toBeInTheDocument();
     });
 
-    const moreButtons = screen.getAllByTitle('群組設定');
+    const moreButtons = screen.getAllByTitle('group_settings');
     fireEvent.click(moreButtons[0]);
 
-    const deleteOption = await screen.findByText('刪除');
+    const deleteOption = await screen.findByText('menu_delete');
     fireEvent.click(deleteOption);
 
     const dialog = await screen.findByRole('dialog');
-    const confirmDelete = within(dialog).getByRole('button', { name: '刪除' });
+    const confirmDelete = within(dialog).getByRole('button', { name: 'menu_delete' });
     fireEvent.click(confirmDelete);
 
     // Wait for deletion
@@ -251,19 +261,19 @@ describe('GroupsView Delete Protection', () => {
       expect(screen.getByText('Group 1')).toBeInTheDocument();
     });
 
-    const moreButtons = screen.getAllByTitle('群組設定');
+    const moreButtons = screen.getAllByTitle('group_settings');
     fireEvent.click(moreButtons[0]);
 
-    const deleteOption = await screen.findByText('刪除');
+    const deleteOption = await screen.findByText('menu_delete');
     fireEvent.click(deleteOption);
 
     const dialog = await screen.findByRole('dialog');
-    const confirmDelete = within(dialog).getByRole('button', { name: '刪除' });
+    const confirmDelete = within(dialog).getByRole('button', { name: 'menu_delete' });
     fireEvent.click(confirmDelete);
 
     // Should show error toast
     await waitFor(() => {
-      expect(showToastMock).toHaveBeenCalledWith('刪除失敗', 'error');
+      expect(showToastMock).toHaveBeenCalledWith('toast_delete_failed', 'error');
     });
 
     consoleErrorSpy.mockRestore();

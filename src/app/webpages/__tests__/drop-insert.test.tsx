@@ -3,6 +3,16 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CardGrid } from '../CardGrid';
 
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 const makeDT = () =>
   ({
     getData: (k: string) => {

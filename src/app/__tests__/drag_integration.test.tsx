@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { OpenTabsProvider } from '../tabs/OpenTabsProvider';
@@ -6,6 +6,16 @@ import { TabsPanel } from '../tabs/TabsPanel';
 import { CardGrid } from '../webpages/CardGrid';
 import { FeedbackProvider } from '../ui/feedback';
 import type { WebpageCardData } from '../webpages/WebpageCard';
+
+vi.mock('../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
 
 declare global {
   var chrome: any;

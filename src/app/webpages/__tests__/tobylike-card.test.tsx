@@ -3,6 +3,16 @@ import React from 'react';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import { TobyLikeCard } from '../TobyLikeCard';
 
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 vi.mock('../../sidebar/categories', () => ({
   useCategories: () => ({ categories: [{ id: 'default', name: 'Default' }] }),
 }));
@@ -39,9 +49,9 @@ describe('TobyLikeCard interactions', () => {
         onSave={onSave}
       />
     );
-    const editBtn = screen.getByTitle('編輯');
+    const editBtn = screen.getByTitle('menu_edit');
     fireEvent.click(editBtn);
-    const dialog = screen.getByText(/edit webpage/i).closest('div') as HTMLElement;
+    const dialog = screen.getByText('card_edit_title').closest('div') as HTMLElement;
     expect(dialog).toBeInTheDocument();
     const [titleInput, urlInput] = within(dialog).getAllByRole('textbox');
     fireEvent.change(titleInput, {
@@ -50,7 +60,7 @@ describe('TobyLikeCard interactions', () => {
     fireEvent.change(urlInput, {
       target: { value: 'https://n.test' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'btn_save_changes' }));
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'New',
@@ -68,22 +78,22 @@ describe('TobyLikeCard interactions', () => {
         url="https://x.test"
       />
     );
-    fireEvent.click(screen.getByTitle('編輯'));
-    const dialog = screen.getByText(/Edit Webpage/i);
+    fireEvent.click(screen.getByTitle('menu_edit'));
+    const dialog = screen.getByText('card_edit_title');
     expect(dialog).toBeInTheDocument();
     // Click overlay (outside dialog) should close
     const modal = dialog.closest('div') as HTMLElement;
     const overlay = modal.parentElement as HTMLElement;
     fireEvent.click(overlay);
-    expect(screen.queryByText(/Edit Webpage/i)).toBeNull();
+    expect(screen.queryByText('card_edit_title')).toBeNull();
     // Reopen and close with X / Cancel
-    fireEvent.click(screen.getByTitle('編輯'));
+    fireEvent.click(screen.getByTitle('menu_edit'));
     const closeBtn = screen.getByText('✕').closest('button') as HTMLButtonElement;
     fireEvent.click(closeBtn);
-    expect(screen.queryByText(/Edit Webpage/i)).toBeNull();
-    fireEvent.click(screen.getByTitle('編輯'));
-    fireEvent.click(screen.getByRole('button', { name: /Cancel/ }));
-    expect(screen.queryByText(/Edit Webpage/i)).toBeNull();
+    expect(screen.queryByText('card_edit_title')).toBeNull();
+    fireEvent.click(screen.getByTitle('menu_edit'));
+    fireEvent.click(screen.getByRole('button', { name: 'btn_cancel' }));
+    expect(screen.queryByText('card_edit_title')).toBeNull();
   });
 });
 
@@ -103,13 +113,13 @@ describe('TobyLikeCard edit modal fixes (fix-card-edit-modal)', () => {
         url="https://example.com"
       />
     );
-    fireEvent.click(screen.getByTitle('編輯'));
+    fireEvent.click(screen.getByTitle('menu_edit'));
 
     // Should have Note label
-    expect(screen.getByText('Note')).toBeInTheDocument();
+    expect(screen.getByText('card_note_label')).toBeInTheDocument();
 
     // Should have 3 text inputs: Title, URL, Note
-    const dialog = screen.getByText(/edit webpage/i).closest('div') as HTMLElement;
+    const dialog = screen.getByText('card_edit_title').closest('div') as HTMLElement;
     const inputs = within(dialog).getAllByRole('textbox');
     expect(inputs.length).toBeGreaterThanOrEqual(3);
 
@@ -130,8 +140,8 @@ describe('TobyLikeCard edit modal fixes (fix-card-edit-modal)', () => {
     );
 
     // Open modal
-    fireEvent.click(screen.getByTitle('編輯'));
-    const dialog = screen.getByText(/edit webpage/i).closest('div') as HTMLElement;
+    fireEvent.click(screen.getByTitle('menu_edit'));
+    const dialog = screen.getByText('card_edit_title').closest('div') as HTMLElement;
     const inputs = within(dialog).getAllByRole('textbox');
     const titleInput = inputs[0];
 
@@ -170,13 +180,13 @@ describe('TobyLikeCard edit modal fixes (fix-card-edit-modal)', () => {
     );
 
     // Open modal
-    fireEvent.click(screen.getByTitle('編輯'));
-    let dialog = screen.getByText(/edit webpage/i).closest('div') as HTMLElement;
+    fireEvent.click(screen.getByTitle('menu_edit'));
+    let dialog = screen.getByText('card_edit_title').closest('div') as HTMLElement;
     let inputs = within(dialog).getAllByRole('textbox');
     expect(inputs[0]).toHaveValue('V1');
 
     // Close modal
-    fireEvent.click(screen.getByRole('button', { name: /Cancel/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'btn_cancel' }));
 
     // Props change while modal closed
     rerender(
@@ -188,8 +198,8 @@ describe('TobyLikeCard edit modal fixes (fix-card-edit-modal)', () => {
     );
 
     // Reopen modal - should show new values
-    fireEvent.click(screen.getByTitle('編輯'));
-    dialog = screen.getByText(/edit webpage/i).closest('div') as HTMLElement;
+    fireEvent.click(screen.getByTitle('menu_edit'));
+    dialog = screen.getByText('card_edit_title').closest('div') as HTMLElement;
     inputs = within(dialog).getAllByRole('textbox');
     expect(inputs[0]).toHaveValue('V2');
     expect(inputs[1]).toHaveValue('https://v2.com');

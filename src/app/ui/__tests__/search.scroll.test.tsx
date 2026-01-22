@@ -3,6 +3,16 @@ import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { SearchBox } from '../SearchBox';
 
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 vi.mock('../../webpages/WebpagesProvider', async () => {
   return {
     useWebpages: () => ({

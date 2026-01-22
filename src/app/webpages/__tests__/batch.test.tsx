@@ -5,6 +5,16 @@ import { CardGrid } from '../CardGrid';
 import { FeedbackProvider } from '../../ui/feedback';
 import type { WebpageCardData } from '../WebpageCard';
 
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 const items: WebpageCardData[] = [
   { id: 'a', title: 'A', url: 'https://a', favicon: '', description: '' },
   { id: 'b', title: 'B', url: 'https://b', favicon: '', description: '' },
@@ -26,15 +36,15 @@ describe('Batch operations (task 8)', () => {
     // Select both
     fireEvent.click(cbs[0].parentElement ?? cbs[0]);
     fireEvent.click(cbs[1].parentElement ?? cbs[1]);
-    await screen.findByText(/2 tabs selected/i);
+    await screen.findByText('batch_selected');
 
     // Trigger batch delete
-    fireEvent.click(screen.getByRole('button', { name: 'DELETE' }));
+    fireEvent.click(screen.getByRole('button', { name: 'batch_delete' }));
     const dialog = screen.getByRole('dialog', {
-      name: /confirm delete selected/i,
+      name: 'confirm_delete_selected_title',
     });
     expect(dialog).toBeInTheDocument();
-    fireEvent.click(within(dialog).getByRole('button', { name: /^delete$/i }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'menu_delete' }));
 
     expect(onDeleteMany).toHaveBeenCalledWith(['a', 'b']);
   });

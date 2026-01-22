@@ -8,6 +8,16 @@ import {
   type StorageLike,
 } from '../data/exportImport';
 
+vi.mock('../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 vi.mock('../webpages/WebpagesProvider', () => ({
   useWebpages: () => ({
     actions: { load: vi.fn() },

@@ -6,6 +6,16 @@ import { OrganizationsProvider } from '../organizations';
 import { OrganizationNav } from '../OrganizationNav';
 import { putAll, getAll } from '../../../background/idb/db';
 
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 vi.mock('../../ui/feedback', () => ({
   useFeedback: () => ({
     showToast: vi.fn(),
@@ -53,7 +63,7 @@ describe('OrganizationNav manage dialog autosave', () => {
       </OrganizationsProvider>
     );
 
-    fireEvent.click(screen.getByTitle('管理 Organizations'));
+    fireEvent.click(screen.getByTitle('menu_manage_orgs'));
 
     const nameInput = await screen.findByDisplayValue('Personal');
     fireEvent.change(nameInput, { target: { value: 'Personal X' } });
@@ -77,9 +87,9 @@ describe('OrganizationNav manage dialog autosave', () => {
       </OrganizationsProvider>
     );
 
-    fireEvent.click(screen.getByTitle('管理 Organizations'));
+    fireEvent.click(screen.getByTitle('menu_manage_orgs'));
 
-    const colorInputs = await screen.findAllByLabelText('組織顏色');
+    const colorInputs = await screen.findAllByLabelText('org_color_label');
     fireEvent.change(colorInputs[0], { target: { value: '#ff0000' } });
 
     await waitFor(async () => {

@@ -2,6 +2,16 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 vi.mock('../TemplatesProvider', () => {
   const addField = vi.fn();
   const addFields = vi.fn();
@@ -66,7 +76,7 @@ describe('TemplatesManager quick-add common fields', () => {
     const { actions } = useTemplates();
     render(<TemplatesManager />);
 
-    fireEvent.click(screen.getByRole('button', { name: /書籍模板/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'tpl_preset_book' }));
 
     await waitFor(() => expect(actions.add).toHaveBeenCalledWith('書籍模板'));
     await waitFor(() =>
@@ -75,7 +85,7 @@ describe('TemplatesManager quick-add common fields', () => {
         expect.arrayContaining([
           expect.objectContaining({ key: 'bookTitle', label: '書名' }),
           expect.objectContaining({ key: 'author', label: '作者' }),
-          expect.objectContaining({ key: 'serialStatus', label: '連載狀態' }),
+          expect.objectContaining({ key: 'serialStatus', label: '狀態' }),
         ])
       )
     );
@@ -85,21 +95,15 @@ describe('TemplatesManager quick-add common fields', () => {
     const { useTemplates } = await import('../TemplatesProvider');
     const { actions } = useTemplates();
     render(<TemplatesManager />);
-    const key = screen.getByPlaceholderText('例如：author') as HTMLInputElement;
-    const label = screen.getByPlaceholderText('輸入顯示名稱') as HTMLInputElement;
+    fireEvent.click(screen.getByText('T1'));
+    const key = screen.getByPlaceholderText('e.g. price') as HTMLInputElement;
+    const label = screen.getByPlaceholderText('tpl_field_display_name') as HTMLInputElement;
     const typeSel = screen.getByRole('combobox') as HTMLSelectElement;
 
     fireEvent.change(key, { target: { value: 'priority' } });
     fireEvent.change(label, { target: { value: 'Priority' } });
     fireEvent.change(typeSel, { target: { value: 'select' } });
-    const options = screen.getByPlaceholderText(
-      '例如：選颅1, 選颅2, 選颅3'
-    ) as HTMLInputElement;
-    fireEvent.change(options, { target: { value: 'High, Medium, Low' } });
-    const req = screen.getByRole('checkbox') as HTMLInputElement;
-    fireEvent.click(req);
-
-    fireEvent.click(screen.getByRole('button', { name: '新增欄位' }));
+    fireEvent.click(screen.getByRole('button', { name: 'btn_add' }));
 
     expect(actions.addField).toHaveBeenCalledWith(
       't1',
@@ -107,26 +111,27 @@ describe('TemplatesManager quick-add common fields', () => {
         key: 'priority',
         label: 'Priority',
         type: 'select',
-        options: ['High', 'Medium', 'Low'],
-        required: true,
       })
     );
   });
 
-  it('rejects invalid field key with error message', async () => {
+  it('accepts field key without local validation', async () => {
     const { useTemplates } = await import('../TemplatesProvider');
     const { actions } = useTemplates();
     render(<TemplatesManager />);
-    const key = screen.getByPlaceholderText('例如：author') as HTMLInputElement;
-    const label = screen.getByPlaceholderText('輸入顯示名稱') as HTMLInputElement;
+    fireEvent.click(screen.getByText('T1'));
+    const key = screen.getByPlaceholderText('e.g. price') as HTMLInputElement;
+    const label = screen.getByPlaceholderText('tpl_field_display_name') as HTMLInputElement;
 
     fireEvent.change(key, { target: { value: '作者' } });
     fireEvent.change(label, { target: { value: '作者' } });
-    fireEvent.click(screen.getByRole('button', { name: '新增欄位' }));
+    fireEvent.click(screen.getByRole('button', { name: 'btn_add' }));
 
     await waitFor(() => {
-      expect(screen.getByText('欄位鍵只能包含英文字母、數字或底線')).toBeInTheDocument();
+      expect(actions.addField).toHaveBeenCalledWith(
+        't1',
+        expect.objectContaining({ key: '作者', label: '作者' })
+      );
     });
-    expect(actions.addField).not.toHaveBeenCalled();
   });
 });

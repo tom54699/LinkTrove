@@ -4,6 +4,16 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { FeedbackProvider, useFeedback, ErrorBoundary } from '../feedback';
 import { CardGrid } from '../../webpages/CardGrid';
 
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 describe('Feedback (task 9)', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -59,7 +69,7 @@ describe('Feedback (task 9)', () => {
       </FeedbackProvider>
     );
     fireEvent.click(screen.getByText('Start Loading'));
-    expect(screen.getByRole('status')).toHaveTextContent(/loading/i);
+    expect(screen.getByRole('status')).toHaveTextContent('loading');
   });
 
   it('shows a toast when drop handler throws', () => {
@@ -79,6 +89,6 @@ describe('Feedback (task 9)', () => {
           : '',
     } as any as DataTransfer;
     fireEvent.drop(zone, { dataTransfer: dt });
-    expect(screen.getByText(/failed to add tab/i)).toBeInTheDocument();
+    expect(screen.getByText('toast_add_tab_failed')).toBeInTheDocument();
   });
 });

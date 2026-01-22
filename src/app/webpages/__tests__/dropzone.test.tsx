@@ -4,6 +4,16 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { CardGrid } from '../CardGrid';
 import { FeedbackProvider } from '../../ui/feedback';
 
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
+
 function makeDT() {
   const data: Record<string, string> = {};
   return {

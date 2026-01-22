@@ -1,8 +1,18 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { CardGrid } from '../webpages/CardGrid';
 import { FeedbackProvider } from '../ui/feedback';
+
+vi.mock('../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
 
 describe('Perf sanity (task 12)', () => {
   it('renders 300 cards without crashing', () => {
