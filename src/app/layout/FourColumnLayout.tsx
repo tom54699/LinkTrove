@@ -26,34 +26,61 @@ export const FourColumnLayout: React.FC<{
       
       {/* Left Area: Contains Rail, Sidebar, Main with padding */}
       <div className="flex-1 flex min-w-0 p-4 gap-4">
-        
-        {/* 1. Organization Rail (Leftmost) */}
-        <div className="w-[72px] flex-shrink-0 bg-[var(--panel)] border border-white/5 rounded-2xl overflow-hidden shadow-sm flex flex-col items-center py-4">
-          {organizationNav}
+
+        {/* Left Panel: Collapsible Organization Rail + Collections Sidebar */}
+        <div
+          className={`flex gap-4 transition-all duration-300 ease-out flex-shrink-0
+            ${sidebarCollapsed ? 'w-3 !gap-0' : 'w-[348px]'}`}
+        >
+          {/* Collapsed: Edge Handle */}
+          {sidebarCollapsed && (
+            <button
+              onClick={() => setSidebarCollapsed(false)}
+              className="flex-shrink-0 w-3 h-10 self-center flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] hover:bg-white/5 rounded transition-colors"
+              title="Show Sidebar"
+            >
+              »
+            </button>
+          )}
+
+          {/* 1. Organization Rail (Leftmost) */}
+          <div
+            className={`flex-shrink-0 bg-[var(--panel)] border border-white/5 rounded-2xl shadow-sm flex flex-col items-center py-4 transition-all duration-300 ease-out overflow-hidden
+              ${sidebarCollapsed ? 'w-0 opacity-0 border-0' : 'w-[72px] opacity-100'}`}
+          >
+            {organizationNav}
+          </div>
+
+          {/* 2. Collections Sidebar */}
+          <div
+            className={`flex flex-col h-full bg-[var(--panel)] border border-white/5 rounded-2xl transition-all duration-300 ease-out overflow-hidden
+              ${sidebarCollapsed ? 'w-0 opacity-0 border-0' : 'w-[260px] opacity-100'}`}
+          >
+            {/* Sidebar Header with Collapse Button */}
+            <div className="flex-shrink-0 px-4 pt-3 pb-1 flex items-center justify-between whitespace-nowrap">
+              <span className="text-xs font-medium text-[var(--muted)] uppercase tracking-wider">Collections</span>
+              <button
+                onClick={() => setSidebarCollapsed(true)}
+                className="p-1 text-[var(--muted)] hover:text-[var(--text)] hover:bg-white/5 rounded transition-colors"
+                title="Hide Sidebar"
+              >
+                «
+              </button>
+            </div>
+            <aside
+              aria-label="Collections Sidebar"
+              className="flex-1 px-4 pb-4 overflow-y-auto"
+            >
+              {sidebar}
+            </aside>
+          </div>
         </div>
 
-        {/* 2. Collections Sidebar (Collapsible) */}
-        <div className={`flex flex-col h-full transition-all duration-300 overflow-hidden bg-[var(--panel)] border border-white/5 rounded-2xl ${sidebarCollapsed ? 'w-0 opacity-0 -ml-4 border-0' : 'w-[260px] opacity-100'}`}>
-          <aside
-            aria-label="Collections Sidebar"
-            className="h-full p-4 overflow-y-auto"
-          >
-            {sidebar}
-          </aside>
-        </div>
-        
         {/* 3. Main Content */}
         <main
           aria-label="Content Area"
           className="flex-1 bg-[var(--panel)] border border-white/5 rounded-2xl overflow-hidden relative shadow-sm flex flex-col min-w-0"
         >
-          <button 
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="absolute left-4 top-4 p-1 text-[var(--muted)] hover:text-[var(--text)] z-10 hover:bg-white/5 rounded-md transition-colors"
-            title={sidebarCollapsed ? "Show Sidebar" : "Hide Sidebar"}
-          >
-            {sidebarCollapsed ? '»' : '«'}
-          </button>
           <div className="flex-1 overflow-y-auto p-6">
             {content}
           </div>
