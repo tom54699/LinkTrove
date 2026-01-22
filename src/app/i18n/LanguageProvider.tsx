@@ -10,11 +10,39 @@ interface LanguageContextValue {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
+// Supported languages
+const SUPPORTED_LANGUAGES: Language[] = ['en', 'zh_TW'];
+
 // Cache for loaded messages
 const messagesCache: Record<Language, Record<string, { message: string; placeholders?: Record<string, { content: string }> }>> = {
   en: {},
   zh_TW: {},
 };
+
+// Normalize browser locale format (zh-TW → zh_TW)
+function normalizeLocale(locale: string): string {
+  return locale.replace('-', '_');
+}
+
+// Detect browser language and map to supported language
+function detectBrowserLanguage(): Language {
+  const browserLang = navigator.language || (navigator as any).userLanguage || 'en';
+  const normalized = normalizeLocale(browserLang);
+
+  // Exact match
+  if (SUPPORTED_LANGUAGES.includes(normalized as Language)) {
+    return normalized as Language;
+  }
+
+  // Partial match (e.g., 'zh' matches 'zh_TW')
+  const langPrefix = normalized.split('_')[0];
+  const matched = SUPPORTED_LANGUAGES.find(lang => lang.startsWith(langPrefix));
+  if (matched) {
+    return matched;
+  }
+
+  return 'en';
+}
 
 // Load messages from _locales directory
 async function loadMessages(lang: Language): Promise<typeof messagesCache.en> {
@@ -85,7 +113,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }
         });
 
-        const savedLang = result[STORAGE_KEY] || 'en';
+        const savedLang = result[STORAGE_KEY] || detectBrowserLanguage();
         setLanguageState(savedLang);
 
         const loadedMessages = await loadMessages(savedLang);
