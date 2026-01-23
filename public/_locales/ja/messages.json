@@ -630,11 +630,11 @@
   "tpl_presets": {
     "message": "プリセット:"
   },
+  "tpl_preset_book_name": {
+    "message": "書籍テンプレート"
+  },
   "tpl_preset_book": {
     "message": "📚 本"
-  },
-  "tpl_preset_tool": {
-    "message": "🔧 ツール"
   },
   "tpl_field_count": {
     "message": "$COUNT$ 件のフィールド",
@@ -651,8 +651,86 @@
   "tpl_add_field_section": {
     "message": "フィールドを追加"
   },
+  "tpl_header_key": {
+    "message": "フィールドID"
+  },
+  "tpl_header_label": {
+    "message": "ラベル"
+  },
+  "tpl_header_type": {
+    "message": "タイプ"
+  },
+  "tpl_header_required": {
+    "message": "必須"
+  },
+  "tpl_header_actions": {
+    "message": "操作"
+  },
   "tpl_field_display_name": {
     "message": "表示名"
+  },
+  "tpl_options_placeholder": {
+    "message": "例：オプション1, オプション2, オプション3"
+  },
+  "tpl_options_toggle_show": {
+    "message": "オプションを表示"
+  },
+  "tpl_options_toggle_hide": {
+    "message": "オプションを隠す"
+  },
+  "tpl_type_text": {
+    "message": "テキスト"
+  },
+  "tpl_type_number": {
+    "message": "数値"
+  },
+  "tpl_type_date": {
+    "message": "日付"
+  },
+  "tpl_type_url": {
+    "message": "URL"
+  },
+  "tpl_type_select": {
+    "message": "ドロップダウン"
+  },
+  "tpl_type_rating": {
+    "message": "評価（星）"
+  },
+  "tpl_type_tags": {
+    "message": "タグ"
+  },
+  "tpl_type_placeholder": {
+    "message": "フィールドタイプを選択"
+  },
+  "tpl_book_locked_edit": {
+    "message": "書籍テンプレートの固定フィールドは変更できません"
+  },
+  "tpl_book_locked_delete": {
+    "message": "書籍テンプレートの固定フィールドは削除できません"
+  },
+  "tpl_book_locked_add": {
+    "message": "書籍テンプレートのフィールドは固定のため追加できません"
+  },
+  "tpl_book_locked_options": {
+    "message": "書籍テンプレートの固定フィールドの選択肢は変更できません"
+  },
+  "tpl_options_help": {
+    "message": "オプション（カンマ区切り）"
+  },
+  "tpl_error_required_fields": {
+    "message": "フィールドIDとラベルは必須です"
+  },
+  "tpl_error_invalid_key": {
+    "message": "フィールドIDは英数字とアンダースコアのみ使用できます"
+  },
+  "tpl_error_duplicate_field": {
+    "message": "フィールドIDが既に存在します"
+  },
+  "tpl_error_template_exists": {
+    "message": "テンプレート名は既に存在します"
+  },
+  "tpl_error_template_in_use": {
+    "message": "このテンプレートはコレクションで使用中です"
   },
   "tpl_field_added": {
     "message": "フィールドを追加しました"
@@ -978,6 +1056,15 @@
   },
   "card_note_label": {
     "message": "メモ"
+  },
+  "card_created_at_label": {
+    "message": "作成日時"
+  },
+  "card_updated_at_label": {
+    "message": "最終更新"
+  },
+  "card_time_toggle": {
+    "message": "時間を見る"
   },
   "btn_save_changes": {
     "message": "変更を保存"

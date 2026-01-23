@@ -95,6 +95,28 @@ describe('TobyLikeCard interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'btn_cancel' }));
     expect(screen.queryByText('card_edit_title')).toBeNull();
   });
+
+  it('toggles flip via time button and blocks open while flipped', () => {
+    const onOpen = vi.fn();
+    render(
+      <TobyLikeCard
+        title="T"
+        description="D"
+        createdAt="2026-01-01T00:00:00Z"
+        updatedAt="2026-01-02T00:00:00Z"
+        onOpen={onOpen}
+      />
+    );
+    const card = screen.getByText('T').closest('.card') as HTMLElement;
+    const flipBtn = screen.getByTitle('card_time_toggle');
+    fireEvent.click(flipBtn);
+    expect(card.className).toContain('is-flipped');
+    expect(onOpen).not.toHaveBeenCalled();
+
+    fireEvent.click(card);
+    expect(card.className).not.toContain('is-flipped');
+    expect(onOpen).not.toHaveBeenCalled();
+  });
 });
 
 describe('TobyLikeCard edit modal fixes (fix-card-edit-modal)', () => {

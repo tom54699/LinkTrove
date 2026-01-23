@@ -669,6 +669,8 @@ export const CardGrid: React.FC<CardGridProps> = ({
                     url={(node.item as any).url}
                     categoryId={(node.item as any).category}
                     meta={(node.item as any).meta || {}}
+                    createdAt={(node.item as any).createdAt}
+                    updatedAt={(node.item as any).updatedAt}
                     selected={!!selected[(node.item as any).id]}
                     onToggleSelect={() => toggleSelect((node.item as any).id)}
                     onOpen={() => { try { window.open((node.item as any).url, '_blank'); } catch {} }}
@@ -677,7 +679,6 @@ export const CardGrid: React.FC<CardGridProps> = ({
                     onUpdateUrl={(v) => onUpdateUrl?.((node.item as any).id, v)}
                     onUpdateDescription={(v) => onEditDescription?.((node.item as any).id, v)}
                     onUpdateMeta={(m) => onUpdateMeta?.((node.item as any).id, m)}
-                    onMoveToCategory={(cid) => onUpdateCategory?.((node.item as any).id, cid)}
                     onModalOpenChange={(open) => setDragDisabled(open)}
                     onSave={(patch) => {
                       const it = node.item as any;

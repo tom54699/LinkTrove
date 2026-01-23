@@ -630,11 +630,11 @@
   "tpl_presets": {
     "message": "Presets :"
   },
+  "tpl_preset_book_name": {
+    "message": "Modèle Livre"
+  },
   "tpl_preset_book": {
     "message": "📚 Livre"
-  },
-  "tpl_preset_tool": {
-    "message": "🔧 Outil"
   },
   "tpl_field_count": {
     "message": "$COUNT$ champs",
@@ -651,8 +651,86 @@
   "tpl_add_field_section": {
     "message": "Ajouter un champ"
   },
+  "tpl_header_key": {
+    "message": "ID de champ"
+  },
+  "tpl_header_label": {
+    "message": "Libellé"
+  },
+  "tpl_header_type": {
+    "message": "Type"
+  },
+  "tpl_header_required": {
+    "message": "Req."
+  },
+  "tpl_header_actions": {
+    "message": "Act."
+  },
   "tpl_field_display_name": {
     "message": "Nom d'affichage"
+  },
+  "tpl_options_placeholder": {
+    "message": "ex. : Option 1, Option 2, Option 3"
+  },
+  "tpl_options_toggle_show": {
+    "message": "Afficher les options"
+  },
+  "tpl_options_toggle_hide": {
+    "message": "Masquer les options"
+  },
+  "tpl_type_text": {
+    "message": "Texte"
+  },
+  "tpl_type_number": {
+    "message": "Nombre"
+  },
+  "tpl_type_date": {
+    "message": "Date"
+  },
+  "tpl_type_url": {
+    "message": "URL"
+  },
+  "tpl_type_select": {
+    "message": "Liste déroulante"
+  },
+  "tpl_type_rating": {
+    "message": "Note (étoiles)"
+  },
+  "tpl_type_tags": {
+    "message": "Tags"
+  },
+  "tpl_type_placeholder": {
+    "message": "Sélectionner le type de champ"
+  },
+  "tpl_book_locked_edit": {
+    "message": "Les champs fixes du modèle Livre ne sont pas modifiables"
+  },
+  "tpl_book_locked_delete": {
+    "message": "Les champs fixes du modèle Livre ne peuvent pas être supprimés"
+  },
+  "tpl_book_locked_add": {
+    "message": "Le modèle Livre est verrouillé ; aucun champ ne peut être ajouté"
+  },
+  "tpl_book_locked_options": {
+    "message": "Les options du modèle Livre sont verrouillées"
+  },
+  "tpl_options_help": {
+    "message": "Options (séparées par des virgules)"
+  },
+  "tpl_error_required_fields": {
+    "message": "L’ID et le libellé du champ sont obligatoires"
+  },
+  "tpl_error_invalid_key": {
+    "message": "L’ID du champ ne peut utiliser que des lettres, chiffres ou underscore"
+  },
+  "tpl_error_duplicate_field": {
+    "message": "L’ID du champ existe déjà"
+  },
+  "tpl_error_template_exists": {
+    "message": "Le nom du modèle existe déjà"
+  },
+  "tpl_error_template_in_use": {
+    "message": "Le modèle est utilisé par une collection"
   },
   "tpl_field_added": {
     "message": "Champ ajouté"
@@ -978,6 +1056,15 @@
   },
   "card_note_label": {
     "message": "Note"
+  },
+  "card_created_at_label": {
+    "message": "Créé le"
+  },
+  "card_updated_at_label": {
+    "message": "Dernière modification"
+  },
+  "card_time_toggle": {
+    "message": "Voir les dates"
   },
   "btn_save_changes": {
     "message": "Enregistrer les modifications"

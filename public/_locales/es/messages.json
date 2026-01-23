@@ -630,11 +630,11 @@
   "tpl_presets": {
     "message": "Presets:"
   },
+  "tpl_preset_book_name": {
+    "message": "Plantilla de libro"
+  },
   "tpl_preset_book": {
     "message": "📚 Libro"
-  },
-  "tpl_preset_tool": {
-    "message": "🔧 Herramienta"
   },
   "tpl_field_count": {
     "message": "$COUNT$ campos",
@@ -651,8 +651,86 @@
   "tpl_add_field_section": {
     "message": "Añadir campo"
   },
+  "tpl_header_key": {
+    "message": "ID de campo"
+  },
+  "tpl_header_label": {
+    "message": "Etiqueta"
+  },
+  "tpl_header_type": {
+    "message": "Tipo"
+  },
+  "tpl_header_required": {
+    "message": "Req."
+  },
+  "tpl_header_actions": {
+    "message": "Acc."
+  },
   "tpl_field_display_name": {
     "message": "Nombre de visualización"
+  },
+  "tpl_options_placeholder": {
+    "message": "p. ej., Opción 1, Opción 2, Opción 3"
+  },
+  "tpl_options_toggle_show": {
+    "message": "Mostrar opciones"
+  },
+  "tpl_options_toggle_hide": {
+    "message": "Ocultar opciones"
+  },
+  "tpl_type_text": {
+    "message": "Texto"
+  },
+  "tpl_type_number": {
+    "message": "Número"
+  },
+  "tpl_type_date": {
+    "message": "Fecha"
+  },
+  "tpl_type_url": {
+    "message": "URL"
+  },
+  "tpl_type_select": {
+    "message": "Desplegable"
+  },
+  "tpl_type_rating": {
+    "message": "Calificación (estrellas)"
+  },
+  "tpl_type_tags": {
+    "message": "Etiquetas"
+  },
+  "tpl_type_placeholder": {
+    "message": "Selecciona el tipo de campo"
+  },
+  "tpl_book_locked_edit": {
+    "message": "Los campos fijos del modelo de libro no se pueden editar"
+  },
+  "tpl_book_locked_delete": {
+    "message": "Los campos fijos del modelo de libro no se pueden eliminar"
+  },
+  "tpl_book_locked_add": {
+    "message": "El modelo de libro está bloqueado; no se pueden añadir campos"
+  },
+  "tpl_book_locked_options": {
+    "message": "Las opciones del modelo de libro están bloqueadas"
+  },
+  "tpl_options_help": {
+    "message": "Opciones (separadas por comas)"
+  },
+  "tpl_error_required_fields": {
+    "message": "El ID y la etiqueta del campo son obligatorios"
+  },
+  "tpl_error_invalid_key": {
+    "message": "El ID del campo solo puede usar letras, números o guiones bajos"
+  },
+  "tpl_error_duplicate_field": {
+    "message": "El ID del campo ya existe"
+  },
+  "tpl_error_template_exists": {
+    "message": "El nombre de la plantilla ya existe"
+  },
+  "tpl_error_template_in_use": {
+    "message": "La plantilla está en uso por una colección"
   },
   "tpl_field_added": {
     "message": "Campo añadido"
@@ -978,6 +1056,15 @@
   },
   "card_note_label": {
     "message": "Nota"
+  },
+  "card_created_at_label": {
+    "message": "Creado el"
+  },
+  "card_updated_at_label": {
+    "message": "Última edición"
+  },
+  "card_time_toggle": {
+    "message": "Ver tiempos"
   },
   "btn_save_changes": {
     "message": "Guardar cambios"

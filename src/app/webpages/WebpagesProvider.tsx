@@ -63,6 +63,8 @@ function toCard(d: any): WebpageCardData {
     meta: d.meta,
     templateId: d.templateId,
     templateData: d.templateData,
+    createdAt: d.createdAt,
+    updatedAt: d.updatedAt,
   };
 }
 

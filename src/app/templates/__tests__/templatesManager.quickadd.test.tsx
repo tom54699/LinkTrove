@@ -58,12 +58,6 @@ vi.mock('../../sidebar/categories', () => ({
   }),
 }));
 
-vi.mock('../../ui/feedback', () => ({
-  useFeedback: () => ({
-    showToast: vi.fn(),
-  }),
-}));
-
 import { TemplatesManager } from '../TemplatesManager';
 
 describe('TemplatesManager quick-add common fields', () => {
@@ -85,7 +79,12 @@ describe('TemplatesManager quick-add common fields', () => {
         expect.arrayContaining([
           expect.objectContaining({ key: 'bookTitle', label: '書名' }),
           expect.objectContaining({ key: 'author', label: '作者' }),
-          expect.objectContaining({ key: 'serialStatus', label: '狀態' }),
+          expect.objectContaining({ key: 'serialStatus', label: '連載狀態' }),
+          expect.objectContaining({ key: 'genre', label: '類型' }),
+          expect.objectContaining({ key: 'wordCount', label: '字數' }),
+          expect.objectContaining({ key: 'rating', label: '評分' }),
+          expect.objectContaining({ key: 'siteName', label: '站名' }),
+          expect.objectContaining({ key: 'lastUpdate', label: '最後更新時間' }),
         ])
       )
     );
@@ -98,11 +97,11 @@ describe('TemplatesManager quick-add common fields', () => {
     fireEvent.click(screen.getByText('T1'));
     const key = screen.getByPlaceholderText('e.g. price') as HTMLInputElement;
     const label = screen.getByPlaceholderText('tpl_field_display_name') as HTMLInputElement;
-    const typeSel = screen.getByRole('combobox') as HTMLSelectElement;
-
     fireEvent.change(key, { target: { value: 'priority' } });
     fireEvent.change(label, { target: { value: 'Priority' } });
-    fireEvent.change(typeSel, { target: { value: 'select' } });
+    const typeButton = screen.getByRole('button', { name: 'tpl_type_text' });
+    fireEvent.click(typeButton);
+    fireEvent.click(screen.getByRole('button', { name: 'tpl_type_select' }));
     fireEvent.click(screen.getByRole('button', { name: 'btn_add' }));
 
     expect(actions.addField).toHaveBeenCalledWith(

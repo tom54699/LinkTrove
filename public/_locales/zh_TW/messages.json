@@ -630,11 +630,11 @@
   "tpl_presets": {
     "message": "預設:"
   },
+  "tpl_preset_book_name": {
+    "message": "書籍模板"
+  },
   "tpl_preset_book": {
     "message": "📚 書籍"
-  },
-  "tpl_preset_tool": {
-    "message": "🔧 工具"
   },
   "tpl_field_count": {
     "message": "$COUNT$ 欄位",
@@ -651,8 +651,86 @@
   "tpl_add_field_section": {
     "message": "新增欄位"
   },
+  "tpl_header_key": {
+    "message": "欄位代號"
+  },
+  "tpl_header_label": {
+    "message": "標籤"
+  },
+  "tpl_header_type": {
+    "message": "類型"
+  },
+  "tpl_header_required": {
+    "message": "必填"
+  },
+  "tpl_header_actions": {
+    "message": "操作"
+  },
   "tpl_field_display_name": {
     "message": "顯示名稱"
+  },
+  "tpl_options_placeholder": {
+    "message": "例如：選項1, 選項2, 選項3"
+  },
+  "tpl_options_toggle_show": {
+    "message": "顯示選項"
+  },
+  "tpl_options_toggle_hide": {
+    "message": "收合選項"
+  },
+  "tpl_type_text": {
+    "message": "文字"
+  },
+  "tpl_type_number": {
+    "message": "數字"
+  },
+  "tpl_type_date": {
+    "message": "日期"
+  },
+  "tpl_type_url": {
+    "message": "網址"
+  },
+  "tpl_type_select": {
+    "message": "下拉選單"
+  },
+  "tpl_type_rating": {
+    "message": "評分（星）"
+  },
+  "tpl_type_tags": {
+    "message": "標籤"
+  },
+  "tpl_type_placeholder": {
+    "message": "選擇欄位型別"
+  },
+  "tpl_book_locked_edit": {
+    "message": "書籍模板固定欄位不可修改"
+  },
+  "tpl_book_locked_delete": {
+    "message": "書籍模板固定欄位不可刪除"
+  },
+  "tpl_book_locked_add": {
+    "message": "書籍模板欄位固定，禁止新增"
+  },
+  "tpl_book_locked_options": {
+    "message": "書籍模板固定欄位，不可修改選項"
+  },
+  "tpl_options_help": {
+    "message": "選項（用逗號分隔）"
+  },
+  "tpl_error_required_fields": {
+    "message": "欄位代號與標籤為必填"
+  },
+  "tpl_error_invalid_key": {
+    "message": "欄位代號只能使用英文字母、數字或底線"
+  },
+  "tpl_error_duplicate_field": {
+    "message": "欄位代號已存在"
+  },
+  "tpl_error_template_exists": {
+    "message": "模板名稱已存在"
+  },
+  "tpl_error_template_in_use": {
+    "message": "此模板正在被收藏集使用"
   },
   "tpl_field_added": {
     "message": "欄位已新增"
@@ -981,6 +1059,15 @@
   },
   "card_note_label": {
     "message": "備註"
+  },
+  "card_created_at_label": {
+    "message": "新增時間"
+  },
+  "card_updated_at_label": {
+    "message": "最後編輯時間"
+  },
+  "card_time_toggle": {
+    "message": "查看時間"
   },
   "btn_save_changes": {
     "message": "儲存變更"

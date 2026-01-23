@@ -14,6 +14,8 @@ export interface WebpageCardData {
   meta?: Record<string, string>;
   templateId?: string;
   templateData?: Record<string, any>;
+  createdAt?: string | number;
+  updatedAt?: string | number;
 }
 
 export const WebpageCard: React.FC<{
@@ -59,6 +61,7 @@ export const WebpageCard: React.FC<{
   } | null>(null);
   // Needed for Move menu; hooks must run unconditionally
   const { categories } = useCategories();
+
 
   const handleClick = () => {
     if (isEditing) return;
@@ -444,6 +447,81 @@ export const WebpageCard: React.FC<{
   );
 };
 
+const SelectField: React.FC<{
+  value: string;
+  displayValue?: string;
+  options: string[];
+  placeholder?: string;
+  onChange: (v: string) => void;
+  error?: boolean;
+}> = ({ value, displayValue, options, placeholder, onChange, error }) => {
+  const [open, setOpen] = React.useState(false);
+  const wrapRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc, true);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc, true);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const label = displayValue || value || placeholder || '';
+  const isPlaceholder = !displayValue && !value;
+
+  return (
+    <div ref={wrapRef} className={`lt-select-wrap ${open ? 'is-open' : ''} ${error ? 'is-error' : ''}`}>
+      <button
+        type="button"
+        className={`lt-select-btn ${isPlaceholder ? 'is-placeholder' : ''}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <span className="lt-select-text">{label || placeholder || ''}</span>
+        <span className="lt-select-caret" aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="lt-select-menu" role="listbox">
+          <button
+            type="button"
+            className={`lt-select-item ${!value ? 'is-active' : ''}`}
+            onClick={() => {
+              onChange('');
+              setOpen(false);
+            }}
+          >
+            {placeholder || 'Select...'}
+          </button>
+          {options.map((op) => (
+            <button
+              key={op}
+              type="button"
+              className={`lt-select-item ${value === op ? 'is-active' : ''}`}
+              onClick={() => {
+                onChange(op);
+                setOpen(false);
+              }}
+            >
+              {op}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const TemplateFields: React.FC<{
   categoryId: string;
   meta: Record<string, string>;
@@ -460,27 +538,58 @@ const TemplateFields: React.FC<{
   return (
     <div className="space-y-2">
       {tpl.fields.map((f: any) => {
-        const val = meta[f.key] ?? '';
+        const rawVal = meta[f.key] ?? '';
+        const normalizeSerialStatus = (value?: string) => {
+          const v = (value || '').trim();
+          if (!v) return '';
+          const map: Record<string, string> = {
+            連載: '連載中',
+            連載中: '連載中',
+            完結: '已完結',
+            完本: '已完結',
+            已完結: '已完結',
+            已完本: '已完結',
+            暫停: '太監',
+            斷更: '太監',
+            太監: '太監',
+          };
+          return map[v] || '';
+        };
+        const options = Array.isArray(f.options) ? f.options : [];
+        const isSerialStatus = f.key === 'serialStatus';
+        const normalizedSerial = isSerialStatus ? normalizeSerialStatus(String(rawVal)) : '';
+        const pickSerialOption = () => {
+          if (!normalizedSerial) return '';
+          const aliasMap: Record<string, string[]> = {
+            連載中: ['連載中', '連載'],
+            已完結: ['已完結', '完結', '完本', '已完本'],
+            太監: ['太監', '暫停', '斷更'],
+          };
+          const aliases = aliasMap[normalizedSerial] || [normalizedSerial];
+          return aliases.find((opt) => options.includes(opt)) || '';
+        };
+        const serialValue = isSerialStatus ? pickSerialOption() : '';
+        const val = isSerialStatus ? serialValue : String(rawVal);
+        const displayValue = isSerialStatus
+          ? serialValue || normalizedSerial || String(rawVal)
+          : String(rawVal);
         const set = (v: string) => onChange({ ...meta, [f.key]: v });
-        const baseCls = `w-full rounded bg-slate-900 border p-2 text-sm ${f.required && !val ? 'border-red-600' : 'border-slate-700'}`;
+        const isEmpty = !(String(rawVal) || '').trim();
+        const baseCls = `w-full rounded bg-slate-900 border p-2 text-sm ${f.required && isEmpty ? 'border-red-600' : 'border-slate-700'}`;
         return (
           <div key={f.key}>
             <label className="block text-sm mb-1">
               {f.label} {f.required && <span className="text-red-400">*</span>}
             </label>
             {f.type === 'select' ? (
-              <select
-                className={baseCls}
+              <SelectField
                 value={val}
-                onChange={(e) => set(e.target.value)}
-              >
-                <option value="">{f.defaultValue || 'Select...'}</option>
-                {(f.options || []).map((op: string) => (
-                  <option key={op} value={op}>
-                    {op}
-                  </option>
-                ))}
-              </select>
+                displayValue={displayValue}
+                options={options}
+                placeholder={f.defaultValue || 'Select...'}
+                onChange={set}
+                error={!!(f.required && isEmpty)}
+              />
             ) : f.type === 'number' ? (
               <input
                 className={baseCls}

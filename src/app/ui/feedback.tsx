@@ -51,12 +51,12 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({
         </div>
       )}
       {/* Toast container */}
-      <div className="fixed bottom-4 right-4 z-[70] space-y-2">
+      <div className="fixed bottom-4 right-4 z-[99999] space-y-2">
         {toasts.map((t) => (
           <div
             key={t.id}
             style={{ animation: 'toast-slide-in 0.2s ease-out' }}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm shadow-lg backdrop-blur-sm ${
+            className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm shadow-lg backdrop-blur-sm min-w-[240px] max-w-[90vw] ${
               t.kind === 'success'
                 ? 'bg-emerald-900/90 text-emerald-100 border border-emerald-700/50'
                 : t.kind === 'error'

@@ -630,11 +630,11 @@
   "tpl_presets": {
     "message": "Presets:"
   },
+  "tpl_preset_book_name": {
+    "message": "Buchvorlage"
+  },
   "tpl_preset_book": {
     "message": "📚 Buch"
-  },
-  "tpl_preset_tool": {
-    "message": "🔧 Werkzeug"
   },
   "tpl_field_count": {
     "message": "$COUNT$ Felder",
@@ -651,8 +651,86 @@
   "tpl_add_field_section": {
     "message": "Feld hinzufügen"
   },
+  "tpl_header_key": {
+    "message": "Feld-ID"
+  },
+  "tpl_header_label": {
+    "message": "Bezeichnung"
+  },
+  "tpl_header_type": {
+    "message": "Typ"
+  },
+  "tpl_header_required": {
+    "message": "Pflicht"
+  },
+  "tpl_header_actions": {
+    "message": "Aktion"
+  },
   "tpl_field_display_name": {
     "message": "Anzeigename"
+  },
+  "tpl_options_placeholder": {
+    "message": "z. B. Option 1, Option 2, Option 3"
+  },
+  "tpl_options_toggle_show": {
+    "message": "Optionen anzeigen"
+  },
+  "tpl_options_toggle_hide": {
+    "message": "Optionen ausblenden"
+  },
+  "tpl_type_text": {
+    "message": "Text"
+  },
+  "tpl_type_number": {
+    "message": "Zahl"
+  },
+  "tpl_type_date": {
+    "message": "Datum"
+  },
+  "tpl_type_url": {
+    "message": "URL"
+  },
+  "tpl_type_select": {
+    "message": "Dropdown"
+  },
+  "tpl_type_rating": {
+    "message": "Bewertung (Sterne)"
+  },
+  "tpl_type_tags": {
+    "message": "Tags"
+  },
+  "tpl_type_placeholder": {
+    "message": "Feldtyp auswählen"
+  },
+  "tpl_book_locked_edit": {
+    "message": "Feste Felder der Buchvorlage sind nicht editierbar"
+  },
+  "tpl_book_locked_delete": {
+    "message": "Feste Felder der Buchvorlage können nicht gelöscht werden"
+  },
+  "tpl_book_locked_add": {
+    "message": "Die Buchvorlage ist gesperrt; keine neuen Felder"
+  },
+  "tpl_book_locked_options": {
+    "message": "Optionen der Buchvorlage sind gesperrt"
+  },
+  "tpl_options_help": {
+    "message": "Optionen (durch Kommas getrennt)"
+  },
+  "tpl_error_required_fields": {
+    "message": "Feld-ID und Bezeichnung sind erforderlich"
+  },
+  "tpl_error_invalid_key": {
+    "message": "Die Feld-ID darf nur Buchstaben, Zahlen oder Unterstriche enthalten"
+  },
+  "tpl_error_duplicate_field": {
+    "message": "Die Feld-ID existiert bereits"
+  },
+  "tpl_error_template_exists": {
+    "message": "Der Vorlagenname existiert bereits"
+  },
+  "tpl_error_template_in_use": {
+    "message": "Die Vorlage wird von einer Sammlung verwendet"
   },
   "tpl_field_added": {
     "message": "Feld hinzugefügt"
@@ -978,6 +1056,15 @@
   },
   "card_note_label": {
     "message": "Notiz"
+  },
+  "card_created_at_label": {
+    "message": "Erstellt am"
+  },
+  "card_updated_at_label": {
+    "message": "Zuletzt bearbeitet"
+  },
+  "card_time_toggle": {
+    "message": "Zeit anzeigen"
   },
   "btn_save_changes": {
     "message": "Änderungen speichern"

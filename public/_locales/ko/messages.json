@@ -630,11 +630,11 @@
   "tpl_presets": {
     "message": "프리셋:"
   },
+  "tpl_preset_book_name": {
+    "message": "도서 템플릿"
+  },
   "tpl_preset_book": {
     "message": "📚 책"
-  },
-  "tpl_preset_tool": {
-    "message": "🔧 도구"
   },
   "tpl_field_count": {
     "message": "$COUNT$개 필드",
@@ -651,8 +651,86 @@
   "tpl_add_field_section": {
     "message": "필드 추가"
   },
+  "tpl_header_key": {
+    "message": "필드 ID"
+  },
+  "tpl_header_label": {
+    "message": "라벨"
+  },
+  "tpl_header_type": {
+    "message": "유형"
+  },
+  "tpl_header_required": {
+    "message": "필수"
+  },
+  "tpl_header_actions": {
+    "message": "작업"
+  },
   "tpl_field_display_name": {
     "message": "표시 이름"
+  },
+  "tpl_options_placeholder": {
+    "message": "예: 옵션1, 옵션2, 옵션3"
+  },
+  "tpl_options_toggle_show": {
+    "message": "옵션 표시"
+  },
+  "tpl_options_toggle_hide": {
+    "message": "옵션 숨기기"
+  },
+  "tpl_type_text": {
+    "message": "텍스트"
+  },
+  "tpl_type_number": {
+    "message": "숫자"
+  },
+  "tpl_type_date": {
+    "message": "날짜"
+  },
+  "tpl_type_url": {
+    "message": "URL"
+  },
+  "tpl_type_select": {
+    "message": "드롭다운"
+  },
+  "tpl_type_rating": {
+    "message": "평점(별)"
+  },
+  "tpl_type_tags": {
+    "message": "태그"
+  },
+  "tpl_type_placeholder": {
+    "message": "필드 유형 선택"
+  },
+  "tpl_book_locked_edit": {
+    "message": "도서 템플릿의 고정 필드는 수정할 수 없습니다"
+  },
+  "tpl_book_locked_delete": {
+    "message": "도서 템플릿의 고정 필드는 삭제할 수 없습니다"
+  },
+  "tpl_book_locked_add": {
+    "message": "도서 템플릿 필드는 고정되어 추가할 수 없습니다"
+  },
+  "tpl_book_locked_options": {
+    "message": "도서 템플릿의 고정 필드 옵션은 수정할 수 없습니다"
+  },
+  "tpl_options_help": {
+    "message": "옵션(쉼표로 구분)"
+  },
+  "tpl_error_required_fields": {
+    "message": "필드 ID와 라벨은 필수입니다"
+  },
+  "tpl_error_invalid_key": {
+    "message": "필드 ID는 영문, 숫자, 밑줄만 사용할 수 있습니다"
+  },
+  "tpl_error_duplicate_field": {
+    "message": "필드 ID가 이미 존재합니다"
+  },
+  "tpl_error_template_exists": {
+    "message": "템플릿 이름이 이미 존재합니다"
+  },
+  "tpl_error_template_in_use": {
+    "message": "이 템플릿은 컬렉션에서 사용 중입니다"
   },
   "tpl_field_added": {
     "message": "필드 추가됨"
@@ -978,6 +1056,15 @@
   },
   "card_note_label": {
     "message": "메모"
+  },
+  "card_created_at_label": {
+    "message": "생성 시간"
+  },
+  "card_updated_at_label": {
+    "message": "마지막 수정"
+  },
+  "card_time_toggle": {
+    "message": "시간 보기"
   },
   "btn_save_changes": {
     "message": "변경 사항 저장"

@@ -630,11 +630,11 @@
   "tpl_presets": {
     "message": "Presets:"
   },
+  "tpl_preset_book_name": {
+    "message": "Book Template"
+  },
   "tpl_preset_book": {
     "message": "📚 Book"
-  },
-  "tpl_preset_tool": {
-    "message": "🔧 Tool"
   },
   "tpl_field_count": {
     "message": "$COUNT$ fields",
@@ -651,8 +651,86 @@
   "tpl_add_field_section": {
     "message": "Add Field"
   },
+  "tpl_header_key": {
+    "message": "Field ID"
+  },
+  "tpl_header_label": {
+    "message": "Label"
+  },
+  "tpl_header_type": {
+    "message": "Type"
+  },
+  "tpl_header_required": {
+    "message": "Req"
+  },
+  "tpl_header_actions": {
+    "message": "Act"
+  },
   "tpl_field_display_name": {
     "message": "Display name"
+  },
+  "tpl_options_placeholder": {
+    "message": "e.g., Option 1, Option 2, Option 3"
+  },
+  "tpl_options_toggle_show": {
+    "message": "Show options"
+  },
+  "tpl_options_toggle_hide": {
+    "message": "Hide options"
+  },
+  "tpl_type_text": {
+    "message": "Text"
+  },
+  "tpl_type_number": {
+    "message": "Number"
+  },
+  "tpl_type_date": {
+    "message": "Date"
+  },
+  "tpl_type_url": {
+    "message": "URL"
+  },
+  "tpl_type_select": {
+    "message": "Dropdown"
+  },
+  "tpl_type_rating": {
+    "message": "Rating (stars)"
+  },
+  "tpl_type_tags": {
+    "message": "Tags"
+  },
+  "tpl_type_placeholder": {
+    "message": "Select field type"
+  },
+  "tpl_book_locked_edit": {
+    "message": "Book template fields are locked"
+  },
+  "tpl_book_locked_delete": {
+    "message": "Book template fields cannot be deleted"
+  },
+  "tpl_book_locked_add": {
+    "message": "Book template is locked; no new fields"
+  },
+  "tpl_book_locked_options": {
+    "message": "Book template options are locked"
+  },
+  "tpl_options_help": {
+    "message": "Options (comma-separated)"
+  },
+  "tpl_error_required_fields": {
+    "message": "Field ID and label are required"
+  },
+  "tpl_error_invalid_key": {
+    "message": "Field ID can only use letters, numbers, or underscores"
+  },
+  "tpl_error_duplicate_field": {
+    "message": "Field ID already exists"
+  },
+  "tpl_error_template_exists": {
+    "message": "Template name already exists"
+  },
+  "tpl_error_template_in_use": {
+    "message": "Template is used by a collection"
   },
   "tpl_field_added": {
     "message": "Field added"
@@ -981,6 +1059,15 @@
   },
   "card_note_label": {
     "message": "Note"
+  },
+  "card_created_at_label": {
+    "message": "Created at"
+  },
+  "card_updated_at_label": {
+    "message": "Last edited"
+  },
+  "card_time_toggle": {
+    "message": "View times"
   },
   "btn_save_changes": {
     "message": "Save Changes"
