@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
-export type Language = 'en' | 'zh_TW' | 'zh_CN' | 'ja' | 'ko' | 'es' | 'de';
+export type Language = 'en' | 'zh_TW' | 'zh_CN' | 'ja' | 'ko' | 'es' | 'de' | 'fr' | 'pt_BR';
 
 interface LanguageContextValue {
   language: Language;
@@ -11,7 +11,7 @@ interface LanguageContextValue {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 // Supported languages
-const SUPPORTED_LANGUAGES: Language[] = ['en', 'zh_TW', 'zh_CN', 'ja', 'ko', 'es', 'de'];
+const SUPPORTED_LANGUAGES: Language[] = ['en', 'zh_TW', 'zh_CN', 'ja', 'ko', 'es', 'de', 'fr', 'pt_BR'];
 
 // Cache for loaded messages
 const messagesCache: Record<Language, Record<string, { message: string; placeholders?: Record<string, { content: string }> }>> = {
@@ -22,6 +22,8 @@ const messagesCache: Record<Language, Record<string, { message: string; placehol
   ko: {},
   es: {},
   de: {},
+  fr: {},
+  pt_BR: {},
 };
 
 // Normalize browser locale format (zh-TW → zh_TW)
@@ -192,4 +194,6 @@ export const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
   { value: 'ko', label: '한국어' },
   { value: 'es', label: 'Español' },
   { value: 'de', label: 'Deutsch' },
+  { value: 'fr', label: 'Français' },
+  { value: 'pt_BR', label: 'Português' },
 ];

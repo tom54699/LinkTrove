@@ -300,6 +300,12 @@
   "lang_de": {
     "message": "Deutsch"
   },
+  "lang_fr": {
+    "message": "Français"
+  },
+  "lang_pt_br": {
+    "message": "Português"
+  },
   "lang_changed": {
     "message": "语言已更改"
   },
