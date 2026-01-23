@@ -1011,21 +1011,21 @@
     "message": "保存选中内容到 LinkTrove"
   },
   "context_save_no_groups": {
-    "message": "没有可用的群组"
+    "message": "暂无分组"
   },
   "context_save_open_app": {
     "message": "打开 LinkTrove"
   },
   "context_save_no_organizations": {
-    "message": "还没有组织"
+    "message": "暂无组织"
   },
   "context_label_org": {
     "message": "组织"
   },
   "context_label_collection": {
-    "message": "收藏集"
+    "message": "集合"
   },
   "context_label_group": {
-    "message": "群组"
+    "message": "分组"
   }
 }

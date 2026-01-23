@@ -140,6 +140,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     try {
       await (svc as any).renameSubcategory?.(id, name.trim() || 'group');
       await load();
+      try { chrome.runtime?.sendMessage?.({ kind: 'context-menus:refresh' }); } catch {}
       showToast(t('toast_renamed'), 'success');
     } catch {
       showToast(t('toast_rename_failed'), 'error');
@@ -169,6 +170,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       await persistCollapsed(rest);
       await load();
       try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
+      try { chrome.runtime?.sendMessage?.({ kind: 'context-menus:refresh' }); } catch {}
       showToast(t('toast_group_deleted'), 'success');
     } catch {
       showToast(t('toast_delete_failed'), 'error');
@@ -186,6 +188,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     setGroups(next);
     try {
       await (svc as any).reorderSubcategories?.(categoryId, next.map((x) => x.id));
+      try { chrome.runtime?.sendMessage?.({ kind: 'context-menus:refresh' }); } catch {}
       showToast(t('toast_reordered'), 'success');
     } catch {}
   };
@@ -232,6 +235,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       await (s as any).createSubcategory?.(categoryId, name);
       load();
       try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
+      try { chrome.runtime?.sendMessage?.({ kind: 'context-menus:refresh' }); } catch {}
       showToast(t('toast_added', [name]), 'success');
     } catch (err: any) {
       if (err?.name === 'LimitExceededError' || err?.code === 'LIMIT_EXCEEDED') {

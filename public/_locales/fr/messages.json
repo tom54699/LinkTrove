@@ -1011,13 +1011,13 @@
     "message": "Enregistrer la sélection dans LinkTrove"
   },
   "context_save_no_groups": {
-    "message": "Aucun groupe disponible"
+    "message": "Aucun groupe pour l'instant"
   },
   "context_save_open_app": {
     "message": "Ouvrir LinkTrove"
   },
   "context_save_no_organizations": {
-    "message": "Pas encore d'organisations"
+    "message": "Aucune organisation pour l'instant"
   },
   "context_label_org": {
     "message": "Organisation"

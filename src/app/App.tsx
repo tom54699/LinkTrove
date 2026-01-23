@@ -299,6 +299,7 @@ const HomeInner: React.FC = () => {
                       while (lower.has(name.toLowerCase())) name = `group ${i++}`;
                       await (s as any).createSubcategory?.(selectedId, name);
                       try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
+                      try { chrome.runtime?.sendMessage?.({ kind: 'context-menus:refresh' }); } catch {}
                       showToast(t('toast_group_added', [name]), 'success');
                     } catch {
                       showToast(t('toast_add_failed'), 'error');

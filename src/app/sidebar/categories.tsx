@@ -172,6 +172,7 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
           if (!Array.isArray(arr) || arr.length === 0) await (svc as any).createSubcategory?.(c.id, 'group');
         }
         try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
+        try { chrome.runtime?.sendMessage?.({ kind: 'context-menus:refresh' }); } catch {}
       } catch {}
       // Restore selected category for this organization
       let want: string | undefined;
@@ -277,6 +278,7 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
           const arr = (((await (svc as any).listSubcategories?.(created.id)) as any[]) || []);
           if (!Array.isArray(arr) || arr.length === 0) await (svc as any).createSubcategory?.(created.id, 'group');
           try { window.dispatchEvent(new CustomEvent('groups:changed')); } catch {}
+          try { chrome.runtime?.sendMessage?.({ kind: 'context-menus:refresh' }); } catch {}
         } catch {}
         return created as any;
       },

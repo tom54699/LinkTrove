@@ -1011,10 +1011,10 @@
     "message": "選択をLinkTroveに保存"
   },
   "context_save_no_groups": {
-    "message": "利用可能なグループがありません"
+    "message": "グループがまだありません"
   },
   "context_save_open_app": {
-    "message": "LinkTroveを開く"
+    "message": "LinkTrove を開く"
   },
   "context_save_no_organizations": {
     "message": "組織がまだありません"

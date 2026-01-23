@@ -2,7 +2,7 @@
 
 > **用途：** 解決 AI 工具 Session 斷開後的連續性問題，確保下次對話能無縫接續
 >
-> **最後更新：** 2026-01-19 (同步 OpenSpec 與現況)
+> **最後更新：** 2026-01-22 (右鍵保存改為階層式選單)
 >
 > **更新者：** Codex
 
@@ -102,6 +102,13 @@
    - 引入 OpenCC 轉換器，支援簡繁互通搜尋
    - 新增搜尋測試：簡繁互通 + 自動載入
 
+18. ✅ **右鍵保存改為階層式選單（2026-01-22）**
+   - 新增右鍵選單入口（分頁/連結/選取文字）
+   - 右鍵選單內直接選擇 Organization → Collection → Group（無對話框）
+   - 保存邏輯與拖放一致，卡片追加到末端順位
+   - 不寫入選取文字描述，改為補抓頁面 meta（含模板欄位）
+   - 移除保存對話框頁面與相關 UI/測試
+
 **新增檔案：**
 - `src/app/webpages/MoveSelectedDialog.tsx` - 批次移動對話框組件
 - `openspec/changes/add-batch-operations/proposal.md` - OpenSpec 提案
@@ -111,6 +118,8 @@
 - `src/types/opencc-js.d.ts` - opencc-js 型別宣告
 - `src/app/ui/__tests__/search.opencc.loadmore.test.tsx` - 搜尋簡繁與載入測試
 - `openspec/changes/update-search-infinite-scroll-opencc/*` - OpenSpec 變更提案與規格
+- `docs/features/context-menu-save.md` - 右鍵保存功能文檔
+- `openspec/changes/add-contextmenu-save-dialog/*` - 右鍵保存提案與規格
 
 **修改檔案：**
 - `src/app/webpages/CardGrid.tsx` - 新增浮動工具列與批次操作邏輯（移除 selectMode）
@@ -120,6 +129,13 @@
 - `src/app/ui/SearchBox.tsx` - 搜尋結果分頁、自動載入、簡繁互通與計數更新
 - `package.json` - 新增 opencc-js 依賴
 - `openspec/changes/update-search-infinite-scroll-opencc/tasks.md` - 任務狀態更新
+- `public/manifest.json` - 新增 contextMenus 權限
+- `vite.config.ts` - 右鍵保存改為階層式選單（移除保存對話框入口）
+- `src/background.ts` - 右鍵選單註冊與階層保存
+- `public/_locales/en/messages.json` - 右鍵保存選單文案
+- `public/_locales/zh_TW/messages.json` - 右鍵保存選單文案
+- `docs/INDEX.md` - 功能文檔索引新增右鍵保存
+- `openspec/changes/add-contextmenu-save-dialog/tasks.md` - 任務完成狀態
 
 **其他近期修改（摘要）：**
 - `src/app/webpages/WebpagesProvider.tsx` - drop 操作鎖定與 moveCardToGroup
@@ -146,8 +162,11 @@
    - `npm test -- src/app/sidebar/__tests__/organization-nav.manage.test.tsx`
 
 ### Git 狀態
-- ⚠️ 工作目錄有未提交變更（包含 docs 與多個程式檔）
-- ⚠️ 未追蹤變更：`openspec/changes/update-settings-ui/`
+- ⚠️ 工作目錄有未提交變更（右鍵選單階層保存、i18n、manifest、docs 等）
+- ⚠️ 未追蹤變更包含：
+  - `openspec/changes/add-contextmenu-save-dialog/`
+  - `docs/features/context-menu-save.md`
+  - `mockups/sidebar-dracula-circular.html`（非本次新增，注意確認）
 
 ### 分支狀態
 - 當前分支：`main`

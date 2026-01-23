@@ -1014,7 +1014,7 @@
     "message": "Save selection to LinkTrove"
   },
   "context_save_no_groups": {
-    "message": "No groups available"
+    "message": "No groups yet"
   },
   "context_save_open_app": {
     "message": "Open LinkTrove"

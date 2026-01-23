@@ -1011,13 +1011,13 @@
     "message": "선택을 LinkTrove에 저장"
   },
   "context_save_no_groups": {
-    "message": "사용 가능한 그룹 없음"
+    "message": "그룹이 아직 없습니다"
   },
   "context_save_open_app": {
     "message": "LinkTrove 열기"
   },
   "context_save_no_organizations": {
-    "message": "아직 조직이 없습니다"
+    "message": "조직이 아직 없습니다"
   },
   "context_label_org": {
     "message": "조직"

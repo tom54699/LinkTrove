@@ -33,6 +33,7 @@
 - [拖放操作](features/drag-drop-storage-display.md) - 拖放排序與儲存
 - [批次操作](features/batch-operations.md) - 多選、批次移動/刪除/開新分頁
 - [搜尋功能](features/search.md) - 搜尋 UI 與資料流程
+- [右鍵保存](features/context-menu-save.md) - 右鍵選單保存與階層選擇
 - [模板功能](features/templates.md) - 模板管理與欄位定義
 
 ### 規格文檔
