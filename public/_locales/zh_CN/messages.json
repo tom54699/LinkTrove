@@ -294,6 +294,12 @@
   "lang_ko": {
     "message": "한국어"
   },
+  "lang_es": {
+    "message": "Español"
+  },
+  "lang_de": {
+    "message": "Deutsch"
+  },
   "lang_changed": {
     "message": "语言已更改"
   },
@@ -1006,5 +1012,14 @@
   },
   "context_save_no_organizations": {
     "message": "还没有组织"
+  },
+  "context_label_org": {
+    "message": "组织"
+  },
+  "context_label_collection": {
+    "message": "收藏集"
+  },
+  "context_label_group": {
+    "message": "群组"
   }
 }

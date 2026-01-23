@@ -1,0 +1,1025 @@
+{
+  "extName": {
+    "message": "LinkTrove",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Visueller Tab-Manager im Toby-Stil: Ziehe von offenen Tabs, um als Karten zu speichern.",
+    "description": "Extension description"
+  },
+
+  "settings_title": {
+    "message": "Einstellungen"
+  },
+  "settings_close": {
+    "message": "Schließen"
+  },
+
+  "nav_export_import": {
+    "message": "Export/Import"
+  },
+  "nav_cloud_sync": {
+    "message": "Cloud-Synchronisation"
+  },
+  "nav_templates": {
+    "message": "Vorlagen"
+  },
+  "nav_language": {
+    "message": "Sprache"
+  },
+
+  "data_title": {
+    "message": "Projekt-Backup & Wiederherstellung"
+  },
+  "data_description": {
+    "message": "Projektdaten als JSON exportieren oder wiederherstellen. Import ersetzt vorhandene Daten."
+  },
+  "data_export_label": {
+    "message": "Backup exportieren"
+  },
+  "data_restore_label": {
+    "message": "Wiederherstellen (Daten ersetzen)"
+  },
+  "data_drop_hint": {
+    "message": "JSON-Datei hierher ziehen oder klicken zum Auswählen..."
+  },
+  "data_file_selected": {
+    "message": "Ausgewählt: $FILE$",
+    "placeholders": {
+      "file": { "content": "$1" }
+    }
+  },
+  "data_import_success": {
+    "message": "Import erfolgreich, wird neu geladen..."
+  },
+  "data_export_success": {
+    "message": "Backup exportiert"
+  },
+  "data_export_failed": {
+    "message": "Export fehlgeschlagen"
+  },
+  "data_confirm_import_title": {
+    "message": "Import bestätigen?"
+  },
+  "data_confirm_import_desc": {
+    "message": "Dies wird Ihre aktuellen Daten und Einstellungen dauerhaft ersetzen."
+  },
+
+  "import_toby_title": {
+    "message": "Toby in diese Gruppe importieren"
+  },
+  "import_file_info": {
+    "message": "Datei: $FILE$",
+    "placeholders": {
+      "file": { "content": "$1" }
+    }
+  },
+  "import_link_count": {
+    "message": "$COUNT$ Links",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "btn_start_import": {
+    "message": "Import starten"
+  },
+
+  "cloud_title": {
+    "message": "Google Drive Cloud-Synchronisation"
+  },
+  "cloud_description": {
+    "message": "Google Drive als Backup-Speicher verwenden (privat, in Drive versteckt)"
+  },
+  "cloud_connected": {
+    "message": "Verbunden"
+  },
+  "cloud_disconnect": {
+    "message": "Trennen"
+  },
+  "cloud_disconnected": {
+    "message": "Getrennt"
+  },
+  "cloud_last_sync": {
+    "message": "Letzte Synchronisation:"
+  },
+  "cloud_never": {
+    "message": "Nie"
+  },
+  "cloud_connect": {
+    "message": "Google Drive verbinden"
+  },
+  "cloud_manual_ops": {
+    "message": "Manuelle Aktionen"
+  },
+  "cloud_backup_now": {
+    "message": "Jetzt sichern"
+  },
+  "cloud_merge": {
+    "message": "Cloud-Daten zusammenführen"
+  },
+  "cloud_full_restore": {
+    "message": "Vollständige Wiederherstellung"
+  },
+  "cloud_ops_hint": {
+    "message": "Backup: Lokal in Cloud hochladen / Zusammenführen: Neueres behalten / Vollständige Wiederherstellung: Cloud überschreibt lokal"
+  },
+  "cloud_auto_sync": {
+    "message": "Automatische Synchronisation"
+  },
+  "cloud_auto_sync_desc": {
+    "message": "Wenn aktiviert, werden lokale Änderungen automatisch hochgeladen; Downloads beim Start"
+  },
+  "cloud_auto_enabled": {
+    "message": "Automatische Synchronisation aktiviert"
+  },
+  "cloud_auto_disabled": {
+    "message": "Automatische Synchronisation deaktiviert"
+  },
+  "cloud_backup_success": {
+    "message": "Backup erfolgreich"
+  },
+  "cloud_merge_success": {
+    "message": "Zusammenführung abgeschlossen"
+  },
+  "cloud_restore_success": {
+    "message": "Wiederherstellung erfolgreich"
+  },
+
+  "gc_title": {
+    "message": "Garbage Collection (GC)"
+  },
+  "gc_deleted_items": {
+    "message": "Gelöschte Elemente:"
+  },
+  "gc_oldest_item": {
+    "message": "Ältestes Element:"
+  },
+  "gc_none": {
+    "message": "Keine"
+  },
+  "gc_run": {
+    "message": "GC ausführen"
+  },
+  "gc_confirm_title": {
+    "message": "GC-Ausführung bestätigen"
+  },
+  "gc_confirm_desc": {
+    "message": "Alle gelöschten Elemente dauerhaft bereinigen? Diese Aktion kann nicht rückgängig gemacht werden."
+  },
+  "gc_cleaning": {
+    "message": "Gelöschte Elemente werden bereinigt..."
+  },
+  "gc_cleaned": {
+    "message": "$COUNT$ Elemente bereinigt",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "gc_nothing": {
+    "message": "Keine gelöschten Elemente zum Bereinigen"
+  },
+
+  "snapshot_title": {
+    "message": "Lokale Snapshots"
+  },
+  "snapshot_empty": {
+    "message": "Noch keine Snapshots"
+  },
+  "snapshot_before_restore": {
+    "message": "Vor Wiederherstellung"
+  },
+  "snapshot_before_merge": {
+    "message": "Vor Zusammenführung"
+  },
+  "snapshot_manual": {
+    "message": "Manuell"
+  },
+  "snapshot_pages": {
+    "message": "$COUNT$ Seiten",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "snapshot_restore": {
+    "message": "Wiederherstellen"
+  },
+  "snapshot_delete": {
+    "message": "Löschen"
+  },
+  "snapshot_restore_confirm": {
+    "message": "Diesen Snapshot wiederherstellen? Aktuelle Daten werden ersetzt."
+  },
+  "snapshot_delete_confirm": {
+    "message": "Diesen Snapshot löschen?"
+  },
+  "snapshot_restored": {
+    "message": "Snapshot wiederhergestellt"
+  },
+  "snapshot_deleted": {
+    "message": "Snapshot gelöscht"
+  },
+
+  "confirm_backup_title": {
+    "message": "Backup bestätigen"
+  },
+  "confirm_backup_desc": {
+    "message": "Lokale Daten in Cloud hochladen? Dies überschreibt das Cloud-Backup."
+  },
+  "confirm_merge_title": {
+    "message": "Zusammenführung bestätigen"
+  },
+  "confirm_merge_desc": {
+    "message": "Cloud-Daten zusammenführen? System behält neuere Änderungen von beiden Seiten."
+  },
+  "confirm_restore_title": {
+    "message": "Vollständige Wiederherstellung bestätigen"
+  },
+  "confirm_restore_desc": {
+    "message": "Cloud-Daten vollständig wiederherstellen? Lokale Daten werden ersetzt. Zuerst wird ein Snapshot erstellt."
+  },
+
+  "dialog_processing": {
+    "message": "Verarbeitung..."
+  },
+  "dialog_success": {
+    "message": "Aktion erfolgreich"
+  },
+  "dialog_failed": {
+    "message": "Aktion fehlgeschlagen"
+  },
+  "dialog_close": {
+    "message": "Schließen"
+  },
+
+  "btn_cancel": {
+    "message": "Abbrechen"
+  },
+  "btn_confirm": {
+    "message": "Bestätigen"
+  },
+  "btn_confirm_replace": {
+    "message": "Bestätigen & Ersetzen"
+  },
+  "btn_confirm_execute": {
+    "message": "Bestätigen"
+  },
+  "btn_export_json": {
+    "message": "JSON exportieren"
+  },
+  "btn_import_json": {
+    "message": "JSON importieren"
+  },
+
+  "lang_title": {
+    "message": "Spracheinstellungen"
+  },
+  "lang_description": {
+    "message": "Wählen Sie Ihre bevorzugte Anzeigesprache"
+  },
+  "lang_select_label": {
+    "message": "Anzeigesprache"
+  },
+  "lang_en": {
+    "message": "English"
+  },
+  "lang_zh_tw": {
+    "message": "繁體中文"
+  },
+  "lang_zh_cn": {
+    "message": "简体中文"
+  },
+  "lang_ja": {
+    "message": "日本語"
+  },
+  "lang_ko": {
+    "message": "한국어"
+  },
+  "lang_es": {
+    "message": "Español"
+  },
+  "lang_de": {
+    "message": "Deutsch"
+  },
+  "lang_changed": {
+    "message": "Sprache geändert"
+  },
+
+  "menu_edit": {
+    "message": "Bearbeiten"
+  },
+  "menu_delete": {
+    "message": "Löschen"
+  },
+  "menu_move": {
+    "message": "Verschieben"
+  },
+  "menu_share": {
+    "message": "Teilen"
+  },
+  "menu_rename": {
+    "message": "Umbenennen"
+  },
+  "menu_move_up": {
+    "message": "Nach oben"
+  },
+  "menu_move_down": {
+    "message": "Nach unten"
+  },
+  "menu_open_all": {
+    "message": "Alle öffnen"
+  },
+  "menu_import_toby": {
+    "message": "Toby JSON importieren"
+  },
+  "menu_import_html": {
+    "message": "HTML-Lesezeichen importieren"
+  },
+  "menu_manage_orgs": {
+    "message": "Organisationen verwalten"
+  },
+  "menu_delete_org": {
+    "message": "Organisation löschen"
+  },
+
+  "toast_saved": {
+    "message": "Gespeichert"
+  },
+  "toast_deleted": {
+    "message": "Gelöscht"
+  },
+  "toast_moved": {
+    "message": "Verschoben"
+  },
+  "toast_moved_cards": {
+    "message": "$COUNT$ Karten verschoben",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "toast_deleted_cards": {
+    "message": "$COUNT$ Karten gelöscht",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "toast_import_success": {
+    "message": "Import erfolgreich"
+  },
+  "toast_save_failed": {
+    "message": "Speichern fehlgeschlagen"
+  },
+  "toast_delete_failed": {
+    "message": "Löschen fehlgeschlagen"
+  },
+  "toast_group_added": {
+    "message": "$NAME$ hinzugefügt",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "toast_add_failed": {
+    "message": "Hinzufügen fehlgeschlagen"
+  },
+  "error_select_collection": {
+    "message": "Bitte wählen Sie zuerst eine Sammlung aus"
+  },
+
+  "confirm_delete": {
+    "message": "Löschen bestätigen?"
+  },
+  "confirm_delete_card": {
+    "message": "Diese Karte löschen?"
+  },
+  "confirm_delete_cards": {
+    "message": "$COUNT$ Karten löschen?",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+
+  "batch_move": {
+    "message": "VERSCHIEBEN"
+  },
+  "batch_open_tabs": {
+    "message": "Tabs öffnen"
+  },
+  "batch_delete": {
+    "message": "LÖSCHEN"
+  },
+  "batch_selected": {
+    "message": "$COUNT$ ausgewählt",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+
+  "move_dialog_title": {
+    "message": "$COUNT$ Karte(n) verschieben nach",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "move_label_collection": {
+    "message": "Sammlung"
+  },
+  "move_select_collection": {
+    "message": "Sammlung auswählen"
+  },
+  "move_label_group": {
+    "message": "Gruppe"
+  },
+  "move_select_group": {
+    "message": "Gruppe auswählen"
+  },
+  "btn_move": {
+    "message": "Verschieben"
+  },
+  "loading": {
+    "message": "Laden..."
+  },
+  "error_something_wrong": {
+    "message": "Etwas ist schiefgelaufen."
+  },
+
+  "conflict_severity_major": {
+    "message": "⚠️ Großer Unterschied"
+  },
+  "conflict_severity_minor": {
+    "message": "⚠ Kleiner Unterschied"
+  },
+  "conflict_severity_none": {
+    "message": "✓ Kein Unterschied"
+  },
+  "conflict_enable_auto_sync": {
+    "message": "Automatische Synchronisation aktivieren"
+  },
+  "conflict_merge_cloud": {
+    "message": "Cloud-Daten zusammenführen"
+  },
+  "conflict_diff_detected": {
+    "message": "Unterschiede zwischen lokalen und Cloud-Daten erkannt:"
+  },
+  "conflict_col_item": {
+    "message": "Element"
+  },
+  "conflict_col_local": {
+    "message": "Lokal"
+  },
+  "conflict_col_cloud": {
+    "message": "Cloud"
+  },
+  "conflict_webpages": {
+    "message": "Webseiten"
+  },
+  "conflict_categories": {
+    "message": "Kategorien"
+  },
+  "conflict_groups": {
+    "message": "Gruppen"
+  },
+  "conflict_warning_major": {
+    "message": "⚠️ Großer Unterschied erkannt. Empfehlung: Zuerst lokale Daten sichern."
+  },
+  "conflict_auto_sync_desc": {
+    "message": "Nach Aktivierung der automatischen Synchronisation werden lokale Änderungen automatisch in die Cloud hochgeladen. Verwendet LWW-Merge-Strategie: Behält die neuere Version zwischen lokal und Cloud."
+  },
+  "conflict_merge_desc": {
+    "message": "Zusammenführung verwendet LWW-Strategie: Vergleicht Zeitstempel und behält die neuere Version."
+  },
+  "conflict_btn_enable": {
+    "message": "Aktivierung bestätigen"
+  },
+  "conflict_btn_merge": {
+    "message": "Zusammenführung bestätigen"
+  },
+  "conflict_btn_backup_first": {
+    "message": "Zuerst lokal sichern"
+  },
+
+  "search_placeholder": {
+    "message": "Suchen..."
+  },
+  "search_recent": {
+    "message": "Letzte Suchen"
+  },
+  "search_just_now": {
+    "message": "Gerade eben"
+  },
+  "search_mins_ago": {
+    "message": "vor $MINS$ Min.",
+    "placeholders": {
+      "mins": { "content": "$1" }
+    }
+  },
+  "search_hours_ago": {
+    "message": "vor $HOURS$ Std.",
+    "placeholders": {
+      "hours": { "content": "$1" }
+    }
+  },
+  "search_days_ago": {
+    "message": "vor $DAYS$ Tagen",
+    "placeholders": {
+      "days": { "content": "$1" }
+    }
+  },
+  "search_action_search": {
+    "message": "↵ Suchen"
+  },
+  "search_type_to_start": {
+    "message": "Eingeben um zu suchen..."
+  },
+  "search_no_results": {
+    "message": "Keine Ergebnisse für \"$QUERY$\"",
+    "placeholders": {
+      "query": { "content": "$1" }
+    }
+  },
+  "search_action_open": {
+    "message": "↵ Öffnen"
+  },
+  "search_navigate": {
+    "message": "Navigieren"
+  },
+  "search_open": {
+    "message": "Öffnen"
+  },
+  "search_loaded": {
+    "message": "$LOADED$ / $TOTAL$ geladen",
+    "placeholders": {
+      "loaded": { "content": "$1" },
+      "total": { "content": "$2" }
+    }
+  },
+
+  "sidebar_collections": {
+    "message": "Sammlungen"
+  },
+  "sidebar_add_collection": {
+    "message": "Sammlung hinzufügen"
+  },
+  "sidebar_add_group": {
+    "message": "Gruppe hinzufügen"
+  },
+
+  "tabs_panel_title": {
+    "message": "Offene Tabs"
+  },
+  "tabs_window": {
+    "message": "Fenster $NUM$",
+    "placeholders": {
+      "num": { "content": "$1" }
+    }
+  },
+
+  "template_name": {
+    "message": "Vorlagenname"
+  },
+  "template_add_field": {
+    "message": "Feld hinzufügen"
+  },
+  "template_field_key": {
+    "message": "Feldschlüssel"
+  },
+  "template_field_label": {
+    "message": "Anzeigebezeichnung"
+  },
+  "template_save": {
+    "message": "Vorlage speichern"
+  },
+
+  "tpl_manager_title": {
+    "message": "Vorlagenverwaltung"
+  },
+  "tpl_manager_desc": {
+    "message": "Kartenfeld-Vorlagen verwalten, Datenstruktur definieren."
+  },
+  "tpl_count": {
+    "message": "$COUNT$ Vorlagen",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_create_new": {
+    "message": "Neue Vorlage erstellen"
+  },
+  "tpl_create_hint": {
+    "message": "Von leer starten oder Preset auswählen"
+  },
+  "tpl_name_placeholder": {
+    "message": "Vorlagenname (z.B. Artikel)"
+  },
+  "tpl_name_exists": {
+    "message": "Name existiert bereits"
+  },
+  "tpl_name_exists_desc": {
+    "message": "Eine Vorlage mit diesem Namen existiert bereits."
+  },
+  "tpl_created": {
+    "message": "Vorlage erstellt"
+  },
+  "btn_create": {
+    "message": "Erstellen"
+  },
+  "tpl_presets": {
+    "message": "Presets:"
+  },
+  "tpl_preset_book": {
+    "message": "📚 Buch"
+  },
+  "tpl_preset_tool": {
+    "message": "🔧 Werkzeug"
+  },
+  "tpl_field_count": {
+    "message": "$COUNT$ Felder",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_usage_count": {
+    "message": "Verwendet: $COUNT$",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "tpl_add_field_section": {
+    "message": "Feld hinzufügen"
+  },
+  "tpl_field_display_name": {
+    "message": "Anzeigename"
+  },
+  "tpl_field_added": {
+    "message": "Feld hinzugefügt"
+  },
+  "btn_add": {
+    "message": "Hinzufügen"
+  },
+  "btn_got_it": {
+    "message": "OK"
+  },
+  "btn_expand": {
+    "message": "ERWEITERN"
+  },
+  "btn_collapse": {
+    "message": "REDUZIEREN"
+  },
+  "btn_add_group": {
+    "message": "Gruppe"
+  },
+  "tooltip_expand_all": {
+    "message": "Alle Gruppen erweitern"
+  },
+  "tooltip_collapse_all": {
+    "message": "Alle Gruppen reduzieren"
+  },
+  "tooltip_add_group": {
+    "message": "Neue Gruppe hinzufügen"
+  },
+
+  "share_title": {
+    "message": "Teilen"
+  },
+  "share_publish": {
+    "message": "Veröffentlichen"
+  },
+  "share_copy_link": {
+    "message": "Link kopieren"
+  },
+  "share_link_copied": {
+    "message": "Link kopiert"
+  },
+
+  "org_switch": {
+    "message": "Organisation wechseln"
+  },
+  "org_create": {
+    "message": "Organisation erstellen"
+  },
+  "org_name": {
+    "message": "Organisationsname"
+  },
+
+  "items_count": {
+    "message": "$COUNT$ Elemente",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "version": {
+    "message": "Version"
+  },
+
+  "toast_renamed": {
+    "message": "Umbenannt"
+  },
+  "toast_rename_failed": {
+    "message": "Umbenennen fehlgeschlagen"
+  },
+  "toast_reordered": {
+    "message": "Neu geordnet"
+  },
+  "toast_token_saved": {
+    "message": "GitHub Token gespeichert!"
+  },
+  "toast_token_save_failed": {
+    "message": "Token speichern fehlgeschlagen"
+  },
+  "toast_copied": {
+    "message": "In Zwischenablage kopiert"
+  },
+  "toast_copy_failed": {
+    "message": "Kopieren fehlgeschlagen"
+  },
+  "toast_added": {
+    "message": "$NAME$ hinzugefügt",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "toast_created_from_tab": {
+    "message": "Aus Tab erstellt und zur Gruppe hinzugefügt"
+  },
+  "toast_operation_failed": {
+    "message": "Operation fehlgeschlagen"
+  },
+  "toast_move_failed": {
+    "message": "Verschieben fehlgeschlagen"
+  },
+  "toast_create_failed": {
+    "message": "Erstellen fehlgeschlagen"
+  },
+  "toast_group_deleted": {
+    "message": "Gruppe und Lesezeichen gelöscht"
+  },
+
+  "group_expand": {
+    "message": "Erweitern"
+  },
+  "group_collapse": {
+    "message": "Reduzieren"
+  },
+  "group_open_all": {
+    "message": "Alle Tabs öffnen"
+  },
+  "group_settings": {
+    "message": "Gruppeneinstellungen"
+  },
+  "group_min_one": {
+    "message": "Mindestens eine Gruppe erforderlich"
+  },
+
+  "menu_share_group": {
+    "message": "Diese Gruppe teilen"
+  },
+
+  "confirm_delete_group_title": {
+    "message": "Gruppe löschen"
+  },
+  "confirm_delete_group_desc": {
+    "message": "Diese Gruppe und ihre Lesezeichen löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+  },
+
+  "org_add_new": {
+    "message": "Neue Organisation hinzufügen"
+  },
+  "org_import_hint": {
+    "message": "Importieren (Toby/HTML)"
+  },
+  "org_confirm_delete_title": {
+    "message": "Organisation löschen bestätigen"
+  },
+  "org_confirm_delete_desc": {
+    "message": "Sind Sie sicher, dass Sie \"$NAME$\" löschen möchten?",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "org_delete_warning": {
+    "message": "Warnung: Dies löscht dauerhaft alle Sammlungen, Gruppen und Lesezeichen unter dieser Organisation!"
+  },
+  "org_min_one": {
+    "message": "Löschen fehlgeschlagen: Mindestens eine Organisation erforderlich"
+  },
+  "toast_org_deleted": {
+    "message": "Organisation und alle Daten gelöscht"
+  },
+  "btn_confirm_delete": {
+    "message": "Löschen bestätigen"
+  },
+  "org_manage_title": {
+    "message": "Organisationen verwalten"
+  },
+  "org_manage_desc": {
+    "message": "Organisationen umbenennen oder löschen"
+  },
+  "org_name_label": {
+    "message": "Organisationsname"
+  },
+  "org_color_label": {
+    "message": "Farbe"
+  },
+  "toast_update_failed": {
+    "message": "Aktualisierung fehlgeschlagen"
+  },
+  "settings_btn": {
+    "message": "App-Einstellungen"
+  },
+  "theme_toggle": {
+    "message": "Design wechseln"
+  },
+
+  "share_settings": {
+    "message": "Teilen-Einstellungen"
+  },
+  "share_group_title": {
+    "message": "\"$NAME$\" teilen",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "share_title_label": {
+    "message": "Teilen-Titel"
+  },
+  "share_title_placeholder": {
+    "message": "Titel der Teilen-Seite anpassen"
+  },
+  "share_description_label": {
+    "message": "Teilen-Beschreibung"
+  },
+  "share_description_placeholder": {
+    "message": "Dieses Teilen kurz beschreiben"
+  },
+  "share_items_count": {
+    "message": "Enthält $COUNT$ Elemente",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "share_publish_hint": {
+    "message": "Link veröffentlichen: Erfordert GitHub Token, automatischer Upload zu Gist"
+  },
+  "share_download_hint": {
+    "message": "HTML herunterladen: Datei lokal herunterladen, manuell hochladen"
+  },
+  "share_publish_btn": {
+    "message": "Link veröffentlichen"
+  },
+  "share_download_btn": {
+    "message": "HTML herunterladen"
+  },
+  "share_publish_title": {
+    "message": "Auf GitHub Gist veröffentlichen und Teilen-Link erhalten"
+  },
+
+  "token_setup_title": {
+    "message": "GitHub Token einrichten"
+  },
+  "token_required_desc": {
+    "message": "Ein GitHub Personal Access Token ist erforderlich, um Teilen-Links auf Gist zu veröffentlichen"
+  },
+  "token_step1": {
+    "message": "Gehen Sie zur GitHub-Einstellungsseite"
+  },
+  "token_step2": {
+    "message": "Klicken Sie auf \"Generate new token (classic)\""
+  },
+  "token_step3": {
+    "message": "Aktivieren Sie die \"gist\"-Berechtigung (nur diese wird benötigt)"
+  },
+  "token_step4": {
+    "message": "Kopieren Sie den generierten Token"
+  },
+  "token_security_notice": {
+    "message": "Sicherheitshinweis: Token wird verschlüsselt im sicheren Speicher der Browser-Erweiterung gespeichert, nicht zugänglich für Webseiten oder andere Erweiterungen"
+  },
+  "token_label": {
+    "message": "GitHub Personal Access Token"
+  },
+  "token_storage_notice": {
+    "message": "Token wird sicher lokal im Browser gespeichert, nicht auf Server hochgeladen"
+  },
+  "btn_save": {
+    "message": "Speichern"
+  },
+
+  "share_link_title": {
+    "message": "Teilen-Link"
+  },
+  "share_link_created": {
+    "message": "Teilen-Link erstellt"
+  },
+  "share_link_desc": {
+    "message": "Ihr Teilen-Link wurde auf GitHub Gist veröffentlicht. Kopieren Sie den Link zum Teilen mit anderen:"
+  },
+  "share_link_hint": {
+    "message": "Tipp: Link wird dauerhaft in Ihrem GitHub Gist gespeichert, jederzeit verwaltbar"
+  },
+  "btn_copy_link": {
+    "message": "Link kopieren"
+  },
+  "btn_open_link": {
+    "message": "Link öffnen"
+  },
+
+  "category_edit_title": {
+    "message": "Kategorie bearbeiten"
+  },
+  "category_edit_desc": {
+    "message": "Name, Farbe und Standard-Vorlage aktualisieren"
+  },
+  "category_name_label": {
+    "message": "Name"
+  },
+  "category_color_label": {
+    "message": "Farbe"
+  },
+  "category_template_label": {
+    "message": "Standard-Vorlage"
+  },
+  "category_template_none": {
+    "message": "Keine"
+  },
+  "category_delete_btn": {
+    "message": "Kategorie löschen..."
+  },
+  "category_confirm_delete": {
+    "message": "Löschen bestätigen?"
+  },
+  "category_min_one": {
+    "message": "Löschen fehlgeschlagen: Mindestens eine Sammlung erforderlich"
+  },
+  "toast_category_deleted": {
+    "message": "Sammlung und alle Daten gelöscht"
+  },
+
+  "card_no_description": {
+    "message": "Keine Beschreibung angegeben."
+  },
+  "card_delete_title": {
+    "message": "Karte löschen?"
+  },
+  "card_delete_desc": {
+    "message": "Sind Sie sicher, dass Sie diese Webseite entfernen möchten?"
+  },
+  "card_edit_title": {
+    "message": "Webseite bearbeiten"
+  },
+  "card_title_label": {
+    "message": "Titel"
+  },
+  "card_url_label": {
+    "message": "URL"
+  },
+  "card_note_label": {
+    "message": "Notiz"
+  },
+  "btn_save_changes": {
+    "message": "Änderungen speichern"
+  },
+
+  "toast_open_tabs_failed": {
+    "message": "Tabs öffnen fehlgeschlagen"
+  },
+  "toast_add_tab_failed": {
+    "message": "Tab hinzufügen fehlgeschlagen"
+  },
+  "drag_tabs_hint": {
+    "message": "Tabs hierher ziehen zum Speichern"
+  },
+  "confirm_delete_selected_title": {
+    "message": "Ausgewählte löschen bestätigen"
+  },
+  "confirm_open_tabs": {
+    "message": "$COUNT$ Tabs öffnen?",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "context_save_page": {
+    "message": "Seite in LinkTrove speichern"
+  },
+  "context_save_link": {
+    "message": "Link in LinkTrove speichern"
+  },
+  "context_save_selection": {
+    "message": "Auswahl in LinkTrove speichern"
+  },
+  "context_save_no_groups": {
+    "message": "Keine Gruppen verfügbar"
+  },
+  "context_save_open_app": {
+    "message": "LinkTrove öffnen"
+  },
+  "context_save_no_organizations": {
+    "message": "Noch keine Organisationen"
+  },
+  "context_label_org": {
+    "message": "Organisation"
+  },
+  "context_label_collection": {
+    "message": "Sammlung"
+  },
+  "context_label_group": {
+    "message": "Gruppe"
+  }
+}

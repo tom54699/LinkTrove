@@ -294,6 +294,12 @@
   "lang_ko": {
     "message": "한국어"
   },
+  "lang_es": {
+    "message": "Español"
+  },
+  "lang_de": {
+    "message": "Deutsch"
+  },
   "lang_changed": {
     "message": "언어가 변경되었습니다"
   },
@@ -1006,5 +1012,14 @@
   },
   "context_save_no_organizations": {
     "message": "아직 조직이 없습니다"
+  },
+  "context_label_org": {
+    "message": "조직"
+  },
+  "context_label_collection": {
+    "message": "컬렉션"
+  },
+  "context_label_group": {
+    "message": "그룹"
   }
 }

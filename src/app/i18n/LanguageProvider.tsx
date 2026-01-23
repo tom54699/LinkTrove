@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
-export type Language = 'en' | 'zh_TW' | 'zh_CN' | 'ja' | 'ko';
+export type Language = 'en' | 'zh_TW' | 'zh_CN' | 'ja' | 'ko' | 'es' | 'de';
 
 interface LanguageContextValue {
   language: Language;
@@ -11,7 +11,7 @@ interface LanguageContextValue {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 // Supported languages
-const SUPPORTED_LANGUAGES: Language[] = ['en', 'zh_TW', 'zh_CN', 'ja', 'ko'];
+const SUPPORTED_LANGUAGES: Language[] = ['en', 'zh_TW', 'zh_CN', 'ja', 'ko', 'es', 'de'];
 
 // Cache for loaded messages
 const messagesCache: Record<Language, Record<string, { message: string; placeholders?: Record<string, { content: string }> }>> = {
@@ -20,6 +20,8 @@ const messagesCache: Record<Language, Record<string, { message: string; placehol
   zh_CN: {},
   ja: {},
   ko: {},
+  es: {},
+  de: {},
 };
 
 // Normalize browser locale format (zh-TW → zh_TW)
@@ -188,4 +190,6 @@ export const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
   { value: 'zh_CN', label: '简体中文' },
   { value: 'ja', label: '日本語' },
   { value: 'ko', label: '한국어' },
+  { value: 'es', label: 'Español' },
+  { value: 'de', label: 'Deutsch' },
 ];
