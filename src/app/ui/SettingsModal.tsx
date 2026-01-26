@@ -519,11 +519,42 @@ const CloudSyncPanel: React.FC = () => {
 const LanguagePanel: React.FC = () => {
   const { t, language, setLanguage } = useI18n();
   const { showToast } = useFeedback();
+  const [open, setOpen] = React.useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement | null>(null);
 
   const handleLanguageChange = async (newLang: Language) => {
+    if (newLang === language) {
+      setOpen(false);
+      return;
+    }
     await setLanguage(newLang);
     showToast(t('lang_changed'), 'success');
+    setOpen(false);
   };
+
+  const selectedOption = LANGUAGE_OPTIONS.find((option) => option.value === language) || {
+    value: language,
+    label: language,
+    flag: '🌐',
+  };
+
+  React.useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!dropdownRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [open]);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -534,20 +565,56 @@ const LanguagePanel: React.FC = () => {
         </p>
 
         <div className="text-[13px] font-medium mb-2 text-[var(--fg)]">{t('lang_select_label')}</div>
-        <div className="flex gap-3">
-          {LANGUAGE_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              className={`px-4 py-2.5 rounded-lg border text-[14px] transition-all ${
-                language === option.value
-                  ? 'border-[var(--accent)] bg-[var(--accent)] text-white font-medium shadow-sm'
-                  : 'border-[var(--border)] bg-transparent text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--fg)]'
-              }`}
-              onClick={() => handleLanguageChange(option.value)}
+        <div className="relative w-full max-w-[360px]" ref={dropdownRef}>
+          <button
+            type="button"
+            className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[14px] text-[var(--fg)] flex items-center justify-between gap-3 shadow-sm hover:border-[var(--accent)] transition-all"
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            onClick={() => setOpen((prev) => !prev)}
+          >
+            <span className="flex items-center gap-2">
+              <span className="text-base">{selectedOption.flag}</span>
+              <span>{selectedOption.label}</span>
+            </span>
+            <svg
+              className={`w-4 h-4 text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`}
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
             >
-              {option.label}
-            </button>
-          ))}
+              <path d="M5.5 7.5a1 1 0 0 1 1.5 0L10 10.5l3-3a1 1 0 1 1 1.5 1.5l-3.75 3.75a1 1 0 0 1-1.5 0L5.5 9a1 1 0 0 1 0-1.5z" />
+            </svg>
+          </button>
+          <div
+            className={`absolute z-20 mt-2 w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] shadow-lg overflow-hidden transition-all ${
+              open ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'
+            }`}
+            role="listbox"
+          >
+            <div className="max-h-[240px] overflow-y-auto custom-scrollbar">
+              {LANGUAGE_OPTIONS.map((option) => {
+                const active = language === option.value;
+                return (
+                  <button
+                    type="button"
+                    key={option.value}
+                    role="option"
+                    aria-selected={active}
+                    className={`w-full px-4 py-2.5 flex items-center gap-2 text-[14px] text-left transition-colors ${
+                      active
+                        ? 'bg-[var(--accent)] text-white font-medium'
+                        : 'text-[var(--fg)] hover:bg-[var(--surface)]'
+                    }`}
+                    onClick={() => handleLanguageChange(option.value)}
+                  >
+                    <span className="text-base">{option.flag}</span>
+                    <span>{option.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>

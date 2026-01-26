@@ -186,14 +186,14 @@ export function useI18n(): LanguageContextValue {
 }
 
 // Export language options for UI
-export const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
-  { value: 'en', label: 'English' },
-  { value: 'zh_TW', label: '繁體中文' },
-  { value: 'zh_CN', label: '简体中文' },
-  { value: 'ja', label: '日本語' },
-  { value: 'ko', label: '한국어' },
-  { value: 'es', label: 'Español' },
-  { value: 'de', label: 'Deutsch' },
-  { value: 'fr', label: 'Français' },
-  { value: 'pt_BR', label: 'Português' },
+export const LANGUAGE_OPTIONS: { value: Language; label: string; flag: string }[] = [
+  { value: 'en', label: 'English', flag: '🇬🇧' },
+  { value: 'zh_TW', label: '繁體中文', flag: '🇹🇼' },
+  { value: 'zh_CN', label: '简体中文', flag: '🇨🇳' },
+  { value: 'ja', label: '日本語', flag: '🇯🇵' },
+  { value: 'ko', label: '한국어', flag: '🇰🇷' },
+  { value: 'es', label: 'Español', flag: '🇪🇸' },
+  { value: 'de', label: 'Deutsch', flag: '🇩🇪' },
+  { value: 'fr', label: 'Français', flag: '🇫🇷' },
+  { value: 'pt_BR', label: 'Português', flag: '🇧🇷' },
 ];
