@@ -283,6 +283,34 @@ describe('gcService', () => {
       expect(stats.totalTombstones).toBe(0);
     });
 
+    it('should respect maxDeletedAt when provided', async () => {
+      await clearAllStores();
+      const now = new Date();
+      const oldDate = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000); // 40 days ago
+      const lastSynced = new Date(now.getTime() - 50 * 24 * 60 * 60 * 1000); // 50 days ago
+
+      await addWebpages([
+        {
+          id: 'w1',
+          title: 'Old Delete',
+          url: 'https://example.com',
+          favicon: '',
+          note: '',
+          category: 'cat1',
+          createdAt: '2025-01-01T00:00:00Z',
+          updatedAt: oldDate.toISOString(),
+          deleted: true,
+          deletedAt: oldDate.toISOString(),
+        },
+      ]);
+
+      const result = await runGC(30, { maxDeletedAt: lastSynced.getTime() });
+
+      expect(result.cleaned).toBe(0);
+      const stats = await getGCStats();
+      expect(stats.totalTombstones).toBe(1);
+    });
+
     it('should clean only old tombstones and keep recent ones', async () => {
       await clearAllStores();
       const now = new Date();

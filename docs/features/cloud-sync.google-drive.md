@@ -112,7 +112,7 @@ Drive API 端點（REST v3）：
 刪除（第二階段）：
 - 各集合加 `deleted?: boolean`；
 - 合併時 `deleted === true` 代表優先刪除對方同 id；
-- 本地硬刪除前，先寫 tombstone 並上傳；一段時間後再做垃圾回收（GC）。
+- 本地硬刪除前，先寫 tombstone 並上傳；同步成功後自動做垃圾回收（GC），保留 30 天、7 天間隔。
 
 ---
 

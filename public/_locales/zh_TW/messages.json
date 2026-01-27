@@ -7,14 +7,12 @@
     "message": "類 Toby 視覺化分頁管理：從開啟分頁拖曳儲存為卡片",
     "description": "擴充功能描述"
   },
-
   "settings_title": {
     "message": "設定"
   },
   "settings_close": {
     "message": "關閉"
   },
-
   "nav_export_import": {
     "message": "匯出/匯入"
   },
@@ -27,7 +25,6 @@
   "nav_language": {
     "message": "語言"
   },
-
   "data_title": {
     "message": "專案備份與還原"
   },
@@ -46,7 +43,9 @@
   "data_file_selected": {
     "message": "已選取：$FILE$",
     "placeholders": {
-      "file": { "content": "$1" }
+      "file": {
+        "content": "$1"
+      }
     }
   },
   "data_import_success": {
@@ -64,26 +63,28 @@
   "data_confirm_import_desc": {
     "message": "此操作將永久取代您目前的資料與設定。"
   },
-
   "import_toby_title": {
     "message": "匯入 Toby 到此群組"
   },
   "import_file_info": {
     "message": "檔案：$FILE$",
     "placeholders": {
-      "file": { "content": "$1" }
+      "file": {
+        "content": "$1"
+      }
     }
   },
   "import_link_count": {
     "message": "$COUNT$ 個連結",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "btn_start_import": {
     "message": "開始匯入"
   },
-
   "cloud_title": {
     "message": "Google Drive 雲端同步"
   },
@@ -168,41 +169,6 @@
   "cloud_sync_bg_close": {
     "message": "關閉"
   },
-
-  "gc_title": {
-    "message": "垃圾回收 (GC)"
-  },
-  "gc_deleted_items": {
-    "message": "已刪除項目："
-  },
-  "gc_oldest_item": {
-    "message": "最舊項目："
-  },
-  "gc_none": {
-    "message": "無"
-  },
-  "gc_run": {
-    "message": "執行 GC"
-  },
-  "gc_confirm_title": {
-    "message": "確認執行 GC"
-  },
-  "gc_confirm_desc": {
-    "message": "確定要立即清理所有已刪除項目？此操作不可回復。"
-  },
-  "gc_cleaning": {
-    "message": "正在清理已刪除項目..."
-  },
-  "gc_cleaned": {
-    "message": "成功清理 $COUNT$ 個項目",
-    "placeholders": {
-      "count": { "content": "$1" }
-    }
-  },
-  "gc_nothing": {
-    "message": "無已刪除項目需清理"
-  },
-
   "snapshot_title": {
     "message": "本地快照"
   },
@@ -221,7 +187,9 @@
   "snapshot_pages": {
     "message": "$COUNT$ 網頁",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "snapshot_restore": {
@@ -242,7 +210,6 @@
   "snapshot_deleted": {
     "message": "快照刪除成功"
   },
-
   "confirm_backup_title": {
     "message": "確認立即備份"
   },
@@ -261,7 +228,6 @@
   "confirm_restore_desc": {
     "message": "確定要完全還原雲端資料？本地資料將被完全覆蓋，但系統會先自動建立本地快照以防萬一。"
   },
-
   "dialog_processing": {
     "message": "正在執行中..."
   },
@@ -274,7 +240,6 @@
   "dialog_close": {
     "message": "關閉"
   },
-
   "btn_cancel": {
     "message": "取消"
   },
@@ -293,7 +258,6 @@
   "btn_import_json": {
     "message": "匯入 JSON"
   },
-
   "lang_title": {
     "message": "語言設定"
   },
@@ -333,7 +297,6 @@
   "lang_changed": {
     "message": "語言已變更"
   },
-
   "menu_edit": {
     "message": "編輯"
   },
@@ -370,7 +333,6 @@
   "menu_delete_org": {
     "message": "刪除 Organization"
   },
-
   "toast_saved": {
     "message": "已儲存"
   },
@@ -383,13 +345,17 @@
   "toast_moved_cards": {
     "message": "已移動 $COUNT$ 張卡片",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "toast_deleted_cards": {
     "message": "已刪除 $COUNT$ 張卡片",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "toast_import_success": {
@@ -404,7 +370,9 @@
   "toast_group_added": {
     "message": "已新增 $NAME$",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "toast_add_failed": {
@@ -413,7 +381,6 @@
   "error_select_collection": {
     "message": "請先選擇一個 Collection"
   },
-
   "confirm_delete": {
     "message": "確定要刪除嗎？"
   },
@@ -423,10 +390,11 @@
   "confirm_delete_cards": {
     "message": "確定刪除 $COUNT$ 張卡片？",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
-
   "batch_move": {
     "message": "移動"
   },
@@ -439,14 +407,17 @@
   "batch_selected": {
     "message": "已選取 $COUNT$ 張",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
-
   "move_dialog_title": {
     "message": "移動 $COUNT$ 張卡片至",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "move_label_collection": {
@@ -470,7 +441,6 @@
   "error_something_wrong": {
     "message": "發生錯誤"
   },
-
   "conflict_severity_major": {
     "message": "⚠️ 重大差異"
   },
@@ -525,7 +495,6 @@
   "conflict_btn_backup_first": {
     "message": "先備份本地資料"
   },
-
   "search_placeholder": {
     "message": "搜尋..."
   },
@@ -538,19 +507,25 @@
   "search_mins_ago": {
     "message": "$MINS$ 分鐘前",
     "placeholders": {
-      "mins": { "content": "$1" }
+      "mins": {
+        "content": "$1"
+      }
     }
   },
   "search_hours_ago": {
     "message": "$HOURS$ 小時前",
     "placeholders": {
-      "hours": { "content": "$1" }
+      "hours": {
+        "content": "$1"
+      }
     }
   },
   "search_days_ago": {
     "message": "$DAYS$ 天前",
     "placeholders": {
-      "days": { "content": "$1" }
+      "days": {
+        "content": "$1"
+      }
     }
   },
   "search_action_search": {
@@ -562,7 +537,9 @@
   "search_no_results": {
     "message": "找不到相關結果「$QUERY$」",
     "placeholders": {
-      "query": { "content": "$1" }
+      "query": {
+        "content": "$1"
+      }
     }
   },
   "search_action_open": {
@@ -577,11 +554,14 @@
   "search_loaded": {
     "message": "已載入 $LOADED$ / $TOTAL$",
     "placeholders": {
-      "loaded": { "content": "$1" },
-      "total": { "content": "$2" }
+      "loaded": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
     }
   },
-
   "sidebar_collections": {
     "message": "收藏集"
   },
@@ -591,17 +571,17 @@
   "sidebar_add_group": {
     "message": "新增群組"
   },
-
   "tabs_panel_title": {
     "message": "開啟的分頁"
   },
   "tabs_window": {
     "message": "視窗 $NUM$",
     "placeholders": {
-      "num": { "content": "$1" }
+      "num": {
+        "content": "$1"
+      }
     }
   },
-
   "template_name": {
     "message": "模板名稱"
   },
@@ -617,7 +597,6 @@
   "template_save": {
     "message": "儲存模板"
   },
-
   "tpl_manager_title": {
     "message": "模板管理"
   },
@@ -627,7 +606,9 @@
   "tpl_count": {
     "message": "$COUNT$ 個模板",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "tpl_create_new": {
@@ -663,13 +644,17 @@
   "tpl_field_count": {
     "message": "$COUNT$ 欄位",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "tpl_usage_count": {
     "message": "使用中: $COUNT$",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "tpl_add_field_section": {
@@ -783,7 +768,6 @@
   "tooltip_add_group": {
     "message": "新增群組"
   },
-
   "share_title": {
     "message": "分享"
   },
@@ -796,7 +780,6 @@
   "share_link_copied": {
     "message": "連結已複製"
   },
-
   "org_switch": {
     "message": "切換 Organization"
   },
@@ -806,17 +789,17 @@
   "org_name": {
     "message": "Organization 名稱"
   },
-
   "items_count": {
     "message": "書籤 $COUNT$ 張",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "version": {
     "message": "版本"
   },
-
   "toast_renamed": {
     "message": "已重新命名"
   },
@@ -841,11 +824,10 @@
   "toast_added": {
     "message": "已新增 $NAME$",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
-  },
-  "toast_add_failed": {
-    "message": "新增失敗"
   },
   "toast_created_from_tab": {
     "message": "已從分頁建立並加入 group"
@@ -862,7 +844,6 @@
   "toast_group_deleted": {
     "message": "已刪除 Group 與其書籤"
   },
-
   "group_expand": {
     "message": "展開"
   },
@@ -878,18 +859,15 @@
   "group_min_one": {
     "message": "至少需要保留一個 Group"
   },
-
   "menu_share_group": {
     "message": "分享此群組"
   },
-
   "confirm_delete_group_title": {
     "message": "刪除 Group"
   },
   "confirm_delete_group_desc": {
     "message": "刪除此 group 以及其底下的書籤？此操作無法復原。"
   },
-
   "org_add_new": {
     "message": "新增 Organization"
   },
@@ -902,7 +880,9 @@
   "org_confirm_delete_desc": {
     "message": "確定要刪除「$NAME$」嗎？",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "org_delete_warning": {
@@ -938,14 +918,15 @@
   "theme_toggle": {
     "message": "切換主題"
   },
-
   "share_settings": {
     "message": "分享設定"
   },
   "share_group_title": {
     "message": "分享「$NAME$」",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "share_title_label": {
@@ -963,7 +944,9 @@
   "share_items_count": {
     "message": "包含 $COUNT$ 個項目",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "share_publish_hint": {
@@ -981,7 +964,6 @@
   "share_publish_title": {
     "message": "發布到 GitHub Gist 並獲得分享連結"
   },
-
   "token_setup_title": {
     "message": "設定 GitHub Token"
   },
@@ -1012,7 +994,6 @@
   "btn_save": {
     "message": "儲存"
   },
-
   "share_link_title": {
     "message": "分享連結"
   },
@@ -1031,7 +1012,6 @@
   "btn_open_link": {
     "message": "開啟連結"
   },
-
   "category_edit_title": {
     "message": "編輯 Collection"
   },
@@ -1062,7 +1042,6 @@
   "toast_category_deleted": {
     "message": "已刪除 Collection 及其所有資料"
   },
-
   "card_no_description": {
     "message": "尚無描述"
   },
@@ -1096,7 +1075,6 @@
   "btn_save_changes": {
     "message": "儲存變更"
   },
-
   "toast_open_tabs_failed": {
     "message": "開啟分頁失敗"
   },
@@ -1112,7 +1090,9 @@
   "confirm_open_tabs": {
     "message": "確定要開啟 $COUNT$ 個標籤頁嗎？",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "context_save_page": {

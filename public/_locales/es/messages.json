@@ -7,14 +7,12 @@
     "message": "Gestor visual de pestañas estilo Toby: arrastra desde las pestañas abiertas para guardar como tarjetas.",
     "description": "Extension description"
   },
-
   "settings_title": {
     "message": "Configuración"
   },
   "settings_close": {
     "message": "Cerrar"
   },
-
   "nav_export_import": {
     "message": "Exportar/Importar"
   },
@@ -27,7 +25,6 @@
   "nav_language": {
     "message": "Idioma"
   },
-
   "data_title": {
     "message": "Copia de seguridad y restauración del proyecto"
   },
@@ -46,7 +43,9 @@
   "data_file_selected": {
     "message": "Seleccionado: $FILE$",
     "placeholders": {
-      "file": { "content": "$1" }
+      "file": {
+        "content": "$1"
+      }
     }
   },
   "data_import_success": {
@@ -64,26 +63,28 @@
   "data_confirm_import_desc": {
     "message": "Esto reemplazará permanentemente tus datos y configuración actuales."
   },
-
   "import_toby_title": {
     "message": "Importar Toby a este grupo"
   },
   "import_file_info": {
     "message": "Archivo: $FILE$",
     "placeholders": {
-      "file": { "content": "$1" }
+      "file": {
+        "content": "$1"
+      }
     }
   },
   "import_link_count": {
     "message": "$COUNT$ enlaces",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "btn_start_import": {
     "message": "Iniciar importación"
   },
-
   "cloud_title": {
     "message": "Sincronización con Google Drive"
   },
@@ -168,41 +169,6 @@
   "cloud_sync_bg_close": {
     "message": "Cerrar"
   },
-
-  "gc_title": {
-    "message": "Recolección de basura (GC)"
-  },
-  "gc_deleted_items": {
-    "message": "Elementos eliminados:"
-  },
-  "gc_oldest_item": {
-    "message": "Elemento más antiguo:"
-  },
-  "gc_none": {
-    "message": "Ninguno"
-  },
-  "gc_run": {
-    "message": "Ejecutar GC"
-  },
-  "gc_confirm_title": {
-    "message": "Confirmar ejecución de GC"
-  },
-  "gc_confirm_desc": {
-    "message": "¿Limpiar permanentemente todos los elementos eliminados? Esta acción no se puede deshacer."
-  },
-  "gc_cleaning": {
-    "message": "Limpiando elementos eliminados..."
-  },
-  "gc_cleaned": {
-    "message": "$COUNT$ elementos limpiados",
-    "placeholders": {
-      "count": { "content": "$1" }
-    }
-  },
-  "gc_nothing": {
-    "message": "No hay elementos eliminados para limpiar"
-  },
-
   "snapshot_title": {
     "message": "Instantáneas locales"
   },
@@ -221,7 +187,9 @@
   "snapshot_pages": {
     "message": "$COUNT$ páginas",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "snapshot_restore": {
@@ -242,7 +210,6 @@
   "snapshot_deleted": {
     "message": "Instantánea eliminada"
   },
-
   "confirm_backup_title": {
     "message": "Confirmar copia de seguridad"
   },
@@ -261,7 +228,6 @@
   "confirm_restore_desc": {
     "message": "¿Restaurar completamente los datos de la nube? Los datos locales serán reemplazados. Se creará una instantánea primero."
   },
-
   "dialog_processing": {
     "message": "Procesando..."
   },
@@ -274,7 +240,6 @@
   "dialog_close": {
     "message": "Cerrar"
   },
-
   "btn_cancel": {
     "message": "Cancelar"
   },
@@ -293,7 +258,6 @@
   "btn_import_json": {
     "message": "Importar JSON"
   },
-
   "lang_title": {
     "message": "Configuración de idioma"
   },
@@ -333,7 +297,6 @@
   "lang_changed": {
     "message": "Idioma cambiado"
   },
-
   "menu_edit": {
     "message": "Editar"
   },
@@ -370,7 +333,6 @@
   "menu_delete_org": {
     "message": "Eliminar organización"
   },
-
   "toast_saved": {
     "message": "Guardado"
   },
@@ -383,13 +345,17 @@
   "toast_moved_cards": {
     "message": "$COUNT$ tarjetas movidas",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "toast_deleted_cards": {
     "message": "$COUNT$ tarjetas eliminadas",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "toast_import_success": {
@@ -404,7 +370,9 @@
   "toast_group_added": {
     "message": "$NAME$ añadido",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "toast_add_failed": {
@@ -413,7 +381,6 @@
   "error_select_collection": {
     "message": "Por favor selecciona una colección primero"
   },
-
   "confirm_delete": {
     "message": "¿Confirmar eliminación?"
   },
@@ -423,10 +390,11 @@
   "confirm_delete_cards": {
     "message": "¿Eliminar $COUNT$ tarjetas?",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
-
   "batch_move": {
     "message": "MOVER"
   },
@@ -439,14 +407,17 @@
   "batch_selected": {
     "message": "$COUNT$ seleccionados",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
-
   "move_dialog_title": {
     "message": "Mover $COUNT$ tarjeta(s) a",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "move_label_collection": {
@@ -470,7 +441,6 @@
   "error_something_wrong": {
     "message": "Algo salió mal."
   },
-
   "conflict_severity_major": {
     "message": "⚠️ Diferencia importante"
   },
@@ -525,7 +495,6 @@
   "conflict_btn_backup_first": {
     "message": "Hacer copia de seguridad primero"
   },
-
   "search_placeholder": {
     "message": "Buscar..."
   },
@@ -538,19 +507,25 @@
   "search_mins_ago": {
     "message": "hace $MINS$ min",
     "placeholders": {
-      "mins": { "content": "$1" }
+      "mins": {
+        "content": "$1"
+      }
     }
   },
   "search_hours_ago": {
     "message": "hace $HOURS$ h",
     "placeholders": {
-      "hours": { "content": "$1" }
+      "hours": {
+        "content": "$1"
+      }
     }
   },
   "search_days_ago": {
     "message": "hace $DAYS$ d",
     "placeholders": {
-      "days": { "content": "$1" }
+      "days": {
+        "content": "$1"
+      }
     }
   },
   "search_action_search": {
@@ -562,7 +537,9 @@
   "search_no_results": {
     "message": "Sin resultados para \"$QUERY$\"",
     "placeholders": {
-      "query": { "content": "$1" }
+      "query": {
+        "content": "$1"
+      }
     }
   },
   "search_action_open": {
@@ -577,11 +554,14 @@
   "search_loaded": {
     "message": "Cargados $LOADED$ / $TOTAL$",
     "placeholders": {
-      "loaded": { "content": "$1" },
-      "total": { "content": "$2" }
+      "loaded": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
     }
   },
-
   "sidebar_collections": {
     "message": "Colecciones"
   },
@@ -591,17 +571,17 @@
   "sidebar_add_group": {
     "message": "Añadir grupo"
   },
-
   "tabs_panel_title": {
     "message": "Pestañas abiertas"
   },
   "tabs_window": {
     "message": "Ventana $NUM$",
     "placeholders": {
-      "num": { "content": "$1" }
+      "num": {
+        "content": "$1"
+      }
     }
   },
-
   "template_name": {
     "message": "Nombre de plantilla"
   },
@@ -617,7 +597,6 @@
   "template_save": {
     "message": "Guardar plantilla"
   },
-
   "tpl_manager_title": {
     "message": "Gestión de plantillas"
   },
@@ -627,7 +606,9 @@
   "tpl_count": {
     "message": "$COUNT$ plantillas",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "tpl_create_new": {
@@ -663,13 +644,17 @@
   "tpl_field_count": {
     "message": "$COUNT$ campos",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "tpl_usage_count": {
     "message": "Usado: $COUNT$",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "tpl_add_field_section": {
@@ -783,7 +768,6 @@
   "tooltip_add_group": {
     "message": "Añadir nuevo grupo"
   },
-
   "share_title": {
     "message": "Compartir"
   },
@@ -796,7 +780,6 @@
   "share_link_copied": {
     "message": "Enlace copiado"
   },
-
   "org_switch": {
     "message": "Cambiar organización"
   },
@@ -806,17 +789,17 @@
   "org_name": {
     "message": "Nombre de organización"
   },
-
   "items_count": {
     "message": "$COUNT$ elementos",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "version": {
     "message": "Versión"
   },
-
   "toast_renamed": {
     "message": "Renombrado"
   },
@@ -841,7 +824,9 @@
   "toast_added": {
     "message": "$NAME$ añadido",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "toast_created_from_tab": {
@@ -859,7 +844,6 @@
   "toast_group_deleted": {
     "message": "Grupo y sus marcadores eliminados"
   },
-
   "group_expand": {
     "message": "Expandir"
   },
@@ -875,18 +859,15 @@
   "group_min_one": {
     "message": "Se requiere al menos un grupo"
   },
-
   "menu_share_group": {
     "message": "Compartir este grupo"
   },
-
   "confirm_delete_group_title": {
     "message": "Eliminar grupo"
   },
   "confirm_delete_group_desc": {
     "message": "¿Eliminar este grupo y sus marcadores? Esta acción no se puede deshacer."
   },
-
   "org_add_new": {
     "message": "Añadir nueva organización"
   },
@@ -899,7 +880,9 @@
   "org_confirm_delete_desc": {
     "message": "¿Estás seguro de que quieres eliminar \"$NAME$\"?",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "org_delete_warning": {
@@ -935,14 +918,15 @@
   "theme_toggle": {
     "message": "Cambiar tema"
   },
-
   "share_settings": {
     "message": "Configuración de compartir"
   },
   "share_group_title": {
     "message": "Compartir \"$NAME$\"",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "share_title_label": {
@@ -960,7 +944,9 @@
   "share_items_count": {
     "message": "Contiene $COUNT$ elementos",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "share_publish_hint": {
@@ -978,7 +964,6 @@
   "share_publish_title": {
     "message": "Publicar a GitHub Gist y obtener enlace de compartir"
   },
-
   "token_setup_title": {
     "message": "Configurar token de GitHub"
   },
@@ -1009,7 +994,6 @@
   "btn_save": {
     "message": "Guardar"
   },
-
   "share_link_title": {
     "message": "Enlace de compartir"
   },
@@ -1028,7 +1012,6 @@
   "btn_open_link": {
     "message": "Abrir enlace"
   },
-
   "category_edit_title": {
     "message": "Editar categoría"
   },
@@ -1059,7 +1042,6 @@
   "toast_category_deleted": {
     "message": "Colección y todos sus datos eliminados"
   },
-
   "card_no_description": {
     "message": "Sin descripción proporcionada."
   },
@@ -1093,7 +1075,6 @@
   "btn_save_changes": {
     "message": "Guardar cambios"
   },
-
   "toast_open_tabs_failed": {
     "message": "Error al abrir pestañas"
   },
@@ -1109,7 +1090,9 @@
   "confirm_open_tabs": {
     "message": "¿Abrir $COUNT$ pestañas?",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "context_save_page": {

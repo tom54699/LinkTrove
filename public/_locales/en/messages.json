@@ -7,14 +7,12 @@
     "message": "Toby-like visual tab manager: drag from Open Tabs to save as cards.",
     "description": "Extension description"
   },
-
   "settings_title": {
     "message": "Settings"
   },
   "settings_close": {
     "message": "Close"
   },
-
   "nav_export_import": {
     "message": "Export/Import"
   },
@@ -27,7 +25,6 @@
   "nav_language": {
     "message": "Language"
   },
-
   "data_title": {
     "message": "Project Backup & Restore"
   },
@@ -46,7 +43,9 @@
   "data_file_selected": {
     "message": "Selected: $FILE$",
     "placeholders": {
-      "file": { "content": "$1" }
+      "file": {
+        "content": "$1"
+      }
     }
   },
   "data_import_success": {
@@ -64,26 +63,28 @@
   "data_confirm_import_desc": {
     "message": "This will permanently replace your current data and settings."
   },
-
   "import_toby_title": {
     "message": "Import Toby to this Group"
   },
   "import_file_info": {
     "message": "File: $FILE$",
     "placeholders": {
-      "file": { "content": "$1" }
+      "file": {
+        "content": "$1"
+      }
     }
   },
   "import_link_count": {
     "message": "$COUNT$ links",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "btn_start_import": {
     "message": "Start Import"
   },
-
   "cloud_title": {
     "message": "Google Drive Cloud Sync"
   },
@@ -168,41 +169,6 @@
   "cloud_sync_bg_close": {
     "message": "Close"
   },
-
-  "gc_title": {
-    "message": "Garbage Collection (GC)"
-  },
-  "gc_deleted_items": {
-    "message": "Deleted items:"
-  },
-  "gc_oldest_item": {
-    "message": "Oldest item:"
-  },
-  "gc_none": {
-    "message": "None"
-  },
-  "gc_run": {
-    "message": "Run GC"
-  },
-  "gc_confirm_title": {
-    "message": "Confirm Run GC"
-  },
-  "gc_confirm_desc": {
-    "message": "Permanently clean all deleted items? This cannot be undone."
-  },
-  "gc_cleaning": {
-    "message": "Cleaning deleted items..."
-  },
-  "gc_cleaned": {
-    "message": "Cleaned $COUNT$ items",
-    "placeholders": {
-      "count": { "content": "$1" }
-    }
-  },
-  "gc_nothing": {
-    "message": "No deleted items to clean"
-  },
-
   "snapshot_title": {
     "message": "Local Snapshots"
   },
@@ -221,7 +187,9 @@
   "snapshot_pages": {
     "message": "$COUNT$ pages",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "snapshot_restore": {
@@ -242,7 +210,6 @@
   "snapshot_deleted": {
     "message": "Snapshot deleted"
   },
-
   "confirm_backup_title": {
     "message": "Confirm Backup"
   },
@@ -261,7 +228,6 @@
   "confirm_restore_desc": {
     "message": "Fully restore cloud data? Local data will be replaced. A snapshot will be created first."
   },
-
   "dialog_processing": {
     "message": "Processing..."
   },
@@ -274,7 +240,6 @@
   "dialog_close": {
     "message": "Close"
   },
-
   "btn_cancel": {
     "message": "Cancel"
   },
@@ -293,7 +258,6 @@
   "btn_import_json": {
     "message": "Import JSON"
   },
-
   "lang_title": {
     "message": "Language Settings"
   },
@@ -333,7 +297,6 @@
   "lang_changed": {
     "message": "Language changed"
   },
-
   "menu_edit": {
     "message": "Edit"
   },
@@ -370,7 +333,6 @@
   "menu_delete_org": {
     "message": "Delete Organization"
   },
-
   "toast_saved": {
     "message": "Saved"
   },
@@ -383,13 +345,17 @@
   "toast_moved_cards": {
     "message": "Moved $COUNT$ cards",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "toast_deleted_cards": {
     "message": "Deleted $COUNT$ cards",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "toast_import_success": {
@@ -404,7 +370,9 @@
   "toast_group_added": {
     "message": "Added $NAME$",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "toast_add_failed": {
@@ -413,7 +381,6 @@
   "error_select_collection": {
     "message": "Please select a Collection first"
   },
-
   "confirm_delete": {
     "message": "Confirm delete?"
   },
@@ -423,10 +390,11 @@
   "confirm_delete_cards": {
     "message": "Delete $COUNT$ cards?",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
-
   "batch_move": {
     "message": "MOVE"
   },
@@ -439,14 +407,17 @@
   "batch_selected": {
     "message": "$COUNT$ selected",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
-
   "move_dialog_title": {
     "message": "Move $COUNT$ Card(s) to",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "move_label_collection": {
@@ -470,7 +441,6 @@
   "error_something_wrong": {
     "message": "Something went wrong."
   },
-
   "conflict_severity_major": {
     "message": "⚠️ Major Difference"
   },
@@ -525,7 +495,6 @@
   "conflict_btn_backup_first": {
     "message": "Backup Local First"
   },
-
   "search_placeholder": {
     "message": "Search..."
   },
@@ -538,19 +507,25 @@
   "search_mins_ago": {
     "message": "$MINS$m ago",
     "placeholders": {
-      "mins": { "content": "$1" }
+      "mins": {
+        "content": "$1"
+      }
     }
   },
   "search_hours_ago": {
     "message": "$HOURS$h ago",
     "placeholders": {
-      "hours": { "content": "$1" }
+      "hours": {
+        "content": "$1"
+      }
     }
   },
   "search_days_ago": {
     "message": "$DAYS$d ago",
     "placeholders": {
-      "days": { "content": "$1" }
+      "days": {
+        "content": "$1"
+      }
     }
   },
   "search_action_search": {
@@ -562,7 +537,9 @@
   "search_no_results": {
     "message": "No results for \"$QUERY$\"",
     "placeholders": {
-      "query": { "content": "$1" }
+      "query": {
+        "content": "$1"
+      }
     }
   },
   "search_action_open": {
@@ -577,11 +554,14 @@
   "search_loaded": {
     "message": "Loaded $LOADED$ / $TOTAL$",
     "placeholders": {
-      "loaded": { "content": "$1" },
-      "total": { "content": "$2" }
+      "loaded": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
     }
   },
-
   "sidebar_collections": {
     "message": "Collections"
   },
@@ -591,17 +571,17 @@
   "sidebar_add_group": {
     "message": "Add Group"
   },
-
   "tabs_panel_title": {
     "message": "Open Tabs"
   },
   "tabs_window": {
     "message": "Window $NUM$",
     "placeholders": {
-      "num": { "content": "$1" }
+      "num": {
+        "content": "$1"
+      }
     }
   },
-
   "template_name": {
     "message": "Template Name"
   },
@@ -617,7 +597,6 @@
   "template_save": {
     "message": "Save Template"
   },
-
   "tpl_manager_title": {
     "message": "Templates Management"
   },
@@ -627,7 +606,9 @@
   "tpl_count": {
     "message": "$COUNT$ templates",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "tpl_create_new": {
@@ -663,13 +644,17 @@
   "tpl_field_count": {
     "message": "$COUNT$ fields",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "tpl_usage_count": {
     "message": "Used: $COUNT$",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "tpl_add_field_section": {
@@ -783,7 +768,6 @@
   "tooltip_add_group": {
     "message": "Add new group"
   },
-
   "share_title": {
     "message": "Share"
   },
@@ -796,7 +780,6 @@
   "share_link_copied": {
     "message": "Link copied"
   },
-
   "org_switch": {
     "message": "Switch Organization"
   },
@@ -806,17 +789,17 @@
   "org_name": {
     "message": "Organization Name"
   },
-
   "items_count": {
     "message": "$COUNT$ items",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "version": {
     "message": "Version"
   },
-
   "toast_renamed": {
     "message": "Renamed"
   },
@@ -841,11 +824,10 @@
   "toast_added": {
     "message": "Added $NAME$",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
-  },
-  "toast_add_failed": {
-    "message": "Add failed"
   },
   "toast_created_from_tab": {
     "message": "Created from tab and added to group"
@@ -862,7 +844,6 @@
   "toast_group_deleted": {
     "message": "Deleted group and its bookmarks"
   },
-
   "group_expand": {
     "message": "Expand"
   },
@@ -878,18 +859,15 @@
   "group_min_one": {
     "message": "At least one group is required"
   },
-
   "menu_share_group": {
     "message": "Share this group"
   },
-
   "confirm_delete_group_title": {
     "message": "Delete Group"
   },
   "confirm_delete_group_desc": {
     "message": "Delete this group and its bookmarks? This cannot be undone."
   },
-
   "org_add_new": {
     "message": "Add new organization"
   },
@@ -902,7 +880,9 @@
   "org_confirm_delete_desc": {
     "message": "Are you sure you want to delete \"$NAME$\"?",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "org_delete_warning": {
@@ -938,14 +918,15 @@
   "theme_toggle": {
     "message": "Toggle Theme"
   },
-
   "share_settings": {
     "message": "Share Settings"
   },
   "share_group_title": {
     "message": "Share \"$NAME$\"",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "share_title_label": {
@@ -963,7 +944,9 @@
   "share_items_count": {
     "message": "Contains $COUNT$ items",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "share_publish_hint": {
@@ -981,7 +964,6 @@
   "share_publish_title": {
     "message": "Publish to GitHub Gist and get share link"
   },
-
   "token_setup_title": {
     "message": "Setup GitHub Token"
   },
@@ -1012,7 +994,6 @@
   "btn_save": {
     "message": "Save"
   },
-
   "share_link_title": {
     "message": "Share Link"
   },
@@ -1031,7 +1012,6 @@
   "btn_open_link": {
     "message": "Open Link"
   },
-
   "category_edit_title": {
     "message": "Edit Category"
   },
@@ -1062,7 +1042,6 @@
   "toast_category_deleted": {
     "message": "Deleted Collection and all its data"
   },
-
   "card_no_description": {
     "message": "No description provided."
   },
@@ -1096,7 +1075,6 @@
   "btn_save_changes": {
     "message": "Save Changes"
   },
-
   "toast_open_tabs_failed": {
     "message": "Failed to open tabs"
   },
@@ -1112,7 +1090,9 @@
   "confirm_open_tabs": {
     "message": "Open $COUNT$ tabs?",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "context_save_page": {

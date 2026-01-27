@@ -7,14 +7,12 @@
     "message": "Toby風ビジュアルタブマネージャー：開いているタブからドラッグしてカードとして保存。",
     "description": "Extension description"
   },
-
   "settings_title": {
     "message": "設定"
   },
   "settings_close": {
     "message": "閉じる"
   },
-
   "nav_export_import": {
     "message": "エクスポート/インポート"
   },
@@ -27,7 +25,6 @@
   "nav_language": {
     "message": "言語"
   },
-
   "data_title": {
     "message": "プロジェクトのバックアップと復元"
   },
@@ -46,7 +43,9 @@
   "data_file_selected": {
     "message": "選択済み: $FILE$",
     "placeholders": {
-      "file": { "content": "$1" }
+      "file": {
+        "content": "$1"
+      }
     }
   },
   "data_import_success": {
@@ -64,26 +63,28 @@
   "data_confirm_import_desc": {
     "message": "これにより、現在のデータと設定が完全に置き換えられます。"
   },
-
   "import_toby_title": {
     "message": "Tobyをこのグループにインポート"
   },
   "import_file_info": {
     "message": "ファイル: $FILE$",
     "placeholders": {
-      "file": { "content": "$1" }
+      "file": {
+        "content": "$1"
+      }
     }
   },
   "import_link_count": {
     "message": "$COUNT$ 件のリンク",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "btn_start_import": {
     "message": "インポート開始"
   },
-
   "cloud_title": {
     "message": "Google Driveクラウド同期"
   },
@@ -168,41 +169,6 @@
   "cloud_sync_bg_close": {
     "message": "閉じる"
   },
-
-  "gc_title": {
-    "message": "ガベージコレクション (GC)"
-  },
-  "gc_deleted_items": {
-    "message": "削除済みアイテム:"
-  },
-  "gc_oldest_item": {
-    "message": "最古のアイテム:"
-  },
-  "gc_none": {
-    "message": "なし"
-  },
-  "gc_run": {
-    "message": "GCを実行"
-  },
-  "gc_confirm_title": {
-    "message": "GC実行を確認"
-  },
-  "gc_confirm_desc": {
-    "message": "削除済みアイテムを完全にクリーンしますか？この操作は元に戻せません。"
-  },
-  "gc_cleaning": {
-    "message": "削除済みアイテムをクリーニング中..."
-  },
-  "gc_cleaned": {
-    "message": "$COUNT$ 件をクリーンしました",
-    "placeholders": {
-      "count": { "content": "$1" }
-    }
-  },
-  "gc_nothing": {
-    "message": "クリーンする削除済みアイテムがありません"
-  },
-
   "snapshot_title": {
     "message": "ローカルスナップショット"
   },
@@ -221,7 +187,9 @@
   "snapshot_pages": {
     "message": "$COUNT$ ページ",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "snapshot_restore": {
@@ -242,7 +210,6 @@
   "snapshot_deleted": {
     "message": "スナップショットを削除しました"
   },
-
   "confirm_backup_title": {
     "message": "バックアップを確認"
   },
@@ -261,7 +228,6 @@
   "confirm_restore_desc": {
     "message": "クラウドデータを完全に復元しますか？ローカルデータは置き換えられます。最初にスナップショットが作成されます。"
   },
-
   "dialog_processing": {
     "message": "処理中..."
   },
@@ -274,7 +240,6 @@
   "dialog_close": {
     "message": "閉じる"
   },
-
   "btn_cancel": {
     "message": "キャンセル"
   },
@@ -293,7 +258,6 @@
   "btn_import_json": {
     "message": "JSONインポート"
   },
-
   "lang_title": {
     "message": "言語設定"
   },
@@ -333,7 +297,6 @@
   "lang_changed": {
     "message": "言語を変更しました"
   },
-
   "menu_edit": {
     "message": "編集"
   },
@@ -370,7 +333,6 @@
   "menu_delete_org": {
     "message": "組織を削除"
   },
-
   "toast_saved": {
     "message": "保存しました"
   },
@@ -383,13 +345,17 @@
   "toast_moved_cards": {
     "message": "$COUNT$ 枚のカードを移動しました",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "toast_deleted_cards": {
     "message": "$COUNT$ 枚のカードを削除しました",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "toast_import_success": {
@@ -404,7 +370,9 @@
   "toast_group_added": {
     "message": "$NAME$ を追加しました",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "toast_add_failed": {
@@ -413,7 +381,6 @@
   "error_select_collection": {
     "message": "先にコレクションを選択してください"
   },
-
   "confirm_delete": {
     "message": "削除を確認しますか？"
   },
@@ -423,10 +390,11 @@
   "confirm_delete_cards": {
     "message": "$COUNT$ 枚のカードを削除しますか？",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
-
   "batch_move": {
     "message": "移動"
   },
@@ -439,14 +407,17 @@
   "batch_selected": {
     "message": "$COUNT$ 件選択中",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
-
   "move_dialog_title": {
     "message": "$COUNT$ 枚のカードを移動",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "move_label_collection": {
@@ -470,7 +441,6 @@
   "error_something_wrong": {
     "message": "エラーが発生しました。"
   },
-
   "conflict_severity_major": {
     "message": "⚠️ 大きな差異"
   },
@@ -525,7 +495,6 @@
   "conflict_btn_backup_first": {
     "message": "まずローカルをバックアップ"
   },
-
   "search_placeholder": {
     "message": "検索..."
   },
@@ -538,19 +507,25 @@
   "search_mins_ago": {
     "message": "$MINS$分前",
     "placeholders": {
-      "mins": { "content": "$1" }
+      "mins": {
+        "content": "$1"
+      }
     }
   },
   "search_hours_ago": {
     "message": "$HOURS$時間前",
     "placeholders": {
-      "hours": { "content": "$1" }
+      "hours": {
+        "content": "$1"
+      }
     }
   },
   "search_days_ago": {
     "message": "$DAYS$日前",
     "placeholders": {
-      "days": { "content": "$1" }
+      "days": {
+        "content": "$1"
+      }
     }
   },
   "search_action_search": {
@@ -562,7 +537,9 @@
   "search_no_results": {
     "message": "「$QUERY$」の検索結果がありません",
     "placeholders": {
-      "query": { "content": "$1" }
+      "query": {
+        "content": "$1"
+      }
     }
   },
   "search_action_open": {
@@ -577,11 +554,14 @@
   "search_loaded": {
     "message": "$LOADED$ / $TOTAL$ 件読み込み済み",
     "placeholders": {
-      "loaded": { "content": "$1" },
-      "total": { "content": "$2" }
+      "loaded": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
     }
   },
-
   "sidebar_collections": {
     "message": "コレクション"
   },
@@ -591,17 +571,17 @@
   "sidebar_add_group": {
     "message": "グループを追加"
   },
-
   "tabs_panel_title": {
     "message": "開いているタブ"
   },
   "tabs_window": {
     "message": "ウィンドウ $NUM$",
     "placeholders": {
-      "num": { "content": "$1" }
+      "num": {
+        "content": "$1"
+      }
     }
   },
-
   "template_name": {
     "message": "テンプレート名"
   },
@@ -617,7 +597,6 @@
   "template_save": {
     "message": "テンプレートを保存"
   },
-
   "tpl_manager_title": {
     "message": "テンプレート管理"
   },
@@ -627,7 +606,9 @@
   "tpl_count": {
     "message": "$COUNT$ 件のテンプレート",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "tpl_create_new": {
@@ -663,13 +644,17 @@
   "tpl_field_count": {
     "message": "$COUNT$ 件のフィールド",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "tpl_usage_count": {
     "message": "使用数: $COUNT$",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "tpl_add_field_section": {
@@ -783,7 +768,6 @@
   "tooltip_add_group": {
     "message": "新規グループを追加"
   },
-
   "share_title": {
     "message": "共有"
   },
@@ -796,7 +780,6 @@
   "share_link_copied": {
     "message": "リンクをコピーしました"
   },
-
   "org_switch": {
     "message": "組織を切り替え"
   },
@@ -806,17 +789,17 @@
   "org_name": {
     "message": "組織名"
   },
-
   "items_count": {
     "message": "$COUNT$ 件",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "version": {
     "message": "バージョン"
   },
-
   "toast_renamed": {
     "message": "名前を変更しました"
   },
@@ -841,7 +824,9 @@
   "toast_added": {
     "message": "$NAME$ を追加しました",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "toast_created_from_tab": {
@@ -859,7 +844,6 @@
   "toast_group_deleted": {
     "message": "グループとそのブックマークを削除しました"
   },
-
   "group_expand": {
     "message": "展開"
   },
@@ -875,18 +859,15 @@
   "group_min_one": {
     "message": "少なくとも1つのグループが必要です"
   },
-
   "menu_share_group": {
     "message": "このグループを共有"
   },
-
   "confirm_delete_group_title": {
     "message": "グループを削除"
   },
   "confirm_delete_group_desc": {
     "message": "このグループとそのブックマークを削除しますか？この操作は元に戻せません。"
   },
-
   "org_add_new": {
     "message": "新規組織を追加"
   },
@@ -899,7 +880,9 @@
   "org_confirm_delete_desc": {
     "message": "「$NAME$」を削除してもよろしいですか？",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "org_delete_warning": {
@@ -935,14 +918,15 @@
   "theme_toggle": {
     "message": "テーマ切り替え"
   },
-
   "share_settings": {
     "message": "共有設定"
   },
   "share_group_title": {
     "message": "「$NAME$」を共有",
     "placeholders": {
-      "name": { "content": "$1" }
+      "name": {
+        "content": "$1"
+      }
     }
   },
   "share_title_label": {
@@ -960,7 +944,9 @@
   "share_items_count": {
     "message": "$COUNT$ 件を含む",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "share_publish_hint": {
@@ -978,7 +964,6 @@
   "share_publish_title": {
     "message": "GitHub Gistに公開して共有リンクを取得"
   },
-
   "token_setup_title": {
     "message": "GitHubトークンを設定"
   },
@@ -1009,7 +994,6 @@
   "btn_save": {
     "message": "保存"
   },
-
   "share_link_title": {
     "message": "共有リンク"
   },
@@ -1028,7 +1012,6 @@
   "btn_open_link": {
     "message": "リンクを開く"
   },
-
   "category_edit_title": {
     "message": "カテゴリーを編集"
   },
@@ -1059,7 +1042,6 @@
   "toast_category_deleted": {
     "message": "コレクションとすべてのデータを削除しました"
   },
-
   "card_no_description": {
     "message": "説明がありません。"
   },
@@ -1093,7 +1075,6 @@
   "btn_save_changes": {
     "message": "変更を保存"
   },
-
   "toast_open_tabs_failed": {
     "message": "タブを開けませんでした"
   },
@@ -1109,7 +1090,9 @@
   "confirm_open_tabs": {
     "message": "$COUNT$ 個のタブを開きますか？",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
   "context_save_page": {

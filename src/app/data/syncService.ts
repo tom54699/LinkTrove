@@ -35,6 +35,14 @@ let pushing = false;
 let restoring = false;
 let storageListenerAttached = false;
 
+async function triggerAutoGC(lastSyncedAt?: string) {
+  if (!lastSyncedAt) return;
+  try {
+    const gcModule = await import('./gcService');
+    await gcModule.runAutoGC({ lastSyncedAt });
+  } catch {}
+}
+
 function setLocalStatus(patch: Partial<SyncStatus>) {
   status = { ...status, ...patch };
   status.auto = autoEnabled;
@@ -250,6 +258,7 @@ export async function backupNow(options?: { blocking?: boolean }): Promise<void>
       lastUploadedAt: now,
       lastChecksum: info?.md5Checksum ?? status.lastChecksum,
     });
+    void triggerAutoGC(now);
   } catch (e: any) {
     setLocalStatus({ syncing: false, syncPhase: undefined, blocking: useBlocking, error: String(e?.message || e) });
     throw e;
@@ -355,6 +364,7 @@ export async function restoreNow(
       lastChecksum: fileInfo.md5Checksum ?? status.lastChecksum,
       error: undefined,
     });
+    void triggerAutoGC(now);
   } catch (e: any) {
     setLocalStatus({ syncing: false, syncPhase: undefined, blocking: blockingActive, error: String(e?.message || e) });
     throw e;

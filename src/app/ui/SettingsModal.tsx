@@ -238,10 +238,8 @@ const CloudSyncPanel: React.FC = () => {
   const [autoEnabled, setAutoEnabled] = React.useState(false);
   const [snapshots, setSnapshots] = React.useState<any[]>([]);
   const [loadingSnapshots, setLoadingSnapshots] = React.useState(false);
-  const [gcStats, setGcStats] = React.useState<{ totalTombstones: number; oldestTombstone?: string } | null>(null);
-  const [loadingGC, setLoadingGC] = React.useState(false);
   const [confirmDialog, setConfirmDialog] = React.useState<{ 
-    type: 'gc' | 'restore-snapshot' | 'delete-snapshot' | 'backup' | 'merge' | 'restore-cloud'; 
+    type: 'restore-snapshot' | 'delete-snapshot' | 'backup' | 'merge' | 'restore-cloud'; 
     snapshotId?: string;
     status: 'idle' | 'processing' | 'success' | 'error';
     resultMessage?: string;
@@ -273,7 +271,6 @@ const CloudSyncPanel: React.FC = () => {
   React.useEffect(() => {
     loadSyncStatus();
     loadSnapshotsList();
-    loadGCStats();
     const listener = (changes: any, areaName: string) => {
       if (areaName === 'local' && (changes['cloudSync.status'] || changes['cloudSync.snapshots'])) {
         loadSyncStatus(); loadSnapshotsList();
@@ -316,7 +313,6 @@ const CloudSyncPanel: React.FC = () => {
       await snapshotModule.restoreSnapshot(snapshotId);
       await Promise.all([pagesActions.load(), catActions?.reload?.(), tplActions?.reload?.()]);
       await loadSnapshotsList();
-      await loadGCStats(); // Reload GC stats after restore
       showResult(t('snapshot_restored'));
     } catch (e: any) { setError(String(e?.message || e)); } finally { setLoadingSnapshots(false); }
   }
@@ -329,29 +325,6 @@ const CloudSyncPanel: React.FC = () => {
       await loadSnapshotsList();
       showResult(t('snapshot_deleted'));
     } catch (e: any) { setError(String(e?.message || e)); }
-  }
-
-  async function loadGCStats() {
-    try {
-      const gcModule = await import('../data/gcService');
-      setGcStats(await gcModule.getGCStats());
-    } catch { setGcStats(null); }
-  }
-
-  async function doRunGC() {
-    if (!confirmDialog) return;
-    setConfirmDialog({ ...confirmDialog, status: 'processing', progress: t('gc_cleaning') });
-    setLoadingGC(true);
-    try {
-      const gcModule = await import('../data/gcService');
-      const result = await gcModule.runGC(0);
-      await loadGCStats();
-      const msg = result.cleaned > 0 ? t('gc_cleaned', [result.cleaned]) : t('gc_nothing');
-      setConfirmDialog(prev => prev ? { ...prev, status: 'success', resultMessage: msg, progress: undefined } : null);
-      showResult(msg);
-    } catch (e: any) {
-      setConfirmDialog(prev => prev ? { ...prev, status: 'error', resultMessage: String(e?.message || e), progress: undefined } : null);
-    } finally { setLoadingGC(false); }
   }
 
   async function doConnect() {
@@ -449,17 +422,6 @@ const CloudSyncPanel: React.FC = () => {
         )}
 
         <div className="h-px bg-[var(--border)] my-5"></div>
-        <div className="text-[13px] font-medium mb-1.5 text-[var(--fg)]">{t('gc_title')}</div>
-        <div className="bg-white/[0.03] border border-[var(--border)] rounded-md p-3 text-[12px] mb-2.5">
-          <div className="flex justify-between mb-1"><span className="opacity-70">{t('gc_deleted_items')}</span><span>{gcStats?.totalTombstones ?? 0}</span></div>
-          <div className="flex justify-between"><span className="opacity-70">{t('gc_oldest_item')}</span><span>{gcStats?.oldestTombstone ? new Date(gcStats.oldestTombstone).toLocaleDateString('zh-TW') : t('gc_none')}</span></div>
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="text-[13px] px-3 py-1.5 rounded-md border border-[var(--border)] bg-transparent text-[var(--muted)] hover:bg-[var(--surface)] transition-all cursor-pointer disabled:opacity-50" disabled={loadingGC || !gcStats?.totalTombstones} onClick={() => setConfirmDialog({ type: 'gc', status: 'idle' })}>{t('gc_run')}</button>
-          {actionResult && <span className="text-[12px] text-[var(--success-text)]">✓ {actionResult.text}</span>}
-        </div>
-
-        <div className="h-px bg-[var(--border)] my-5"></div>
         <div className="text-[13px] font-medium mb-1.5 text-[var(--fg)]">{t('snapshot_title')}</div>
         {snapshots.length === 0 ? (
           <div className="text-[12px] text-[var(--muted)] opacity-60 p-3 bg-white/[0.03] border border-[var(--border)] rounded-md">{t('snapshot_empty')}</div>
@@ -494,7 +456,7 @@ const CloudSyncPanel: React.FC = () => {
           <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[460px] max-w-[95vw]" onClick={(e) => e.stopPropagation()} role="dialog">
             <div className="px-5 py-4 border-b border-[var(--border)]">
               <div className="text-base font-bold">
-                {confirmDialog.type === 'gc' ? t('gc_confirm_title') : confirmDialog.type === 'backup' ? t('confirm_backup_title') : confirmDialog.type === 'merge' ? t('confirm_merge_title') : confirmDialog.type === 'restore-cloud' ? t('confirm_restore_title') : t('btn_confirm')}
+                {confirmDialog.type === 'backup' ? t('confirm_backup_title') : confirmDialog.type === 'merge' ? t('confirm_merge_title') : confirmDialog.type === 'restore-cloud' ? t('confirm_restore_title') : t('btn_confirm')}
               </div>
             </div>
             <div className="px-5 py-5 text-[13px] text-[var(--muted)] leading-relaxed">
@@ -506,7 +468,6 @@ const CloudSyncPanel: React.FC = () => {
                 <div className="py-4 text-center"><div className="text-red-400 font-bold mb-1">{t('dialog_failed')}</div><div className="text-[12px] opacity-80">{confirmDialog.resultMessage}</div></div>
               ) : (
                 <>
-                  {confirmDialog.type === 'gc' && t('gc_confirm_desc')}
                   {confirmDialog.type === 'backup' && t('confirm_backup_desc')}
                   {confirmDialog.type === 'merge' && t('confirm_merge_desc')}
                   {confirmDialog.type === 'restore-cloud' && t('confirm_restore_desc')}
@@ -528,7 +489,7 @@ const CloudSyncPanel: React.FC = () => {
                     {t('btn_cancel')}
                   </button>
                   <button className={`px-3 py-1.5 rounded-md text-[13px] border text-white font-bold cursor-pointer ${confirmDialog.type === 'restore-cloud' || confirmDialog.type === 'delete-snapshot' ? 'bg-red-600 border-red-600' : 'bg-[var(--accent)] border-[var(--accent)]'}`} onClick={() => {
-                    if (confirmDialog.type === 'gc') doRunGC(); else if (confirmDialog.type === 'backup') doBackup(); else if (confirmDialog.type === 'merge') doRestore(true); else if (confirmDialog.type === 'restore-cloud') doRestore(false); else if (confirmDialog.type === 'restore-snapshot' && confirmDialog.snapshotId) doRestoreSnapshot(confirmDialog.snapshotId); else if (confirmDialog.type === 'delete-snapshot' && confirmDialog.snapshotId) doDeleteSnapshot(confirmDialog.snapshotId);
+                    if (confirmDialog.type === 'backup') doBackup(); else if (confirmDialog.type === 'merge') doRestore(true); else if (confirmDialog.type === 'restore-cloud') doRestore(false); else if (confirmDialog.type === 'restore-snapshot' && confirmDialog.snapshotId) doRestoreSnapshot(confirmDialog.snapshotId); else if (confirmDialog.type === 'delete-snapshot' && confirmDialog.snapshotId) doDeleteSnapshot(confirmDialog.snapshotId);
                   }}>{t('btn_confirm_execute')}</button>
                 </>
               ) : confirmDialog.status !== 'processing' ? (

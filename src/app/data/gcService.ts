@@ -28,6 +28,11 @@ export interface GCResult {
 
 const GC_STORAGE_KEY = 'cloudSync.lastGCTime';
 const AUTO_GC_INTERVAL_DAYS = 7;
+const DEFAULT_GC_RETENTION_DAYS = 30;
+
+export interface RunGCOptions {
+  maxDeletedAt?: number;
+}
 
 /**
  * Get tombstone statistics
@@ -101,8 +106,14 @@ export async function getGCStats(): Promise<GCStats> {
  * Run garbage collection to clean up old tombstones
  * @param retentionDays - Keep tombstones newer than this many days (default: 30)
  */
-export async function runGC(retentionDays: number = 30): Promise<GCResult> {
+export async function runGC(
+  retentionDays: number = DEFAULT_GC_RETENTION_DAYS,
+  options?: RunGCOptions
+): Promise<GCResult> {
   const cutoffTime = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+  const maxDeletedAt = typeof options?.maxDeletedAt === 'number' && isFinite(options.maxDeletedAt)
+    ? options.maxDeletedAt
+    : undefined;
 
   const db = await openDB();
   const tx = db.transaction(['webpages', 'categories', 'subcategories', 'templates', 'organizations'], 'readwrite');
@@ -131,6 +142,7 @@ export async function runGC(retentionDays: number = 30): Promise<GCResult> {
     if (!item.deleted || !item.deletedAt) return false;
     const deletedTime = typeof item.deletedAt === 'string' ? Date.parse(item.deletedAt) : item.deletedAt;
     if (isNaN(deletedTime)) return false;
+    if (typeof maxDeletedAt === 'number' && deletedTime > maxDeletedAt) return false;
     return deletedTime < cutoffTime;
   };
 
@@ -158,6 +170,22 @@ export async function runGC(retentionDays: number = 30): Promise<GCResult> {
   // Record GC time
   await recordGCTime();
 
+  return result;
+}
+
+export async function runAutoGC(options: { lastSyncedAt?: string; retentionDays?: number } = {}): Promise<GCResult | null> {
+  const lastSyncedTime = parseTime(options.lastSyncedAt);
+  if (!lastSyncedTime) {
+    return null;
+  }
+  if (typeof indexedDB === 'undefined') {
+    return null;
+  }
+  const canRun = await shouldAutoGC();
+  if (!canRun) {
+    return null;
+  }
+  const result = await runGC(options.retentionDays ?? DEFAULT_GC_RETENTION_DAYS, { maxDeletedAt: lastSyncedTime });
   return result;
 }
 
@@ -229,4 +257,11 @@ function requestToPromise<T>(req: IDBRequest<T>): Promise<T> {
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
+}
+
+function parseTime(value?: string | number): number | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'number') return isNaN(value) ? undefined : value;
+  const parsed = Date.parse(value);
+  return isNaN(parsed) ? undefined : parsed;
 }
