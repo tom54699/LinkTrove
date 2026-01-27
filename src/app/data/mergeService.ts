@@ -9,6 +9,12 @@ import type {
   OrganizationData,
 } from '../../background/storageService';
 import { normalizeGroupOrder } from '../../utils/order-utils';
+import {
+  DEFAULT_CATEGORY_NAME,
+  DEFAULT_GROUP_NAME,
+  DEFAULT_ORGANIZATION_NAME,
+  isDefaultName,
+} from '../../utils/defaults';
 
 export interface ExportPayload {
   schemaVersion: number;
@@ -177,6 +183,20 @@ function mergeCategories(
 ): CategoryData[] {
   const merged = new Map<string, CategoryData>();
 
+  const toTimestamp = (item: any): number => {
+    const updated = item?.updatedAt;
+    const created = item?.createdAt;
+    if (updated) {
+      if (typeof updated === 'string') return Date.parse(updated) || 0;
+      if (typeof updated === 'number') return updated;
+    }
+    if (created) {
+      if (typeof created === 'string') return Date.parse(created) || 0;
+      if (typeof created === 'number') return created;
+    }
+    return 0;
+  };
+
   // Merge by ID
   for (const item of local) {
     merged.set(item.id, item);
@@ -187,9 +207,16 @@ function mergeCategories(
     if (!localItem) {
       merged.set(remoteItem.id, remoteItem);
     } else {
-      // For categories, we don't have updatedAt, so prefer remote if different
-      // In future we should add updatedAt to CategoryData
-      merged.set(remoteItem.id, remoteItem);
+      const localTime = toTimestamp(localItem as any);
+      const remoteTime = toTimestamp(remoteItem as any);
+      if (remoteTime === 0 && localTime === 0) {
+        // No timestamps - prefer remote
+        merged.set(remoteItem.id, remoteItem);
+      } else if (remoteTime >= localTime) {
+        merged.set(remoteItem.id, remoteItem);
+      } else {
+        merged.set(remoteItem.id, localItem);
+      }
     }
   }
 
@@ -221,6 +248,59 @@ function mergeTemplates(
   }
 
   return Array.from(merged.values());
+}
+
+function cleanupDefaultHierarchy(
+  merged: MergeResult,
+  remoteHasData: boolean
+): MergeResult {
+  if (!remoteHasData) return merged;
+
+  const orgs = merged.organizations || [];
+  const cats = merged.categories || [];
+  const subs = merged.subcategories || [];
+  const pages = merged.webpages || [];
+
+  const defaultOrg = orgs.find(
+    (o) => o?.isDefault && isDefaultName(o?.name, DEFAULT_ORGANIZATION_NAME)
+  );
+  if (!defaultOrg) return merged;
+
+  const catsInOrg = cats.filter((c) => c.organizationId === defaultOrg.id);
+  if (catsInOrg.length !== 1) return merged;
+
+  const defaultCat = catsInOrg[0];
+  if (!defaultCat?.isDefault || !isDefaultName(defaultCat?.name, DEFAULT_CATEGORY_NAME)) {
+    return merged;
+  }
+
+  const subsInCat = subs.filter((s) => s.categoryId === defaultCat.id);
+  if (subsInCat.length !== 1) return merged;
+
+  const defaultGroup = subsInCat[0];
+  if (!defaultGroup?.isDefault || !isDefaultName(defaultGroup?.name, DEFAULT_GROUP_NAME)) {
+    return merged;
+  }
+
+  const hasCards = pages.some((p: any) => !p?.deleted && p?.subcategoryId === defaultGroup.id);
+  if (hasCards) return merged;
+
+  const nextOrgs = orgs.filter((o) => o.id !== defaultOrg.id);
+  const nextCats = cats.filter((c) => c.id !== defaultCat.id);
+  const nextSubs = subs.filter((s) => s.id !== defaultGroup.id);
+  const nextOrders = {
+    ...merged.orders,
+    subcategories: { ...(merged.orders?.subcategories || {}) },
+  };
+  delete nextOrders.subcategories[defaultGroup.id];
+
+  return {
+    ...merged,
+    organizations: nextOrgs,
+    categories: nextCats,
+    subcategories: nextSubs,
+    orders: nextOrders,
+  };
 }
 
 /**
@@ -306,7 +386,7 @@ export function mergeLWW(
   const settings =
     remoteTime > localTime ? remote.settings : local.settings || remote.settings;
 
-  return {
+  const mergedResult: MergeResult = {
     webpages,
     categories,
     templates,
@@ -326,4 +406,12 @@ export function mergeLWW(
       templatesMerged: templates.length,
     },
   };
+  const remoteHasData = [
+    remote.webpages?.length,
+    remote.categories?.length,
+    remote.subcategories?.length,
+    remote.organizations?.length,
+  ].some((n) => (n || 0) > 0);
+
+  return cleanupDefaultHierarchy(mergedResult, remoteHasData);
 }

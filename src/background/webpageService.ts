@@ -1,5 +1,5 @@
 import { createStorageService, type StorageService, type WebpageData } from './storageService';
-import { getMeta, setMeta } from './idb/db';
+import { getAll, getMeta, setMeta } from './idb/db';
 import { areOrdersEqual, normalizeGroupOrder } from '../utils/order-utils';
 
 export interface TabLike {
@@ -78,6 +78,30 @@ export function createWebpageService(deps?: {
       '_' +
       Math.abs(hash(url)).toString(36)
     );
+  }
+
+  async function resolveFallbackCategoryId(): Promise<string | undefined> {
+    let persisted: string | undefined;
+    try {
+      persisted = (await getMeta<string>('settings.selectedCategoryId')) || undefined;
+    } catch {}
+    if (!persisted) {
+      try {
+        const got: any = await new Promise((resolve) => {
+          try { chrome.storage?.local?.get?.({ selectedCategoryId: '' }, resolve); } catch { resolve({}); }
+        });
+        if (got && typeof got.selectedCategoryId === 'string') persisted = got.selectedCategoryId;
+      } catch {}
+    }
+    if (!persisted) {
+      try {
+        const cats = (await getAll('categories').catch(() => [])) as any[];
+        const active = (cats || []).filter((c: any) => !c.deleted);
+        active.sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+        persisted = active[0]?.id;
+      } catch {}
+    }
+    return persisted;
   }
 
   function hash(s: string) {
@@ -187,13 +211,14 @@ export function createWebpageService(deps?: {
     } catch {}
 
     const list = await loadWebpages();
+    const fallbackCategoryId = options?.category || (await resolveFallbackCategoryId());
     const item: WebpageData = {
       id: genId(url),
       title,
       url,
       favicon,
       note: '',
-      category: options?.category || 'default',
+      category: fallbackCategoryId || '',
       subcategoryId: options?.subcategoryId,
       createdAt: now,
       updatedAt: now,

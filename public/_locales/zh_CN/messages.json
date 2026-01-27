@@ -144,6 +144,30 @@
   "cloud_restore_success": {
     "message": "恢复成功"
   },
+  "cloud_sync_bg_in_progress": {
+    "message": "后台同步中…"
+  },
+  "cloud_sync_bg_failed": {
+    "message": "后台同步失败"
+  },
+  "cloud_sync_phase_checking": {
+    "message": "准备同步…"
+  },
+  "cloud_sync_phase_downloading": {
+    "message": "下载云端数据…"
+  },
+  "cloud_sync_phase_merging": {
+    "message": "合并数据…"
+  },
+  "cloud_sync_phase_importing": {
+    "message": "写入数据…"
+  },
+  "cloud_sync_phase_uploading": {
+    "message": "上传数据…"
+  },
+  "cloud_sync_bg_close": {
+    "message": "关闭"
+  },
 
   "gc_title": {
     "message": "垃圾回收 (GC)"
@@ -784,7 +808,7 @@
   },
 
   "items_count": {
-    "message": "$COUNT$ 项",
+    "message": "书签 $COUNT$ 张",
     "placeholders": {
       "count": { "content": "$1" }
     }

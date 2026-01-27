@@ -144,6 +144,30 @@
   "cloud_restore_success": {
     "message": "Wiederherstellung erfolgreich"
   },
+  "cloud_sync_bg_in_progress": {
+    "message": "Synchronisierung im Hintergrund..."
+  },
+  "cloud_sync_bg_failed": {
+    "message": "Hintergrund-Synchronisierung fehlgeschlagen"
+  },
+  "cloud_sync_phase_checking": {
+    "message": "Synchronisierung wird vorbereitet..."
+  },
+  "cloud_sync_phase_downloading": {
+    "message": "Cloud-Daten werden heruntergeladen..."
+  },
+  "cloud_sync_phase_merging": {
+    "message": "Daten werden zusammengeführt..."
+  },
+  "cloud_sync_phase_importing": {
+    "message": "Daten werden geschrieben..."
+  },
+  "cloud_sync_phase_uploading": {
+    "message": "Daten werden hochgeladen..."
+  },
+  "cloud_sync_bg_close": {
+    "message": "Schließen"
+  },
 
   "gc_title": {
     "message": "Garbage Collection (GC)"

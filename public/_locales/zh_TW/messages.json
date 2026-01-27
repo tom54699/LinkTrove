@@ -144,6 +144,30 @@
   "cloud_restore_success": {
     "message": "還原成功"
   },
+  "cloud_sync_bg_in_progress": {
+    "message": "背景同步中…"
+  },
+  "cloud_sync_bg_failed": {
+    "message": "背景同步失敗"
+  },
+  "cloud_sync_phase_checking": {
+    "message": "準備同步…"
+  },
+  "cloud_sync_phase_downloading": {
+    "message": "下載雲端資料…"
+  },
+  "cloud_sync_phase_merging": {
+    "message": "合併資料…"
+  },
+  "cloud_sync_phase_importing": {
+    "message": "寫入資料…"
+  },
+  "cloud_sync_phase_uploading": {
+    "message": "上傳資料…"
+  },
+  "cloud_sync_bg_close": {
+    "message": "關閉"
+  },
 
   "gc_title": {
     "message": "垃圾回收 (GC)"
@@ -784,7 +808,7 @@
   },
 
   "items_count": {
-    "message": "$COUNT$ 個項目",
+    "message": "書籤 $COUNT$ 張",
     "placeholders": {
       "count": { "content": "$1" }
     }

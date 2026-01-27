@@ -144,6 +144,30 @@
   "cloud_restore_success": {
     "message": "Restauración exitosa"
   },
+  "cloud_sync_bg_in_progress": {
+    "message": "Sincronizando en segundo plano..."
+  },
+  "cloud_sync_bg_failed": {
+    "message": "La sincronización en segundo plano falló"
+  },
+  "cloud_sync_phase_checking": {
+    "message": "Preparando sincronización..."
+  },
+  "cloud_sync_phase_downloading": {
+    "message": "Descargando datos de la nube..."
+  },
+  "cloud_sync_phase_merging": {
+    "message": "Combinando datos..."
+  },
+  "cloud_sync_phase_importing": {
+    "message": "Escribiendo datos..."
+  },
+  "cloud_sync_phase_uploading": {
+    "message": "Subiendo datos..."
+  },
+  "cloud_sync_bg_close": {
+    "message": "Cerrar"
+  },
 
   "gc_title": {
     "message": "Recolección de basura (GC)"

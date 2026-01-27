@@ -6,6 +6,12 @@ import type {
 } from '../storageService';
 import { getAll, putAll, setMeta, getMeta, clearStore, tx } from './db';
 import { areOrdersEqual, normalizeGroupOrder } from '../../utils/order-utils';
+import {
+  DEFAULT_CATEGORY_NAME,
+  DEFAULT_GROUP_NAME,
+  DEFAULT_ORGANIZATION_NAME,
+  createEntityId,
+} from '../../utils/defaults';
 
 // Entity limits for UI layout constraints
 export const ENTITY_LIMITS = {
@@ -31,14 +37,18 @@ async function migrateOnce(): Promise<void> {
   try {
     const localAny: any = await new Promise((resolve) => {
       try {
-        chrome.storage?.local?.get?.({ webpages: [] }, resolve);
+        const getter = chrome.storage?.local?.get;
+        if (!getter) return resolve({});
+        getter({ webpages: [] }, resolve);
       } catch {
         resolve({});
       }
     });
     const syncAny: any = await new Promise((resolve) => {
       try {
-        chrome.storage?.sync?.get?.({ categories: [], templates: [] }, resolve);
+        const getter = chrome.storage?.sync?.get;
+        if (!getter) return resolve({});
+        getter({ categories: [], templates: [] }, resolve);
       } catch {
         resolve({});
       }
@@ -67,11 +77,18 @@ async function migrateOnce(): Promise<void> {
 
 export function createIdbStorageService(): StorageService {
   // ensure migration runs once per session
-  void migrateOnce();
-  void migrateOrganizationsOnce();
-  void migrateSubcategoriesOnce();
+  const migrationsReady = (async () => {
+    try { await migrateOnce(); } catch {}
+    try { await migrateOrganizationsOnce(); } catch {}
+    try { await migrateSubcategoriesOnce(); } catch {}
+  })();
+
+  async function ensureMigrationsReady(): Promise<void> {
+    try { await migrationsReady; } catch {}
+  }
 
   async function listSubcategoriesImpl(categoryId: string): Promise<any[]> {
+    await ensureMigrationsReady();
     return await tx(['subcategories' as any], 'readonly', async (t) => {
       const s = t.objectStore('subcategories' as any);
       // 穩健做法：優先使用 by_categoryId 索引搭配 IDBKeyRange.only，再以 order 排序
@@ -117,7 +134,7 @@ export function createIdbStorageService(): StorageService {
     } catch {}
     try {
       // Create default organization if missing
-      const orgId = 'o_default';
+      const orgId = createEntityId('o');
       await tx('organizations' as any, 'readwrite', async (t) => {
         const s = t.objectStore('organizations' as any);
         try {
@@ -126,29 +143,35 @@ export function createIdbStorageService(): StorageService {
             req.onsuccess = () => resolve(req.result || []);
             req.onerror = () => reject(req.error);
           });
-          // 只有在完全沒有任何組織時才建立 o_default，避免污染既有資料與測試期望
+          // 只有在完全沒有任何組織時才建立預設組織，避免污染既有資料與測試期望
           if ((existing || []).length === 0) {
-            s.put({ id: orgId, name: 'Personal', color: '#64748b', order: 0 });
+            s.put({ id: orgId, name: DEFAULT_ORGANIZATION_NAME, color: '#64748b', order: 0, isDefault: true });
           }
         } catch {
           // 讀取失敗（例如新資料庫），直接建立預設
-          try { s.put({ id: orgId, name: 'Personal', color: '#64748b', order: 0 }); } catch {}
+          try { s.put({ id: orgId, name: DEFAULT_ORGANIZATION_NAME, color: '#64748b', order: 0, isDefault: true }); } catch {}
         }
       });
 
       // Load categories, attach missing organizationId, and normalize order within each org
       const categories = (await getAll('categories')) as CategoryData[];
       if (categories.length) {
+        let fallbackOrgId = orgId;
+        try {
+          const existingOrgs = (await getAll('organizations' as any).catch(() => [])) as any[];
+          const withDefault = (existingOrgs || []).find((o: any) => o?.isDefault);
+          fallbackOrgId = withDefault?.id || existingOrgs?.[0]?.id || orgId;
+        } catch {}
         // Attach missing org id
         const next = categories.map((c) =>
           (!('organizationId' in c) || !(c as any).organizationId)
-            ? ({ ...(c as any), organizationId: 'o_default' } as any)
+            ? ({ ...(c as any), organizationId: fallbackOrgId } as any)
             : (c as any)
         );
         // Reorder categories per organization to be contiguous
         const byOrg: Record<string, any[]> = {};
         for (const c of next as any[]) {
-          const oid = (c as any).organizationId || 'o_default';
+          const oid = (c as any).organizationId || fallbackOrgId;
           if (!byOrg[oid]) byOrg[oid] = [];
           byOrg[oid].push(c);
         }
@@ -184,15 +207,15 @@ export function createIdbStorageService(): StorageService {
       const toCreate: any[] = [];
       for (const c of categories as any[]) {
         if (!byCatHasAny[c.id]) {
-          // Use deterministic id to avoid duplicate default creation in race conditions
-          const id = `g_default_${c.id}`;
+          const id = createEntityId('g');
           const sc = {
             id,
             categoryId: c.id,
-            name: 'group',
+            name: DEFAULT_GROUP_NAME,
             order: 0,
             createdAt: now,
             updatedAt: now,
+            isDefault: !!(c as any)?.isDefault,
           };
           defaults[c.id] = sc;
           toCreate.push(sc);
@@ -367,7 +390,7 @@ export function createIdbStorageService(): StorageService {
     const subcats: any[] = Array.isArray(parsed?.subcategories)
       ? parsed.subcategories
       : [];
-    const orgs: any[] = Array.isArray(parsed?.organizations)
+    const orgsRaw: any[] = Array.isArray(parsed?.organizations)
       ? parsed.organizations
       : [];
     const ordersObj: any = parsed?.orders;
@@ -385,28 +408,49 @@ export function createIdbStorageService(): StorageService {
     await clearStore('subcategories' as any);
     await clearStore('organizations' as any);
     await clearStore('webpages');
-    if (orgs.length) await putAll('organizations' as any, orgs);
-    if (!orgs.length) {
+    const orgsNormalized = (orgsRaw as any[]).map((o: any) => ({
+      ...o,
+      isDefault: !!o?.isDefault,
+    }));
+    let fallbackOrgId: string | undefined = orgsNormalized[0]?.id;
+    if (orgsNormalized.length) {
+      const def = orgsNormalized.find((o: any) => o.isDefault);
+      fallbackOrgId = def?.id || orgsNormalized[0]?.id;
+      await putAll('organizations' as any, orgsNormalized);
+    } else {
       // Ensure default organization exists
+      const def = {
+        id: createEntityId('o'),
+        name: DEFAULT_ORGANIZATION_NAME,
+        color: '#64748b',
+        order: 0,
+        isDefault: true,
+      } as any;
+      fallbackOrgId = def.id;
       try {
         await tx('organizations' as any, 'readwrite', async (t) => {
           const s = t.objectStore('organizations' as any);
-          const def = { id: 'o_default', name: 'Personal', color: '#64748b', order: 0 } as any;
           s.put(def);
         });
       } catch {}
     }
     // Backfill missing category.organizationId when absent
-    const catsNormalized = (cats as any[]).map((c: any) =>
-      ('organizationId' in c && c.organizationId) ? c : { ...c, organizationId: 'o_default' }
-    );
+    const catsNormalized = (cats as any[]).map((c: any) => ({
+      ...c,
+      organizationId: ('organizationId' in c && c.organizationId) ? c.organizationId : fallbackOrgId,
+      isDefault: !!(c as any)?.isDefault,
+    }));
     if (catsNormalized.length) await putAll('categories', catsNormalized as any);
     if (tmpls.length) await putAll('templates', tmpls);
-    if (subcats.length) await putAll('subcategories' as any, subcats);
+    const subcatsNormalized = (subcats as any[]).map((s: any) => ({
+      ...s,
+      isDefault: !!(s as any)?.isDefault,
+    }));
+    if (subcatsNormalized.length) await putAll('subcategories' as any, subcatsNormalized as any);
     if (pages.length) await putAll('webpages', pages);
     // Restore per-group orders for groups present
     try {
-      const presentGroups: Set<string> = new Set((subcats as any[]).map((s: any) => s.id));
+      const presentGroups: Set<string> = new Set((subcatsNormalized as any[]).map((s: any) => s.id));
       for (const [gid, arr] of Object.entries(ordersSubcats || {})) {
         if (!presentGroups.has(gid)) continue;
         const key = `order.subcat.${gid}`;
@@ -418,7 +462,7 @@ export function createIdbStorageService(): StorageService {
     } catch {}
     try {
       const baseOrders: Record<string, string[]> = {};
-      for (const sc of subcats as any[]) {
+      for (const sc of subcatsNormalized as any[]) {
         const gid = sc?.id as string | undefined;
         if (!gid) continue;
         baseOrders[gid] = Array.isArray(ordersSubcats[gid])
@@ -427,7 +471,7 @@ export function createIdbStorageService(): StorageService {
       }
       await buildNormalizedOrders({
         pages,
-        subcategories: subcats,
+        subcategories: subcatsNormalized,
         baseOrders,
         persist: true,
       });
@@ -472,7 +516,12 @@ export function createIdbStorageService(): StorageService {
     },
     // Subcategories (groups)
     listSubcategories: async (categoryId: string) => listSubcategoriesImpl(categoryId),
-    createSubcategory: async (categoryId: string, name: string) => {
+    createSubcategory: async (
+      categoryId: string,
+      name: string,
+      options?: { isDefault?: boolean; skipDefaultReset?: boolean }
+    ) => {
+      await ensureMigrationsReady();
       const list = await listSubcategoriesImpl(categoryId);
 
       // Check limit (list already filters deleted items)
@@ -486,10 +535,19 @@ export function createIdbStorageService(): StorageService {
       );
       if (exists) return exists as any;
       const now = Date.now();
-      const id = 'g_' + Math.random().toString(36).slice(2, 9);
-      const sc = { id, categoryId, name, order: (list[list.length - 1]?.order ?? -1) + 1, createdAt: now, updatedAt: now } as any;
-      await tx(['subcategories' as any], 'readwrite', async (t) => {
+      const id = createEntityId('g');
+      const sc = {
+        id,
+        categoryId,
+        name,
+        order: (list[list.length - 1]?.order ?? -1) + 1,
+        createdAt: now,
+        updatedAt: now,
+        isDefault: !!options?.isDefault,
+      } as any;
+      await tx(['subcategories' as any, 'categories'], 'readwrite', async (t) => {
         const s = t.objectStore('subcategories' as any);
+        const cs = t.objectStore('categories');
         // 交易內再次檢查同名，避免競態
         try {
           const all: any[] = await new Promise((resolve, reject) => {
@@ -503,6 +561,20 @@ export function createIdbStorageService(): StorageService {
           if (dup) return; // 已有同名，放棄寫入
         } catch {}
         s.put(sc);
+
+        // If adding another group under a default category, mark category as customized
+        try {
+          const cur = await new Promise<any>((resolve, reject) => {
+            const req = cs.get(categoryId);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          });
+          if (cur && cur.isDefault && list.length > 0 && !options?.skipDefaultReset) {
+            cur.isDefault = false;
+            cur.updatedAt = new Date().toISOString();
+            cs.put(cur);
+          }
+        } catch {}
       });
       return sc as any;
     },
@@ -515,7 +587,11 @@ export function createIdbStorageService(): StorageService {
           req.onerror = () => reject(req.error);
         });
         if (!cur) return;
-        cur.name = name;
+        const nextName = name;
+        if (String(cur.name || '') !== String(nextName || '') && cur.isDefault) {
+          cur.isDefault = false;
+        }
+        cur.name = nextName;
         cur.updatedAt = Date.now();
         s.put(cur);
       });
@@ -725,6 +801,7 @@ export function createIdbStorageService(): StorageService {
 
     // Organizations API
     listOrganizations: async () => {
+      await ensureMigrationsReady();
       const list = (await getAll('organizations' as any).catch(() => [])) as any[];
       const arr = Array.isArray(list) ? list.slice() : [];
       const filtered = arr.filter((o: any) => !o.deleted);
@@ -735,6 +812,7 @@ export function createIdbStorageService(): StorageService {
     },
     createOrganization: async (name: string, color?: string, options?: { createDefaultCollection?: boolean }) => {
       const { createDefaultCollection = true } = options || {};
+      await ensureMigrationsReady();
 
       // Calculate order for Organization
       const existing = (await getAll('organizations' as any).catch(() => [])) as any[];
@@ -748,24 +826,27 @@ export function createIdbStorageService(): StorageService {
       const order = existing.length ? Math.max(...existing.map((o: any) => o.order ?? 0)) + 1 : 0;
 
       // Generate IDs
-      const orgId = 'o_' + Math.random().toString(36).slice(2, 9);
-      const catId = 'c_' + Math.random().toString(36).slice(2, 9);
+      const orgId = createEntityId('o');
+      const catId = createEntityId('c');
 
       // Create Organization object
       const org = {
         id: orgId,
         name: (name || 'Org').trim() || 'Org',
         color,
-        order
+        order,
+        isDefault: false,
       };
 
       // Create default Collection object
       const defaultCategory = createDefaultCollection ? {
         id: catId,
-        name: 'General',
+        name: DEFAULT_CATEGORY_NAME,
         color: color || '#64748b',
         order: 0,
-        organizationId: orgId
+        organizationId: orgId,
+        isDefault: false,
+        updatedAt: new Date().toISOString(),
       } : null;
 
       // Atomic transaction: write both or rollback
@@ -797,6 +878,7 @@ export function createIdbStorageService(): StorageService {
         });
         if (!cur) return;
         cur.name = (name || '').trim() || cur.name;
+        cur.updatedAt = new Date().toISOString();
         s.put(cur);
       });
     },
@@ -805,19 +887,25 @@ export function createIdbStorageService(): StorageService {
         const os = t.objectStore('organizations' as any);
         const cs = t.objectStore('categories');
         // Ensure a target organization exists
-        let targetId = options?.reassignTo || 'o_default';
+        let targetId = options?.reassignTo;
         // Create default if missing or if target equals deleted id
         const orgs = await new Promise<any[]>((resolve, reject) => {
           const req = os.getAll();
           req.onsuccess = () => resolve(req.result || []);
           req.onerror = () => reject(req.error);
         });
-        if (!orgs.some((o) => o.id === targetId) || targetId === id) {
-          // pick first other org
-          const alt = orgs.find((o) => o.id !== id);
+        if (!targetId || !orgs.some((o) => o.id === targetId) || targetId === id) {
+          // pick default org or first other org
+          const alt = orgs.find((o) => o.id !== id && o.isDefault) || orgs.find((o) => o.id !== id);
           if (alt) targetId = alt.id;
           else {
-            const def = { id: 'o_default', name: 'Personal', color: '#64748b', order: 0 } as any;
+            const def = {
+              id: createEntityId('o'),
+              name: DEFAULT_ORGANIZATION_NAME,
+              color: '#64748b',
+              order: 0,
+              isDefault: true,
+            } as any;
             os.put(def);
             targetId = def.id;
           }
@@ -871,11 +959,34 @@ export function createIdbStorageService(): StorageService {
 
     // Categories helpers scoped by organization
     addCategory: async (name: string, color?: string, organizationId?: string) => {
-      const orgId = organizationId || 'o_default';
-      const id = 'c_' + Math.random().toString(36).slice(2, 9);
+      await ensureMigrationsReady();
+      let orgId = organizationId;
+      let createdDefaultOrg: any | null = null;
+      try {
+        if (!orgId) {
+          const orgs = (await getAll('organizations' as any).catch(() => [])) as any[];
+          const active = (orgs || []).filter((o: any) => !o.deleted);
+          const def = active.find((o: any) => o.isDefault) || active[0];
+          if (def) {
+            orgId = def.id;
+          } else {
+            orgId = createEntityId('o');
+            createdDefaultOrg = {
+              id: orgId,
+              name: DEFAULT_ORGANIZATION_NAME,
+              color: '#64748b',
+              order: 0,
+              isDefault: true,
+            };
+          }
+        }
+      } catch {}
+      if (!orgId) orgId = createEntityId('o');
+      const id = createEntityId('c');
       // compute next order within org and check limit
       let nextOrder = 0;
       let currentCount = 0;
+      let orgWasDefault = false;
       try {
         await tx('categories', 'readonly', async (t) => {
           const s = t.objectStore('categories');
@@ -902,6 +1013,11 @@ export function createIdbStorageService(): StorageService {
           }
         });
       } catch {}
+      try {
+        const orgs = (await getAll('organizations' as any).catch(() => [])) as any[];
+        const cur = orgs.find((o: any) => o.id === orgId);
+        orgWasDefault = !!cur?.isDefault;
+      } catch {}
 
       // Check limit
       if (currentCount >= ENTITY_LIMITS.MAX_CATEGORIES_PER_ORG) {
@@ -913,8 +1029,28 @@ export function createIdbStorageService(): StorageService {
         color: color || '#64748b',
         order: nextOrder,
         organizationId: orgId,
+        isDefault: false,
+        updatedAt: new Date().toISOString(),
       } as any;
-      await tx('categories', 'readwrite', async (t) => {
+      await tx(['categories', 'organizations' as any], 'readwrite', async (t) => {
+        if (createdDefaultOrg) {
+          t.objectStore('organizations' as any).put(createdDefaultOrg);
+        }
+        if (orgWasDefault && currentCount > 0) {
+          try {
+            const os = t.objectStore('organizations' as any);
+            const cur = await new Promise<any>((resolve, reject) => {
+              const req = os.get(orgId);
+              req.onsuccess = () => resolve(req.result);
+              req.onerror = () => reject(req.error);
+            });
+            if (cur && cur.isDefault) {
+              cur.isDefault = false;
+              cur.updatedAt = new Date().toISOString();
+              os.put(cur);
+            }
+          } catch {}
+        }
         t.objectStore('categories').put(cat);
       });
       return cat as any;
@@ -964,6 +1100,8 @@ export function createIdbStorageService(): StorageService {
         } catch {}
         cur.organizationId = toOrganizationId;
         cur.order = nextOrder;
+        if (cur.isDefault) cur.isDefault = false;
+        cur.updatedAt = new Date().toISOString();
         s.put(cur);
       });
     },

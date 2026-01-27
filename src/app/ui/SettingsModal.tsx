@@ -6,10 +6,7 @@ import { TemplatesManager } from '../templates/TemplatesManager';
 import { useWebpages } from '../webpages/WebpagesProvider';
 import { useCategories } from '../sidebar/categories';
 import { useTemplates } from '../templates/TemplatesProvider';
-import type { ConflictInfo } from '../data/conflictDetection';
 import { useI18n, LANGUAGE_OPTIONS, type Language } from '../i18n';
-
-const ConflictDialog = React.lazy(() => import('./ConflictDialog').then(module => ({ default: module.ConflictDialog })));
 
 type Section = 'data' | 'templates';
 // 擴充：Cloud Sync 區塊、語言設定
@@ -236,11 +233,9 @@ const CloudSyncPanel: React.FC = () => {
   const [connected, setConnected] = React.useState(false);
   const [last, setLast] = React.useState<string | undefined>(undefined);
   const [syncing, setSyncing] = React.useState(false);
+  const [blocking, setBlocking] = React.useState(false);
   const [error, setError] = React.useState<string | undefined>(undefined);
   const [autoEnabled, setAutoEnabled] = React.useState(false);
-  const [pendingPush, setPendingPush] = React.useState(false);
-  const [conflictInfo, setConflictInfo] = React.useState<ConflictInfo | null>(null);
-  const [conflictOperation, setConflictOperation] = React.useState<'auto-sync' | 'manual-merge' | null>(null);
   const [snapshots, setSnapshots] = React.useState<any[]>([]);
   const [loadingSnapshots, setLoadingSnapshots] = React.useState(false);
   const [gcStats, setGcStats] = React.useState<{ totalTombstones: number; oldestTombstone?: string } | null>(null);
@@ -252,6 +247,7 @@ const CloudSyncPanel: React.FC = () => {
     resultMessage?: string;
     progress?: string;
   } | null>(null);
+  const [autoSyncDialogOpen, setAutoSyncDialogOpen] = React.useState(false);
   const [actionResult, setActionResult] = React.useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const showResult = (text: string, type: 'success' | 'error' = 'success') => {
@@ -268,9 +264,9 @@ const CloudSyncPanel: React.FC = () => {
       setConnected(!!st.connected);
       setLast(st.lastSyncedAt);
       setSyncing(!!st.syncing);
+      setBlocking(!!st.blocking);
       setError(st.error);
       setAutoEnabled(!!st.auto);
-      setPendingPush(!!st.pendingPush);
     } catch {}
   }, []);
 
@@ -286,6 +282,24 @@ const CloudSyncPanel: React.FC = () => {
     try { chrome.storage?.onChanged?.addListener?.(listener); } catch {}
     return () => { try { chrome.storage?.onChanged?.removeListener?.(listener); } catch {} };
   }, [loadSyncStatus]);
+
+  React.useEffect(() => {
+    if (blocking && syncing && !confirmDialog) {
+      setAutoSyncDialogOpen(true);
+      setConfirmDialog({ type: 'merge', status: 'processing', progress: t('dialog_processing') });
+      return;
+    }
+    if ((!blocking || !syncing) && autoSyncDialogOpen && !error) {
+      setConfirmDialog(null);
+      setAutoSyncDialogOpen(false);
+    }
+  }, [blocking, syncing, confirmDialog, autoSyncDialogOpen, error, t]);
+
+  React.useEffect(() => {
+    if (!autoSyncDialogOpen) return;
+    if (!error) return;
+    setConfirmDialog(prev => prev ? { ...prev, status: 'error', resultMessage: error, progress: undefined } : prev);
+  }, [autoSyncDialogOpen, error]);
 
   async function loadSnapshotsList() {
     try {
@@ -343,12 +357,8 @@ const CloudSyncPanel: React.FC = () => {
   async function doConnect() {
     try {
       const mod = await import('../data/syncService');
-      await mod.connect();
-      setConnected(true);
-      const refreshed = mod.getStatus();
-      setLast(refreshed.lastSyncedAt);
-      setAutoEnabled(!!refreshed.auto);
-      setPendingPush(!!refreshed.pendingPush);
+      await mod.connect({ blockingOnSync: true });
+      await loadSyncStatus();
       showResult(t('cloud_connected'));
     } catch (e: any) { setError(String(e?.message || e)); }
   }
@@ -361,7 +371,7 @@ const CloudSyncPanel: React.FC = () => {
     setSyncing(true);
     try {
       const mod = await import('../data/syncService');
-      await mod.backupNow();
+      await mod.backupNow({ blocking: false });
       const st = mod.getStatus();
       setLast(st.lastSyncedAt);
       setConfirmDialog(prev => prev ? { ...prev, status: 'success', resultMessage: t('cloud_backup_success') } : null);
@@ -381,7 +391,7 @@ const CloudSyncPanel: React.FC = () => {
         const snapshotModule = await import('../data/snapshotService');
         await snapshotModule.createSnapshot('before-restore');
       }
-      await mod.restoreNow(undefined, merge);
+      await mod.restoreNow(undefined, merge, { blocking: false });
       const st = mod.getStatus();
       setLast(st.lastSyncedAt);
       setConfirmDialog(prev => prev ? { ...prev, status: 'success', resultMessage: merge ? t('cloud_merge_success') : t('cloud_restore_success') } : null);
@@ -472,7 +482,15 @@ const CloudSyncPanel: React.FC = () => {
       </div>
 
       {confirmDialog && (
-        <div className="fixed inset-0 z-[10001] bg-black/70 flex items-center justify-center p-4 backdrop-blur-md" onClick={() => { if (confirmDialog.status !== 'processing') setConfirmDialog(null); }}>
+        <div
+          className="fixed inset-0 z-[10001] bg-black/70 flex items-center justify-center p-4 backdrop-blur-md"
+          onClick={() => {
+            if (confirmDialog.status !== 'processing') {
+              setConfirmDialog(null);
+              if (autoSyncDialogOpen) setAutoSyncDialogOpen(false);
+            }
+          }}
+        >
           <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[460px] max-w-[95vw]" onClick={(e) => e.stopPropagation()} role="dialog">
             <div className="px-5 py-4 border-b border-[var(--border)]">
               <div className="text-base font-bold">
@@ -500,13 +518,29 @@ const CloudSyncPanel: React.FC = () => {
             <div className="px-5 py-3 border-t border-[var(--border)] bg-white/5 flex justify-end gap-2">
               {confirmDialog.status === 'idle' ? (
                 <>
-                  <button className="px-3 py-1.5 rounded-md text-[13px] border border-[var(--border)] text-[var(--muted)] hover:bg-white/5 cursor-pointer" onClick={() => setConfirmDialog(null)}>{t('btn_cancel')}</button>
+                  <button
+                    className="px-3 py-1.5 rounded-md text-[13px] border border-[var(--border)] text-[var(--muted)] hover:bg-white/5 cursor-pointer"
+                    onClick={() => {
+                      setConfirmDialog(null);
+                      if (autoSyncDialogOpen) setAutoSyncDialogOpen(false);
+                    }}
+                  >
+                    {t('btn_cancel')}
+                  </button>
                   <button className={`px-3 py-1.5 rounded-md text-[13px] border text-white font-bold cursor-pointer ${confirmDialog.type === 'restore-cloud' || confirmDialog.type === 'delete-snapshot' ? 'bg-red-600 border-red-600' : 'bg-[var(--accent)] border-[var(--accent)]'}`} onClick={() => {
                     if (confirmDialog.type === 'gc') doRunGC(); else if (confirmDialog.type === 'backup') doBackup(); else if (confirmDialog.type === 'merge') doRestore(true); else if (confirmDialog.type === 'restore-cloud') doRestore(false); else if (confirmDialog.type === 'restore-snapshot' && confirmDialog.snapshotId) doRestoreSnapshot(confirmDialog.snapshotId); else if (confirmDialog.type === 'delete-snapshot' && confirmDialog.snapshotId) doDeleteSnapshot(confirmDialog.snapshotId);
                   }}>{t('btn_confirm_execute')}</button>
                 </>
               ) : confirmDialog.status !== 'processing' ? (
-                <button className="px-4 py-1.5 rounded-md text-[13px] border border-[var(--border)] bg-[var(--surface)] text-[var(--fg)] cursor-pointer" onClick={() => setConfirmDialog(null)}>{t('dialog_close')}</button>
+                <button
+                  className="px-4 py-1.5 rounded-md text-[13px] border border-[var(--border)] bg-[var(--surface)] text-[var(--fg)] cursor-pointer"
+                  onClick={() => {
+                    setConfirmDialog(null);
+                    if (autoSyncDialogOpen) setAutoSyncDialogOpen(false);
+                  }}
+                >
+                  {t('dialog_close')}
+                </button>
               ) : <button className="px-3 py-1.5 rounded-md text-[13px] border border-[var(--border)] text-[var(--muted)] opacity-50 cursor-not-allowed">{t('dialog_processing')}</button>}
             </div>
           </div>

@@ -28,6 +28,8 @@ export interface CategoryData {
   defaultTemplateId?: string;
   // Organization scoping (optional during migration)
   organizationId?: string;
+  // Default marker (system-generated)
+  isDefault?: boolean;
   updatedAt?: string;
   // Tombstone for soft delete (sync support)
   deleted?: boolean;
@@ -41,6 +43,8 @@ export interface SubcategoryData {
   order: number;
   createdAt: number;
   updatedAt: number;
+  // Default marker (system-generated)
+  isDefault?: boolean;
   // Tombstone for soft delete (sync support)
   deleted?: boolean;
   deletedAt?: number;
@@ -70,6 +74,8 @@ export interface OrganizationData {
   name: string;
   color?: string;
   order: number;
+  // Default marker (system-generated)
+  isDefault?: boolean;
   updatedAt?: string;
   // Tombstone for soft delete (sync support)
   deleted?: boolean;
@@ -87,7 +93,11 @@ export interface StorageService {
   importData: (jsonData: string) => Promise<void>;
   // Subcategories (groups)
   listSubcategories?: (categoryId: string) => Promise<SubcategoryData[]>;
-  createSubcategory?: (categoryId: string, name: string) => Promise<SubcategoryData>;
+  createSubcategory?: (
+    categoryId: string,
+    name: string,
+    options?: { isDefault?: boolean; skipDefaultReset?: boolean }
+  ) => Promise<SubcategoryData>;
   renameSubcategory?: (id: string, name: string) => Promise<void>;
   deleteSubcategory?: (id: string, reassignTo: string) => Promise<void>;
   // Delete a subcategory and all webpages under it (atomic within IDB tx)

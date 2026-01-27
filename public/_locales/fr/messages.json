@@ -144,6 +144,30 @@
   "cloud_restore_success": {
     "message": "Restauration réussie"
   },
+  "cloud_sync_bg_in_progress": {
+    "message": "Synchronisation en arrière-plan..."
+  },
+  "cloud_sync_bg_failed": {
+    "message": "Échec de la synchronisation en arrière-plan"
+  },
+  "cloud_sync_phase_checking": {
+    "message": "Préparation de la synchronisation..."
+  },
+  "cloud_sync_phase_downloading": {
+    "message": "Téléchargement des données cloud..."
+  },
+  "cloud_sync_phase_merging": {
+    "message": "Fusion des données..."
+  },
+  "cloud_sync_phase_importing": {
+    "message": "Écriture des données..."
+  },
+  "cloud_sync_phase_uploading": {
+    "message": "Téléversement des données..."
+  },
+  "cloud_sync_bg_close": {
+    "message": "Fermer"
+  },
 
   "gc_title": {
     "message": "Nettoyage (GC)"

@@ -6,6 +6,7 @@ import type {
 import { clearStore } from '../../background/idb/db';
 import { putAll } from '../../background/idb/db';
 import { setMeta } from '../../background/idb/db';
+import { DEFAULT_GROUP_NAME, createEntityId } from '../../utils/defaults';
 
 export interface StorageLike {
   saveToLocal: (data: WebpageData[]) => Promise<void>;
@@ -67,13 +68,13 @@ export function createExportImportService(deps: {
     const incomingPages = Array.isArray(parsed?.webpages)
       ? parsed.webpages
       : [];
-    const incomingCats = Array.isArray(parsed?.categories)
+    const incomingCatsRaw = Array.isArray(parsed?.categories)
       ? parsed.categories
       : [];
     const incomingTpls = Array.isArray(parsed?.templates)
       ? parsed.templates
       : [];
-    const incomingSubcats = Array.isArray(parsed?.subcategories)
+    const incomingSubcatsRaw = Array.isArray(parsed?.subcategories)
       ? parsed.subcategories
       : [];
     const incomingOrders =
@@ -82,7 +83,7 @@ export function createExportImportService(deps: {
         : {};
     if (!incomingPages.every(isWebpage))
       throw new Error('Invalid webpages payload');
-    if (!incomingCats.every(isCategory))
+    if (!incomingCatsRaw.every(isCategory))
       throw new Error('Invalid categories payload');
     if (!incomingTpls.every(isTemplate))
       throw new Error('Invalid templates payload');
@@ -94,7 +95,7 @@ export function createExportImportService(deps: {
     const existingPageUrls = new Set<string>((prevPages as any[]).map((p: any) => String(p.url)));
     const existingCatIds = new Set<string>((prevCats as any[]).map((c: any) => String(c.id)));
     const addedPages = (incomingPages as any[]).filter((p: any) => !existingPageIds.has(String(p.id)) && !existingPageUrls.has(String(p.url))).length;
-    const addedCategories = (incomingCats as any[]).filter((c: any) => !existingCatIds.has(String(c.id))).length;
+    const addedCategories = (incomingCatsRaw as any[]).filter((c: any) => !existingCatIds.has(String(c.id))).length;
 
     // Overwrite strategy: clear stores then write incoming（IDB 不可用時忽略錯誤）
     try {
@@ -109,6 +110,11 @@ export function createExportImportService(deps: {
     // Prepare subcategories and ensure every page has a valid subcategoryId
     const byCat: Record<string, any[]> = {};
     const subcatsToWrite: any[] = [];
+    const incomingCats = (incomingCatsRaw as any[]).map((c) => ({ ...c, isDefault: !!(c as any).isDefault }));
+    const incomingSubcats = (incomingSubcatsRaw as any[]).map((s) => ({ ...s, isDefault: !!(s as any).isDefault }));
+    const categoryIndex: Record<string, any> = {};
+    for (const c of incomingCats as any[]) categoryIndex[c.id] = c;
+
     if (Array.isArray(incomingSubcats)) {
       for (const s of incomingSubcats) {
         if (s && typeof s.id === 'string' && typeof s.categoryId === 'string') {
@@ -121,12 +127,13 @@ export function createExportImportService(deps: {
     function ensureDefault(catId: string): any {
       if (!defaults[catId]) {
         const sc = {
-          id: 'g_' + Math.random().toString(36).slice(2, 9),
+          id: createEntityId('g'),
           categoryId: catId,
-          name: 'group',
+          name: DEFAULT_GROUP_NAME,
           order: (byCat[catId]?.length ?? 0),
           createdAt: Date.now(),
           updatedAt: Date.now(),
+          isDefault: !!categoryIndex[catId]?.isDefault,
         };
         defaults[catId] = sc;
         (byCat[catId] ||= []).push(sc);

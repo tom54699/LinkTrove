@@ -10,12 +10,14 @@ import { useGroupImport } from './import/useGroupImport';
 import { ShareDialog, TokenDialog, ShareResultDialog } from './share/dialogs';
 import { TobyImportDialog, TobyProgressDialog } from './import/dialogs';
 import { useI18n } from '../i18n';
+import { DEFAULT_GROUP_NAME } from '../../utils/defaults';
 
 interface GroupItem {
   id: string;
   categoryId: string;
   name: string;
   order: number;
+  isDefault?: boolean;
 }
 
 export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => {
@@ -138,7 +140,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
 
   const rename = async (id: string, name: string) => {
     try {
-      await (svc as any).renameSubcategory?.(id, name.trim() || 'group');
+      await (svc as any).renameSubcategory?.(id, name.trim() || DEFAULT_GROUP_NAME);
       await load();
       try { chrome.runtime?.sendMessage?.({ kind: 'context-menus:refresh' }); } catch {}
       showToast(t('toast_renamed'), 'success');

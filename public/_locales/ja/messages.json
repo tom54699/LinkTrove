@@ -144,6 +144,30 @@
   "cloud_restore_success": {
     "message": "復元成功"
   },
+  "cloud_sync_bg_in_progress": {
+    "message": "バックグラウンド同期中…"
+  },
+  "cloud_sync_bg_failed": {
+    "message": "バックグラウンド同期に失敗"
+  },
+  "cloud_sync_phase_checking": {
+    "message": "同期の準備中…"
+  },
+  "cloud_sync_phase_downloading": {
+    "message": "クラウドデータをダウンロード中…"
+  },
+  "cloud_sync_phase_merging": {
+    "message": "データを統合中…"
+  },
+  "cloud_sync_phase_importing": {
+    "message": "データを書き込み中…"
+  },
+  "cloud_sync_phase_uploading": {
+    "message": "アップロード中…"
+  },
+  "cloud_sync_bg_close": {
+    "message": "閉じる"
+  },
 
   "gc_title": {
     "message": "ガベージコレクション (GC)"

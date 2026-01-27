@@ -3,6 +3,7 @@ import { useWebpages } from '../webpages/WebpagesProvider';
 import { useCategories } from '../sidebar/categories';
 import { useOrganizations } from '../sidebar/organizations';
 import { createStorageService } from '../../background/storageService';
+import { DEFAULT_GROUP_NAME } from '../../utils/defaults';
 import { loadOpenCCConverters } from '../../utils/opencc';
 import { useI18n } from '../i18n';
 
@@ -224,11 +225,11 @@ export const SearchBox: React.FC<{
     try {
       const cats = Array.from(new Set(list.map((it: any) => it.category).filter(Boolean)));
       const svc = createStorageService();
-      const map: Record<string, string> = { '__none__': 'group' }; // Default name for items without subcategoryId
+      const map: Record<string, string> = { '__none__': DEFAULT_GROUP_NAME }; // Default name for items without subcategoryId
       for (const cid of cats) {
         try {
           const subs = await (svc as any).listSubcategories?.(cid);
-          for (const s of subs || []) map[s.id] = s.name || 'group';
+          for (const s of subs || []) map[s.id] = s.name || DEFAULT_GROUP_NAME;
         } catch {}
       }
       setGroupNameMap(map);
@@ -313,7 +314,7 @@ export const SearchBox: React.FC<{
   const groupedResults = React.useMemo(() => {
     const byCat: Record<string, any[]> = {};
     for (const it of visibleResults) {
-      const cid = String(it.category || 'default');
+      const cid = String(it.category || '');
       (byCat[cid] ||= []).push(it);
     }
     return Object.entries(byCat).map(([cid, arr]) => {
@@ -385,7 +386,7 @@ export const SearchBox: React.FC<{
                     setActiveIdx((i) => Math.max(i - 1, 0));
                   } else if (e.key === 'Enter') {
                     const pick = visibleResults[activeIdx] || visibleResults[0];
-                    if (pick) navigateTo(pick.id, pick.category || 'default');
+                    if (pick) navigateTo(pick.id, pick.category || '');
                   } else if (e.key === 'Escape') {
                     setOpen(false);
                   }
@@ -469,7 +470,7 @@ export const SearchBox: React.FC<{
                                     onMouseMove={() => {
                                       if (idx >= 0 && activeIdx !== idx) setActiveIdx(idx);
                                     }}
-                                    onClick={() => navigateTo(it.id, it.category || 'default')}
+                                    onClick={() => navigateTo(it.id, it.category || '')}
                                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors group/item border-l-2 ${
                                       isActive ? 'bg-[var(--card)] border-[var(--accent)]' : 'border-transparent'
                                     }`}

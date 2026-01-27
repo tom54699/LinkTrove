@@ -451,7 +451,7 @@ export async function importTobyV4WithOrganizations(
       return t;
     }
     const id = gen('o');
-    const row = { id, name: (name || 'Imported').trim() || 'Imported', color: color || '#64748b', order: 0 } as any;
+    const row = { id, name: (name || 'Imported').trim() || 'Imported', color: color || '#64748b', order: 0, isDefault: false } as any;
     // order will be normalized by UI/migration later; assign 0 for now or append based on existing length
     const list = await getAll('organizations' as any).catch(() => []);
     const max = (list as any[]).reduce((m, o: any) => Math.max(m, o?.order ?? 0), -1);
@@ -467,7 +467,7 @@ export async function importTobyV4WithOrganizations(
 
     // Toby group → LinkTrove Category (Collection)
     const catId = gen('c');
-    const cat = { id: catId, name: group?.name || 'Imported', color: '#64748b', order: 0, organizationId: orgId } as any;
+    const cat = { id: catId, name: group?.name || 'Imported', color: '#64748b', order: 0, organizationId: orgId, isDefault: false } as any;
     await tx('categories', 'readwrite', async (t) => t.objectStore('categories').put(cat));
     categoriesCreated++;
 
@@ -477,7 +477,7 @@ export async function importTobyV4WithOrganizations(
       // Toby list → LinkTrove Subcategory (Group)
       const gid = gen('g');
       const now = Date.now();
-      const sc = { id: gid, categoryId: catId, name: l?.title || 'Default Group', order: 0, createdAt: now, updatedAt: now } as any;
+      const sc = { id: gid, categoryId: catId, name: l?.title || 'Default Group', order: 0, createdAt: now, updatedAt: now, isDefault: false } as any;
       await tx('subcategories' as any, 'readwrite', async (t) => t.objectStore('subcategories' as any).put(sc));
       groupsCreated++;
 
@@ -517,7 +517,7 @@ export async function importTobyV4WithOrganizations(
       for (const g of groups) {
         // Toby group → LinkTrove Category (Collection)
         const catId = gen('c');
-        const cat = { id: catId, name: g?.name || 'Imported', color: '#64748b', order: 0, organizationId: orgId } as any;
+        const cat = { id: catId, name: g?.name || 'Imported', color: '#64748b', order: 0, organizationId: orgId, isDefault: false } as any;
         await tx('categories', 'readwrite', async (t) => t.objectStore('categories').put(cat));
         categoriesCreated++;
 
@@ -526,7 +526,7 @@ export async function importTobyV4WithOrganizations(
           // Toby list → LinkTrove Subcategory (Group)
           const gid = gen('g');
           const now = Date.now();
-          const sc = { id: gid, categoryId: catId, name: l?.title || 'Default Group', order: 0, createdAt: now, updatedAt: now } as any;
+          const sc = { id: gid, categoryId: catId, name: l?.title || 'Default Group', order: 0, createdAt: now, updatedAt: now, isDefault: false } as any;
           await tx('subcategories' as any, 'readwrite', async (t) => t.objectStore('subcategories' as any).put(sc));
           groupsCreated++;
 

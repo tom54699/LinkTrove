@@ -144,6 +144,30 @@
   "cloud_restore_success": {
     "message": "Restore successful"
   },
+  "cloud_sync_bg_in_progress": {
+    "message": "Syncing in background..."
+  },
+  "cloud_sync_bg_failed": {
+    "message": "Background sync failed"
+  },
+  "cloud_sync_phase_checking": {
+    "message": "Preparing sync..."
+  },
+  "cloud_sync_phase_downloading": {
+    "message": "Downloading cloud data..."
+  },
+  "cloud_sync_phase_merging": {
+    "message": "Merging data..."
+  },
+  "cloud_sync_phase_importing": {
+    "message": "Writing data..."
+  },
+  "cloud_sync_phase_uploading": {
+    "message": "Uploading data..."
+  },
+  "cloud_sync_bg_close": {
+    "message": "Close"
+  },
 
   "gc_title": {
     "message": "Garbage Collection (GC)"

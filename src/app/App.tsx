@@ -13,6 +13,7 @@ import { FeedbackProvider, ErrorBoundary } from './ui/feedback';
 import { useFeedback } from './ui/feedback';
 import { WebpagesProvider, useWebpages } from './webpages/WebpagesProvider';
 import { SettingsModal } from './ui/SettingsModal';
+import { SyncStatusToast } from './ui/SyncStatusToast';
 import { useTemplates } from './templates/TemplatesProvider';
 import { GroupsView } from './groups/GroupsView';
 import { LanguageProvider, useI18n } from './i18n';
@@ -51,6 +52,7 @@ export const AppLayout: React.FC = () => {
           <main className="flex-1 overflow-hidden min-h-0">
             <Outlet />
           </main>
+          <SyncStatusToast />
           {settingsOpen && (
             <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
           )}

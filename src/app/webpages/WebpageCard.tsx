@@ -51,7 +51,7 @@ export const WebpageCard: React.FC<{
   const [titleValue, setTitleValue] = useState<string>(data.title);
   const [urlValue, setUrlValue] = useState<string>(data.url);
   const [urlError, setUrlError] = useState<string>('');
-  const categoryValue = data.category || 'default';
+  const categoryValue = data.category || '';
   const [metaValue, setMetaValue] = useState<Record<string, string>>({
     ...(data.meta || {}),
   });

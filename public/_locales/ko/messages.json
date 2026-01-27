@@ -144,6 +144,30 @@
   "cloud_restore_success": {
     "message": "복원 성공"
   },
+  "cloud_sync_bg_in_progress": {
+    "message": "백그라운드 동기화 중…"
+  },
+  "cloud_sync_bg_failed": {
+    "message": "백그라운드 동기화 실패"
+  },
+  "cloud_sync_phase_checking": {
+    "message": "동기화 준비 중…"
+  },
+  "cloud_sync_phase_downloading": {
+    "message": "클라우드 데이터 다운로드 중…"
+  },
+  "cloud_sync_phase_merging": {
+    "message": "데이터 병합 중…"
+  },
+  "cloud_sync_phase_importing": {
+    "message": "데이터 쓰는 중…"
+  },
+  "cloud_sync_phase_uploading": {
+    "message": "업로드 중…"
+  },
+  "cloud_sync_bg_close": {
+    "message": "닫기"
+  },
 
   "gc_title": {
     "message": "가비지 컬렉션 (GC)"

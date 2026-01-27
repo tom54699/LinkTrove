@@ -1,3 +1,5 @@
+import { DEFAULT_GROUP_NAME, createEntityId } from '../../utils/defaults';
+
 export type StoreName =
   | 'webpages'
   | 'categories'
@@ -33,8 +35,17 @@ async function ensureSubcategoriesMigrated(): Promise<void> {
       const now = Date.now(); const defaults: Record<string, any> = {};
       for (const cid of need) {
         if (!hasAnySubByCat[cid] && cats.some((c) => c.id === cid)) {
-          const id = `g_default_${cid}`;
-          const sc = { id, categoryId: cid, name: 'group', order: 0, createdAt: now, updatedAt: now } as any;
+          const id = createEntityId('g');
+          const matchCat = cats.find((c) => c.id === cid);
+          const sc = {
+            id,
+            categoryId: cid,
+            name: DEFAULT_GROUP_NAME,
+            order: 0,
+            createdAt: now,
+            updatedAt: now,
+            isDefault: !!(matchCat as any)?.isDefault,
+          } as any;
           subS.put(sc); defaults[cid] = sc;
         }
       }

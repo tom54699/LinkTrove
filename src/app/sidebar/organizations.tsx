@@ -1,11 +1,19 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { getAll, tx, setMeta } from '../../background/idb/db';
+import { createStorageService } from '../../background/storageService';
+import {
+  DEFAULT_GROUP_NAME,
+  DEFAULT_ORGANIZATION_NAME,
+  createEntityId,
+} from '../../utils/defaults';
 
 export interface Organization {
   id: string;
   name: string;
   color?: string;
   order: number;
+  isDefault?: boolean;
+  updatedAt?: string;
 }
 
 interface OrgsState {
@@ -24,19 +32,51 @@ interface OrgsState {
 
 export const OrgsCtx = createContext<OrgsState | null>(null);
 
-const DEFAULT_ORGS: Organization[] = [
-  { id: 'o_default', name: 'Personal', order: 0 },
+const FALLBACK_ORG_ID = createEntityId('o');
+const FALLBACK_ORGS: Organization[] = [
+  { id: FALLBACK_ORG_ID, name: DEFAULT_ORGANIZATION_NAME, order: 0, isDefault: true },
 ];
 
 export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [organizations, setOrganizations] = useState<Organization[]>(DEFAULT_ORGS);
-  const [selectedOrgId, setSelectedOrgId] = useState<string>('o_default');
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [selectedOrgId, setSelectedOrgId] = useState<string>('');
+  const storage = React.useMemo(() => createStorageService(), []);
+  const ensureDefaultOrg = React.useCallback(async (): Promise<Organization | null> => {
+    let ensured: Organization | null = null;
+    try {
+      await tx('organizations' as any, 'readwrite', async (t) => {
+        const s = t.objectStore('organizations' as any);
+        const existing: any[] = await new Promise((resolve, reject) => {
+          const req = s.getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => reject(req.error);
+        });
+        if (!existing.length) {
+          ensured = {
+            id: createEntityId('o'),
+            name: DEFAULT_ORGANIZATION_NAME,
+            color: '#64748b',
+            order: 0,
+            isDefault: true,
+          };
+          s.put(ensured as any);
+        } else {
+          ensured = existing.find((o: any) => o.isDefault) || existing[0];
+        }
+      });
+    } catch {}
+    return ensured;
+  }, []);
 
   React.useLayoutEffect(() => {
     (async () => {
       try {
-        const list = (await getAll('organizations' as any).catch(() => [])) as any[];
-        let orgs: Organization[] = Array.isArray(list) && list.length > 0 ? (list as any) : DEFAULT_ORGS;
+        const list = (await storage.listOrganizations?.().catch(() => [])) as any[];
+        let orgs: Organization[] = Array.isArray(list) && list.length > 0 ? (list as any) : [];
+        if (!orgs.length) {
+          const ensured = await ensureDefaultOrg();
+          if (ensured) orgs = [ensured];
+        }
         orgs = orgs.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.name).localeCompare(String(b.name)));
         setOrganizations(orgs);
         // Restore selected org
@@ -46,28 +86,30 @@ export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({
           });
           const sel = got?.selectedOrganizationId || '';
           if (sel && orgs.some((o) => o.id === sel)) setSelectedOrgId(sel);
-          else setSelectedOrgId(orgs[0]?.id || 'o_default');
+          else setSelectedOrgId(orgs[0]?.id || '');
         } catch {
-          setSelectedOrgId(orgs[0]?.id || 'o_default');
+          setSelectedOrgId(orgs[0]?.id || '');
         }
       } catch {}
     })();
-  }, []);
+  }, [storage, ensureDefaultOrg]);
 
   const actions = useMemo(() => ({
     async reload() {
       try {
-        const list = (await getAll('organizations' as any).catch(() => [])) as any[];
-        const orgs: Organization[] = Array.isArray(list) && list.length > 0 ? (list as any) : DEFAULT_ORGS;
+        const list = (await storage.listOrganizations?.().catch(() => [])) as any[];
+        let orgs: Organization[] = Array.isArray(list) && list.length > 0 ? (list as any) : [];
+        if (!orgs.length) {
+          const ensured = await ensureDefaultOrg();
+          if (ensured) orgs = [ensured];
+        }
         orgs.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.name).localeCompare(String(b.name)));
         setOrganizations(orgs);
-        if (!orgs.some((o) => o.id === selectedOrgId)) setSelectedOrgId(orgs[0]?.id || 'o_default');
+        if (!orgs.some((o) => o.id === selectedOrgId)) setSelectedOrgId(orgs[0]?.id || '');
       } catch {}
     },
     async add(name: string, color?: string) {
       // Use storageService to create organization with default collection
-      const { createStorageService } = await import('../../background/storageService');
-      const storage = createStorageService();
       const result = await storage.createOrganization?.(name, color);
 
       if (result) {
@@ -77,19 +119,8 @@ export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({
         // Auto-create default group for the default collection
         if (result.defaultCollection) {
           const catId = result.defaultCollection.id;
-          const now = Date.now();
-          const defaultGroup = {
-            id: `g_default_${catId}`,
-            categoryId: catId,
-            name: 'group',
-            order: 0,
-            createdAt: now,
-            updatedAt: now,
-          };
           try {
-            await tx(['subcategories' as any], 'readwrite', async (t) => {
-              t.objectStore('subcategories' as any).put(defaultGroup);
-            });
+            await storage.createSubcategory?.(catId, DEFAULT_GROUP_NAME);
           } catch {}
         }
 
@@ -99,7 +130,7 @@ export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({
       // Fallback to old behavior if storageService fails (but not for limit errors)
       const nowList = organizations.slice();
       const order = nowList.length ? (nowList[nowList.length - 1].order ?? nowList.length - 1) + 1 : 0;
-      const next: Organization = { id: 'o_' + Math.random().toString(36).slice(2, 9), name: name.trim() || 'Org', color, order };
+      const next: Organization = { id: createEntityId('o'), name: name.trim() || 'Org', color, order, isDefault: false };
       setOrganizations([...nowList, next]);
       try {
         await tx('organizations' as any, 'readwrite', async (t) => t.objectStore('organizations' as any).put(next));
@@ -107,23 +138,34 @@ export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({
       return next;
     },
     async rename(id: string, name: string) {
-      setOrganizations((prev) => prev.map((o) => o.id === id ? { ...o, name: name.trim() || o.name } : o));
+      setOrganizations((prev) => prev.map((o) => {
+        if (o.id !== id) return o;
+        const nextName = name.trim() || o.name;
+        const nextIsDefault = o.isDefault && String(nextName) === String(o.name);
+        return { ...o, name: nextName, isDefault: nextIsDefault, updatedAt: new Date().toISOString() };
+      }));
       try {
         await tx('organizations' as any, 'readwrite', async (t) => {
           const s = t.objectStore('organizations' as any);
           const cur = await new Promise<any>((resolve, reject) => { const req = s.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
-          if (!cur) return; cur.name = name; s.put(cur);
+          if (!cur) return;
+          const nextName = name;
+          if (String(cur.name || '') !== String(nextName || '') && cur.isDefault) cur.isDefault = false;
+          cur.name = nextName;
+          cur.updatedAt = new Date().toISOString();
+          s.put(cur);
         });
       } catch {}
     },
     async updateColor(id: string, color?: string) {
-      setOrganizations((prev) => prev.map((o) => o.id === id ? { ...o, color } : o));
+      setOrganizations((prev) => prev.map((o) => o.id === id ? { ...o, color, updatedAt: new Date().toISOString() } : o));
       try {
         await tx('organizations' as any, 'readwrite', async (t) => {
           const s = t.objectStore('organizations' as any);
           const cur = await new Promise<any>((resolve, reject) => { const req = s.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
           if (!cur) return;
           cur.color = color;
+          cur.updatedAt = new Date().toISOString();
           s.put(cur);
         });
       } catch {}
@@ -190,7 +232,7 @@ export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({
       // Auto-switch to another organization if current one is deleted
       if (selectedOrgId === id) {
         const remaining = organizations.filter(o => o.id !== id);
-        const nextOrgId = remaining[0]?.id || 'o_default';
+        const nextOrgId = remaining[0]?.id || '';
         setSelectedOrgId(nextOrgId);
       }
     },
@@ -203,7 +245,7 @@ export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({
       setOrganizations(newList);
       try { await tx('organizations' as any, 'readwrite', async (t) => { const s = t.objectStore('organizations' as any); for (const o of newList) s.put(o as any); }); } catch {}
     },
-  }), [organizations, selectedOrgId]);
+  }), [organizations, selectedOrgId, storage]);
 
   React.useEffect(() => {
     const onRestore = () => {
@@ -235,12 +277,12 @@ export function useOrganizations(): OrgsState {
   // 測試/未包 Provider 時提供安全 fallback
   if (!v) {
     return {
-      organizations: DEFAULT_ORGS,
-      selectedOrgId: 'o_default',
+      organizations: FALLBACK_ORGS,
+      selectedOrgId: FALLBACK_ORG_ID,
       setCurrentOrganization: () => {},
       actions: {
         reload: async () => {},
-        add: async (name: string, color?: string) => ({ id: 'o_default', name: name || 'Personal', color, order: 0 }),
+        add: async (name: string, color?: string) => ({ id: createEntityId('o'), name: name || DEFAULT_ORGANIZATION_NAME, color, order: 0 }),
         rename: async () => {},
         updateColor: async () => {},
         remove: async () => {},

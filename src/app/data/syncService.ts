@@ -7,6 +7,8 @@ import { mergeLWW, type ExportPayload } from './mergeService';
 type SyncStatus = {
   connected: boolean;
   syncing: boolean;
+  syncPhase?: 'checking' | 'downloading' | 'merging' | 'importing' | 'uploading';
+  blocking?: boolean;
   lastSyncedAt?: string;
   error?: string;
   lastDownloadedAt?: string;
@@ -23,6 +25,7 @@ let status: SyncStatus = {
   syncing: false,
   auto: false,
   pendingPush: false,
+  blocking: false,
 };
 
 let autoEnabled = false;
@@ -39,6 +42,16 @@ function setLocalStatus(patch: Partial<SyncStatus>) {
   try {
     chrome.storage?.local?.set?.({ 'cloudSync.status': { ...status } });
   } catch {}
+}
+
+function payloadHasData(payload: any): boolean {
+  if (!payload || typeof payload !== 'object') return false;
+  return [
+    payload.webpages?.length,
+    payload.categories?.length,
+    payload.subcategories?.length,
+    payload.organizations?.length,
+  ].some((n) => (n || 0) > 0);
 }
 
 export function getStatus(): SyncStatus {
@@ -80,6 +93,8 @@ async function bootstrapStatus() {
       status.auto = autoEnabled;
       status.pendingPush = pendingPush;
       status.syncing = false;
+      status.blocking = false;
+      status.syncPhase = undefined;
       if (stored.connected) {
         try {
           await drive.connect(false);
@@ -93,7 +108,7 @@ async function bootstrapStatus() {
   ensureStorageListener();
   setLocalStatus({});
   if (autoEnabled && status.connected) {
-    void ensureRemoteFreshness();
+    void ensureRemoteFreshness({ blocking: false });
   }
 }
 
@@ -120,7 +135,7 @@ async function runAutoBackup() {
   pendingPush = false;
   pushing = true;
   try {
-    await backupNow();
+    await backupNow({ blocking: false });
   } catch {
     pendingPush = true;
     setLocalStatus({});
@@ -138,17 +153,33 @@ function remoteIsNewer(info: DriveFileInfo): boolean {
   return (isFinite(remoteTime) && remoteTime > newestLocal) || checksumChanged;
 }
 
-async function ensureRemoteFreshness() {
+async function ensureRemoteFreshness(options?: { blocking?: boolean }) {
   if (!autoEnabled || !status.connected) return;
+  const useBlocking = options?.blocking !== false;
+  let started = false;
+  if (useBlocking) {
+    started = true;
+    setLocalStatus({ syncing: true, syncPhase: 'checking', blocking: true, error: undefined });
+  }
   try {
     const info = await drive.getFile();
-    if (!info) return;
-    if (!remoteIsNewer(info)) return;
+    if (!info) {
+      if (started) setLocalStatus({ syncing: false, syncPhase: undefined, blocking: false });
+      return;
+    }
+    if (!remoteIsNewer(info)) {
+      if (started) setLocalStatus({ syncing: false, syncPhase: undefined, blocking: false });
+      return;
+    }
     // Use merge mode for auto sync to preserve local changes
-    await restoreNow(info, true);
+    await restoreNow(info, true, { blocking: useBlocking });
   } catch (error) {
     const message = (error as any)?.message || String(error);
-    setLocalStatus({ error: message });
+    if (started) {
+      setLocalStatus({ syncing: false, syncPhase: undefined, blocking: false, error: message });
+    } else {
+      setLocalStatus({ error: message });
+    }
   }
 }
 
@@ -170,11 +201,11 @@ export async function setAutoSync(enabled: boolean): Promise<void> {
   ensureStorageListener();
   setLocalStatus({});
   if (status.connected) {
-    await ensureRemoteFreshness();
+    await ensureRemoteFreshness({ blocking: false });
   }
 }
 
-export async function connect(): Promise<void> {
+export async function connect(options?: { blockingOnSync?: boolean }): Promise<void> {
   await drive.connect();
   setLocalStatus({ connected: true, error: undefined });
   ensureStorageListener();
@@ -185,6 +216,10 @@ export async function connect(): Promise<void> {
     autoEnabled = true;
     setLocalStatus({});
   }
+  // Check remote freshness only when explicit blocking is requested (UI connect)
+  if (options?.blockingOnSync) {
+    void ensureRemoteFreshness({ blocking: true });
+  }
 }
 
 export async function disconnect(): Promise<void> {
@@ -194,13 +229,14 @@ export async function disconnect(): Promise<void> {
     pushTimer = null;
   }
   pendingPush = false;
-  setLocalStatus({ connected: false, syncing: false });
+  setLocalStatus({ connected: false, syncing: false, syncPhase: undefined, blocking: false });
 }
 
-export async function backupNow(): Promise<void> {
+export async function backupNow(options?: { blocking?: boolean }): Promise<void> {
   const storage = createStorageService();
   const ei = createExportImportService({ storage });
-  setLocalStatus({ syncing: true, error: undefined });
+  const useBlocking = options?.blocking !== false;
+  setLocalStatus({ syncing: true, syncPhase: 'uploading', blocking: useBlocking, error: undefined });
   try {
     const json = await ei.exportJson();
     const info = await drive.createOrUpdate(json);
@@ -208,36 +244,52 @@ export async function backupNow(): Promise<void> {
     pendingPush = false;
     setLocalStatus({
       syncing: false,
+      syncPhase: undefined,
+      blocking: false,
       lastSyncedAt: now,
       lastUploadedAt: now,
       lastChecksum: info?.md5Checksum ?? status.lastChecksum,
     });
   } catch (e: any) {
-    setLocalStatus({ syncing: false, error: String(e?.message || e) });
+    setLocalStatus({ syncing: false, syncPhase: undefined, blocking: useBlocking, error: String(e?.message || e) });
     throw e;
   }
 }
 
-export async function restoreNow(info?: DriveFileInfo, merge = false): Promise<void> {
+export async function restoreNow(
+  info?: DriveFileInfo,
+  merge = false,
+  options?: { blocking?: boolean }
+): Promise<void> {
   const storage = createStorageService();
-  setLocalStatus({ syncing: true, error: undefined });
+  const useBlocking = options?.blocking !== false;
+  setLocalStatus({ syncing: true, syncPhase: 'checking', blocking: useBlocking, error: undefined });
   restoring = true;
+  let blockingActive = useBlocking;
   try {
     const fileInfo = info ?? (await drive.getFile());
     if (!fileInfo) throw new Error('雲端尚無備份');
+    setLocalStatus({ syncPhase: 'downloading' });
     const remoteText = await drive.download(fileInfo.fileId);
-
+    let remoteHasData = false;
+    let remoteParsed: any | null = null;
+    try {
+      remoteParsed = JSON.parse(remoteText);
+      remoteHasData = payloadHasData(remoteParsed);
+    } catch {}
     if (merge) {
       // LWW merge mode
+      setLocalStatus({ syncPhase: 'merging' });
       const [localText, remoteData] = await Promise.all([
         (storage as any).exportData(),
         Promise.resolve(remoteText),
       ]);
       const local: ExportPayload = JSON.parse(localText);
-      const remote: ExportPayload = JSON.parse(remoteData);
+      const remote: ExportPayload = remoteParsed || JSON.parse(remoteData);
       const merged = mergeLWW(local, remote);
 
       // Write merged data back
+      setLocalStatus({ syncPhase: 'importing' });
       const mergedPayload = {
         schemaVersion: 1,
         webpages: merged.webpages,
@@ -252,6 +304,7 @@ export async function restoreNow(info?: DriveFileInfo, merge = false): Promise<v
       await (storage as any).importData(JSON.stringify(mergedPayload));
     } else {
       // Full replace mode (original behavior)
+      setLocalStatus({ syncPhase: 'importing' });
       await (storage as any).importData(remoteText);
     }
     try {
@@ -295,19 +348,21 @@ export async function restoreNow(info?: DriveFileInfo, merge = false): Promise<v
     pendingPush = false;
     setLocalStatus({
       syncing: false,
+      syncPhase: undefined,
+      blocking: false,
       lastSyncedAt: now,
       lastDownloadedAt: now,
       lastChecksum: fileInfo.md5Checksum ?? status.lastChecksum,
       error: undefined,
     });
   } catch (e: any) {
-    setLocalStatus({ syncing: false, error: String(e?.message || e) });
+    setLocalStatus({ syncing: false, syncPhase: undefined, blocking: blockingActive, error: String(e?.message || e) });
     throw e;
   } finally {
     restoring = false;
   }
 }
 
-export async function syncNow(): Promise<void> {
-  await backupNow();
+export function clearSyncError(): void {
+  setLocalStatus({ error: undefined, blocking: false, syncPhase: undefined, syncing: false });
 }

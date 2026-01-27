@@ -6,6 +6,12 @@ import {
   type OrganizationData,
   type SubcategoryData,
 } from './background/storageService';
+import {
+  DEFAULT_CATEGORY_NAME,
+  DEFAULT_GROUP_NAME,
+  DEFAULT_ORGANIZATION_NAME,
+  createEntityId,
+} from './utils/defaults';
 import { createWebpageService } from './background/webpageService';
 import {
   extractMetaForTab,
@@ -34,9 +40,6 @@ const MENU_ROOT_LINK = `${MENU_PREFIX}::link`;
 const MENU_ROOT_SELECTION = `${MENU_PREFIX}::selection`;
 const MENU_REBUILD_THROTTLE_MS = 15000;
 const MENU_OPEN_APP_SUFFIX = '::open';
-const DEFAULT_ORG_ID = 'o_default';
-const DEFAULT_CATEGORY_ID = 'default';
-const DEFAULT_GROUP_ID = `g_default_${DEFAULT_CATEGORY_ID}`;
 
 function getMenuTitle(key: string, fallback: string) {
   try {
@@ -163,12 +166,16 @@ async function loadMenuData(): Promise<MenuData> {
   const orgMap = new Map<string, OrganizationData>();
   for (const org of organizations) orgMap.set(org.id, org);
 
+  const fallbackOrg = organizations.find((o) => (o as any)?.isDefault) || organizations[0];
+  const fallbackOrgId = fallbackOrg?.id;
+  const synthesizedOrgId = fallbackOrgId || createEntityId('o');
+
   for (const cat of categories) {
-    const orgId = cat.organizationId || 'o_default';
+    const orgId = cat.organizationId || synthesizedOrgId;
     if (!orgMap.has(orgId)) {
       orgMap.set(orgId, {
         id: orgId,
-        name: orgId === 'o_default' ? 'Personal' : orgId,
+        name: orgId === synthesizedOrgId ? DEFAULT_ORGANIZATION_NAME : orgId,
         order: 999999,
       });
     }
@@ -179,7 +186,7 @@ async function loadMenuData(): Promise<MenuData> {
 
   const categoriesByOrg = new Map<string, CategoryData[]>();
   for (const category of categories) {
-    const orgId = category.organizationId || 'o_default';
+    const orgId = category.organizationId || synthesizedOrgId;
     if (!categoriesByOrg.has(orgId)) categoriesByOrg.set(orgId, []);
     categoriesByOrg.get(orgId)!.push(category);
   }
@@ -235,45 +242,45 @@ async function ensureBaselineData(): Promise<void> {
         ]);
 
         const activeOrgs = (orgs || []).filter((o: any) => !o?.deleted);
-        if (activeOrgs.length === 0) {
+        let defaultOrgId = activeOrgs.find((o: any) => o?.isDefault)?.id || activeOrgs[0]?.id;
+        if (!defaultOrgId) {
+          defaultOrgId = createEntityId('o');
           os.put({
-            id: DEFAULT_ORG_ID,
-            name: 'Personal',
+            id: defaultOrgId,
+            name: DEFAULT_ORGANIZATION_NAME,
             color: '#64748b',
             order: 0,
+            isDefault: true,
           });
         }
 
         const activeCats = (cats || []).filter((c: any) => !c?.deleted);
-        const hasDefaultCategory = activeCats.some(
-          (c: any) => c.id === DEFAULT_CATEGORY_ID
-        );
-        if (activeCats.length === 0 && !hasDefaultCategory) {
+        let defaultCategoryId = activeCats.find((c: any) => c?.isDefault)?.id;
+        if (!activeCats.length && !defaultCategoryId) {
+          defaultCategoryId = createEntityId('c');
           cs.put({
-            id: DEFAULT_CATEGORY_ID,
-            name: 'Default',
+            id: defaultCategoryId,
+            name: DEFAULT_CATEGORY_NAME,
             color: '#64748b',
             order: 0,
-            organizationId: DEFAULT_ORG_ID,
+            organizationId: defaultOrgId,
+            isDefault: true,
           });
         }
 
         const activeSubs = (subs || []).filter((s: any) => !s?.deleted);
-        const hasDefaultGroup = activeSubs.some(
-          (s: any) => s.categoryId === DEFAULT_CATEGORY_ID
-        );
-        if (
-          (activeCats.length === 0 || hasDefaultCategory) &&
-          !hasDefaultGroup
-        ) {
+        const targetCatId = defaultCategoryId;
+        const hasDefaultGroup = !!(targetCatId && activeSubs.some((s: any) => s.categoryId === targetCatId));
+        if (targetCatId && !hasDefaultGroup) {
           const now = Date.now();
           ss.put({
-            id: DEFAULT_GROUP_ID,
-            categoryId: DEFAULT_CATEGORY_ID,
-            name: 'group',
+            id: createEntityId('g'),
+            categoryId: targetCatId,
+            name: DEFAULT_GROUP_NAME,
             order: 0,
             createdAt: now,
             updatedAt: now,
+            isDefault: true,
           });
         }
       }
