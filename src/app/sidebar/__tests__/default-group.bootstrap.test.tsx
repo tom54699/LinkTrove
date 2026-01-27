@@ -2,6 +2,8 @@ import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { CategoriesProvider } from '../../sidebar/categories';
+import { getAll } from '../../../background/idb/db';
+import { DEFAULT_GROUP_NAME } from '../../../utils/defaults';
 
 // Minimal Chrome API stubs for tests (callback-style)
 function setupChromeStub() {
@@ -41,7 +43,13 @@ describe('bootstrap default group for Default collection', () => {
     let list: any[] = [];
     const deadline = Date.now() + 2000;
     while (true) {
-      list = ((await svc.listSubcategories?.('default')) as any[]) || [];
+      const cats = (await getAll('categories')) as any[];
+      const defCat = cats.find((c) => c.isDefault) || cats[0];
+      if (defCat?.id) {
+        list = ((await svc.listSubcategories?.(defCat.id)) as any[]) || [];
+      } else {
+        list = [];
+      }
       if (Array.isArray(list) && list.length > 0) break;
       if (Date.now() > deadline) break;
       await new Promise((r) => setTimeout(r, 20));
@@ -50,6 +58,6 @@ describe('bootstrap default group for Default collection', () => {
     expect(list.length).toBeGreaterThan(0);
     // ensure the default group name matches "group"
     const names = list.map((x) => String(x.name || '').toLowerCase());
-    expect(names).toContain('group');
+    expect(names).toContain(DEFAULT_GROUP_NAME.toLowerCase());
   });
 });

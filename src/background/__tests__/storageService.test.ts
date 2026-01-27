@@ -50,7 +50,7 @@ describe('storageService', () => {
         url: 'https://a',
         favicon: '',
         note: '',
-        category: 'default',
+        category: 'c1',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
@@ -64,7 +64,7 @@ describe('storageService', () => {
   it('saves and loads categories in sync', async () => {
     const { createStorageService } = await import('../storageService');
     const s = createStorageService();
-    const cats = [{ id: 'c1', name: 'Default', color: '#fff', order: 0 }];
+    const cats = [{ id: 'c1', name: 'Bookmarks', color: '#fff', order: 0 }];
     await s.saveToSync(cats);
     const loaded = await s.loadFromSync();
     expect(loaded).toEqual(cats);
@@ -80,12 +80,12 @@ describe('storageService', () => {
         url: 'https://a',
         favicon: '',
         note: '',
-        category: 'default',
+        category: 'c1',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
     ];
-    const cats = [{ id: 'c1', name: 'Default', color: '#fff', order: 0 }];
+    const cats = [{ id: 'c1', name: 'Bookmarks', color: '#fff', order: 0 }];
     await s.saveToLocal([]);
     await s.saveToSync([]);
     const json = JSON.stringify({ webpages: pages, categories: cats });
@@ -93,7 +93,7 @@ describe('storageService', () => {
     const dump = await s.exportData();
     const obj = JSON.parse(dump);
     expect(obj.webpages[0].title).toBe('A');
-    expect(obj.categories[0].name).toBe('Default');
+    expect(obj.categories[0].name).toBe('Bookmarks');
   });
 
   it('rejects invalid data on import', async () => {

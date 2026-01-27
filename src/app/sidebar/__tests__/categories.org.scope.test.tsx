@@ -32,12 +32,12 @@ describe('Categories scoped by Organization', () => {
   it('filters categories by selected org and adds into current org', async () => {
     setupChromeStub();
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Personal', order: 0 },
+      { id: 'o_a', name: 'Personal', order: 0, isDefault: true },
       { id: 'o_b', name: 'Team', order: 1 },
     ] as any);
     await putAll('categories', [
-      { id: 'c1', name: 'A', color: '#aaa', order: 0, organizationId: 'o_default' },
-      { id: 'c2', name: 'B', color: '#bbb', order: 1, organizationId: 'o_default' },
+      { id: 'c1', name: 'A', color: '#aaa', order: 0, organizationId: 'o_a' },
+      { id: 'c2', name: 'B', color: '#bbb', order: 1, organizationId: 'o_a' },
       { id: 'c3', name: 'X', color: '#ccc', order: 0, organizationId: 'o_b' },
     ] as any);
 

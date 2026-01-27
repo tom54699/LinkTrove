@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { getAll, getMeta } from '../db';
+import { DEFAULT_CATEGORY_NAME, DEFAULT_ORGANIZATION_NAME } from '../../../utils/defaults';
 
 async function resetDb() {
   try {
@@ -35,7 +36,9 @@ describe('StorageService organizations API', () => {
 
     const list0 = (await (s as any).listOrganizations?.()) as any[];
     expect(Array.isArray(list0)).toBe(true);
-    expect(list0.find((o) => o.id === 'o_default')).toBeTruthy();
+    const defOrg = list0.find((o) => o.isDefault);
+    expect(defOrg).toBeTruthy();
+    expect(defOrg.name).toBe(DEFAULT_ORGANIZATION_NAME);
 
     const resultA = await (s as any).createOrganization?.('Org A', '#123456', { createDefaultCollection: false });
     const resultB = await (s as any).createOrganization?.('Org B', undefined, { createDefaultCollection: false });
@@ -51,7 +54,7 @@ describe('StorageService organizations API', () => {
     expect(list2.find((o) => o.id === a.id)?.name).toBe('Org A+');
 
     // reorder: put B first
-    await (s as any).reorderOrganizations?.([b!.id, a!.id, 'o_default']);
+    await (s as any).reorderOrganizations?.([b!.id, a!.id, defOrg.id]);
     const list3 = (await (s as any).listOrganizations?.()) as any[];
     expect(list3[0].id).toBe(b!.id);
   });
@@ -67,11 +70,13 @@ describe('StorageService organizations API', () => {
     const c1 = await (s as any).addCategory?.('C1');
     const c2 = await (s as any).addCategory?.('C2');
     const c3 = await (s as any).addCategory?.('C3');
-    expect(c1.organizationId).toBe('o_default');
+    const currentOrgs = (await (s as any).listOrganizations?.()) as any[];
+    const currentDefault = currentOrgs.find((o) => o.isDefault) || currentOrgs[0];
+    expect(c1.organizationId).toBe(currentDefault.id);
     // reorder within default
-    await (s as any).reorderCategories?.([c3.id, c1.id, c2.id], 'o_default');
+    await (s as any).reorderCategories?.([c3.id, c1.id, c2.id], currentDefault.id);
     const afterCats = (await getAll('categories')) as any[];
-    const defCats = afterCats.filter((c) => c.organizationId === 'o_default').sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const defCats = afterCats.filter((c) => c.organizationId === currentDefault.id).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     expect(defCats.map((c) => c.id)).toEqual([c3.id, c1.id, c2.id]);
 
     // move one category to Org B
@@ -81,9 +86,9 @@ describe('StorageService organizations API', () => {
     expect(inB.some((c) => c.id === c2.id)).toBe(true);
 
     // delete Org B and reassign to default
-    await (s as any).deleteOrganization?.(orgB.id, { reassignTo: 'o_default' });
+    await (s as any).deleteOrganization?.(orgB.id, { reassignTo: currentDefault.id });
     const finalCats = (await getAll('categories')) as any[];
-    expect(finalCats.every((c) => c.organizationId === 'o_default')).toBe(true);
+    expect(finalCats.every((c) => c.organizationId === currentDefault.id)).toBe(true);
   });
 
   it('should auto-create default Collection when creating Organization', async () => {
@@ -101,7 +106,7 @@ describe('StorageService organizations API', () => {
     // Verify default Collection was auto-created
     expect(result.defaultCollection).toBeDefined();
     expect(result.defaultCollection).not.toBeNull();
-    expect(result.defaultCollection.name).toBe('General');
+    expect(result.defaultCollection.name).toBe(DEFAULT_CATEGORY_NAME);
     expect(result.defaultCollection.organizationId).toBe(result.organization.id);
     expect(result.defaultCollection.order).toBe(0);
     expect(result.defaultCollection.color).toBe('#ff0000');
@@ -110,7 +115,7 @@ describe('StorageService organizations API', () => {
     const allCategories = (await getAll('categories')) as any[];
     const createdCategory = allCategories.find((c) => c.id === result.defaultCollection.id);
     expect(createdCategory).toBeDefined();
-    expect(createdCategory.name).toBe('General');
+    expect(createdCategory.name).toBe(DEFAULT_CATEGORY_NAME);
   });
 
   it('should skip default Collection when createDefaultCollection is false', async () => {

@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { ThreeColumnLayout } from '../../layout/ThreeColumn';
 import { CategoriesProvider, useCategories } from '../categories';
 import { Sidebar } from '../sidebar';
+import { DEFAULT_CATEGORY_NAME } from '../../../utils/defaults';
 
 vi.mock('../../i18n', () => ({
   useI18n: () => ({
@@ -46,11 +47,11 @@ describe('Sidebar (task 7.1)', () => {
 
     // Default entries: Default only (All removed)
     expect(
-      screen.getByRole('button', { name: /Default/i })
+      screen.getByRole('button', { name: new RegExp(DEFAULT_CATEGORY_NAME, 'i') })
     ).toBeInTheDocument();
 
     // Initially Default is selected
-    const def = screen.getByRole('button', { name: /Default/i });
+    const def = screen.getByRole('button', { name: new RegExp(DEFAULT_CATEGORY_NAME, 'i') });
     expect(def.getAttribute('data-active')).toBe('true');
   });
 
@@ -61,9 +62,9 @@ describe('Sidebar (task 7.1)', () => {
       </CategoriesProvider>
     );
 
-    // Initially shows Default (All removed)
-    expect(screen.getByTestId('content-probe').textContent).toContain('default');
-    // Since there's only one category now, the test just verifies it shows Default
-    expect(screen.getByRole('button', { name: /Default/i })).toBeInTheDocument();
+    // Initially shows default selection
+    expect(screen.getByTestId('content-probe').textContent).toMatch(/Current:\s*\w+/);
+    // Since there's only one category now, the test just verifies it shows the default label
+    expect(screen.getByRole('button', { name: new RegExp(DEFAULT_CATEGORY_NAME, 'i') })).toBeInTheDocument();
   });
 });

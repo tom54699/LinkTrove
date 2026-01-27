@@ -38,11 +38,11 @@ describe('Delete Protection Integration Tests', () => {
   it('three-layer protection: cannot delete last org → last collection → last group', async () => {
     // Setup minimal hierarchy: 1 org → 1 collection → 1 group
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Personal', order: 0 },
+      { id: 'o_a', name: 'Personal', order: 0 },
     ] as any);
 
     await putAll('categories', [
-      { id: 'c1', name: 'Collection 1', color: '#888', order: 0, organizationId: 'o_default' },
+      { id: 'c1', name: 'Collection 1', color: '#888', order: 0, organizationId: 'o_a' },
     ] as any);
 
     await putAll('subcategories' as any, [
@@ -60,7 +60,7 @@ describe('Delete Protection Integration Tests', () => {
           <div data-testid="cat-count">{cats.categories.length}</div>
           <button
             data-testid="delete-org"
-            onClick={() => { void orgs.actions.remove('o_default').catch(() => {}); }}
+            onClick={() => { void orgs.actions.remove('o_a').catch(() => {}); }}
           >
             Delete Org
           </button>
@@ -112,13 +112,13 @@ describe('Delete Protection Integration Tests', () => {
   it('cascade delete verification: org → collections → groups → webpages', async () => {
     // Setup: 2 orgs, each with multiple collections, groups, and webpages
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Org A', order: 0 },
+      { id: 'o_a', name: 'Org A', order: 0 },
       { id: 'o_b', name: 'Org B', order: 1 },
     ] as any);
 
     await putAll('categories', [
-      { id: 'c1', name: 'Cat A1', color: '#aaa', order: 0, organizationId: 'o_default' },
-      { id: 'c2', name: 'Cat A2', color: '#bbb', order: 1, organizationId: 'o_default' },
+      { id: 'c1', name: 'Cat A1', color: '#aaa', order: 0, organizationId: 'o_a' },
+      { id: 'c2', name: 'Cat A2', color: '#bbb', order: 1, organizationId: 'o_a' },
       { id: 'c3', name: 'Cat B1', color: '#ccc', order: 0, organizationId: 'o_b' },
     ] as any);
 
@@ -141,7 +141,7 @@ describe('Delete Protection Integration Tests', () => {
           <div data-testid="org-count">{orgs.organizations.length}</div>
           <button
             data-testid="delete-org-a"
-            onClick={() => { void orgs.actions.remove('o_default').catch(() => {}); }}
+            onClick={() => { void orgs.actions.remove('o_a').catch(() => {}); }}
           >
             Delete Org A
           </button>
@@ -190,12 +190,12 @@ describe('Delete Protection Integration Tests', () => {
 
   it('per-organization collection protection: cannot delete last in org A, but can in org B', async () => {
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Org A', order: 0 },
+      { id: 'o_a', name: 'Org A', order: 0 },
       { id: 'o_b', name: 'Org B', order: 1 },
     ] as any);
 
     await putAll('categories', [
-      { id: 'c1', name: 'Cat A1', color: '#aaa', order: 0, organizationId: 'o_default' },
+      { id: 'c1', name: 'Cat A1', color: '#aaa', order: 0, organizationId: 'o_a' },
       { id: 'c2', name: 'Cat B1', color: '#bbb', order: 0, organizationId: 'o_b' },
       { id: 'c3', name: 'Cat B2', color: '#ccc', order: 1, organizationId: 'o_b' },
     ] as any);
@@ -265,7 +265,7 @@ describe('Delete Protection Integration Tests', () => {
   it('error handling: data layer throws error when UI protection bypassed', async () => {
 
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Personal', order: 0 },
+      { id: 'o_a', name: 'Personal', order: 0 },
     ] as any);
 
     const TestHarness: React.FC = () => {
@@ -275,7 +275,7 @@ describe('Delete Protection Integration Tests', () => {
       const forceDelete = async () => {
         try {
           // Simulate bypassing UI check and calling data layer directly
-          await orgs.actions.remove('o_default');
+          await orgs.actions.remove('o_a');
         } catch {
           setErrorMessage('blocked');
         }

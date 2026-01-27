@@ -27,8 +27,8 @@ vi.mock('../categories', () => ({
 
 vi.mock('../organizations', () => ({
   useOrganizations: () => ({
-    organizations: [{ id: 'o_default', name: 'Personal' }],
-    selectedOrgId: 'o_default',
+    organizations: [{ id: 'o_a', name: 'Personal' }],
+    selectedOrgId: 'o_a',
     setCurrentOrganization: vi.fn(),
   }),
 }));

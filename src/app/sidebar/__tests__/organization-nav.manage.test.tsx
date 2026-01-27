@@ -53,7 +53,7 @@ describe('OrganizationNav manage dialog autosave', () => {
 
   it('auto-saves organization name on blur', async () => {
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Personal', color: '#111111', order: 0 },
+      { id: 'o_a', name: 'Personal', color: '#111111', order: 0, isDefault: true },
       { id: 'o_b', name: 'Work', color: '#222222', order: 1 },
     ] as any);
 
@@ -71,13 +71,13 @@ describe('OrganizationNav manage dialog autosave', () => {
 
     await waitFor(async () => {
       const orgsInDb = (await getAll('organizations' as any)) as any[];
-      expect(orgsInDb.find((o: any) => o.id === 'o_default')?.name).toBe('Personal X');
+      expect(orgsInDb.find((o: any) => o.id === 'o_a')?.name).toBe('Personal X');
     });
   });
 
   it('auto-saves organization color on change', async () => {
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Personal', color: '#111111', order: 0 },
+      { id: 'o_a', name: 'Personal', color: '#111111', order: 0, isDefault: true },
       { id: 'o_b', name: 'Work', color: '#222222', order: 1 },
     ] as any);
 
@@ -94,7 +94,7 @@ describe('OrganizationNav manage dialog autosave', () => {
 
     await waitFor(async () => {
       const orgsInDb = (await getAll('organizations' as any)) as any[];
-      expect(orgsInDb.find((o: any) => o.id === 'o_default')?.color).toBe('#ff0000');
+      expect(orgsInDb.find((o: any) => o.id === 'o_a')?.color).toBe('#ff0000');
     });
   });
 });

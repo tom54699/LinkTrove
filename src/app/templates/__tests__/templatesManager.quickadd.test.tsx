@@ -46,8 +46,8 @@ vi.mock('../TemplatesProvider', () => {
 
 vi.mock('../../sidebar/categories', () => ({
   useCategories: () => ({
-    categories: [{ id: 'default', name: 'Default', color: '#aaa', order: 0 }],
-    selectedId: 'default',
+    categories: [{ id: 'c1', name: 'Bookmarks', color: '#aaa', order: 0 }],
+    selectedId: 'c1',
     setCurrentCategory: vi.fn(),
     actions: {
       setDefaultTemplate: vi.fn(),

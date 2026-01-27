@@ -14,7 +14,7 @@ vi.mock('../../i18n', () => ({
 }));
 
 vi.mock('../../sidebar/categories', () => ({
-  useCategories: () => ({ categories: [{ id: 'default', name: 'Default' }] }),
+  useCategories: () => ({ categories: [{ id: 'c1', name: 'Bookmarks' }] }),
 }));
 vi.mock('../../templates/TemplatesProvider', () => ({
   useTemplates: () => ({ templates: [] }),

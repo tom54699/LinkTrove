@@ -25,12 +25,12 @@ describe('createStorageService (IDB)', () => {
         url: 'https://x',
         favicon: '',
         note: '',
-        category: 'default',
+        category: 'c1',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
     ];
-    const cats = [{ id: 'default', name: 'Default', color: '#999', order: 0 }];
+    const cats = [{ id: 'c1', name: 'Bookmarks', color: '#999', order: 0 }];
     const tmpls = [{ id: 't1', name: 'Basic', fields: [] }];
     await s.saveToLocal(pages as any);
     await s.saveToSync(cats as any);

@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, it, expect } from 'vitest';
 import { putAll, getAll } from '../idb/db';
+import { DEFAULT_ORGANIZATION_NAME } from '../../utils/defaults';
 
 async function resetDb() {
   try {
@@ -51,7 +52,7 @@ describe('Export/Import with organizations', () => {
     expect(cats2.every((c) => byOrg.has((c as any).organizationId))).toBe(true);
   });
 
-  it('imports legacy JSON without organizations by creating o_default and assigning categories', async () => {
+  it('imports legacy JSON without organizations by creating default org and assigning categories', async () => {
     const legacy = JSON.stringify({
       webpages: [],
       categories: [ { id: 'c1', name: 'Legacy', color: '#aaa', order: 0 } ],
@@ -64,9 +65,9 @@ describe('Export/Import with organizations', () => {
     const orgs = (await getAll('organizations' as any)) as any[];
     const cats = (await getAll('categories')) as any[];
     expect(orgs.length).toBeGreaterThanOrEqual(1);
-    const def = orgs.find((o) => o.id === 'o_default');
+    const def = orgs.find((o) => o.isDefault);
     expect(def).toBeTruthy();
-    expect((cats[0] as any).organizationId).toBe('o_default');
+    expect(def.name).toBe(DEFAULT_ORGANIZATION_NAME);
+    expect((cats[0] as any).organizationId).toBe(def.id);
   });
 });
-

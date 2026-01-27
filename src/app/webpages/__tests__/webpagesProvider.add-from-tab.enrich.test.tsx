@@ -38,8 +38,8 @@ function createMockService({ withTemplateFields = true }: MockOptions = {}) {
   const data: any[] = [];
   const categories = [
     {
-      id: 'default',
-      name: 'Default',
+      id: 'c1',
+      name: 'Bookmarks',
       color: '#111',
       order: 0,
       defaultTemplateId: withTemplateFields ? 'tpl-1' : undefined,
@@ -67,7 +67,7 @@ function createMockService({ withTemplateFields = true }: MockOptions = {}) {
         url: tab.url,
         favicon: tab.favIconUrl ?? '',
         note: '',
-        category: 'default',
+        category: 'c1',
         subcategoryId: undefined,
         meta: {},
         createdAt: now,

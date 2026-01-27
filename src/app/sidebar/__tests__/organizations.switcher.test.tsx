@@ -32,7 +32,7 @@ describe('OrganizationsProvider basic switch', () => {
     setupChromeStub();
     // seed orgs
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Personal', order: 0 },
+      { id: 'o_a', name: 'Personal', order: 0, isDefault: true },
       { id: 'o_b', name: 'Team', order: 1 },
     ] as any);
     render(
@@ -41,9 +41,9 @@ describe('OrganizationsProvider basic switch', () => {
       </OrganizationsProvider>
     );
     const sel = await screen.findByTestId('sel');
-    expect(sel.textContent === 'o_default' || sel.textContent === 'o_b').toBe(true);
+    expect(sel.textContent === 'o_a' || sel.textContent === 'o_b').toBe(true);
     await waitFor(() => {
-      expect(screen.getByTestId('sel').textContent).toBe('o_default');
+      expect(screen.getByTestId('sel').textContent).toBe('o_a');
     });
     fireEvent.click(screen.getByText('swap'));
     await waitFor(() => {

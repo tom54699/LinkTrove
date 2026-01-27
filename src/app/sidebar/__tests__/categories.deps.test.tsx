@@ -5,8 +5,8 @@ import { CategoriesProvider, useCategories } from '../categories';
 
 const dbMocks = vi.hoisted(() => ({
   tx: vi.fn(async () => ([
-    { id: 'c1', name: 'A', color: '#aaa', order: 0, organizationId: 'o_default' },
-    { id: 'c2', name: 'B', color: '#bbb', order: 1, organizationId: 'o_default' },
+    { id: 'c1', name: 'A', color: '#aaa', order: 0, organizationId: 'o_a' },
+    { id: 'c2', name: 'B', color: '#bbb', order: 1, organizationId: 'o_a' },
   ])),
   getMeta: vi.fn(async () => undefined),
   setMeta: vi.fn(async () => undefined),

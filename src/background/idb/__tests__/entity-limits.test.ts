@@ -24,6 +24,12 @@ async function waitForOrgMigration(timeout = 3000) {
   }
 }
 
+async function getDefaultOrgId(svc: any): Promise<string> {
+  const orgs = (await svc.listOrganizations?.()) as any[];
+  const def = orgs.find((o: any) => o.isDefault) || orgs[0];
+  return def?.id;
+}
+
 describe('Entity count limits', () => {
   beforeEach(async () => {
     await resetDb();
@@ -86,9 +92,10 @@ describe('Entity count limits', () => {
       const { createStorageService } = await import('../../storageService');
       const s = createStorageService();
       await waitForOrgMigration();
+      const defOrgId = await getDefaultOrgId(s);
 
       for (let i = 1; i <= 20; i++) {
-        const cat = await (s as any).addCategory?.(`Cat ${i}`, '#000000', 'o_default');
+        const cat = await (s as any).addCategory?.(`Cat ${i}`, '#000000', defOrgId);
         expect(cat.name).toBe(`Cat ${i}`);
       }
     });
@@ -97,17 +104,18 @@ describe('Entity count limits', () => {
       const { createStorageService } = await import('../../storageService');
       const s = createStorageService();
       await waitForOrgMigration();
+      const defOrgId = await getDefaultOrgId(s);
 
       // Create 20 categories
       for (let i = 1; i <= 20; i++) {
-        await (s as any).addCategory?.(`Cat ${i}`, '#000000', 'o_default');
+        await (s as any).addCategory?.(`Cat ${i}`, '#000000', defOrgId);
       }
 
       // 21st category should fail
-      await expect((s as any).addCategory?.('Cat 21', '#000000', 'o_default'))
+      await expect((s as any).addCategory?.('Cat 21', '#000000', defOrgId))
         .rejects.toThrow(LimitExceededError);
 
-      await expect((s as any).addCategory?.('Cat 21', '#000000', 'o_default'))
+      await expect((s as any).addCategory?.('Cat 21', '#000000', defOrgId))
         .rejects.toThrow(/已達上限/);
     });
 
@@ -115,6 +123,7 @@ describe('Entity count limits', () => {
       const { createStorageService } = await import('../../storageService');
       const s = createStorageService();
       await waitForOrgMigration();
+      const defOrgId = await getDefaultOrgId(s);
 
       // Create another org
       const result = await (s as any).createOrganization?.('Org B', undefined, { createDefaultCollection: false });
@@ -122,7 +131,7 @@ describe('Entity count limits', () => {
 
       // Fill up default org
       for (let i = 1; i <= 20; i++) {
-        await (s as any).addCategory?.(`DefCat ${i}`, '#000000', 'o_default');
+        await (s as any).addCategory?.(`DefCat ${i}`, '#000000', defOrgId);
       }
 
       // Should still be able to create in Org B
@@ -137,8 +146,9 @@ describe('Entity count limits', () => {
       const { createStorageService } = await import('../../storageService');
       const s = createStorageService();
       await waitForOrgMigration();
+      const defOrgId = await getDefaultOrgId(s);
 
-      const cat = await (s as any).addCategory?.('TestCat', '#000000', 'o_default');
+      const cat = await (s as any).addCategory?.('TestCat', '#000000', defOrgId);
 
       for (let i = 1; i <= 50; i++) {
         const group = await (s as any).createSubcategory?.(cat.id, `Group ${i}`);
@@ -150,8 +160,9 @@ describe('Entity count limits', () => {
       const { createStorageService } = await import('../../storageService');
       const s = createStorageService();
       await waitForOrgMigration();
+      const defOrgId = await getDefaultOrgId(s);
 
-      const cat = await (s as any).addCategory?.('TestCat', '#000000', 'o_default');
+      const cat = await (s as any).addCategory?.('TestCat', '#000000', defOrgId);
 
       // Create 50 groups
       for (let i = 1; i <= 50; i++) {
@@ -170,9 +181,10 @@ describe('Entity count limits', () => {
       const { createStorageService } = await import('../../storageService');
       const s = createStorageService();
       await waitForOrgMigration();
+      const defOrgId = await getDefaultOrgId(s);
 
-      const catA = await (s as any).addCategory?.('Cat A', '#000000', 'o_default');
-      const catB = await (s as any).addCategory?.('Cat B', '#000000', 'o_default');
+      const catA = await (s as any).addCategory?.('Cat A', '#000000', defOrgId);
+      const catB = await (s as any).addCategory?.('Cat B', '#000000', defOrgId);
 
       // Fill up Cat A
       for (let i = 1; i <= 50; i++) {

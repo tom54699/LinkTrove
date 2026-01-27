@@ -20,7 +20,7 @@ const showToastMock = vi.fn();
 
 vi.mock('../../sidebar/categories', () => ({
   useCategories: () => ({
-    categories: [{ id: 'c1', name: 'Collection 1', color: '#888', order: 0, organizationId: 'o_default' }],
+    categories: [{ id: 'c1', name: 'Collection 1', color: '#888', order: 0, organizationId: 'o_a' }],
     selectedId: 'c1',
     actions: {},
     setCurrentCategory: () => {},
@@ -121,7 +121,7 @@ describe('GroupsView Delete Protection', () => {
   it('prevents deleting the last group in a collection', async () => {
     // Setup: category with only one group
     await putAll('categories', [
-      { id: 'c1', name: 'Collection 1', color: '#888', order: 0, organizationId: 'o_default' },
+      { id: 'c1', name: 'Collection 1', color: '#888', order: 0, organizationId: 'o_a' },
     ] as any);
 
     await putAll('subcategories' as any, [
@@ -158,7 +158,7 @@ describe('GroupsView Delete Protection', () => {
 
   it('allows deleting when multiple groups exist', async () => {
     await putAll('categories', [
-      { id: 'c1', name: 'Collection 1', color: '#888', order: 0, organizationId: 'o_default' },
+      { id: 'c1', name: 'Collection 1', color: '#888', order: 0, organizationId: 'o_a' },
     ] as any);
 
     await putAll('subcategories' as any, [
@@ -197,7 +197,7 @@ describe('GroupsView Delete Protection', () => {
 
   it('cascades delete to all webpages in the group', async () => {
     await putAll('categories', [
-      { id: 'c1', name: 'Collection 1', color: '#888', order: 0, organizationId: 'o_default' },
+      { id: 'c1', name: 'Collection 1', color: '#888', order: 0, organizationId: 'o_a' },
     ] as any);
 
     await putAll('subcategories' as any, [
@@ -245,7 +245,7 @@ describe('GroupsView Delete Protection', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await putAll('categories', [
-      { id: 'c1', name: 'Collection 1', color: '#888', order: 0, organizationId: 'o_default' },
+      { id: 'c1', name: 'Collection 1', color: '#888', order: 0, organizationId: 'o_a' },
     ] as any);
 
     await putAll('subcategories' as any, [

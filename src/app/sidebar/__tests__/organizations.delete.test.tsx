@@ -56,7 +56,7 @@ describe('Organization Delete Protection', () => {
 
   it('prevents deleting the last organization', async () => {
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Personal', order: 0 },
+      { id: 'o_a', name: 'Personal', order: 0, isDefault: true },
     ] as any);
 
     render(
@@ -69,7 +69,7 @@ describe('Organization Delete Protection', () => {
       expect(screen.getByTestId('count').textContent).toBe('1');
     });
 
-    const deleteBtn = screen.getByTestId('delete-o_default');
+    const deleteBtn = screen.getByTestId('delete-o_a');
 
     fireEvent.click(deleteBtn);
     await waitFor(() => {
@@ -84,7 +84,7 @@ describe('Organization Delete Protection', () => {
 
   it('allows deleting when multiple organizations exist', async () => {
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Personal', order: 0 },
+      { id: 'o_a', name: 'Personal', order: 0, isDefault: true },
       { id: 'o_work', name: 'Work', order: 1 },
     ] as any);
 
@@ -109,18 +109,18 @@ describe('Organization Delete Protection', () => {
     // Verify it's deleted from database
     const orgsInDb = (await getAll('organizations' as any)) as any[];
     expect(orgsInDb.length).toBe(1);
-    expect(orgsInDb[0].id).toBe('o_default');
+    expect(orgsInDb[0].id).toBe('o_a');
   });
 
   it('cascades delete to all categories, groups, and webpages', async () => {
     // Setup: Create organization with categories, groups, and webpages
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Personal', order: 0 },
+      { id: 'o_a', name: 'Personal', order: 0, isDefault: true },
       { id: 'o_work', name: 'Work', order: 1 },
     ] as any);
 
     await putAll('categories', [
-      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_default' },
+      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_a' },
       { id: 'c2', name: 'Cat2', color: '#bbb', order: 0, organizationId: 'o_work' },
       { id: 'c3', name: 'Cat3', color: '#ccc', order: 1, organizationId: 'o_work' },
     ] as any);
@@ -158,7 +158,7 @@ describe('Organization Delete Protection', () => {
     // Verify cascade delete in database
     const orgsInDb = (await getAll('organizations' as any)) as any[];
     expect(orgsInDb.length).toBe(1);
-    expect(orgsInDb[0].id).toBe('o_default');
+    expect(orgsInDb[0].id).toBe('o_a');
 
     const catsInDb = (await getAll('categories')) as any[];
     expect(catsInDb.length).toBe(1);

@@ -57,11 +57,11 @@ describe('Collection Delete Protection', () => {
 
   it('prevents deleting the last collection in an organization', async () => {
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Personal', order: 0 },
+      { id: 'o_a', name: 'Personal', order: 0, isDefault: true },
     ] as any);
 
     await putAll('categories', [
-      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_default' },
+      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_a' },
     ] as any);
 
     render(
@@ -94,12 +94,12 @@ describe('Collection Delete Protection', () => {
 
   it('allows deleting when organization has multiple collections', async () => {
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Personal', order: 0 },
+      { id: 'o_a', name: 'Personal', order: 0, isDefault: true },
     ] as any);
 
     await putAll('categories', [
-      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_default' },
-      { id: 'c2', name: 'Cat2', color: '#bbb', order: 1, organizationId: 'o_default' },
+      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_a' },
+      { id: 'c2', name: 'Cat2', color: '#bbb', order: 1, organizationId: 'o_a' },
     ] as any);
 
     render(
@@ -131,13 +131,13 @@ describe('Collection Delete Protection', () => {
 
   it('allows deleting collection in org A when org B has only one collection', async () => {
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Org A', order: 0 },
+      { id: 'o_a', name: 'Org A', order: 0, isDefault: true },
       { id: 'o_b', name: 'Org B', order: 1 },
     ] as any);
 
     await putAll('categories', [
-      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_default' },
-      { id: 'c2', name: 'Cat2', color: '#bbb', order: 1, organizationId: 'o_default' },
+      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_a' },
+      { id: 'c2', name: 'Cat2', color: '#bbb', order: 1, organizationId: 'o_a' },
       { id: 'c3', name: 'Cat3', color: '#ccc', order: 0, organizationId: 'o_b' },
     ] as any);
 
@@ -170,12 +170,12 @@ describe('Collection Delete Protection', () => {
 
   it('cascades delete to all groups and webpages', async () => {
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Personal', order: 0 },
+      { id: 'o_a', name: 'Personal', order: 0, isDefault: true },
     ] as any);
 
     await putAll('categories', [
-      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_default' },
-      { id: 'c2', name: 'Cat2', color: '#bbb', order: 1, organizationId: 'o_default' },
+      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_a' },
+      { id: 'c2', name: 'Cat2', color: '#bbb', order: 1, organizationId: 'o_a' },
     ] as any);
 
     await putAll('subcategories' as any, [
@@ -227,12 +227,12 @@ describe('Collection Delete Protection', () => {
 
   it('switches to another collection after deleting current one', async () => {
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Personal', order: 0 },
+      { id: 'o_a', name: 'Personal', order: 0, isDefault: true },
     ] as any);
 
     await putAll('categories', [
-      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_default' },
-      { id: 'c2', name: 'Cat2', color: '#bbb', order: 1, organizationId: 'o_default' },
+      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_a' },
+      { id: 'c2', name: 'Cat2', color: '#bbb', order: 1, organizationId: 'o_a' },
     ] as any);
 
     const TestWithSelection: React.FC = () => {
@@ -285,13 +285,13 @@ describe('Collection Delete Protection', () => {
 
   it('prevents deleting last collection per organization in multi-org scenario', async () => {
     await putAll('organizations' as any, [
-      { id: 'o_default', name: 'Org A', order: 0 },
+      { id: 'o_a', name: 'Org A', order: 0, isDefault: true },
       { id: 'o_b', name: 'Org B', order: 1 },
     ] as any);
 
     await putAll('categories', [
-      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_default' },
-      { id: 'c2', name: 'Cat2', color: '#bbb', order: 1, organizationId: 'o_default' },
+      { id: 'c1', name: 'Cat1', color: '#aaa', order: 0, organizationId: 'o_a' },
+      { id: 'c2', name: 'Cat2', color: '#bbb', order: 1, organizationId: 'o_a' },
       { id: 'c3', name: 'Cat3', color: '#ccc', order: 0, organizationId: 'o_b' },
     ] as any);
 

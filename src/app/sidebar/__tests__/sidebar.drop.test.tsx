@@ -22,10 +22,10 @@ vi.mock('../../webpages/WebpagesProvider', () => ({
 vi.mock('../categories', () => ({
   useCategories: () => ({
     categories: [
-      { id: 'default', name: 'Default', color: '#aaa', order: 0 },
+      { id: 'c0', name: 'Bookmarks', color: '#aaa', order: 0 },
       { id: 'c1', name: 'C1', color: '#bbb', order: 1 },
     ],
-    selectedId: 'default',
+    selectedId: 'c0',
     setCurrentCategory: vi.fn(),
   }),
 }));

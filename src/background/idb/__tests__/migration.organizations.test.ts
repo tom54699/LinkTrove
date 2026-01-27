@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { putAll, getAll, getMeta } from '../db';
+import { DEFAULT_ORGANIZATION_NAME } from '../../../utils/defaults';
 
 async function resetDb() {
   try {
@@ -41,13 +42,13 @@ describe('IDB migration for organizations (v3)', () => {
 
     const orgs = (await getAll('organizations' as any)) as any[];
     expect(orgs.length).toBeGreaterThanOrEqual(1);
-    const def = orgs.find((o) => o.id === 'o_default');
+    const def = orgs.find((o) => o.isDefault);
     expect(def).toBeTruthy();
-    expect(def.name).toBe('Personal');
+    expect(def.name).toBe(DEFAULT_ORGANIZATION_NAME);
 
     const after = (await getAll('categories')) as any[];
     // Each category should be assigned to default org
-    for (const c of after) expect(c.organizationId).toBe('o_default');
+    for (const c of after) expect(c.organizationId).toBe(def.id);
     // And order should be contiguous per org (0..n-1) in original order
     const ordered = after.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     expect(ordered.map((c) => c.id)).toEqual(['c2', 'c3', 'c1']);
