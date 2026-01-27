@@ -1,0 +1,11 @@
+## 1. Implementation
+- [x] 1.1 擴充資料模型：Organization/Category/Subcategory 加上 `isDefault?: boolean`
+- [x] 1.2 預設建立流程改為隨機 ID，移除固定 ID 常數與 fallback
+- [x] 1.3 預設名稱統一（My Space / Bookmarks / General）並建立 `isDefault=true`
+- [x] 1.4 編輯名稱或新增子層級時，將對應 `isDefault` 轉為 `false`
+- [x] 1.5 同步合併後清理空的預設階層（僅雲端有資料時觸發）
+- [x] 1.6 同步期間顯示進度視窗並鎖定互動（完成或錯誤後解除）
+- [x] 1.7 匯入/匯出保留 `isDefault`（缺欄位時視為 false）
+- [x] 1.8 更新 context menu / selection fallback 邏輯不再依賴固定 ID
+- [x] 1.9 更新相關測試與 fixtures
+- [x] 1.10 更新文件：`docs/specs/data-format.md` 與相關架構說明

@@ -22,18 +22,22 @@
   - name: string
   - color?: string
   - order: number
+  - isDefault?: boolean（系統預設標記）
 - CategoryData
   - id: `c_...`
   - name: string
   - color: string
   - order: number
   - organizationId: string（指向 organizations.id）
+  - isDefault?: boolean（系統預設標記）
+  - updatedAt?: string
 - SubcategoryData
   - id: `g_...`
   - categoryId: string（指向 categories.id）
   - name: string
   - order: number
   - createdAt/updatedAt: number (epoch ms)
+  - isDefault?: boolean（系統預設標記）
 - WebpageData
   - id: `w_...`
   - title/url/favicon/note
@@ -44,9 +48,9 @@
 ## 相容策略
 
 - 若匯入 JSON 缺少 `organizations`：
-  - 會自動建立預設 `o_default`（Personal），並為所有 categories 補上 `organizationId = o_default`。
+  - 會自動建立預設 Organization（`isDefault = true`），並為所有 categories 補上對應的 `organizationId`。
 - 若 category 缺少 `organizationId` 欄位：
-  - 匯入時自動補為 `o_default`。
+  - 匯入時自動補為預設 Organization 的 ID。
 - 每個 group（subcategory）內卡片順序：
   - 儲存在 `orders.subcategories[<groupId>]`；匯入時會恢復該順序。
   - 匯出時所有 group 都會包含對應的順序陣列（即使為空陣列）。

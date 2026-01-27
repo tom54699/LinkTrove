@@ -51,7 +51,7 @@ Open Tabs（右側）
 - Toast 與 Loading：操作成功/失敗有提示；長作業會顯示 Loading。
 - 專案備份/還原（Settings）：
   - 匯出 JSON：下載含 `organizations/categories/subcategories/webpages/templates` 與每群組順序（orders）的檔案；並含 `settings.selectedOrganizationId`、`settings.selectedCategoryId`（若存在）。
-  - 匯入 JSON（取代）：以檔案匯入，取代現有資料（建議先匯出備份）。若匯入檔未包含 `organizations`，系統會自動建立 `o_default` 並為 categories 補上 `organizationId`。
+  - 匯入 JSON（取代）：以檔案匯入，取代現有資料（建議先匯出備份）。若匯入檔未包含 `organizations`，系統會自動建立預設 Organization（`isDefault=true`）並為 categories 補上對應的 `organizationId`。
 - 第三方匯入（M2）：
   - Toby（群組層）：在 Home → 每個 group 標題列「匯入 Toby」，選擇 Toby v3 JSON（lists 或 cards 皆可），以向導（Wizard）匯入到該 group，保留順序。
   - Toby v4（含 Organizations）：在 Home 工具列「匯入 Toby（新集合）」：若偵測到 v4 `organizations`，會自動建立對應的 Organizations 與 Collections，並將 lists → groups、cards → cards（保留每 group 內順序）。

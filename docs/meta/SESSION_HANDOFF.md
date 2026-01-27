@@ -2,7 +2,7 @@
 
 > **用途：** 解決 AI 工具 Session 斷開後的連續性問題，確保下次對話能無縫接續
 >
-> **最後更新：** 2026-01-22 (右鍵保存改為階層式選單)
+> **最後更新：** 2026-01-27 (預設 ID 隨機化完成 + 同步提示 i18n)
 >
 > **更新者：** Codex
 
@@ -109,6 +109,20 @@
    - 不寫入選取文字描述，改為補抓頁面 meta（含模板欄位）
    - 移除保存對話框頁面與相關 UI/測試
 
+19. ✅ **預設 Organization/Collection/Group 改為隨機 ID**
+   - 新增 `isDefault` 標記與預設名稱（My Space / Bookmarks / General）
+   - migration / ensureBaseline / createOrganization / import-export / Providers 全面改寫
+   - 移除固定 `o_default` / `default` ID 依賴
+
+20. ✅ **同步清理空預設層級 + 同步進度阻擋視窗**
+   - 僅當雲端有資料時，合併後清理空的預設 Organization/Collection/Group
+   - 同步時顯示進度提示並阻擋操作，錯誤可手動關閉
+
+21. ✅ **同步提示整合與 i18n**
+   - 手動同步沿用 Settings 對話框進度
+   - 背景同步改為右下角 Toast（含多語系字串）
+   - 修正 syncService 測試與 migration 卡住問題
+
 **新增檔案：**
 - `src/app/webpages/MoveSelectedDialog.tsx` - 批次移動對話框組件
 - `openspec/changes/add-batch-operations/proposal.md` - OpenSpec 提案
@@ -118,6 +132,9 @@
 - `src/types/opencc-js.d.ts` - opencc-js 型別宣告
 - `src/app/ui/__tests__/search.opencc.loadmore.test.tsx` - 搜尋簡繁與載入測試
 - `openspec/changes/update-search-infinite-scroll-opencc/*` - OpenSpec 變更提案與規格
+- `src/utils/defaults.ts` - 預設名稱與 ID 工具
+- `src/app/ui/SyncProgressOverlay.tsx` - 同步進度阻擋視窗
+- `openspec/changes/update-default-entities-random-ids/*` - 預設 ID 隨機化提案
 - `docs/features/context-menu-save.md` - 右鍵保存功能文檔
 - `openspec/changes/add-contextmenu-save-dialog/*` - 右鍵保存提案與規格
 
@@ -162,15 +179,17 @@
    - `npm test -- src/app/sidebar/__tests__/organization-nav.manage.test.tsx`
 
 ### Git 狀態
-- ⚠️ 工作目錄有未提交變更（右鍵選單階層保存、i18n、manifest、docs 等）
+- ⚠️ 工作目錄有未提交變更（預設 ID 隨機化、同步提示 i18n、測試/文檔更新）
 - ⚠️ 未追蹤變更包含：
-  - `openspec/changes/add-contextmenu-save-dialog/`
-  - `docs/features/context-menu-save.md`
   - `mockups/sidebar-dracula-circular.html`（非本次新增，注意確認）
+  - `openspec/changes/sidebar-native-groups-minimal-list/`
+  - `openspec/changes/update-default-entities-random-ids/`
+  - `src/app/ui/SyncProgressOverlay.tsx`
+  - `src/utils/defaults.ts`
 
 ### 分支狀態
 - 當前分支：`main`
-- ⚠️ **尚未推送到遠端**
+- ⚠️ 本地領先遠端 1 commit（main...origin/main [ahead 1]）
 
 ---
 
@@ -191,6 +210,11 @@
 - [x] OpenSpec 已安裝並建立 specs/changes
 
 ### 優先級 P1（下次 Session 開始時）
+
+0. **完成預設 ID 隨機化變更收尾**
+   - 使用者手動執行相關 Vitest（sidebar/groups/background）
+   - 檢查同步進度視窗在首次/重新同步時是否正確阻擋操作
+   - 更新 `openspec/changes/update-default-entities-random-ids/tasks.md` 勾選狀態
 
 1. **完成 OpenSpec 未完變更（tasks 未勾）**
    - `update-settings-ui`

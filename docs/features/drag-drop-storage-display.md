@@ -34,7 +34,7 @@
 > 註：自 2025-09 起，已移除「拖到群組標題列 header」的拖放功能，僅保留內容區 CardGrid 拖放。以下保留過去行為供參考。
 
 （已移除）A) 拖到群組標題列 header（建立新卡→指派 collection→指派 group）
-1. `actions.addFromTab(tab)` 建卡（category 預設為 `default`，`note=''`），並先行插入 UI state 以提升回饋（src/app/webpages/WebpagesProvider.tsx:100, 145, 161）。
+1. `actions.addFromTab(tab)` 建卡（category 預設為「預設 collection」，`note=''`），並先行插入 UI state 以提升回饋（src/app/webpages/WebpagesProvider.tsx:100, 145, 161）。
 2. `actions.updateCategory(id, group.categoryId)`：
    - 依目標 collection 的 template 欄位計算 `meta` 預設值（`computeAutoMeta`），並嘗試合併 cache 的常見欄位（siteName/author）（src/app/webpages/WebpagesProvider.tsx:219 之後）。
 3. `(storage as any).updateCardSubcategory(id, group.id)`：設定 `subcategoryId` 並維護群組內順序（src/background/idb/storage.ts:515）。
@@ -44,7 +44,7 @@
 > 註：自 2025-09 起，已移除「拖到 Sidebar 的 Collection」以新增/移動卡片的功能；僅保留「拖曳類別以重新排序」。新卡片的拖放入口統一集中於各 Group 的內容區 CardGrid。
 
 ### B) 拖到群組內的卡片格網（建立新卡 / 移動既有卡片）
-- **Drop 新分頁**：`CardGrid` 計算 `beforeId` → `GroupsView` 呼叫 `actions.addFromTab(tab, { categoryId, subcategoryId, beforeId })` → `webpageService.addWebpageFromTab` 一步寫入 `category/subcategoryId/order` → 重新載入列表顯示（避免先塞 default 再改）。
+- **Drop 新分頁**：`CardGrid` 計算 `beforeId` → `GroupsView` 呼叫 `actions.addFromTab(tab, { categoryId, subcategoryId, beforeId })` → `webpageService.addWebpageFromTab` 一步寫入 `category/subcategoryId/order` → 重新載入列表顯示（避免先塞預設 collection 再改）。
 - **Drop 既有卡片**：`CardGrid` 計算 `beforeId` → `GroupsView` 呼叫 `actions.moveCardToGroup(cardId, categoryId, groupId, beforeId)` → `webpageService.moveCardToGroup` 原子更新 `category/subcategoryId/order`。
 - **效能補強**：`WebpagesProvider` 的 `operationLockRef` 會在 drop 期間短暫鎖定，避免 `chrome.storage.onChanged` 觸發重複 `load()`（減少冗餘重渲染）。
 
@@ -57,19 +57,19 @@
 
 ## 自訂欄位顯示邏輯
 - 顯示取決於「卡片所屬 collection 的 `defaultTemplateId`」，若該 template 有欄位才會渲染。
-- **當從 Group 內 drop 新分頁**：已改為一步寫入目標 `category/subcategoryId`，減少「先塞 default 再改」的短暫空窗。
-- **其他新增流程**（未指定 group）仍可能先以 default 插入，再更新 collection；在此期間開啟編輯可能會看到欄位未出現（時序現象）。
+- **當從 Group 內 drop 新分頁**：已改為一步寫入目標 `category/subcategoryId`，減少「先塞預設 collection 再改」的短暫空窗。
+- **其他新增流程**（未指定 group）仍可能先以預設 collection 插入，再更新 collection；在此期間開啟編輯可能會看到欄位未出現（時序現象）。
 
 ## 已知問題（根因）
 1) 描述有時抓不到：meta 擷取需真實 tab.id 且頁面含 description；已補強休眠分頁 reload，但仍可能因頁面無 meta 或權限限制而空白。
-2) 自訂欄位忽隱忽現：**僅在「非 group drop」新增流程**仍會先插入 default collection，再改到目標 collection（加上 Templates/Categories 非同步載入）。
+2) 自訂欄位忽隱忽現：**僅在「非 group drop」新增流程**仍會先插入預設 collection，再改到目標 collection（加上 Templates/Categories 非同步載入）。
 3) DB 有存但畫面沒顯：目前 drop 已改為原子更新 + 操作鎖定，**機率降低**；但若更新失敗或 `load` 尚未完成仍可能短暫看不到。
 4) 偶有重複：drop 已加上 `stopPropagation()` 與 ghost 清理，**機率降低**；同 URL 仍可能在**短時間窗之外**重複新增（目前有 1 秒內去重）。
 
 ## 改進方案（現況與待補）
 
 ### 已落地的改進（摘要）
-- `addFromTab(tab, { categoryId, subcategoryId, beforeId })` 已支援一步建立 + 設定 group + 排序（取代先塞 default 再改的流程）。
+- `addFromTab(tab, { categoryId, subcategoryId, beforeId })` 已支援一步建立 + 設定 group + 排序（取代先塞預設 collection 再改的流程）。
 - `actions.moveCardToGroup` 與 `webpageService.moveCardToGroup` 原子更新跨群組移動與排序。
 - `operationLockRef` 降低 drop 期間的重複 `load()`，減少冗餘重渲染。
 - drop handler 已加 `stopPropagation()` 與 ghost 清理，避免重覆觸發。
