@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { DEFAULT_GROUP_NAME } from '../../utils/defaults';
 
 async function resetDb() {
   try {
@@ -25,15 +26,17 @@ describe('StorageService subcategories (groups) API', () => {
     const a = await s.createSubcategory!('c1', 'A');
     const b = await s.createSubcategory!('c1', 'B');
     let list = await s.listSubcategories!('c1');
-    expect(list.map((x) => x.name)).toEqual(['A', 'B']);
+    const userGroups = list.filter((x: any) => x.name !== DEFAULT_GROUP_NAME);
+    expect(userGroups.map((x) => x.name)).toEqual(['A', 'B']);
     // rename
     await s.renameSubcategory!(a.id, 'A1');
     list = await s.listSubcategories!('c1');
-    expect(list[0].name).toBe('A1');
+    expect(list.find((x: any) => x.id === a.id)?.name).toBe('A1');
     // reorder
     await s.reorderSubcategories!('c1', [b.id, a.id]);
     list = await s.listSubcategories!('c1');
-    expect(list.map((x) => x.id)).toEqual([b.id, a.id]);
+    const reordered = list.filter((x: any) => x.name !== DEFAULT_GROUP_NAME);
+    expect(reordered.map((x) => x.id)).toEqual([b.id, a.id]);
   });
 
   it('reassigns webpages when deleting a group', async () => {

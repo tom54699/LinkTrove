@@ -1,6 +1,7 @@
 import { createStorageService, type StorageService, type WebpageData } from './storageService';
 import { getAll, getMeta, setMeta } from './idb/db';
 import { areOrdersEqual, normalizeGroupOrder } from '../utils/order-utils';
+import { nowMs } from '../utils/time';
 
 export interface TabLike {
   id?: number;
@@ -40,10 +41,6 @@ export function createWebpageService(deps?: {
   const storage = deps?.storage ?? createStorageService();
   // 避免短時間重覆新增同一 URL（僅在本實例生命週期內有效）
   const recentlyAdded = new Map<string, number>();
-
-  function nowIso() {
-    return new Date().toISOString();
-  }
 
   function normalizeUrl(raw?: string): string {
     if (!raw) throw new Error('Missing URL');
@@ -195,7 +192,7 @@ export function createWebpageService(deps?: {
     const url = normalizeUrl(tab.url);
     const title = cleanTitle(tab.title, url);
     const favicon = tab.favIconUrl ?? '';
-    const now = nowIso();
+    const now = nowMs();
 
     // 短時窗去重（1 秒內同 URL 忽略第二次新增）
     try {
@@ -281,7 +278,7 @@ export function createWebpageService(deps?: {
         updates.title !== undefined
           ? cleanTitle(updates.title, prev.url)
           : prev.title,
-      updatedAt: nowIso(),
+      updatedAt: nowMs(),
     };
     const next = [...list];
     next[idx] = merged;
@@ -295,7 +292,7 @@ export function createWebpageService(deps?: {
     if (!victim) return;
 
     // Soft delete: mark as deleted instead of removing
-    const now = new Date().toISOString();
+    const now = nowMs();
     const updated = {
       ...victim,
       deleted: true,

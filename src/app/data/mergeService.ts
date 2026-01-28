@@ -61,7 +61,7 @@ export interface MergeResult {
   };
 }
 
-type HasTimestamp = { id: string; updatedAt?: number; createdAt?: number; deleted?: boolean; deletedAt?: string | number };
+type HasTimestamp = { id: string; updatedAt?: number | string; createdAt?: number | string; deleted?: boolean; deletedAt?: string | number };
 
 /**
  * Merge two arrays by ID, keeping the item with the latest timestamp

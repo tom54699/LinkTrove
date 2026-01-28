@@ -237,7 +237,7 @@ export const Sidebar: React.FC = () => {
                         if (!editing) return;
 
                         // UI Layer Check: minimum count protection
-                        const inSameOrg = categories.filter((c: any) => c.organizationId === editing.organizationId);
+                        const inSameOrg = categories.filter((c: any) => c.organizationId === editing.organizationId && !c.deleted);
                         if (inSameOrg.length <= 1) {
                           showToast(t('category_min_one'), 'error');
                           return;

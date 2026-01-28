@@ -6,6 +6,7 @@ import {
   DEFAULT_ORGANIZATION_NAME,
   createEntityId,
 } from '../../utils/defaults';
+import { nowMs } from '../../utils/time';
 
 export interface Organization {
   id: string;
@@ -13,7 +14,7 @@ export interface Organization {
   color?: string;
   order: number;
   isDefault?: boolean;
-  updatedAt?: string;
+  updatedAt?: number | string;
 }
 
 interface OrgsState {
@@ -142,7 +143,7 @@ export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({
         if (o.id !== id) return o;
         const nextName = name.trim() || o.name;
         const nextIsDefault = o.isDefault && String(nextName) === String(o.name);
-        return { ...o, name: nextName, isDefault: nextIsDefault, updatedAt: new Date().toISOString() };
+        return { ...o, name: nextName, isDefault: nextIsDefault, updatedAt: nowMs() };
       }));
       try {
         await tx('organizations' as any, 'readwrite', async (t) => {
@@ -152,20 +153,20 @@ export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({
           const nextName = name;
           if (String(cur.name || '') !== String(nextName || '') && cur.isDefault) cur.isDefault = false;
           cur.name = nextName;
-          cur.updatedAt = new Date().toISOString();
+          cur.updatedAt = nowMs();
           s.put(cur);
         });
       } catch {}
     },
     async updateColor(id: string, color?: string) {
-      setOrganizations((prev) => prev.map((o) => o.id === id ? { ...o, color, updatedAt: new Date().toISOString() } : o));
+      setOrganizations((prev) => prev.map((o) => o.id === id ? { ...o, color, updatedAt: nowMs() } : o));
       try {
         await tx('organizations' as any, 'readwrite', async (t) => {
           const s = t.objectStore('organizations' as any);
           const cur = await new Promise<any>((resolve, reject) => { const req = s.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
           if (!cur) return;
           cur.color = color;
-          cur.updatedAt = new Date().toISOString();
+          cur.updatedAt = nowMs();
           s.put(cur);
         });
       } catch {}
@@ -176,51 +177,62 @@ export const OrganizationsProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error('Cannot delete last organization');
       }
 
-      // Cascade delete: delete all categories (which will delete all groups and webpages)
+      // Cascade soft-delete: mark all categories, groups, and webpages as deleted
       try {
+        const now = nowMs();
+
         await tx(['categories', 'subcategories' as any, 'webpages', 'organizations' as any], 'readwrite', async (t) => {
           const cs = t.objectStore('categories');
           const ss = t.objectStore('subcategories' as any);
           const ws = t.objectStore('webpages');
           const os = t.objectStore('organizations' as any);
 
-          // Get all categories in this org
+          // Get all categories in this org (filter out already deleted)
           const catList: any[] = await new Promise((resolve, reject) => {
             const req = cs.getAll();
             req.onsuccess = () => resolve(req.result || []);
             req.onerror = () => reject(req.error);
           });
-          const catsInOrg = catList.filter((c: any) => c.organizationId === id);
+          const catsInOrg = catList.filter((c: any) => !c.deleted && c.organizationId === id);
 
-          // For each category, cascade delete groups and webpages
+          // For each category, cascade soft-delete groups and webpages
           for (const cat of catsInOrg) {
-            // Get all groups in this category
+            // Get all groups in this category (filter out already deleted)
             const subList: any[] = await new Promise((resolve, reject) => {
               const req = ss.getAll();
               req.onsuccess = () => resolve(req.result || []);
               req.onerror = () => reject(req.error);
             });
-            const subsInCat = subList.filter((s: any) => s.categoryId === cat.id);
+            const subsInCat = subList.filter((s: any) => !s.deleted && s.categoryId === cat.id);
 
-            // For each group, delete all webpages
+            // For each group, soft-delete all webpages
             for (const sub of subsInCat) {
               const webList: any[] = await new Promise((resolve, reject) => {
                 const req = ws.getAll();
                 req.onsuccess = () => resolve(req.result || []);
                 req.onerror = () => reject(req.error);
               });
-              const websInSub = webList.filter((w: any) => w.subcategoryId === sub.id);
+              const websInSub = webList.filter((w: any) => !w.deleted && w.subcategoryId === sub.id);
               for (const web of websInSub) {
-                ws.delete(web.id);
+                ws.put({ ...web, deleted: true, deletedAt: now, updatedAt: now });
               }
-              ss.delete(sub.id);
+              // Soft-delete subcategory
+              ss.put({ ...sub, deleted: true, deletedAt: now, updatedAt: now });
             }
 
-            cs.delete(cat.id);
+            // Soft-delete category
+            cs.put({ ...cat, deleted: true, deletedAt: now, updatedAt: now });
           }
 
-          // Finally delete organization
-          os.delete(id);
+          // Finally soft-delete organization
+          const org: any = await new Promise((resolve, reject) => {
+            const req = os.get(id);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          });
+          if (org) {
+            os.put({ ...org, deleted: true, deletedAt: now, updatedAt: now });
+          }
         });
       } catch (error) {
         console.error('Delete organization error:', error);

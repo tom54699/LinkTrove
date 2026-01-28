@@ -1,3 +1,5 @@
+export type Timestamp = number | string;
+
 export interface WebpageData {
   id: string;
   title: string;
@@ -13,11 +15,12 @@ export interface WebpageData {
   templateData?: Record<string, any>;
   // For backward compatibility, use note field as description
   description?: string;
-  createdAt: string; // ISO string for storage
-  updatedAt: string;
+  // Canonical: number (ms). String allowed for backward compatibility.
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
   // Tombstone for soft delete (sync support)
   deleted?: boolean;
-  deletedAt?: string; // ISO string
+  deletedAt?: Timestamp;
 }
 
 export interface CategoryData {
@@ -30,10 +33,10 @@ export interface CategoryData {
   organizationId?: string;
   // Default marker (system-generated)
   isDefault?: boolean;
-  updatedAt?: string;
+  updatedAt?: Timestamp;
   // Tombstone for soft delete (sync support)
   deleted?: boolean;
-  deletedAt?: string;
+  deletedAt?: Timestamp;
 }
 
 export interface SubcategoryData {
@@ -41,13 +44,13 @@ export interface SubcategoryData {
   categoryId: string;
   name: string;
   order: number;
-  createdAt: number;
-  updatedAt: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
   // Default marker (system-generated)
   isDefault?: boolean;
   // Tombstone for soft delete (sync support)
   deleted?: boolean;
-  deletedAt?: number;
+  deletedAt?: Timestamp;
 }
 
 export interface TemplateField {
@@ -63,10 +66,10 @@ export interface TemplateData {
   id: string;
   name: string;
   fields: TemplateField[];
-  updatedAt?: string;
+  updatedAt?: Timestamp;
   // Tombstone for soft delete (sync support)
   deleted?: boolean;
-  deletedAt?: string;
+  deletedAt?: Timestamp;
 }
 
 export interface OrganizationData {
@@ -76,10 +79,10 @@ export interface OrganizationData {
   order: number;
   // Default marker (system-generated)
   isDefault?: boolean;
-  updatedAt?: string;
+  updatedAt?: Timestamp;
   // Tombstone for soft delete (sync support)
   deleted?: boolean;
-  deletedAt?: string;
+  deletedAt?: Timestamp;
 }
 
 export interface StorageService {
@@ -118,10 +121,6 @@ export interface StorageService {
     options?: { createDefaultCollection?: boolean }
   ) => Promise<{ organization: OrganizationData; defaultCollection: CategoryData | null }>;
   renameOrganization?: (id: string, name: string) => Promise<void>;
-  deleteOrganization?: (
-    id: string,
-    options?: { reassignTo?: string }
-  ) => Promise<void>;
   reorderOrganizations?: (orderedIds: string[]) => Promise<void>;
 
   // Categories helpers scoped by organization

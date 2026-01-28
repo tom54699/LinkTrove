@@ -7,6 +7,7 @@ import { clearStore } from '../../background/idb/db';
 import { putAll } from '../../background/idb/db';
 import { setMeta } from '../../background/idb/db';
 import { DEFAULT_GROUP_NAME, createEntityId } from '../../utils/defaults';
+import { nowMs } from '../../utils/time';
 
 export interface StorageLike {
   saveToLocal: (data: WebpageData[]) => Promise<void>;
@@ -131,8 +132,8 @@ export function createExportImportService(deps: {
           categoryId: catId,
           name: DEFAULT_GROUP_NAME,
           order: (byCat[catId]?.length ?? 0),
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
+          createdAt: nowMs(),
+          updatedAt: nowMs(),
           isDefault: !!categoryIndex[catId]?.isDefault,
         };
         defaults[catId] = sc;

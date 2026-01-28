@@ -106,10 +106,16 @@ describe('Organization Delete Protection', () => {
       expect(screen.getByTestId('count').textContent).toBe('1');
     });
 
-    // Verify it's deleted from database
+    // Verify it's soft-deleted in database
     const orgsInDb = (await getAll('organizations' as any)) as any[];
-    expect(orgsInDb.length).toBe(1);
-    expect(orgsInDb[0].id).toBe('o_a');
+    expect(orgsInDb.length).toBe(2); // Both orgs exist
+    const orgWork = orgsInDb.find((o: any) => o.id === 'o_work');
+    expect(orgWork.deleted).toBe(true);
+    expect(orgWork.deletedAt).toBeTruthy();
+    // Filter out deleted: only org A remains
+    const activeOrgs = orgsInDb.filter((o: any) => !o.deleted);
+    expect(activeOrgs.length).toBe(1);
+    expect(activeOrgs[0].id).toBe('o_a');
   });
 
   it('cascades delete to all categories, groups, and webpages', async () => {
@@ -155,22 +161,33 @@ describe('Organization Delete Protection', () => {
       expect(screen.getByTestId('count').textContent).toBe('1');
     });
 
-    // Verify cascade delete in database
+    // Verify cascade soft-delete in database
     const orgsInDb = (await getAll('organizations' as any)) as any[];
-    expect(orgsInDb.length).toBe(1);
-    expect(orgsInDb[0].id).toBe('o_a');
+    expect(orgsInDb.length).toBe(2); // Both orgs exist
+    const workOrg = orgsInDb.find((o: any) => o.id === 'o_work');
+    expect(workOrg.deleted).toBe(true);
+    expect(workOrg.deletedAt).toBeTruthy();
 
     const catsInDb = (await getAll('categories')) as any[];
-    expect(catsInDb.length).toBe(1);
-    expect(catsInDb[0].id).toBe('c1');
-    expect(catsInDb.every((c) => c.organizationId !== 'o_work')).toBe(true);
+    expect(catsInDb.length).toBe(3); // All 3 categories exist
+    const workCat2 = catsInDb.find((c: any) => c.id === 'c2');
+    const workCat3 = catsInDb.find((c: any) => c.id === 'c3');
+    expect(workCat2.deleted).toBe(true); // c2 (org_work) is soft-deleted
+    expect(workCat3.deleted).toBe(true); // c3 (org_work) is soft-deleted
+    const activeCats = catsInDb.filter((c: any) => !c.deleted);
+    expect(activeCats.length).toBe(1);
+    expect(activeCats[0].id).toBe('c1');
 
     const groupsInDb = (await getAll('subcategories' as any)) as any[];
-    expect(groupsInDb.length).toBe(1);
-    expect(groupsInDb[0].id).toBe('g1');
+    expect(groupsInDb.length).toBe(3); // All 3 groups exist
+    const activeGroups = groupsInDb.filter((g: any) => !g.deleted);
+    expect(activeGroups.length).toBe(1);
+    expect(activeGroups[0].id).toBe('g1');
 
     const webpagesInDb = (await getAll('webpages')) as any[];
-    expect(webpagesInDb.length).toBe(1);
+    expect(webpagesInDb.length).toBe(3); // All 3 webpages exist
+    const activeWebpages = webpagesInDb.filter((w: any) => !w.deleted);
+    expect(activeWebpages.length).toBe(1);
     expect(webpagesInDb[0].id).toBe('w1');
   });
 

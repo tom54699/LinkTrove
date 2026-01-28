@@ -12,6 +12,7 @@ import {
   DEFAULT_ORGANIZATION_NAME,
   createEntityId,
 } from './utils/defaults';
+import { nowMs } from './utils/time';
 import { createWebpageService } from './background/webpageService';
 import {
   extractMetaForTab,
@@ -272,7 +273,7 @@ async function ensureBaselineData(): Promise<void> {
         const targetCatId = defaultCategoryId;
         const hasDefaultGroup = !!(targetCatId && activeSubs.some((s: any) => s.categoryId === targetCatId));
         if (targetCatId && !hasDefaultGroup) {
-          const now = Date.now();
+          const now = nowMs();
           ss.put({
             id: createEntityId('g'),
             categoryId: targetCatId,

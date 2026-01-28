@@ -1,4 +1,5 @@
 import { DEFAULT_GROUP_NAME, createEntityId } from '../../utils/defaults';
+import { nowMs } from '../../utils/time';
 
 export type StoreName =
   | 'webpages'
@@ -32,7 +33,7 @@ async function ensureSubcategoriesMigrated(): Promise<void> {
       const pages: any[] = await new Promise((res, rej) => { const rq = pageS.getAll(); rq.onsuccess = () => res(rq.result || []); rq.onerror = () => rej(rq.error); });
       const hasAnySubByCat: Record<string, boolean> = {}; for (const s of subs) hasAnySubByCat[s.categoryId] = true;
       const need = new Set<string>(); for (const p of pages) if (p.category && !p.subcategoryId) need.add(p.category);
-      const now = Date.now(); const defaults: Record<string, any> = {};
+      const now = nowMs(); const defaults: Record<string, any> = {};
       for (const cid of need) {
         if (!hasAnySubByCat[cid] && cats.some((c) => c.id === cid)) {
           const id = createEntityId('g');
@@ -200,5 +201,12 @@ export async function setMeta(key: string, value: any): Promise<void> {
   await tx('meta', 'readwrite', async (t) => {
     const s = t.objectStore('meta');
     s.put({ key, value });
+  });
+}
+
+export async function deleteMeta(key: string): Promise<void> {
+  await tx('meta', 'readwrite', async (t) => {
+    const s = t.objectStore('meta');
+    s.delete(key);
   });
 }

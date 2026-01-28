@@ -1,5 +1,6 @@
 import { getAll, putAll, setMeta, tx } from '../idb/db';
 import type { CategoryData, WebpageData } from '../storageService';
+import { nowMs } from '../../utils/time';
 
 export interface TobyCard {
   title?: string;
@@ -33,10 +34,6 @@ export interface TobyV4Organization { name?: string; color?: string; groups?: To
 export interface TobyExportV4 {
   organizations?: TobyV4Organization[];
   groups?: TobyV4OrgGroup[]; // when no organizations
-}
-
-function nowIso() {
-  return new Date().toISOString();
 }
 
 function genId(prefix: string) {
@@ -112,7 +109,7 @@ export async function importTobyV3(json: string): Promise<TobyImportResult> {
   let catsCreated = 0;
   let groupsCreated = 0;
   let pagesCreated = 0;
-  const now = Date.now();
+  const now = nowMs();
 
   // Buffer writes per store
   const catsToPut: CategoryData[] = [];
@@ -167,8 +164,8 @@ export async function importTobyV3(json: string): Promise<TobyImportResult> {
         category: cat.id,
         subcategoryId: gid,
         meta: undefined,
-        createdAt: nowIso(),
-        updatedAt: nowIso(),
+        createdAt: nowMs(),
+        updatedAt: nowMs(),
       };
       webpagesToPut.push(wp);
       idsInOrder.push(id);
@@ -255,8 +252,8 @@ export async function importTobyV3IntoGroup(
       category: categoryId,
       subcategoryId: groupId,
       meta: undefined,
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
+      createdAt: nowMs(),
+      updatedAt: nowMs(),
     });
     newIds.push(id);
     knownUrls.add(url);
@@ -331,7 +328,7 @@ export async function importTobyAsNewCategory(
   let processed = 0;
   if (opts?.mode === 'flat') {
     const flatName = (opts.flatGroupName || 'Imported').trim() || 'Imported';
-    const now = Date.now();
+    const now = nowMs();
     const gid = 'g_' + Math.random().toString(36).slice(2, 9);
     await tx('subcategories' as any, 'readwrite', async (t) => {
       t.objectStore('subcategories' as any).put({ id: gid, categoryId: catId, name: flatName, order: 0, createdAt: now, updatedAt: now });
@@ -344,7 +341,7 @@ export async function importTobyAsNewCategory(
         const url = normalizeUrl(card.url || '');
         if (!url) continue;
         const id = genId(url);
-        pages.push({ id, title: normalizeTitle(card), url, favicon: (card.favIconUrl || '').trim() || guessFavicon(url), note: (card.customDescription || '').trim(), category: catId, subcategoryId: gid, meta: undefined, createdAt: nowIso(), updatedAt: nowIso() });
+        pages.push({ id, title: normalizeTitle(card), url, favicon: (card.favIconUrl || '').trim() || guessFavicon(url), note: (card.customDescription || '').trim(), category: catId, subcategoryId: gid, meta: undefined, createdAt: nowMs(), updatedAt: nowMs() });
         idsInOrder.push(id);
       }
     }
@@ -364,7 +361,7 @@ export async function importTobyAsNewCategory(
     const ensureGroup = async (groupName: string) => {
       const key = String(groupName || 'Imported').toLowerCase();
       if (lowerToGroup.has(key)) return lowerToGroup.get(key);
-      const now = Date.now();
+      const now = nowMs();
       const sc = { id: 'g_' + Math.random().toString(36).slice(2, 9), categoryId: catId, name: groupName || 'Imported', order: lowerToGroup.size, createdAt: now, updatedAt: now };
       await tx('subcategories' as any, 'readwrite', async (t) => { t.objectStore('subcategories' as any).put(sc); });
       lowerToGroup.set(key, sc);
@@ -378,7 +375,7 @@ export async function importTobyAsNewCategory(
       for (const card of (l.cards || [])) {
         const url = normalizeUrl(card.url || ''); if (!url) continue;
         const id = genId(url);
-        pages.push({ id, title: normalizeTitle(card), url, favicon: (card.favIconUrl || '').trim() || guessFavicon(url), note: (card.customDescription || '').trim(), category: catId, subcategoryId: g.id, meta: undefined, createdAt: nowIso(), updatedAt: nowIso() });
+        pages.push({ id, title: normalizeTitle(card), url, favicon: (card.favIconUrl || '').trim() || guessFavicon(url), note: (card.customDescription || '').trim(), category: catId, subcategoryId: g.id, meta: undefined, createdAt: nowMs(), updatedAt: nowMs() });
         idsInOrder.push(id);
       }
       for (let i2 = 0; i2 < pages.length; i2 += bs) {
@@ -476,7 +473,7 @@ export async function importTobyV4WithOrganizations(
     for (const l of lists) {
       // Toby list → LinkTrove Subcategory (Group)
       const gid = gen('g');
-      const now = Date.now();
+      const now = nowMs();
       const sc = { id: gid, categoryId: catId, name: l?.title || 'Default Group', order: 0, createdAt: now, updatedAt: now, isDefault: false } as any;
       await tx('subcategories' as any, 'readwrite', async (t) => t.objectStore('subcategories' as any).put(sc));
       groupsCreated++;
@@ -496,8 +493,8 @@ export async function importTobyV4WithOrganizations(
           category: catId,
           subcategoryId: gid,
           meta: undefined,
-          createdAt: nowIso(),
-          updatedAt: nowIso(),
+          createdAt: nowMs(),
+          updatedAt: nowMs(),
         };
         await tx('webpages', 'readwrite', async (t) => t.objectStore('webpages').put(page as any));
         idsInOrder.push(id);
@@ -525,7 +522,7 @@ export async function importTobyV4WithOrganizations(
         for (const l of lists) {
           // Toby list → LinkTrove Subcategory (Group)
           const gid = gen('g');
-          const now = Date.now();
+          const now = nowMs();
           const sc = { id: gid, categoryId: catId, name: l?.title || 'Default Group', order: 0, createdAt: now, updatedAt: now, isDefault: false } as any;
           await tx('subcategories' as any, 'readwrite', async (t) => t.objectStore('subcategories' as any).put(sc));
           groupsCreated++;
@@ -545,8 +542,8 @@ export async function importTobyV4WithOrganizations(
               category: catId,
               subcategoryId: gid,
               meta: undefined,
-              createdAt: nowIso(),
-              updatedAt: nowIso(),
+              createdAt: nowMs(),
+              updatedAt: nowMs(),
             };
             await tx('webpages', 'readwrite', async (t) => t.objectStore('webpages').put(page as any));
             idsInOrder.push(id);

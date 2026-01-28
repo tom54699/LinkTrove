@@ -2,7 +2,7 @@
 
 > **用途：** 解決 AI 工具 Session 斷開後的連續性問題，確保下次對話能無縫接續
 >
-> **最後更新：** 2026-01-27 (自動 GC + 移除設定頁 GC)
+> **最後更新：** 2026-01-28 (時間戳 canonical number + unify-cascade-soft-delete 規格更新)
 >
 > **更新者：** Codex
 
@@ -12,7 +12,13 @@
 
 ### 最近完成的工作
 
-1. ✅ **TypeScript 錯誤修復**（90+ 錯誤 → 0 錯誤）
+1. ✅ **時間戳 canonical number（內部儲存）**
+   - 新增 `src/utils/time.ts`，寫入改用 `Date.now()` (number)
+   - IDB migration：把舊 ISO string 轉成 number
+   - export 時轉回 ISO string，保持對外相容
+   - 更新 OpenSpec（unify-cascade-soft-delete）時間戳規範
+
+2. ✅ **TypeScript 錯誤修復**（90+ 錯誤 → 0 錯誤）
    - 修復 App.tsx、categories.tsx、pageMeta.ts 等檔案
    - 建置通過，無編譯錯誤
 

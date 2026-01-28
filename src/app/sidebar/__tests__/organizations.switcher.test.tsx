@@ -1,9 +1,19 @@
 import 'fake-indexeddb/auto';
 import React from 'react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { OrganizationsProvider, useOrganizations } from '../organizations';
 import { putAll } from '../../../background/idb/db';
+
+async function resetDb() {
+  try {
+    await new Promise((res, rej) => {
+      const req = indexedDB.deleteDatabase('linktrove');
+      req.onsuccess = () => res(null);
+      req.onerror = () => rej(req.error);
+    });
+  } catch {}
+}
 
 function setupChromeStub() {
   const g: any = globalThis as any;
@@ -28,6 +38,10 @@ const Harness: React.FC = () => {
 };
 
 describe('OrganizationsProvider basic switch', () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
   it('switches selected org id via context', async () => {
     setupChromeStub();
     // seed orgs
@@ -41,7 +55,6 @@ describe('OrganizationsProvider basic switch', () => {
       </OrganizationsProvider>
     );
     const sel = await screen.findByTestId('sel');
-    expect(sel.textContent === 'o_a' || sel.textContent === 'o_b').toBe(true);
     await waitFor(() => {
       expect(screen.getByTestId('sel').textContent).toBe('o_a');
     });

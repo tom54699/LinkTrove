@@ -166,25 +166,39 @@ describe('Delete Protection Integration Tests', () => {
       expect(screen.getByTestId('org-count').textContent).toBe('1');
     }, { timeout: 1500 });
 
-    // Verify cascade: only org B's data remains
+    // Verify cascade soft-delete: org A and its data are marked as deleted
     await waitFor(async () => {
       const orgsInDb = (await getAll('organizations' as any)) as any[];
       const catsInDb = (await getAll('categories')) as any[];
       const groupsInDb = (await getAll('subcategories' as any)) as any[];
       const webpagesInDb = (await getAll('webpages')) as any[];
 
-      expect(orgsInDb.length).toBe(1);
-      expect(orgsInDb[0].id).toBe('o_b');
+      // Soft-delete: records still exist but marked as deleted
+      expect(orgsInDb.length).toBe(2); // Both org A and org B exist
+      const orgA = orgsInDb.find((o: any) => o.id === 'o_a');
+      const orgB = orgsInDb.find((o: any) => o.id === 'o_b');
+      expect(orgA.deleted).toBe(true);
+      expect(orgA.deletedAt).toBeTruthy();
+      expect(orgB.deleted).toBeUndefined(); // or false
 
-      expect(catsInDb.length).toBe(1);
-      expect(catsInDb[0].id).toBe('c3');
-      expect(catsInDb[0].organizationId).toBe('o_b');
+      // Filter out deleted items - only org B's data remains
+      const activeOrgs = orgsInDb.filter((o: any) => !o.deleted);
+      const activeCats = catsInDb.filter((c: any) => !c.deleted);
+      const activeGroups = groupsInDb.filter((g: any) => !g.deleted);
+      const activeWebpages = webpagesInDb.filter((w: any) => !w.deleted);
 
-      expect(groupsInDb.length).toBe(1);
-      expect(groupsInDb[0].id).toBe('g3');
+      expect(activeOrgs.length).toBe(1);
+      expect(activeOrgs[0].id).toBe('o_b');
 
-      expect(webpagesInDb.length).toBe(1);
-      expect(webpagesInDb[0].id).toBe('w3');
+      expect(activeCats.length).toBe(1);
+      expect(activeCats[0].id).toBe('c3');
+      expect(activeCats[0].organizationId).toBe('o_b');
+
+      expect(activeGroups.length).toBe(1);
+      expect(activeGroups[0].id).toBe('g3');
+
+      expect(activeWebpages.length).toBe(1);
+      expect(activeWebpages[0].id).toBe('w3');
     }, { timeout: 1500 });
   });
 
@@ -247,19 +261,28 @@ describe('Delete Protection Integration Tests', () => {
     let catsInDb = (await getAll('categories')) as any[];
     expect(catsInDb.find((c: any) => c.id === 'c1')).toBeTruthy();
 
-    // Try to delete c2 (org B has 2) - should succeed
+    // Try to delete c2 (org B has 2) - should succeed (soft-delete)
     fireEvent.click(screen.getByTestId('delete-c2'));
 
     await waitFor(async () => {
       catsInDb = (await getAll('categories')) as any[];
-      expect(catsInDb.find((c: any) => c.id === 'c2')).toBeFalsy();
+      const c2 = catsInDb.find((c: any) => c.id === 'c2');
+      // Soft-delete: c2 still exists but marked as deleted
+      expect(c2).toBeTruthy();
+      expect(c2.deleted).toBe(true);
+      expect(c2.deletedAt).toBeTruthy();
     }, { timeout: 1500 });
 
-    // Final state: c1 (org A), c3 (org B)
+    // Final state: c1 (org A), c2 (org B, deleted), c3 (org B)
     catsInDb = (await getAll('categories')) as any[];
-    expect(catsInDb.length).toBe(2);
+    expect(catsInDb.length).toBe(3); // All records exist (c2 is soft-deleted)
     expect(catsInDb.some((c: any) => c.id === 'c1')).toBe(true);
     expect(catsInDb.some((c: any) => c.id === 'c3')).toBe(true);
+    // Filter out deleted: only c1 and c3 remain active
+    const activeCats = catsInDb.filter((c: any) => !c.deleted);
+    expect(activeCats.length).toBe(2);
+    expect(activeCats.some((c: any) => c.id === 'c1')).toBe(true);
+    expect(activeCats.some((c: any) => c.id === 'c3')).toBe(true);
   });
 
   it('error handling: data layer throws error when UI protection bypassed', async () => {
@@ -368,9 +391,17 @@ describe('Delete Protection Integration Tests', () => {
     expect(newSelected).not.toBe(initialSelected);
     expect(['o_a', 'o_b'].includes(newSelected!)).toBe(true);
 
-    // Verify only one org remains in database
+    // Verify soft-delete: both orgs exist in database, one is marked deleted
     const orgsInDb = (await getAll('organizations' as any)) as any[];
-    expect(orgsInDb.length).toBe(1);
-    expect(orgsInDb[0].id).toBe(newSelected);
+    expect(orgsInDb.length).toBe(2); // Both orgs exist
+    const deletedOrg = orgsInDb.find((o: any) => o.id === initialSelected);
+    const activeOrg = orgsInDb.find((o: any) => o.id === newSelected);
+    expect(deletedOrg.deleted).toBe(true);
+    expect(deletedOrg.deletedAt).toBeTruthy();
+    expect(activeOrg.deleted).toBeUndefined(); // or false
+    // Filter out deleted: only one active org remains
+    const activeOrgs = orgsInDb.filter((o: any) => !o.deleted);
+    expect(activeOrgs.length).toBe(1);
+    expect(activeOrgs[0].id).toBe(newSelected);
   });
 });

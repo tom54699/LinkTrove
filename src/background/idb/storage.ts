@@ -4,7 +4,7 @@ import type {
   TemplateData,
   StorageService,
 } from '../storageService';
-import { getAll, putAll, setMeta, getMeta, clearStore, tx } from './db';
+import { getAll, putAll, setMeta, getMeta, clearStore, tx, StoreName } from './db';
 import { areOrdersEqual, normalizeGroupOrder } from '../../utils/order-utils';
 import {
   DEFAULT_CATEGORY_NAME,
@@ -12,6 +12,7 @@ import {
   DEFAULT_ORGANIZATION_NAME,
   createEntityId,
 } from '../../utils/defaults';
+import { nowMs, toIso, toMs } from '../../utils/time';
 
 // Entity limits for UI layout constraints
 export const ENTITY_LIMITS = {
@@ -27,6 +28,32 @@ export class LimitExceededError extends Error {
     super(message);
     this.name = 'LimitExceededError';
   }
+}
+
+const TIMESTAMP_FIELDS = ['createdAt', 'updatedAt', 'deletedAt'] as const;
+
+function normalizeTimestampFields<T extends Record<string, any>>(item: T): T {
+  let changed = false;
+  const next = { ...item } as T;
+  for (const key of TIMESTAMP_FIELDS) {
+    if (!(key in next)) continue;
+    const ms = toMs((next as any)[key]);
+    if (ms !== undefined && (next as any)[key] !== ms) {
+      (next as any)[key] = ms;
+      changed = true;
+    }
+  }
+  return changed ? next : item;
+}
+
+function serializeTimestampFields<T extends Record<string, any>>(item: T): T {
+  const next = { ...item } as T;
+  for (const key of TIMESTAMP_FIELDS) {
+    if (!(key in next)) continue;
+    const iso = toIso((next as any)[key]);
+    if (iso) (next as any)[key] = iso;
+  }
+  return next;
 }
 
 async function migrateOnce(): Promise<void> {
@@ -54,13 +81,13 @@ async function migrateOnce(): Promise<void> {
       }
     });
     const webpages: WebpageData[] = Array.isArray(localAny?.webpages)
-      ? localAny.webpages
+      ? localAny.webpages.map((w: any) => normalizeTimestampFields(w))
       : [];
     const categories: CategoryData[] = Array.isArray(syncAny?.categories)
-      ? syncAny.categories
+      ? syncAny.categories.map((c: any) => normalizeTimestampFields(c))
       : [];
     const templates: TemplateData[] = Array.isArray(syncAny?.templates)
-      ? syncAny.templates
+      ? syncAny.templates.map((t: any) => normalizeTimestampFields(t))
       : [];
     if (webpages.length + categories.length + templates.length > 0) {
       if (webpages.length) await putAll('webpages', webpages);
@@ -81,6 +108,7 @@ export function createIdbStorageService(): StorageService {
     try { await migrateOnce(); } catch {}
     try { await migrateOrganizationsOnce(); } catch {}
     try { await migrateSubcategoriesOnce(); } catch {}
+    try { await migrateTimestampsOnce(); } catch {}
   })();
 
   async function ensureMigrationsReady(): Promise<void> {
@@ -200,7 +228,7 @@ export function createIdbStorageService(): StorageService {
         getAll('subcategories' as any).catch(() => []),
         getAll('webpages'),
       ]);
-      const now = Date.now();
+      const now = nowMs();
       const byCatHasAny: Record<string, boolean> = {};
       for (const sc of subcats as any[]) byCatHasAny[sc.categoryId] = true;
       const defaults: Record<string, any> = {};
@@ -245,6 +273,41 @@ export function createIdbStorageService(): StorageService {
       // ignore
     }
     try { await setMeta('migratedSubcategoriesV1', true); } catch {}
+  }
+
+  async function migrateTimestampsOnce(): Promise<void> {
+    let shouldMarkDone = false;
+    try {
+      const done = await getMeta<boolean>('migratedTimestampsV1');
+      if (done) return;
+    } catch {}
+    try {
+      const storeConfigs: Array<{ name: StoreName; fields: readonly string[] }> = [
+        { name: 'webpages', fields: TIMESTAMP_FIELDS },
+        { name: 'categories', fields: ['updatedAt', 'deletedAt'] },
+        { name: 'templates', fields: ['updatedAt', 'deletedAt'] },
+        { name: 'subcategories', fields: TIMESTAMP_FIELDS },
+        { name: 'organizations', fields: ['updatedAt', 'deletedAt'] },
+      ];
+      for (const { name } of storeConfigs) {
+        const items = (await getAll(name as any).catch(() => [])) as any[];
+        if (!Array.isArray(items) || items.length === 0) continue;
+        const changed: any[] = [];
+        for (const item of items) {
+          const next = normalizeTimestampFields(item);
+          if (next !== item) changed.push(next);
+        }
+        if (changed.length) {
+          await putAll(name as any, changed);
+        }
+      }
+      shouldMarkDone = true;
+    } catch {
+      // ignore
+    }
+    if (shouldMarkDone) {
+      try { await setMeta('migratedTimestampsV1', true); } catch {}
+    }
   }
 
   async function buildNormalizedOrders(options?: {
@@ -359,11 +422,11 @@ export function createIdbStorageService(): StorageService {
 
     const payload = {
       schemaVersion: 1,
-      webpages,
-      categories,
-      templates,
-      subcategories,
-      organizations,
+      webpages: (webpages as any[]).map((p) => serializeTimestampFields(p)),
+      categories: (categories as any[]).map((c) => serializeTimestampFields(c)),
+      templates: (templates as any[]).map((t) => serializeTimestampFields(t)),
+      subcategories: (subcategories as any[]).map((s) => serializeTimestampFields(s)),
+      organizations: (organizations as any[]).map((o) => serializeTimestampFields(o)),
       settings,
       orders,
       exportedAt: new Date().toISOString(),
@@ -408,10 +471,12 @@ export function createIdbStorageService(): StorageService {
     await clearStore('subcategories' as any);
     await clearStore('organizations' as any);
     await clearStore('webpages');
-    const orgsNormalized = (orgsRaw as any[]).map((o: any) => ({
-      ...o,
-      isDefault: !!o?.isDefault,
-    }));
+    const orgsNormalized = (orgsRaw as any[]).map((o: any) =>
+      normalizeTimestampFields({
+        ...o,
+        isDefault: !!o?.isDefault,
+      })
+    );
     let fallbackOrgId: string | undefined = orgsNormalized[0]?.id;
     if (orgsNormalized.length) {
       const def = orgsNormalized.find((o: any) => o.isDefault);
@@ -435,19 +500,25 @@ export function createIdbStorageService(): StorageService {
       } catch {}
     }
     // Backfill missing category.organizationId when absent
-    const catsNormalized = (cats as any[]).map((c: any) => ({
-      ...c,
-      organizationId: ('organizationId' in c && c.organizationId) ? c.organizationId : fallbackOrgId,
-      isDefault: !!(c as any)?.isDefault,
-    }));
+    const catsNormalized = (cats as any[]).map((c: any) =>
+      normalizeTimestampFields({
+        ...c,
+        organizationId: ('organizationId' in c && c.organizationId) ? c.organizationId : fallbackOrgId,
+        isDefault: !!(c as any)?.isDefault,
+      })
+    );
     if (catsNormalized.length) await putAll('categories', catsNormalized as any);
-    if (tmpls.length) await putAll('templates', tmpls);
-    const subcatsNormalized = (subcats as any[]).map((s: any) => ({
-      ...s,
-      isDefault: !!(s as any)?.isDefault,
-    }));
+    const templatesNormalized = (tmpls as any[]).map((t: any) => normalizeTimestampFields(t));
+    if (templatesNormalized.length) await putAll('templates', templatesNormalized as any);
+    const subcatsNormalized = (subcats as any[]).map((s: any) =>
+      normalizeTimestampFields({
+        ...s,
+        isDefault: !!(s as any)?.isDefault,
+      })
+    );
     if (subcatsNormalized.length) await putAll('subcategories' as any, subcatsNormalized as any);
-    if (pages.length) await putAll('webpages', pages);
+    const pagesNormalized = (pages as any[]).map((p: any) => normalizeTimestampFields(p));
+    if (pagesNormalized.length) await putAll('webpages', pagesNormalized as any);
     // Restore per-group orders for groups present
     try {
       const presentGroups: Set<string> = new Set((subcatsNormalized as any[]).map((s: any) => s.id));
@@ -481,8 +552,19 @@ export function createIdbStorageService(): StorageService {
   return {
     // naming preserved for compatibility; replace full set to persist deletions
     saveToLocal: async (data: WebpageData[]) => {
+      // Load all webpages including soft-deleted ones
+      const all = (await getAll('webpages')) as WebpageData[];
+      const allById = new Map(all.map(w => [w.id, w]));
+
+      // Merge: keep soft-deleted items, update/add active items
+      for (const w of data) {
+        allById.set(w.id, normalizeTimestampFields(w as any));
+      }
+
+      // Save merged result
       await clearStore('webpages');
-      await putAll('webpages', data || []);
+      const merged = Array.from(allById.values()).map((w) => normalizeTimestampFields(w as any));
+      await putAll('webpages', merged);
     },
     loadFromLocal: async () => {
       const all = (await getAll('webpages')) as WebpageData[];
@@ -492,7 +574,8 @@ export function createIdbStorageService(): StorageService {
     // Replace categories set to ensure deletions persist
     saveToSync: async (data: CategoryData[]) => {
       await clearStore('categories');
-      await putAll('categories', data || []);
+      const normalized = (data || []).map((c) => normalizeTimestampFields(c as any));
+      await putAll('categories', normalized);
     },
     loadFromSync: async () => {
       const all = (await getAll('categories')) as CategoryData[];
@@ -502,7 +585,8 @@ export function createIdbStorageService(): StorageService {
     // Replace templates set to ensure deletions persist
     saveTemplates: async (data: TemplateData[]) => {
       await clearStore('templates');
-      await putAll('templates', data || []);
+      const normalized = (data || []).map((t) => normalizeTimestampFields(t as any));
+      await putAll('templates', normalized);
     },
     loadTemplates: async () => {
       const all = (await getAll('templates')) as TemplateData[];
@@ -534,7 +618,7 @@ export function createIdbStorageService(): StorageService {
         (g) => String(g.name || '').toLowerCase() === String(name || '').toLowerCase()
       );
       if (exists) return exists as any;
-      const now = Date.now();
+      const now = nowMs();
       const id = createEntityId('g');
       const sc = {
         id,
@@ -548,7 +632,7 @@ export function createIdbStorageService(): StorageService {
       await tx(['subcategories' as any, 'categories'], 'readwrite', async (t) => {
         const s = t.objectStore('subcategories' as any);
         const cs = t.objectStore('categories');
-        // 交易內再次檢查同名，避免競態
+        // 交易內再次檢查同名，避免競態（排除已刪除的）
         try {
           const all: any[] = await new Promise((resolve, reject) => {
             const req = s.getAll();
@@ -556,7 +640,7 @@ export function createIdbStorageService(): StorageService {
             req.onerror = () => reject(req.error);
           });
           const dup = all.find(
-            (g: any) => g.categoryId === categoryId && String(g.name || '').toLowerCase() === String(name || '').toLowerCase()
+            (g: any) => !g.deleted && g.categoryId === categoryId && String(g.name || '').toLowerCase() === String(name || '').toLowerCase()
           );
           if (dup) return; // 已有同名，放棄寫入
         } catch {}
@@ -571,7 +655,7 @@ export function createIdbStorageService(): StorageService {
           });
           if (cur && cur.isDefault && list.length > 0 && !options?.skipDefaultReset) {
             cur.isDefault = false;
-            cur.updatedAt = new Date().toISOString();
+            cur.updatedAt = nowMs();
             cs.put(cur);
           }
         } catch {}
@@ -592,7 +676,7 @@ export function createIdbStorageService(): StorageService {
           cur.isDefault = false;
         }
         cur.name = nextName;
-        cur.updatedAt = Date.now();
+        cur.updatedAt = nowMs();
         s.put(cur);
       });
     },
@@ -634,14 +718,15 @@ export function createIdbStorageService(): StorageService {
           p.subcategoryId = reassignTo;
           ws.put(p);
         }
-        // Delete the subcategory
-        ss.delete(id);
+        // Soft-delete the subcategory
+        const now = nowMs();
+        ss.put({ ...cur, deleted: true, deletedAt: now, updatedAt: now });
       });
-      // Clean up order metadata for the deleted group
-      try { await setMeta(`order.subcat.${id}`, []); } catch {}
+      // Keep order metadata for now, will be cleaned up by GC
     },
-    // Delete the subcategory and all webpages referencing it in one transaction
+    // Soft-delete the subcategory and all webpages referencing it in one transaction
     deleteSubcategoryAndPages: async (id: string) => {
+      const now = nowMs();
       await tx(['subcategories' as any, 'webpages'], 'readwrite', async (t) => {
         const ss = t.objectStore('subcategories' as any);
         const ws = t.objectStore('webpages');
@@ -651,6 +736,9 @@ export function createIdbStorageService(): StorageService {
           req.onerror = () => reject(req.error);
         });
         if (!cur) return;
+        // Skip if already deleted
+        if (cur.deleted) return;
+
         // Query pages by composite index when available, fallback to scan
         const pages: any[] = await new Promise((resolve, reject) => {
           let idx: any = null;
@@ -667,10 +755,16 @@ export function createIdbStorageService(): StorageService {
             rq.onerror = () => reject(rq.error);
           }
         });
-        for (const p of pages) ws.delete(p.id);
-        ss.delete(id);
+        // Soft-delete all webpages in this group
+        for (const p of pages) {
+          if (!p.deleted) {
+            ws.put({ ...p, deleted: true, deletedAt: now, updatedAt: now });
+          }
+        }
+        // Soft-delete the subcategory
+        ss.put({ ...cur, deleted: true, deletedAt: now, updatedAt: now });
       });
-      try { await setMeta(`order.subcat.${id}`, []); } catch {}
+      // Keep order metadata for now, will be cleaned up by GC
     },
     reorderSubcategories: async (categoryId: string, orderedIds: string[]) => {
       await tx(['subcategories' as any], 'readwrite', async (t) => {
@@ -684,7 +778,7 @@ export function createIdbStorageService(): StorageService {
           });
           if (!cur || cur.categoryId !== categoryId) continue;
           cur.order = order++;
-          cur.updatedAt = Date.now();
+          cur.updatedAt = nowMs();
           s.put(cur);
         }
       });
@@ -701,7 +795,7 @@ export function createIdbStorageService(): StorageService {
         const prev = (cur as any).subcategoryId as string | undefined;
         const next = subcategoryId;
         cur.subcategoryId = next;
-        cur.updatedAt = new Date().toISOString();
+        cur.updatedAt = nowMs();
         s.put(cur);
         // Maintain per-group order lists
         try {
@@ -720,6 +814,7 @@ export function createIdbStorageService(): StorageService {
       });
     },
     deleteSubcategoriesByCategory: async (categoryId: string) => {
+      const now = nowMs();
       let deletedIds: string[] = [];
       await tx(['subcategories' as any], 'readwrite', async (t) => {
         const s = t.objectStore('subcategories' as any);
@@ -732,9 +827,12 @@ export function createIdbStorageService(): StorageService {
             req.onsuccess = () => resolve(req.result || []);
             req.onerror = () => reject(req.error);
           });
+          // Soft-delete subcategories (filter out already deleted)
           for (const it of list) {
-            s.delete(it.id);
-            deletedIds.push(it.id);
+            if (!it.deleted) {
+              s.put({ ...it, deleted: true, deletedAt: now, updatedAt: now });
+              deletedIds.push(it.id);
+            }
           }
         } catch {
           // Fallback: getAll then filter
@@ -744,17 +842,15 @@ export function createIdbStorageService(): StorageService {
             req.onerror = () => reject(req.error);
           });
           for (const it of all) {
-            if (it.categoryId === categoryId) {
-              s.delete(it.id);
+            if (it.categoryId === categoryId && !it.deleted) {
+              s.put({ ...it, deleted: true, deletedAt: now, updatedAt: now });
               deletedIds.push(it.id);
             }
           }
         }
       });
-      // Clean up order metadata for all deleted groups
-      for (const id of deletedIds) {
-        try { await setMeta(`order.subcat.${id}`, []); } catch {}
-      }
+      // Note: Keep order metadata for now, will be cleaned up by GC
+      // This allows restoration to preserve original order
     },
 
     // Cleanup orphaned meta records
@@ -846,7 +942,7 @@ export function createIdbStorageService(): StorageService {
         order: 0,
         organizationId: orgId,
         isDefault: false,
-        updatedAt: new Date().toISOString(),
+        updatedAt: nowMs(),
       } : null;
 
       // Atomic transaction: write both or rollback
@@ -878,56 +974,8 @@ export function createIdbStorageService(): StorageService {
         });
         if (!cur) return;
         cur.name = (name || '').trim() || cur.name;
-        cur.updatedAt = new Date().toISOString();
+        cur.updatedAt = nowMs();
         s.put(cur);
-      });
-    },
-    deleteOrganization: async (id: string, options?: { reassignTo?: string }) => {
-      await tx(['organizations' as any, 'categories'], 'readwrite', async (t) => {
-        const os = t.objectStore('organizations' as any);
-        const cs = t.objectStore('categories');
-        // Ensure a target organization exists
-        let targetId = options?.reassignTo;
-        // Create default if missing or if target equals deleted id
-        const orgs = await new Promise<any[]>((resolve, reject) => {
-          const req = os.getAll();
-          req.onsuccess = () => resolve(req.result || []);
-          req.onerror = () => reject(req.error);
-        });
-        if (!targetId || !orgs.some((o) => o.id === targetId) || targetId === id) {
-          // pick default org or first other org
-          const alt = orgs.find((o) => o.id !== id && o.isDefault) || orgs.find((o) => o.id !== id);
-          if (alt) targetId = alt.id;
-          else {
-            const def = {
-              id: createEntityId('o'),
-              name: DEFAULT_ORGANIZATION_NAME,
-              color: '#64748b',
-              order: 0,
-              isDefault: true,
-            } as any;
-            os.put(def);
-            targetId = def.id;
-          }
-        }
-        // Reassign categories to target
-        const cats = await new Promise<any[]>((resolve, reject) => {
-          const req = cs.getAll();
-          req.onsuccess = () => resolve(req.result || []);
-          req.onerror = () => reject(req.error);
-        });
-        // Determine next order base in target org
-        let base = 0;
-        for (const c of cats) if ((c as any).organizationId === targetId) base = Math.max(base, (c as any).order ?? 0);
-        for (const c of cats) {
-          if ((c as any).organizationId === id) {
-            (c as any).organizationId = targetId;
-            (c as any).order = ++base;
-            cs.put(c);
-          }
-        }
-        // Delete org
-        os.delete(id);
       });
     },
     reorderOrganizations: async (orderedIds: string[]) => {
@@ -1030,7 +1078,7 @@ export function createIdbStorageService(): StorageService {
         order: nextOrder,
         organizationId: orgId,
         isDefault: false,
-        updatedAt: new Date().toISOString(),
+        updatedAt: nowMs(),
       } as any;
       await tx(['categories', 'organizations' as any], 'readwrite', async (t) => {
         if (createdDefaultOrg) {
@@ -1046,7 +1094,7 @@ export function createIdbStorageService(): StorageService {
             });
             if (cur && cur.isDefault) {
               cur.isDefault = false;
-              cur.updatedAt = new Date().toISOString();
+              cur.updatedAt = nowMs();
               os.put(cur);
             }
           } catch {}
@@ -1101,7 +1149,7 @@ export function createIdbStorageService(): StorageService {
         cur.organizationId = toOrganizationId;
         cur.order = nextOrder;
         if (cur.isDefault) cur.isDefault = false;
-        cur.updatedAt = new Date().toISOString();
+        cur.updatedAt = nowMs();
         s.put(cur);
       });
     },

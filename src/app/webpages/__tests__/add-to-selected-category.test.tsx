@@ -6,23 +6,40 @@ import { CategoriesProvider, useCategories } from '../../sidebar/categories';
 
 const Harness: React.FC = () => {
   const { actions: pageActions, items } = useWebpages();
-  const { actions: catActions, setCurrentCategory, categories } = useCategories() as any;
+  const { actions: catActions, setCurrentCategory, categories, selectedId } = useCategories() as any;
   const [ready, setReady] = React.useState(false);
+  const [workCatId, setWorkCatId] = React.useState<string | null>(null);
+  const initRef = React.useRef(false);
+
   React.useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
     (async () => {
-      // Create a new collection and switch to it
+      // Create a new collection
       const cat = await catActions.addCategory('Work', '#0f0');
+      setWorkCatId(cat.id);
       setCurrentCategory(cat.id);
-      // Add a webpage from a tab
-      await pageActions.addFromTab({
-        id: 1,
-        title: 'Example',
-        url: 'https://example.com',
-        favIconUrl: '',
-      } as any);
-      setReady(true);
     })();
-  }, [catActions, setCurrentCategory, pageActions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  React.useEffect(() => {
+    // Wait for category switch to take effect
+    if (workCatId && selectedId === workCatId && !ready) {
+      (async () => {
+        // Add a webpage from a tab
+        await pageActions.addFromTab({
+          id: 1,
+          title: 'Example',
+          url: 'https://example.com',
+          favIconUrl: '',
+        } as any);
+        setReady(true);
+      })();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workCatId, selectedId, ready]);
+
   return (
     <div>
       <pre data-testid="items">{JSON.stringify(items)}</pre>

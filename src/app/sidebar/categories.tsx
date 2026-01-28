@@ -3,6 +3,7 @@ import { createStorageService } from '../../background/storageService';
 import { setMeta, tx, getMeta } from '../../background/idb/db';
 import { useOrganizations, OrgsCtx } from './organizations';
 import { DEFAULT_CATEGORY_NAME, DEFAULT_GROUP_NAME, createEntityId } from '../../utils/defaults';
+import { nowMs } from '../../utils/time';
 
 export interface Category {
   id: string;
@@ -11,7 +12,7 @@ export interface Category {
   order: number;
   defaultTemplateId?: string;
   isDefault?: boolean;
-  updatedAt?: string;
+  updatedAt?: number | string;
 }
 
 interface CategoriesState {
@@ -88,14 +89,14 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
             req.onsuccess = () => resolve(req.result || []);
             req.onerror = () => reject(req.error);
           });
-          return rows as any[];
+          return rows.filter((c: any) => !c.deleted);
         } catch {
           const rows: any[] = await new Promise((resolve, reject) => {
             const req = s.getAll();
             req.onsuccess = () => resolve(req.result || []);
             req.onerror = () => reject(req.error);
           });
-          return rows.filter((c: any) => c.organizationId === selectedOrgId);
+          return rows.filter((c: any) => c.organizationId === selectedOrgId && !c.deleted);
         }
       });
       // Repair step: if none for this org, but DB has categories missing organizationId, attach to default org
@@ -126,9 +127,9 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
                   req.onsuccess = () => resolve(req.result || []);
                   req.onerror = () => reject(req.error);
                 });
-                list = rows as any[];
+                list = rows.filter((c: any) => !c.deleted);
               } catch {
-                list = all.filter((c: any) => c.organizationId === selectedOrgId);
+                list = all.filter((c: any) => c.organizationId === selectedOrgId && !c.deleted);
               }
             }
           });
@@ -152,7 +153,7 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
                 order: 0,
                 organizationId: selectedOrgId,
                 isDefault: true,
-                updatedAt: new Date().toISOString(),
+                updatedAt: nowMs(),
               });
             }
           });
@@ -169,14 +170,14 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
                 req.onsuccess = () => resolve(req.result || []);
                 req.onerror = () => reject(req.error);
               });
-              return rows as any[];
+              return rows.filter((c: any) => !c.deleted);
             } catch {
               const rows: any[] = await new Promise((resolve, reject) => {
                 const req = s.getAll();
                 req.onsuccess = () => resolve(req.result || []);
                 req.onerror = () => reject(req.error);
               });
-              return rows.filter((c: any) => c.organizationId === selectedOrgId);
+              return rows.filter((c: any) => c.organizationId === selectedOrgId && !c.deleted);
             }
           });
         } catch {}
@@ -277,8 +278,8 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
               merged.push(c);
             }
           }
-          // Filter by current organization
-          const filtered = merged.filter((c: any) => c.organizationId === selectedOrgId);
+          // Filter by current organization and exclude soft-deleted
+          const filtered = merged.filter((c: any) => c.organizationId === selectedOrgId && !c.deleted);
           filtered.sort(
             (a, b) =>
               (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name)
@@ -290,7 +291,7 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
         // 使用後端服務建立（帶 organizationId），避免遺失 org 資訊
         const created = await (svc as any).addCategory?.(name.trim() || 'Untitled', color, selectedOrgId);
         // 更新本地狀態並持久化
-        const list = [...categories, { id: created.id, name: created.name, color: created.color, order: created.order, defaultTemplateId: created.defaultTemplateId, isDefault: created.isDefault } as any];
+        const list = [...categories, { id: created.id, name: created.name, color: created.color, order: created.order, defaultTemplateId: created.defaultTemplateId, isDefault: created.isDefault, organizationId: created.organizationId || selectedOrgId } as any];
         list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.name).localeCompare(String(b.name)));
         setCategories(list);
         try { chrome.storage?.local?.set?.({ categories: list }); } catch {}
@@ -310,7 +311,7 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
           if (c.id !== id) return c;
           const nextName = name.trim() || c.name;
           const nextIsDefault = c.isDefault && String(nextName) === String(c.name);
-          return { ...c, name: nextName, isDefault: nextIsDefault, updatedAt: new Date().toISOString() };
+          return { ...c, name: nextName, isDefault: nextIsDefault, updatedAt: nowMs() };
         });
         setCategories(list);
         try {
@@ -321,14 +322,14 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
             const nextName = name.trim() || cur.name;
             if (String(cur.name || '') !== String(nextName || '') && cur.isDefault) cur.isDefault = false;
             cur.name = nextName;
-            cur.updatedAt = new Date().toISOString();
+            cur.updatedAt = nowMs();
             s.put(cur);
           });
         } catch {}
         try { chrome.storage?.local?.set?.({ categories: list }); } catch {}
       },
       async updateColor(id: string, color: string) {
-        const list = categories.map((c) => (c.id === id ? { ...c, color: color || c.color, updatedAt: new Date().toISOString() } : c));
+        const list = categories.map((c) => (c.id === id ? { ...c, color: color || c.color, updatedAt: nowMs() } : c));
         setCategories(list);
         try {
           await tx('categories', 'readwrite', async (t) => {
@@ -336,7 +337,7 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
             const cur = await new Promise<any>((resolve, reject) => { const req = s.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
             if (!cur) return;
             cur.color = color || cur.color;
-            cur.updatedAt = new Date().toISOString();
+            cur.updatedAt = nowMs();
             s.put(cur);
           });
         } catch {}
@@ -366,22 +367,43 @@ export const CategoriesProvider: React.FC<{ children: React.ReactNode }> = ({
             }); 
           } catch {}
         }
-        // Also delete webpages under this category
+        // Also soft-delete webpages under this category
         try {
-          const pages = await svc?.loadFromLocal();
-          const filtered = (pages || []).filter(
-            (p: any) => String(p.category || '') !== String(id)
-          );
-          await svc?.saveToLocal(filtered as any);
+          const now = nowMs();
+          await tx('webpages', 'readwrite', async (t) => {
+            const s = t.objectStore('webpages');
+            const idx = s.index('category');
+            const range = IDBKeyRange.only(id);
+            const pages: any[] = await new Promise((resolve, reject) => {
+              const req = idx.getAll(range);
+              req.onsuccess = () => resolve(req.result || []);
+              req.onerror = () => reject(req.error);
+            });
+            // Soft-delete webpages (filter out already deleted)
+            for (const page of pages) {
+              if (!page.deleted) {
+                s.put({ ...page, deleted: true, deletedAt: now, updatedAt: now });
+              }
+            }
+          });
         } catch {}
         // Also delete all groups under this category
         try {
           await (svc as any)?.deleteSubcategoriesByCategory?.(id);
         } catch {}
-        // Delete category row from IDB
+        // Soft-delete category row from IDB
         try {
+          const now = nowMs();
           await tx('categories', 'readwrite', async (t) => {
-            t.objectStore('categories').delete(id);
+            const s = t.objectStore('categories');
+            const cat: any = await new Promise((resolve, reject) => {
+              const req = s.get(id);
+              req.onsuccess = () => resolve(req.result);
+              req.onerror = () => reject(req.error);
+            });
+            if (cat) {
+              s.put({ ...cat, deleted: true, deletedAt: now, updatedAt: now });
+            }
           });
         } catch (error) {
           console.error('Delete category error:', error);

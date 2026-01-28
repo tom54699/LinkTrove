@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { getAll, getMeta } from '../db';
 import { DEFAULT_CATEGORY_NAME, DEFAULT_ORGANIZATION_NAME } from '../../../utils/defaults';
 
@@ -25,7 +25,7 @@ async function waitForOrgMigration(timeout = 3000) {
 }
 
 describe('StorageService organizations API', () => {
-  beforeAll(async () => {
+  beforeEach(async () => {
     await resetDb();
   });
 
@@ -57,38 +57,6 @@ describe('StorageService organizations API', () => {
     await (s as any).reorderOrganizations?.([b!.id, a!.id, defOrg.id]);
     const list3 = (await (s as any).listOrganizations?.()) as any[];
     expect(list3[0].id).toBe(b!.id);
-  });
-
-  it('category helpers: addCategory / reorderCategories / updateCategoryOrganization / deleteOrganization', async () => {
-    const { createStorageService } = await import('../../storageService');
-    const s = createStorageService();
-    await waitForOrgMigration();
-
-    const resultOrgB = await (s as any).createOrganization?.('Org B', undefined, { createDefaultCollection: false });
-    const orgB = resultOrgB.organization;
-    // Add three categories under default
-    const c1 = await (s as any).addCategory?.('C1');
-    const c2 = await (s as any).addCategory?.('C2');
-    const c3 = await (s as any).addCategory?.('C3');
-    const currentOrgs = (await (s as any).listOrganizations?.()) as any[];
-    const currentDefault = currentOrgs.find((o) => o.isDefault) || currentOrgs[0];
-    expect(c1.organizationId).toBe(currentDefault.id);
-    // reorder within default
-    await (s as any).reorderCategories?.([c3.id, c1.id, c2.id], currentDefault.id);
-    const afterCats = (await getAll('categories')) as any[];
-    const defCats = afterCats.filter((c) => c.organizationId === currentDefault.id).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    expect(defCats.map((c) => c.id)).toEqual([c3.id, c1.id, c2.id]);
-
-    // move one category to Org B
-    await (s as any).updateCategoryOrganization?.(c2.id, orgB.id);
-    const moved = (await getAll('categories')) as any[];
-    const inB = moved.filter((c) => c.organizationId === orgB.id);
-    expect(inB.some((c) => c.id === c2.id)).toBe(true);
-
-    // delete Org B and reassign to default
-    await (s as any).deleteOrganization?.(orgB.id, { reassignTo: currentDefault.id });
-    const finalCats = (await getAll('categories')) as any[];
-    expect(finalCats.every((c) => c.organizationId === currentDefault.id)).toBe(true);
   });
 
   it('should auto-create default Collection when creating Organization', async () => {

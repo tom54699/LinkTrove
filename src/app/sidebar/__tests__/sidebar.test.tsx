@@ -1,10 +1,12 @@
+import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { ThreeColumnLayout } from '../../layout/ThreeColumn';
 import { CategoriesProvider, useCategories } from '../categories';
 import { Sidebar } from '../sidebar';
 import { DEFAULT_CATEGORY_NAME } from '../../../utils/defaults';
+import { OrganizationsProvider } from '../organizations';
 
 vi.mock('../../i18n', () => ({
   useI18n: () => ({
@@ -38,33 +40,37 @@ describe('Sidebar (task 7.1)', () => {
     setupChromeStub();
   });
 
-  it('shows default categories and allows selection', () => {
+  it('shows default categories and allows selection', async () => {
     render(
-      <CategoriesProvider>
-        <Sidebar />
-      </CategoriesProvider>
+      <OrganizationsProvider>
+        <CategoriesProvider>
+          <Sidebar />
+        </CategoriesProvider>
+      </OrganizationsProvider>
     );
 
     // Default entries: Default only (All removed)
-    expect(
-      screen.getByRole('button', { name: new RegExp(DEFAULT_CATEGORY_NAME, 'i') })
-    ).toBeInTheDocument();
+    const def = await screen.findByRole('button', { name: new RegExp(DEFAULT_CATEGORY_NAME, 'i') });
+    expect(def).toBeInTheDocument();
 
     // Initially Default is selected
-    const def = screen.getByRole('button', { name: new RegExp(DEFAULT_CATEGORY_NAME, 'i') });
     expect(def.getAttribute('data-active')).toBe('true');
   });
 
-  it('updates content area when switching category', () => {
+  it('updates content area when switching category', async () => {
     render(
-      <CategoriesProvider>
-        <ThreeColumnLayout sidebar={<Sidebar />} content={<ContentProbe />} />
-      </CategoriesProvider>
+      <OrganizationsProvider>
+        <CategoriesProvider>
+          <ThreeColumnLayout sidebar={<Sidebar />} content={<ContentProbe />} />
+        </CategoriesProvider>
+      </OrganizationsProvider>
     );
 
     // Initially shows default selection
-    expect(screen.getByTestId('content-probe').textContent).toMatch(/Current:\s*\w+/);
+    await waitFor(() => {
+      expect(screen.getByTestId('content-probe').textContent).toMatch(/Current:\s*\w+/);
+    });
     // Since there's only one category now, the test just verifies it shows the default label
-    expect(screen.getByRole('button', { name: new RegExp(DEFAULT_CATEGORY_NAME, 'i') })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: new RegExp(DEFAULT_CATEGORY_NAME, 'i') })).toBeInTheDocument();
   });
 });

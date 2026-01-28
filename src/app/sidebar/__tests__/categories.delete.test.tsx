@@ -124,8 +124,14 @@ describe('Collection Delete Protection', () => {
 
     await waitFor(async () => {
       const catsInDb = (await getAll('categories')) as any[];
-      expect(catsInDb.length).toBe(1);
-      expect(catsInDb[0].id).toBe('c1');
+      expect(catsInDb.length).toBe(2); // Both c1 and c2 exist
+      const c2 = catsInDb.find((c: any) => c.id === 'c2');
+      expect(c2.deleted).toBe(true); // c2 is soft-deleted
+      expect(c2.deletedAt).toBeTruthy();
+      // Filter out deleted: only c1 remains
+      const activeCats = catsInDb.filter((c: any) => !c.deleted);
+      expect(activeCats.length).toBe(1);
+      expect(activeCats[0].id).toBe('c1');
     }, { timeout: 1500 });
   });
 
@@ -163,8 +169,15 @@ describe('Collection Delete Protection', () => {
 
     await waitFor(async () => {
       const catsInDb = (await getAll('categories')) as any[];
-      expect(catsInDb.length).toBe(2); // c1 and c3
-      expect(catsInDb.some((c) => c.id === 'c3')).toBe(true);
+      expect(catsInDb.length).toBe(3); // c1, c2, c3 all exist
+      const c2 = catsInDb.find((c: any) => c.id === 'c2');
+      expect(c2.deleted).toBe(true); // c2 is soft-deleted
+      expect(c2.deletedAt).toBeTruthy();
+      // Filter out deleted: c1 and c3 remain
+      const activeCats = catsInDb.filter((c: any) => !c.deleted);
+      expect(activeCats.length).toBe(2);
+      expect(activeCats.some((c) => c.id === 'c1')).toBe(true);
+      expect(activeCats.some((c) => c.id === 'c3')).toBe(true);
     }, { timeout: 1500 });
   });
 
@@ -212,16 +225,24 @@ describe('Collection Delete Protection', () => {
 
     await waitFor(async () => {
       const catsInDb = (await getAll('categories')) as any[];
-      expect(catsInDb.length).toBe(1);
-      expect(catsInDb[0].id).toBe('c1');
+      expect(catsInDb.length).toBe(2); // c1 and c2 exist
+      const c2 = catsInDb.find((c: any) => c.id === 'c2');
+      expect(c2.deleted).toBe(true); // c2 is soft-deleted
+      const activeCats = catsInDb.filter((c: any) => !c.deleted);
+      expect(activeCats.length).toBe(1);
+      expect(activeCats[0].id).toBe('c1');
 
       const groupsInDb = (await getAll('subcategories' as any)) as any[];
-      expect(groupsInDb.length).toBe(1);
-      expect(groupsInDb[0].id).toBe('g1');
+      expect(groupsInDb.length).toBe(3); // g1, g2, g3 exist
+      const activeGroups = groupsInDb.filter((g: any) => !g.deleted);
+      expect(activeGroups.length).toBe(1);
+      expect(activeGroups[0].id).toBe('g1');
 
       const webpagesInDb = (await getAll('webpages')) as any[];
-      expect(webpagesInDb.length).toBe(1);
-      expect(webpagesInDb[0].id).toBe('w1');
+      expect(webpagesInDb.length).toBe(3); // w1, w2, w3 exist
+      const activeWebpages = webpagesInDb.filter((w: any) => !w.deleted);
+      expect(activeWebpages.length).toBe(1);
+      expect(activeWebpages[0].id).toBe('w1');
     }, { timeout: 1500 });
   });
 

@@ -1,9 +1,6 @@
 import { putAll, setMeta, getAll, tx } from '../idb/db';
 import type { WebpageData } from '../storageService';
-
-function nowIso() {
-  return new Date().toISOString();
-}
+import { nowMs } from '../../utils/time';
 
 function genId() {
   return 'w_' + Math.random().toString(36).slice(2, 10);
@@ -112,7 +109,7 @@ export async function importNetscapeHtmlIntoGroup(
 ): Promise<HtmlImportResult> {
   const anchors = parseNetscapeAnchors(html);
   if (!anchors.length) return { pagesCreated: 0 };
-  const now = nowIso();
+  const now = nowMs();
   const pages: WebpageData[] = [];
   const idsInOrder: string[] = [];
   for (const a of anchors) {
@@ -181,7 +178,7 @@ export async function importNetscapeHtmlIntoCategory(
     const key = String(name || 'Imported').toLowerCase();
     const got = lowerToGroup.get(key);
     if (got) return got;
-    const now = Date.now();
+    const now = nowMs();
     const sc = {
       id: 'g_' + Math.random().toString(36).slice(2, 9),
       categoryId,
@@ -208,7 +205,7 @@ export async function importNetscapeHtmlIntoCategory(
       });
       toCreate.length = 0; // ensure only once
     }
-    const now = nowIso();
+    const now = nowMs();
     const pages: WebpageData[] = [];
     const idsInOrder: string[] = [];
     for (const a of items) {
@@ -295,7 +292,7 @@ export async function importNetscapeHtmlAsNewCategory(
   if (opts?.mode === 'flat') {
     // Create single group and flatten all anchors
     const flatName = (opts.flatGroupName || 'Imported').trim() || 'Imported';
-    const now = Date.now();
+    const now = nowMs();
     const g = { id: 'g_' + Math.random().toString(36).slice(2, 9), categoryId: id, name: flatName, order: 0, createdAt: now, updatedAt: now };
     await tx(['subcategories' as any], 'readwrite', async (t) => {
       t.objectStore('subcategories' as any).put(g);
@@ -312,7 +309,7 @@ export async function importNetscapeHtmlAsNewCategory(
       try { url = new URL(a.url).toString(); } catch { continue; }
       if (opts?.dedupSkip && known.has(url)) continue;
       const idw = genId();
-      pages.push({ id: idw, title: cleanTitle(a.title, url), url, favicon: guessFavicon(url), note: a.desc || '', category: id, subcategoryId: g.id, meta: undefined, createdAt: nowIso(), updatedAt: nowIso() });
+      pages.push({ id: idw, title: cleanTitle(a.title, url), url, favicon: guessFavicon(url), note: a.desc || '', category: id, subcategoryId: g.id, meta: undefined, createdAt: nowMs(), updatedAt: nowMs() });
       ids.push(idw);
       known.add(url);
     }

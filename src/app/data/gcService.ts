@@ -2,6 +2,7 @@
 // Reduces IndexedDB storage and improves merge performance
 
 import { createStorageService } from '../../background/storageService';
+import { deleteMeta } from '../../background/idb/db';
 
 export interface GCStats {
   totalTombstones: number;
@@ -147,10 +148,17 @@ export async function runGC(
   };
 
   // Clean each store
+  const deletedSubcategoryIds: string[] = [];
+
   for (const [storeName, store] of Object.entries(stores)) {
     const allRaw = await requestToPromise(store.getAll());
     const all = Array.isArray(allRaw) ? allRaw : [];
     const toDelete = all.filter(shouldClean);
+
+    // Collect subcategory IDs for order metadata cleanup
+    if (storeName === 'subcategories') {
+      deletedSubcategoryIds.push(...toDelete.map((item: any) => item.id));
+    }
 
     for (const item of toDelete) {
       await requestToPromise(store.delete(item.id));
@@ -166,6 +174,15 @@ export async function runGC(
     tx.onabort = () => reject(tx.error);
   });
   db.close();
+
+  // Clean up order metadata for deleted subcategories
+  for (const subcatId of deletedSubcategoryIds) {
+    try {
+      await deleteMeta(`order.subcat.${subcatId}`);
+    } catch (e) {
+      console.warn(`Failed to clean order metadata for ${subcatId}:`, e);
+    }
+  }
 
   // Record GC time
   await recordGCTime();
