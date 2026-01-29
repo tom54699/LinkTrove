@@ -608,7 +608,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
         {items.length === 0 && !((ghostTab != null || ghostType != null) && ghostIndex != null) ? (
           <div className="py-12 text-center text-[var(--muted)] opacity-50 font-medium">{t('drag_tabs_hint')}</div>
         ) : (
-          <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', maxWidth: '1200px' }}>
+          <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 270px))', maxWidth: '1200px' }}>
             {(() => {
               const ghostActive = isOver || ghostTab != null || ghostType != null || ghostIndex != null;
               const viewItems = ghostActive && draggingCardId ? items.filter((x) => x.id !== draggingCardId) : items;

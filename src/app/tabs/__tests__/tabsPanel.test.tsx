@@ -1,8 +1,18 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import { OpenTabsProvider } from '../OpenTabsProvider';
 import { TabsPanel } from '../TabsPanel';
+
+vi.mock('../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string, fallback?: string) => (typeof fallback === 'string' ? fallback : key),
+    language: 'en',
+    setLanguage: vi.fn(),
+  }),
+  LanguageProvider: ({ children }: { children: any }) => children,
+  LANGUAGE_OPTIONS: [],
+}));
 
 describe('TabsPanel (task 4.1)', () => {
   it('renders list of tabs and updates on change', async () => {

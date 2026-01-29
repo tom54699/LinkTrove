@@ -92,7 +92,7 @@ export const FourColumnLayout: React.FC<{
         className={`h-full bg-[var(--panel)] border-l border-white/10 shadow-xl
                    transition-[width] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] 
                    overflow-hidden flex flex-col group/tabs z-50 relative
-                   flex-shrink-0 ${isPinned ? 'w-[300px]' : 'w-[50px] hover:w-[300px]'}`}
+                   flex-shrink-0 ${isPinned ? 'w-[280px]' : 'w-[50px] hover:w-[280px]'}`}
       >
         
         {/* Header Area (Fixed Height) */}
