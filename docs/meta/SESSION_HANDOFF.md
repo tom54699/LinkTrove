@@ -2,9 +2,9 @@
 
 > **用途：** 解決 AI 工具 Session 斷開後的連續性問題，確保下次對話能無縫接續
 >
-> **最後更新：** 2026-01-28 (時間戳 canonical number + unify-cascade-soft-delete 規格更新)
+> **最後更新：** 2026-01-29 (OpenTabs 頂部間距調整)
 >
-> **更新者：** Codex
+> **更新者：** Claude Code
 
 ---
 
@@ -12,7 +12,12 @@
 
 ### 最近完成的工作
 
-1. ✅ **時間戳 canonical number（內部儲存）**
+1. ✅ **OpenTabs 頂部間距調整**（2026-01-29）
+   - 調整右側 OpenTabs panel 頂部 border 與第一個 window 之間間距
+   - FourColumnLayout.tsx：`pb-4` → `py-4`（頂部增加 16px padding）
+   - 視覺更舒適，避免內容與分隔線太擠
+
+2. ✅ **時間戳 canonical number（內部儲存）**
    - 新增 `src/utils/time.ts`，寫入改用 `Date.now()` (number)
    - IDB migration：把舊 ISO string 轉成 number
    - export 時轉回 ISO string，保持對外相容
