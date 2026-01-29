@@ -501,7 +501,25 @@ function tabToPayload(t: any) {
     favIconUrl: t.favIconUrl,
     index: t.index,
     windowId: t.windowId,
+    nativeGroupId: t.groupId > 0 ? t.groupId : undefined,
   };
+}
+
+async function getTabGroupsPayload() {
+  return new Promise<any[]>((resolve) => {
+    if (!chrome.tabGroups) return resolve([]);
+    chrome.tabGroups.query({}, (groups) => {
+      resolve(
+        (groups || []).map((g) => ({
+          id: g.id,
+          title: g.title,
+          color: g.color,
+          windowId: g.windowId,
+          collapsed: g.collapsed,
+        }))
+      );
+    });
+  });
 }
 
 let started = false;
@@ -517,6 +535,22 @@ const tabsManager = createTabsManager({
     });
   },
 });
+
+// Broadcast Tab Group events
+if (chrome.tabGroups) {
+  const broadcastGroups = async () => {
+    const groups = await getTabGroupsPayload();
+    clients.forEach((p) => {
+      try {
+        p.postMessage({ kind: 'groups-update', groups });
+      } catch {}
+    });
+  };
+  chrome.tabGroups.onCreated.addListener(broadcastGroups);
+  chrome.tabGroups.onRemoved.addListener(broadcastGroups);
+  chrome.tabGroups.onUpdated.addListener(broadcastGroups);
+  chrome.tabGroups.onMoved.addListener(broadcastGroups);
+}
 
 async function boot() {
   try {
@@ -565,13 +599,15 @@ chrome.runtime.onConnect.addListener((port) => {
           const windowIds = (wins || [])
             .map((x) => x.id)
             .filter((x) => typeof x === 'number');
-          chrome.tabs.query({}, (tabs) => {
+          chrome.tabs.query({}, async (tabs) => {
             try {
+              const nativeGroups = await getTabGroupsPayload();
               const payload = {
                 kind: 'init',
                 activeWindowId,
                 windowIds,
                 tabs: tabs.map(tabToPayload),
+                nativeGroups,
               };
               port.postMessage(payload);
             } catch (err) {

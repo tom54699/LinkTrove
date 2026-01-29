@@ -21,7 +21,7 @@ export const TabItem: React.FC<
         favIconUrl: tab.favIconUrl,
       });
     } catch {
-      // ignore in non-supporting environments
+      // ignore
     }
     rest.onDragStart?.(e);
   };
@@ -32,19 +32,35 @@ export const TabItem: React.FC<
   };
   return (
     <div
-      className={`flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-800 ${dragging ? 'ring-2 ring-blue-500' : ''}`}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 cursor-grab active:cursor-grabbing hover:translate-x-[2px] group/item ${dragging ? 'opacity-50 ring-1 ring-blue-500' : ''} ${rest.className || ''}`}
+      style={{
+        backgroundColor: '#44475a',
+        border: '1px solid rgba(255,255,255,0.05)',
+        ...rest.style
+      }}
       draggable
       data-dragging={dragging || undefined}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = '#505467';
+        e.currentTarget.style.borderColor = '#6272a4';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = '#44475a';
+        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)';
+      }}
       {...rest}
     >
       {tab.favIconUrl ? (
-        <img src={tab.favIconUrl} alt="" className="w-4 h-4" draggable={false} />
+        <img src={tab.favIconUrl} alt="" className="w-4 h-4 rounded-sm object-contain shrink-0" draggable={false} />
       ) : (
-        <div className="w-4 h-4 bg-slate-600 rounded" />
+        <div className="w-4 h-4 rounded-sm bg-slate-600 shrink-0 flex items-center justify-center text-[10px] font-bold text-white/50">
+           {(tab.title || 'U')[0].toUpperCase()}
+        </div>
       )}
-      <span className="truncate" title={tab.title || tab.url}>
+      
+      <span className="truncate text-xs text-[#f8f8f2] font-medium leading-tight select-none" title={tab.title || tab.url}>
         {tab.title || tab.url || 'Untitled'}
       </span>
     </div>

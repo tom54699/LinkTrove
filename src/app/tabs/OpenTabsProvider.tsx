@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
-import type { TabItemData } from './types';
+import type { TabItemData, NativeTabGroup } from './types';
 
 interface OpenTabsCtx {
   tabs: TabItemData[]; // visible tabs for active window (if set)
   allTabs: TabItemData[]; // all tabs across windows
+  nativeTabGroups: NativeTabGroup[];
+  totalTabCount: number;
   activeWindowId: number | null;
   actions: {
     setTabs: (tabs: TabItemData[]) => void;
@@ -24,6 +26,7 @@ export const OpenTabsProvider: React.FC<{
   expose?: (ctx: OpenTabsCtx) => void; // for tests
 }> = ({ children, initialTabs = [], expose }) => {
   const [allTabs, setTabsState] = useState<TabItemData[]>(initialTabs);
+  const [nativeTabGroups, setNativeTabGroups] = useState<NativeTabGroup[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<number | null>(null);
   const [_windowIds, setWindowIds] = useState<number[]>([]);
   const [windowLabels, setWindowLabels] = useState<Record<number, string>>({});
@@ -67,9 +70,11 @@ export const OpenTabsProvider: React.FC<{
     return sortByIndex(filtered);
   }, [allTabs, activeWindowId]);
 
+  const totalTabCount = useMemo(() => allTabs.length, [allTabs]);
+
   const value = useMemo<OpenTabsCtx>(
-    () => ({ tabs, allTabs, activeWindowId, actions }),
-    [tabs, allTabs, activeWindowId, actions]
+    () => ({ tabs, allTabs, nativeTabGroups, totalTabCount, activeWindowId, actions }),
+    [tabs, allTabs, nativeTabGroups, totalTabCount, activeWindowId, actions]
   );
   const actionsRef = React.useRef(actions);
   React.useEffect(() => {
@@ -105,16 +110,24 @@ export const OpenTabsProvider: React.FC<{
     const onMsg = (msg: any) => {
       if (msg?.kind === 'init' && Array.isArray(msg.tabs)) {
         setTabsState(sortByIndex(msg.tabs));
+        if (Array.isArray(msg.nativeGroups)) setNativeTabGroups(msg.nativeGroups);
         if (Array.isArray(msg.windowIds)) setWindowIds(msg.windowIds);
         if (typeof msg.activeWindowId === 'number')
           setActiveWindowId(msg.activeWindowId);
+      } else if (msg?.kind === 'groups-update' && Array.isArray(msg.groups)) {
+        setNativeTabGroups(msg.groups);
       } else if (msg?.kind === 'tab-event' && msg.evt) {
         const evt = msg.evt;
         if (evt.type === 'created' && evt.payload) actionsRef.current.addTab(evt.payload);
         else if (evt.type === 'removed') actionsRef.current.removeTab(evt.payload.tabId);
-        else if (evt.type === 'updated')
-          actionsRef.current.updateTab(evt.payload.tabId, evt.payload.changeInfo);
-        else if (evt.type === 'moved')
+        else if (evt.type === 'updated') {
+          const patch = { ...evt.payload.changeInfo };
+          if ('groupId' in patch) {
+            patch.nativeGroupId = patch.groupId > 0 ? patch.groupId : undefined;
+            delete patch.groupId;
+          }
+          actionsRef.current.updateTab(evt.payload.tabId, patch);
+        } else if (evt.type === 'moved')
           actionsRef.current.updateTab(evt.payload.tabId, {
             index: evt.payload.toIndex,
             windowId: evt.payload.windowId,

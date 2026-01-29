@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkTrove - Sidebar Refresh V2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#0f172a',
+                        card: '#1e293b',
+                    }
+                }
+            }
+        }
+        function toggle(el) {
+            const next = el.nextElementSibling;
+            if(next) next.classList.toggle('hidden');
+            const arrow = el.querySelector('.arrow');
+            if(arrow) {
+                if(next.classList.contains('hidden')) arrow.style.transform = 'rotate(-90deg)';
+                else arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+    </script>
+    <style>
+        body { background: #020617; color: #f8fafc; font-family: sans-serif; }
+        .sidebar { width: 300px; height: 500px; background: #0f172a; border-right: 1px solid #1e293b; overflow-y: auto; flex-shrink: 0; }
+        .arrow { transition: transform 0.2s; display: inline-block; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-7xl mx-auto space-y-12">
+        
+        <h1 class="text-3xl font-bold text-center text-slate-400">Sidebar Refresh V2</h1>
+
+        <div class="flex flex-wrap gap-8 justify-center">
+
+            <!-- 1. Blocky Cards -->
+            <div class="flex flex-col items-center gap-2">
+                <span class="text-xs font-bold text-slate-500 uppercase">1. Blocky Cards</span>
+                <div class="sidebar p-3 space-y-3 bg-[#0b1120]">
+                    <!-- Window -->
+                    <div class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-sm">
+                        <div class="bg-slate-700/50 px-3 py-2 border-b border-slate-700 flex justify-between cursor-pointer" onclick="toggle(this)">
+                            <span class="font-bold text-xs text-slate-200">Main Window</span>
+                            <span class="arrow text-[10px] text-slate-400">▼</span>
+                        </div>
+                        <div class="p-2 space-y-2">
+                            <!-- Group -->
+                            <div class="bg-blue-500/10 rounded-lg p-2 border border-blue-500/20">
+                                <div class="text-[10px] font-black text-blue-400 mb-2 px-1">WORK</div>
+                                <div class="space-y-1">
+                                    <div class="bg-slate-800/80 p-2 rounded text-xs text-slate-300 shadow-sm flex gap-2 items-center cursor-pointer hover:bg-slate-700">
+                                        <div class="w-4 h-4 rounded bg-slate-600"></div> Figma
+                                    </div>
+                                    <div class="bg-slate-800/80 p-2 rounded text-xs text-slate-300 shadow-sm flex gap-2 items-center cursor-pointer hover:bg-slate-700">
+                                        <div class="w-4 h-4 rounded bg-slate-600"></div> Jira
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Loose -->
+                            <div class="bg-slate-800 p-2 rounded text-xs text-slate-300 shadow-sm flex gap-2 items-center cursor-pointer hover:bg-slate-700 border border-slate-700">
+                                <div class="w-4 h-4 rounded bg-slate-600"></div> Google Search
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Floating Pills -->
+            <div class="flex flex-col items-center gap-2">
+                <span class="text-xs font-bold text-slate-500 uppercase">2. Floating Pills</span>
+                <div class="sidebar p-2 space-y-4 bg-slate-900 border-none">
+                    <!-- Window -->
+                    <div>
+                        <div class="px-2 py-1 mb-2 text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2 cursor-pointer" onclick="toggle(this)">
+                            <span class="w-2 h-2 rounded-full bg-slate-600"></span> Session 1 <span class="arrow ml-auto">▼</span>
+                        </div>
+                        <div class="space-y-2 pl-2">
+                            <!-- Group -->
+                            <div class="bg-slate-800 rounded-2xl p-1.5 shadow-lg">
+                                <div class="px-2 py-1 flex items-center gap-2 mb-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.8)]"></span>
+                                    <span class="text-[10px] font-bold text-pink-200">SOCIAL</span>
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="px-3 py-2 bg-slate-700/50 rounded-xl text-xs text-slate-200 flex gap-2 items-center cursor-pointer hover:bg-slate-600 transition">
+                                        <img src="https://www.google.com/favicon.ico" class="w-4 h-4 rounded-full"> Twitter
+                                    </div>
+                                    <div class="px-3 py-2 bg-slate-700/50 rounded-xl text-xs text-slate-200 flex gap-2 items-center cursor-pointer hover:bg-slate-600 transition">
+                                        <img src="https://www.google.com/favicon.ico" class="w-4 h-4 rounded-full"> Instagram
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Strict Table -->
+            <div class="flex flex-col items-center gap-2">
+                <span class="text-xs font-bold text-slate-500 uppercase">3. Strict Table</span>
+                <div class="sidebar p-0 bg-[#1e1e1e] border-slate-700">
+                    <div class="flex text-[10px] font-bold text-slate-500 border-b border-slate-700 bg-[#252526]">
+                        <div class="p-2 w-8 text-center">ID</div>
+                        <div class="p-2 flex-1">NAME</div>
+                    </div>
+                    <!-- Window -->
+                    <div class="border-b border-slate-700 bg-[#2d2d2d] cursor-pointer hover:bg-[#383838]" onclick="toggle(this)">
+                        <div class="p-2 text-xs font-bold text-slate-300 flex gap-2">
+                            <span class="arrow text-[10px]">▼</span> Chrome Main
+                        </div>
+                    </div>
+                    <div>
+                        <!-- Group Header -->
+                        <div class="flex border-b border-slate-700 bg-[#252526]/50 hover:bg-[#2a2d2e] cursor-pointer" onclick="toggle(this)">
+                            <div class="w-1 bg-green-500"></div>
+                            <div class="p-2 text-[10px] font-bold text-green-500 flex-1">DOCS GROUP</div>
+                            <div class="p-2 text-[10px] text-slate-500">2</div>
+                        </div>
+                        <div>
+                            <!-- Row -->
+                            <div class="flex border-b border-slate-800 hover:bg-[#2a2d2e] cursor-pointer items-center h-8">
+                                <div class="w-8 flex justify-center"><div class="w-4 h-4 bg-slate-600 rounded-sm"></div></div>
+                                <div class="flex-1 px-2 text-xs text-slate-300 truncate">React Documentation</div>
+                            </div>
+                            <!-- Row -->
+                            <div class="flex border-b border-slate-800 hover:bg-[#2a2d2e] cursor-pointer items-center h-8">
+                                <div class="w-8 flex justify-center"><div class="w-4 h-4 bg-slate-600 rounded-sm"></div></div>
+                                <div class="flex-1 px-2 text-xs text-slate-300 truncate">TypeScript Handbook</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Neon Cyber -->
+            <div class="flex flex-col items-center gap-2">
+                <span class="text-xs font-bold text-slate-500 uppercase">4. Neon Cyber</span>
+                <div class="sidebar p-4 bg-black border border-purple-900/30 shadow-[0_0_20px_rgba(147,51,234,0.1)]">
+                    <!-- Window -->
+                    <div class="mb-6 relative">
+                        <div class="absolute -left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-purple-600 to-transparent"></div>
+                        <div class="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-3 cursor-pointer" onclick="toggle(this)">
+                            CYBER DECK <span class="arrow text-purple-500 text-[10px] ml-2">▼</span>
+                        </div>
+                        <div class="space-y-4">
+                            <!-- Group -->
+                            <div class="border border-purple-500/30 rounded p-2 bg-purple-900/10">
+                                <div class="text-[10px] font-bold text-purple-300 mb-2 flex justify-between cursor-pointer" onclick="toggle(this)">
+                                    // DEV_ENV <span class="arrow">▼</span>
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="p-1.5 flex gap-3 hover:bg-purple-500/20 rounded cursor-pointer transition border border-transparent hover:border-purple-500/50">
+                                        <div class="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_5px_#4ade80] mt-1.5"></div>
+                                        <div class="text-xs text-gray-300">Localhost:3000</div>
+                                    </div>
+                                    <div class="p-1.5 flex gap-3 hover:bg-purple-500/20 rounded cursor-pointer transition border border-transparent hover:border-purple-500/50">
+                                        <div class="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_5px_#4ade80] mt-1.5"></div>
+                                        <div class="text-xs text-gray-300">Terminal</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Notion Style -->
+            <div class="flex flex-col items-center gap-2">
+                <span class="text-xs font-bold text-slate-500 uppercase">5. Notion Style</span>
+                <div class="sidebar p-2 bg-[#fbfbfa] dark:bg-[#191919] border-r border-[#e0e0e0] dark:border-[#2f2f2f] text-[#37352f] dark:text-[#d4d4d4]">
+                    <div class="text-xs font-bold text-gray-400 px-2 py-1 mb-1">OPEN TABS</div>
+                    <!-- Window -->
+                    <div>
+                        <div class="flex items-center gap-1 px-2 py-1 hover:bg-[#efefef] dark:hover:bg-[#2f2f2f] rounded cursor-pointer select-none" onclick="toggle(this)">
+                            <span class="arrow text-[10px] text-gray-400 w-4">▼</span>
+                            <span class="text-sm font-medium">Main Window</span>
+                        </div>
+                        <div class="pl-4">
+                            <!-- Group -->
+                            <div>
+                                <div class="flex items-center gap-1 px-2 py-1 hover:bg-[#efefef] dark:hover:bg-[#2f2f2f] rounded cursor-pointer select-none text-[#e03e3e] dark:text-[#ff6b6b]" onclick="toggle(this)">
+                                    <span class="arrow text-[10px] opacity-50 w-4">▼</span>
+                                    <span class="text-sm font-medium">Important</span>
+                                </div>
+                                <div class="pl-6">
+                                    <div class="flex items-center gap-2 px-2 py-1 hover:bg-[#efefef] dark:hover:bg-[#2f2f2f] rounded cursor-pointer">
+                                        <span class="text-lg leading-none">📄</span>
+                                        <span class="text-sm truncate">Project Spec</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 px-2 py-1 hover:bg-[#efefef] dark:hover:bg-[#2f2f2f] rounded cursor-pointer">
+                                        <span class="text-lg leading-none">🌐</span>
+                                        <span class="text-sm truncate">Reference Site</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Loose -->
+                            <div class="flex items-center gap-2 px-2 py-1 hover:bg-[#efefef] dark:hover:bg-[#2f2f2f] rounded cursor-pointer">
+                                <div class="w-4 h-4 bg-gray-300 rounded-sm"></div>
+                                <span class="text-sm truncate">Youtube Music</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

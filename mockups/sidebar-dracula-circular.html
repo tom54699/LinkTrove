@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" class="theme-dracula">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkTrove - Dracula Sidebar Designs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#282a36',
+                        panel: '#343746',
+                        card: '#51566e',
+                        accent: '#ff507a',
+                        muted: '#6272a4',
+                        fg: '#f8f8f2',
+                    }
+                }
+            }
+        }
+        function toggle(element) {
+            const container = element.nextElementSibling;
+            if (!container) return;
+            const arrow = element.querySelector('.arrow');
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                if(arrow) arrow.style.transform = 'rotate(0deg)';
+                element.classList.remove('opacity-60');
+            } else {
+                container.classList.add('hidden');
+                if(arrow) arrow.style.transform = 'rotate(-90deg)';
+                element.classList.add('opacity-60');
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #282a36; color: #f8f8f2; font-family: ui-sans-serif, system-ui, sans-serif; }
+        .wrapper { width: 300px; height: 550px; flex-shrink: 0; display: flex; flex-direction: column; overflow: hidden; background: #282a36; border-right: 1px solid #44475a; }
+        .arrow { transition: transform 0.2s ease; display: inline-block; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #6272a4; border-radius: 2px; }
+    </style>
+</head>
+<body class="p-8 bg-[#282a36]">
+    <div class="max-w-7xl mx-auto text-center mb-8">
+        <h1 class="text-3xl font-bold text-[#ff507a]">Dracula Theme Sidebar Designs</h1>
+        <p class="text-[#6272a4] mt-2">Small Circular Icons • Project Colors • Collapsible</p>
+    </div>
+
+    <div class="flex flex-wrap gap-10 justify-center">
+
+        <!-- 1. Dracula Minimal List -->
+        <div class="flex flex-col gap-2">
+            <span class="text-xs font-bold text-[#6272a4] uppercase text-center">1. Minimal List</span>
+            <div class="wrapper border border-[#44475a] rounded-lg">
+                <div class="p-3 border-b border-[#44475a] bg-[#343746] flex justify-between">
+                    <span class="font-bold text-sm text-[#f8f8f2]">Open Tabs</span>
+                    <span class="text-xs bg-[#282a36] px-2 py-0.5 rounded text-[#bd93f9]">3 Windows</span>
+                </div>
+                <div class="flex-1 overflow-y-auto p-2">
+                    <!-- Window -->
+                    <div class="mb-2">
+                        <div class="flex items-center gap-2 px-2 py-1.5 hover:bg-[#44475a] rounded cursor-pointer group transition-colors" onclick="toggle(this)">
+                            <span class="arrow text-[10px] text-[#6272a4]">▼</span>
+                            <span class="text-xs font-bold text-[#f8f8f2] uppercase">Chrome Main</span>
+                        </div>
+                        <div class="pl-2 mt-1 space-y-0.5">
+                            <!-- Group (Pink) -->
+                            <div class="pl-2 border-l-2 border-[#ff79c6] ml-1.5">
+                                <div class="text-[10px] font-bold text-[#ff79c6] px-2 py-0.5 cursor-pointer mb-0.5" onclick="toggle(this)">SOCIAL <span class="arrow">▼</span></div>
+                                <div class="space-y-0.5">
+                                    <div class="flex items-center gap-2 px-2 py-1.5 hover:bg-[#44475a] rounded cursor-pointer group">
+                                        <img src="https://www.google.com/favicon.ico" class="w-4 h-4 rounded-full bg-[#f8f8f2] p-0.5">
+                                        <span class="text-xs text-[#f8f8f2] truncate opacity-80 group-hover:opacity-100">Twitter Feed</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 px-2 py-1.5 hover:bg-[#44475a] rounded cursor-pointer group">
+                                        <img src="https://www.google.com/favicon.ico" class="w-4 h-4 rounded-full bg-[#f8f8f2] p-0.5">
+                                        <span class="text-xs text-[#f8f8f2] truncate opacity-80 group-hover:opacity-100">Instagram</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Loose Tab -->
+                            <div class="flex items-center gap-2 px-2 py-1.5 hover:bg-[#44475a] rounded cursor-pointer group ml-3">
+                                <img src="https://github.com/favicon.ico" class="w-4 h-4 rounded-full bg-[#f8f8f2] p-0.5">
+                                <span class="text-xs text-[#f8f8f2] truncate opacity-80 group-hover:opacity-100">GitHub</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Avatar Cards -->
+        <div class="flex flex-col gap-2">
+            <span class="text-xs font-bold text-[#6272a4] uppercase text-center">2. Avatar Cards</span>
+            <div class="wrapper bg-[#282a36] border border-[#44475a] rounded-lg p-2">
+                <div class="flex-1 overflow-y-auto space-y-3">
+                    <!-- Window -->
+                    <div class="bg-[#343746] rounded-lg overflow-hidden border border-[#44475a]">
+                        <div class="px-3 py-2 flex justify-between items-center cursor-pointer hover:bg-[#44475a] border-b border-[#44475a]" onclick="toggle(this)">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-[#50fa7b]"></span>
+                                <span class="text-xs font-bold text-[#f8f8f2]">Work</span>
+                            </div>
+                            <span class="arrow text-[#6272a4] text-[10px]">▼</span>
+                        </div>
+                        <div class="p-1 space-y-1">
+                            <!-- Group (Cyan) -->
+                            <div class="bg-[#282a36]/50 rounded border border-[#8be9fd]/30">
+                                <div class="px-2 py-1 flex items-center gap-2 cursor-pointer" onclick="toggle(this)">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-[#8be9fd]"></span>
+                                    <span class="text-[10px] font-bold text-[#8be9fd]">DOCS</span>
+                                    <span class="arrow text-[#8be9fd]/50 text-[8px] ml-auto">▼</span>
+                                </div>
+                                <div class="p-1 space-y-0.5">
+                                    <div class="flex items-center gap-3 p-1.5 hover:bg-[#44475a] rounded cursor-pointer group transition">
+                                        <div class="w-7 h-7 rounded-full bg-[#44475a] flex items-center justify-center shrink-0 border border-[#6272a4] group-hover:border-[#8be9fd]">
+                                            <div class="text-[10px] font-bold text-[#f8f8f2]">R</div>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="text-xs text-[#f8f8f2] truncate font-medium">React Native</div>
+                                            <div class="text-[9px] text-[#6272a4] truncate">reactnative.dev</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Floating Bubbles -->
+        <div class="flex flex-col gap-2">
+            <span class="text-xs font-bold text-[#6272a4] uppercase text-center">3. Floating Bubbles</span>
+            <div class="wrapper border-none bg-[#282a36] pl-2">
+                <div class="flex-1 overflow-y-auto py-2 pr-2 space-y-4">
+                    <!-- Window -->
+                    <div class="relative pl-4 border-l border-[#44475a]">
+                        <div class="flex items-center gap-2 -ml-[21px] mb-2 cursor-pointer" onclick="toggle(this)">
+                            <div class="w-10 h-10 rounded-full bg-[#44475a] border-4 border-[#282a36] flex items-center justify-center text-[#ff507a] font-bold shadow-lg z-10">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <span class="text-sm font-bold text-[#f8f8f2]">Main</span>
+                            <span class="arrow text-[#6272a4] text-[10px] ml-auto">▼</span>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <!-- Group (Green) -->
+                            <div class="relative group/g">
+                                <div class="flex items-center gap-2 mb-1 cursor-pointer" onclick="toggle(this)">
+                                    <div class="w-2 h-2 rounded-full bg-[#50fa7b] shadow-[0_0_5px_rgba(80,250,123,0.5)]"></div>
+                                    <span class="text-xs font-bold text-[#50fa7b]">DEV</span>
+                                    <span class="arrow text-[#6272a4] text-[8px]">▼</span>
+                                </div>
+                                <div class="pl-4 space-y-2 border-l border-[#50fa7b]/20 ml-1 pb-1">
+                                    <div class="flex items-center gap-3 cursor-pointer group">
+                                        <img src="https://www.google.com/favicon.ico" class="w-8 h-8 rounded-full bg-[#f8f8f2] border-2 border-[#282a36] shadow-sm group-hover:scale-110 transition">
+                                        <div class="min-w-0">
+                                            <div class="text-xs text-[#f8f8f2] truncate group-hover:text-[#50fa7b]">Localhost</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 cursor-pointer group">
+                                        <div class="w-8 h-8 rounded-full bg-[#44475a] border-2 border-[#282a36] shadow-sm flex items-center justify-center text-[10px] group-hover:scale-110 transition">GH</div>
+                                        <div class="min-w-0">
+                                            <div class="text-xs text-[#f8f8f2] truncate group-hover:text-[#50fa7b]">GitHub</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Dracula Accordion -->
+        <div class="flex flex-col gap-2">
+            <span class="text-xs font-bold text-[#6272a4] uppercase text-center">4. Accordion</span>
+            <div class="wrapper border border-[#44475a] rounded-lg overflow-hidden bg-[#282a36]">
+                <div class="flex-1 overflow-y-auto">
+                    <!-- Window -->
+                    <div class="border-b border-[#44475a]">
+                        <div class="px-4 py-3 bg-[#343746] hover:bg-[#44475a] cursor-pointer flex justify-between items-center" onclick="toggle(this)">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-bold text-[#f8f8f2]">Shopping Session</span>
+                                <span class="text-[10px] text-[#6272a4]">(5)</span>
+                            </div>
+                            <span class="arrow text-[#f8f8f2] text-[10px]">▼</span>
+                        </div>
+                        <div class="bg-[#282a36] py-2">
+                            <!-- Group (Orange) -->
+                            <div class="px-2 mb-2">
+                                <div class="bg-[#ffb86c]/10 rounded border border-[#ffb86c]/20 overflow-hidden">
+                                    <div class="px-3 py-1.5 flex justify-between items-center cursor-pointer hover:bg-[#ffb86c]/20" onclick="toggle(this)">
+                                        <span class="text-[10px] font-bold text-[#ffb86c]">AMAZON</span>
+                                        <span class="arrow text-[#ffb86c]">▼</span>
+                                    </div>
+                                    <div class="px-2 py-1 space-y-1">
+                                        <div class="flex items-center gap-2 p-1 hover:bg-[#44475a] rounded cursor-pointer group">
+                                            <div class="w-5 h-5 rounded-full bg-[#f8f8f2] flex items-center justify-center text-[10px] text-black font-bold">A</div>
+                                            <span class="text-xs text-[#f8f8f2] truncate">Headphones</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Compact Avatar Rails -->
+        <div class="flex flex-col gap-2">
+            <span class="text-xs font-bold text-[#6272a4] uppercase text-center">5. Avatar Rails</span>
+            <div class="wrapper border border-[#44475a] rounded-lg bg-[#282a36]">
+                <div class="p-3 border-b border-[#44475a]">
+                    <h2 class="text-xs font-bold text-[#ff507a] uppercase tracking-widest">Active Tabs</h2>
+                </div>
+                <div class="flex-1 overflow-y-auto p-2 space-y-4">
+                    <!-- Window -->
+                    <div>
+                        <div class="flex items-center gap-2 mb-2 px-1 cursor-pointer hover:bg-[#343746] rounded py-1" onclick="toggle(this)">
+                            <span class="arrow text-[9px] text-[#6272a4]">▼</span>
+                            <span class="text-xs font-bold text-[#bd93f9]">MAIN WINDOW</span>
+                        </div>
+                        <div class="pl-2 space-y-1">
+                            <!-- Group (Purple) -->
+                            <div class="pl-2 border-l border-[#bd93f9]">
+                                <div class="flex items-center gap-2 px-2 py-1.5 hover:bg-[#343746] rounded cursor-pointer group transition">
+                                    <img src="https://www.google.com/favicon.ico" class="w-5 h-5 rounded-full bg-[#f8f8f2] p-0.5">
+                                    <div class="flex flex-col min-w-0">
+                                        <span class="text-xs text-[#f8f8f2] font-medium truncate group-hover:text-[#ff79c6]">Figma</span>
+                                        <span class="text-[9px] text-[#6272a4] truncate">Design System</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 px-2 py-1.5 hover:bg-[#343746] rounded cursor-pointer group transition">
+                                    <div class="w-5 h-5 rounded-full bg-[#44475a] flex items-center justify-center text-[9px] font-bold">L</div>
+                                    <div class="flex flex-col min-w-0">
+                                        <span class="text-xs text-[#f8f8f2] font-medium truncate group-hover:text-[#ff79c6]">Linear</span>
+                                        <span class="text-[9px] text-[#6272a4] truncate">Task Board</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

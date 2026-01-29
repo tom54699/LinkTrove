@@ -1095,6 +1095,21 @@
       }
     }
   },
+  "sidebar_open_tabs": {
+    "message": "OPEN TABS"
+  },
+  "window_title": {
+    "message": "Window"
+  },
+  "untitled_group": {
+    "message": "Untitled Group"
+  },
+  "empty": {
+    "message": "Empty"
+  },
+  "no_open_tabs": {
+    "message": "No open tabs"
+  },
   "context_save_page": {
     "message": "Save page to LinkTrove"
   },

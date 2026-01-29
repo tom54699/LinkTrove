@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkTrove - Tabs as Cards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#282a36',
+                        fg: '#f8f8f2',
+                        muted: '#6272a4',
+                        card: '#44475a', /* Slightly lighter than bg */
+                        border: '#6272a4',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: #282a36; color: #f8f8f2; font-family: ui-sans-serif, system-ui, sans-serif; }
+        .sidebar { width: 300px; height: 600px; padding: 12px; border-right: 1px solid #44475a; display: flex; flex-direction: column; }
+        
+        .tab-card {
+            background: #44475a;
+            border: 1px solid rgba(0,0,0,0.2);
+            border-radius: 6px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: grab;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .tab-card:hover {
+            background: #505467;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border-color: #6272a4;
+        }
+        .tab-card:active {
+            cursor: grabbing;
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body class="p-10 flex justify-center bg-[#282a36]">
+
+    <div class="sidebar">
+        <div class="mb-4 flex justify-between items-center text-[11px] font-bold text-[#6272a4] uppercase tracking-wider">
+            Open Tabs (Cards)
+        </div>
+
+        <div class="space-y-4 overflow-y-auto pr-1">
+            <!-- Window Group -->
+            <div>
+                <div class="text-xs font-bold text-[#f8f8f2] mb-2 px-1">Main Window</div>
+                
+                <div class="space-y-2">
+                    <!-- Tab Group Header -->
+                    <div class="flex items-center gap-2 px-1 mb-1 mt-3">
+                        <div class="w-2 h-2 rounded-full bg-pink-500"></div>
+                        <span class="text-[10px] font-bold text-pink-400">SOCIAL MEDIA</span>
+                    </div>
+
+                    <!-- Card 1 -->
+                    <div class="tab-card group">
+                        <div class="w-8 h-8 rounded bg-black/20 flex items-center justify-center shrink-0">
+                            <img src="https://www.google.com/favicon.ico" class="w-5 h-5">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-[13px] font-medium truncate text-[#f8f8f2]">Twitter / Home</div>
+                            <div class="text-[10px] text-[#6272a4] truncate">twitter.com</div>
+                        </div>
+                        <!-- Drag Handle (Optional visual cue) -->
+                        <div class="opacity-0 group-hover:opacity-50 text-[#6272a4]">:::</div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="tab-card group">
+                        <div class="w-8 h-8 rounded bg-black/20 flex items-center justify-center shrink-0">
+                            <img src="https://www.google.com/favicon.ico" class="w-5 h-5">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-[13px] font-medium truncate text-[#f8f8f2]">Instagram Feed</div>
+                            <div class="text-[10px] text-[#6272a4] truncate">instagram.com</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loose Tabs -->
+                <div class="mt-3 space-y-2">
+                    <div class="text-[10px] font-bold text-[#6272a4] px-1 mb-1">UNGROUPED</div>
+                    
+                    <div class="tab-card group">
+                        <div class="w-8 h-8 rounded bg-black/20 flex items-center justify-center shrink-0">
+                            <img src="https://github.com/favicon.ico" class="w-5 h-5">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-[13px] font-medium truncate text-[#f8f8f2]">GitHub - LinkTrove/Repo</div>
+                            <div class="text-[10px] text-[#6272a4] truncate">github.com</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

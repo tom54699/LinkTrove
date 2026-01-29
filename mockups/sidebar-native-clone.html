@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkTrove - Sidebar Native Clone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#282a36',
+                        fg: '#f8f8f2',
+                        muted: '#6272a4',
+                        card: '#51566e',
+                        panel: '#343746',
+                        border: '#44475a',
+                    }
+                }
+            }
+        }
+        function toggle(el) {
+            const next = el.nextElementSibling;
+            if(next) next.classList.toggle('hidden');
+            const arrow = el.querySelector('.arrow');
+            if(arrow) arrow.innerText = next.classList.contains('hidden') ? '▸' : '▾';
+        }
+    </script>
+    <style>
+        body { background: #282a36; color: #f8f8f2; font-family: ui-sans-serif, system-ui, sans-serif; }
+        .sidebar { width: 280px; height: 600px; display: flex; flex-direction: column; padding: 12px; border-right: 1px solid #44475a; }
+        
+        /* Utility similar to src/index.css */
+        .text-muted { color: #6272a4; }
+        .bg-card { background-color: #51566e; }
+    </style>
+</head>
+<body class="p-10 flex justify-center bg-[#282a36]">
+
+    <div class="flex gap-8">
+        
+        <!-- Left Sidebar (Reference) -->
+        <div class="sidebar opacity-50 border-r-2 border-dashed border-red-500/30">
+            <div class="mb-4 text-lg font-semibold">My Organization</div>
+            <div class="mb-6 h-8 bg-black/20 rounded border border-[#6272a4]"></div>
+            
+            <div class="mb-3 text-[11px] uppercase text-[#6272a4] font-semibold tracking-wider">
+                COLLECTIONS
+            </div>
+            
+            <div class="space-y-1">
+                <!-- Active Collection -->
+                <div class="w-full px-2 py-1 rounded border border-[#44475a] transition-colors flex items-center gap-2 bg-[#51566e]">
+                    <span class="inline-block w-2 h-2 rounded bg-pink-500"></span>
+                    <span class="flex-1 text-[13px]">Design Resources</span>
+                    <span class="text-xs">⚙︎</span>
+                </div>
+                <!-- Inactive Collection -->
+                <div class="w-full px-2 py-1 rounded border border-[#44475a] transition-colors flex items-center gap-2 hover:bg-[#343746]">
+                    <span class="inline-block w-2 h-2 rounded bg-blue-500"></span>
+                    <span class="flex-1 text-[13px]">Development</span>
+                    <span class="text-xs">⚙︎</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar (Target Implementation) -->
+        <div class="sidebar">
+            <!-- Header matches Left Sidebar -->
+            <div class="mb-3 text-[11px] uppercase text-[#6272a4] font-semibold tracking-wider flex justify-between items-center">
+                OPEN TABS
+                <span class="text-[10px] bg-[#343746] px-1.5 rounded text-[#f8f8f2]">3</span>
+            </div>
+
+            <div class="space-y-2 overflow-y-auto pr-1">
+                
+                <!-- Window 1 -->
+                <div>
+                    <!-- Window Header styled like Collection Item -->
+                    <div class="w-full px-2 py-1 rounded border border-[#44475a] transition-colors flex items-center gap-2 hover:bg-[#343746] cursor-pointer" onclick="toggle(this)">
+                        <span class="arrow text-[10px] w-3 text-[#6272a4]">▾</span>
+                        <span class="flex-1 text-[13px] font-medium">Main Window</span>
+                        <span class="text-[10px] text-[#6272a4]">Active</span>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="pl-2 mt-1 border-l border-[#44475a] ml-3 space-y-1">
+                        
+                        <!-- Native Group -->
+                        <div>
+                            <div class="flex items-center gap-2 px-2 py-1 rounded hover:bg-[#343746] cursor-pointer" onclick="toggle(this)">
+                                <span class="arrow text-[10px] w-3 text-[#6272a4]">▾</span>
+                                <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                                <span class="text-[12px] font-bold text-orange-400">SHOPPING</span>
+                            </div>
+                            <div class="pl-6 space-y-0.5">
+                                <div class="flex items-center gap-2 px-2 py-1 rounded hover:bg-[#343746] cursor-pointer">
+                                    <img src="https://www.google.com/favicon.ico" class="w-4 h-4 rounded-full bg-white/10 p-0.5">
+                                    <span class="text-[13px] truncate">Amazon Product</span>
+                                </div>
+                                <div class="flex items-center gap-2 px-2 py-1 rounded hover:bg-[#343746] cursor-pointer">
+                                    <img src="https://www.google.com/favicon.ico" class="w-4 h-4 rounded-full bg-white/10 p-0.5">
+                                    <span class="text-[13px] truncate">Ebay Listing</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Loose Tabs -->
+                        <div class="flex items-center gap-2 px-2 py-1 rounded hover:bg-[#343746] cursor-pointer">
+                            <img src="https://github.com/favicon.ico" class="w-4 h-4 rounded-full bg-white/10 p-0.5">
+                            <span class="text-[13px] truncate">GitHub Dashboard</span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Window 2 (Collapsed) -->
+                <div>
+                    <div class="w-full px-2 py-1 rounded border border-[#44475a] transition-colors flex items-center gap-2 hover:bg-[#343746] cursor-pointer" onclick="toggle(this)">
+                        <span class="arrow text-[10px] w-3 text-[#6272a4]">▸</span>
+                        <span class="flex-1 text-[13px] font-medium text-[#6272a4]">Background Window</span>
+                    </div>
+                    <div class="hidden pl-4 mt-1">
+                        <!-- Content hidden -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

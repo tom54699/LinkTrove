@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkTrove - Narrow Collapsible Cards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#282a36',
+                        fg: '#f8f8f2',
+                        muted: '#6272a4',
+                        card: '#44475a',
+                        border: '#6272a4',
+                    }
+                }
+            }
+        }
+        function toggle(el) {
+            const next = el.nextElementSibling;
+            if(next) next.classList.toggle('hidden');
+            const arrow = el.querySelector('.arrow');
+            if(arrow) arrow.innerText = next.classList.contains('hidden') ? '▸' : '▾';
+        }
+    </script>
+    <style>
+        body { background: #282a36; color: #f8f8f2; font-family: ui-sans-serif, system-ui, sans-serif; }
+        .sidebar { width: 280px; height: 650px; padding: 12px; border-right: 1px solid #44475a; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .tab-card {
+            background: #343746;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 4px;
+            padding: 6px 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: grab;
+            transition: all 0.15s;
+        }
+        .tab-card:hover {
+            background: #44475a;
+            border-color: #6272a4;
+            transform: translateX(2px);
+        }
+    </style>
+</head>
+<body class="p-10 flex justify-center bg-[#282a36]">
+
+    <div class="sidebar">
+        <div class="mb-4 text-[11px] font-black text-[#6272a4] uppercase tracking-widest">
+            Open Tabs
+        </div>
+
+        <div class="space-y-4 overflow-y-auto pr-1">
+            
+            <!-- Window Group -->
+            <div>
+                <div class="flex items-center gap-2 mb-2 px-1 cursor-pointer select-none group" onclick="toggle(this)">
+                    <span class="arrow text-[10px] w-3 text-[#6272a4]">▾</span>
+                    <span class="text-[12px] font-bold text-[#f8f8f2] uppercase tracking-tight group-hover:text-white">Main Window</span>
+                </div>
+                
+                <div class="space-y-3 pl-3">
+                    <!-- Tab Group 1 -->
+                    <div>
+                        <div class="flex items-center gap-2 mb-1.5 cursor-pointer select-none group/g" onclick="toggle(this)">
+                            <span class="arrow text-[9px] w-3 text-[#6272a4]">▾</span>
+                            <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                            <span class="text-[11px] font-bold text-blue-400 uppercase tracking-tighter group-hover/g:text-blue-300">Development</span>
+                        </div>
+                        <div class="space-y-1 pl-3 border-l border-blue-500/20">
+                            <div class="tab-card">
+                                <img src="https://www.google.com/favicon.ico" class="w-4 h-4 rounded-sm">
+                                <span class="text-xs truncate">Localhost:3000</span>
+                            </div>
+                            <div class="tab-card">
+                                <img src="https://github.com/favicon.ico" class="w-4 h-4 rounded-sm">
+                                <span class="text-xs truncate">Pull Request #123</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Group 2 (Collapsed) -->
+                    <div>
+                        <div class="flex items-center gap-2 mb-1.5 cursor-pointer select-none group/g" onclick="toggle(this)">
+                            <span class="arrow text-[9px] w-3 text-[#6272a4]">▸</span>
+                            <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
+                            <span class="text-[11px] font-bold text-orange-400 uppercase tracking-tighter">Shopping</span>
+                        </div>
+                        <div class="hidden space-y-1 pl-3 border-l border-orange-500/20">
+                            <!-- Hidden items -->
+                        </div>
+                    </div>
+
+                    <!-- Loose Tabs -->
+                    <div class="space-y-1 pt-1">
+                        <div class="tab-card">
+                            <img src="https://www.google.com/favicon.ico" class="w-4 h-4 rounded-sm">
+                            <span class="text-xs truncate">Google Search</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

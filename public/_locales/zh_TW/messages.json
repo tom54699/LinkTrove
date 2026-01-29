@@ -1095,6 +1095,21 @@
       }
     }
   },
+  "sidebar_open_tabs": {
+    "message": "開啟的分頁"
+  },
+  "window_title": {
+    "message": "視窗"
+  },
+  "untitled_group": {
+    "message": "未命名群組"
+  },
+  "empty": {
+    "message": "空"
+  },
+  "no_open_tabs": {
+    "message": "沒有開啟的分頁"
+  },
   "context_save_page": {
     "message": "保存此分頁到 LinkTrove"
   },
