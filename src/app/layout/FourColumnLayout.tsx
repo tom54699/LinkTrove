@@ -134,7 +134,7 @@ export const FourColumnLayout: React.FC<{
         <div 
           className={`w-full h-full flex flex-col pt-14 transition-opacity duration-300 ${isPinned ? 'opacity-100 delay-100' : 'opacity-0 group-hover/tabs:opacity-100 group-hover/tabs:delay-100'}`}
         >
-           <div className="flex flex-col h-full px-4 pb-4 overflow-y-auto border-t border-white/5">
+           <div className="flex flex-col h-full px-4 py-4 overflow-y-auto border-t border-white/5">
              {tabsPanel}
            </div>
         </div>
