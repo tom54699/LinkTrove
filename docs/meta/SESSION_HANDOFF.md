@@ -2,7 +2,7 @@
 
 > **用途：** 解決 AI 工具 Session 斷開後的連續性問題，確保下次對話能無縫接續
 >
-> **最後更新：** 2026-01-29 (OpenTabs 頂部間距調整)
+> **最後更新：** 2026-01-30 (原生分頁群組同步與拖曳修復)
 >
 > **更新者：** Claude Code
 
@@ -12,7 +12,27 @@
 
 ### 最近完成的工作
 
-1. ✅ **OpenTabs 頂部間距調整**（2026-01-29）
+1. ✅ **原生分頁群組收合同步與拖曳排序**（2026-01-30）
+   - **收合同步**：UI 收合/展開群組時同步更新瀏覽器原生群組狀態
+   - **拖曳排序**：支援 tabs/groups 拖曳重新排序（Native HTML5 DnD）
+   - **Bug 修復**：
+     - 修復 `isDraggingGroup` 未定義導致群組內拖曳失敗
+     - 修復拖曳順序邏輯（先改群組再計算 index）
+     - 修復拖到群組最尾巴無法儲存問題
+     - 修復新群組建立後沒有即時同步（添加 debug logging 驗證）
+   - **P0 問題修復**：
+     - 完善 handleDrop 狀態清理（setDragTab/setDragGroup）
+     - 添加群組拖曳 onDragEnd 清理邏輯
+   - **設計決定**：
+     - 群組標題不作為 drop target（只負責收合/展開）
+     - 群組暫不支援拖到分頁之間（UX 複雜度考量）
+   - **文檔更新**：
+     - 創建 `openspec/changes/add-native-group-collapse-sync/IMPLEMENTATION.md`
+     - 更新 tasks.md 記錄所有修復
+     - 更新 SESSION_HANDOFF.md（本文件）
+   - 建置通過，功能驗證完成
+
+2. ✅ **OpenTabs 頂部間距調整**（2026-01-29）
    - 調整右側 OpenTabs panel 頂部 border 與第一個 window 之間間距
    - FourColumnLayout.tsx：`pb-4` → `py-4`（頂部增加 16px padding）
    - 視覺更舒適，避免內容與分隔線太擠
@@ -140,6 +160,10 @@
    - 修正 syncService 測試與 migration 卡住問題
 
 **新增檔案：**
+- `openspec/changes/add-native-group-collapse-sync/IMPLEMENTATION.md` - 拖曳功能實施總結（400+ 行）
+- `openspec/changes/add-native-group-collapse-sync/proposal.md` - 功能提案
+- `openspec/changes/add-native-group-collapse-sync/tasks.md` - 實作與修復任務清單
+- `openspec/changes/add-native-group-collapse-sync/specs/open-tabs-sync/spec.md` - 規格 delta
 - `src/app/webpages/MoveSelectedDialog.tsx` - 批次移動對話框組件
 - `openspec/changes/add-batch-operations/proposal.md` - OpenSpec 提案
 - `openspec/changes/add-batch-operations/tasks.md` - 實作任務清單
@@ -155,6 +179,12 @@
 - `openspec/changes/add-contextmenu-save-dialog/*` - 右鍵保存提案與規格
 
 **修改檔案：**
+- `src/app/tabs/TabsPanel.tsx` - 實作拖曳排序、收合同步、修復所有 P0 問題（+340 行淨變更）
+- `src/app/tabs/TabItem.tsx` - 添加 draggable 支援
+- `src/app/dnd/dragContext.ts` - 新增 DragTab/DragGroup 類型與狀態管理
+- `src/app/tabs/OpenTabsProvider.tsx` - 修復新群組同步（移除 debug log）
+- `src/background.ts` - 群組事件監聽與廣播（移除 debug log）
+- `docs/meta/SESSION_HANDOFF.md` - 更新本次 Session 工作記錄
 - `src/app/webpages/CardGrid.tsx` - 新增浮動工具列與批次操作邏輯（移除 selectMode）
 - `src/app/webpages/TobyLikeCard.tsx` - 簡化 checkbox 邏輯（移除 selectMode 檢查）
 - `src/styles/toby-like.css` - 新增 hover 顯示 checkbox 樣式

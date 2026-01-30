@@ -3,16 +3,42 @@ export type DragTab = {
   title?: string;
   url?: string;
   favIconUrl?: string;
+  groupId?: number;
+  windowId?: number;
+  index?: number;
 };
 
-let current: DragTab | null = null;
+export type DragGroup = {
+  id: number;
+  windowId?: number;
+  title?: string;
+  color?: string;
+};
+
+export const DRAG_TYPES = {
+  TAB: 'application/x-linktrove-tab',
+  GROUP: 'application/x-linktrove-group',
+};
+
+let currentTab: DragTab | null = null;
+let currentGroup: DragGroup | null = null;
 
 export function setDragTab(tab: DragTab | null) {
-  current = tab;
+  currentTab = tab;
+  currentGroup = null; // Exclusive drag
 }
 
 export function getDragTab(): DragTab | null {
-  return current;
+  return currentTab;
+}
+
+export function setDragGroup(group: DragGroup | null) {
+  currentGroup = group;
+  currentTab = null;
+}
+
+export function getDragGroup(): DragGroup | null {
+  return currentGroup;
 }
 
 // Webpage drag context for cross-group ghost preview

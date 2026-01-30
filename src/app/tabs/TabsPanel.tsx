@@ -3,6 +3,7 @@ import { useOpenTabs } from './OpenTabsProvider';
 import { TabItem } from './TabItem';
 import type { NativeTabGroup, TabItemData } from './types';
 import { useI18n } from '../i18n';
+import { DRAG_TYPES, setDragTab, setDragGroup, getDragTab, getDragGroup } from '../dnd/dragContext';
 
 // Helper to map native group colors
 const getGroupColorInfo = (color: string) => {
@@ -30,6 +31,32 @@ const getWindowColorClass = (index: number) => {
   };
 };
 
+const DropIndicator: React.FC<{ 
+  type: 'tab' | 'group'; 
+  id: number; 
+  position: 'top' | 'bottom' | 'inside'; 
+  onDrop: (e: React.DragEvent) => void; 
+  setDropTarget: (target: any) => void; 
+}> = ({ type, id, position, onDrop, setDropTarget }) => (
+  <div 
+    className="h-[38px] w-full relative z-10 my-1 rounded border transition-all duration-200 shrink-0"
+    style={{
+      backgroundColor: 'rgba(68, 71, 90, 0.4)', // #44475a with 40% opacity
+      borderColor: 'rgba(255, 255, 255, 0.1)',
+      borderStyle: 'solid',
+      borderWidth: '1px'
+    }}
+    onDragOver={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDropTarget({ type, id, position });
+    }}
+    onDrop={onDrop}
+  >
+    <div className="absolute inset-0 rounded bg-white/5 opacity-0 hover:opacity-100 transition-opacity" />
+  </div>
+);
+
 export const TabsPanel: React.FC = () => {
   const { t } = useI18n();
   const { allTabs, nativeTabGroups, activeWindowId, actions } = useOpenTabs();
@@ -38,11 +65,22 @@ export const TabsPanel: React.FC = () => {
   const [editing, setEditing] = React.useState<number | null>(null);
   const [editText, setEditText] = React.useState('');
 
+  const [dropTarget, setDropTarget] = React.useState<{
+    type: 'tab' | 'group';
+    id: number; // tabId or groupId
+    position: 'top' | 'bottom' | 'inside';
+  } | null>(null);
+
   const structure = React.useMemo(() => {
     const wins = new Map<number, { 
       tabs: TabItemData[]; 
       groups: Map<number, { group: NativeTabGroup; tabs: TabItemData[] }> 
     }>();
+
+    for (const tab of allTabs) {
+       const wid = tab.windowId ?? -1;
+       if (!wins.has(wid)) wins.set(wid, { tabs: [], groups: new Map() });
+    }
 
     for (const tab of allTabs) {
       if (!tab.url || 
@@ -54,7 +92,6 @@ export const TabsPanel: React.FC = () => {
       }
 
       const wid = tab.windowId ?? -1;
-      if (!wins.has(wid)) wins.set(wid, { tabs: [], groups: new Map() });
       const win = wins.get(wid)!;
 
       if (tab.nativeGroupId && tab.nativeGroupId > -1) {
@@ -95,14 +132,177 @@ export const TabsPanel: React.FC = () => {
   const toggleWindow = (wid: number) =>
     setCollapsedWindows((m) => ({ ...m, [wid]: !m[wid] }));
 
-  const toggleGroup = (gid: number) =>
-    setCollapsedGroups((m) => ({ ...m, [gid]: !m[gid] }));
+  const toggleGroup = (gid: number) => {
+    setCollapsedGroups((m) => {
+      const newState = !m[gid];
+      if (chrome.tabGroups?.update) {
+        chrome.tabGroups.update(gid, { collapsed: newState }).catch(() => {
+          setCollapsedGroups((prev) => ({ ...prev, [gid]: !newState }));
+        });
+      }
+      return { ...m, [gid]: newState };
+    });
+  };
+
+  const handleDragOver = (
+    e: React.DragEvent,
+    type: 'tab' | 'group',
+    id: number,
+    itemData?: any
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const dragTab = getDragTab();
+    const dragGroup = getDragGroup();
+    if (!dragTab && !dragGroup) return;
+
+    if (dragGroup && type === 'tab') return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mid = rect.top + rect.height / 2;
+    const position = e.clientY < mid ? 'top' : 'bottom';
+
+    if (dragTab && type === 'tab') {
+      if (dragTab?.id === id) { setDropTarget(null); return; }
+      setDropTarget({ type: 'tab', id, position });
+      return;
+    }
+
+    if (dragTab && type === 'group') {
+      setDropTarget({ type: 'group', id, position: 'inside' });
+      return;
+    }
+
+    if (dragGroup && type === 'group') {
+      if (dragGroup?.id === id) { setDropTarget(null); return; }
+      setDropTarget({ type: 'group', id, position });
+      return;
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!dropTarget) return;
+
+    const dragTab = getDragTab();
+    const dragGroup = getDragGroup();
+    const { type: targetType, id: targetId, position } = dropTarget;
+
+    try {
+      if (dragTab && targetType === 'tab') {
+        let targetTab: chrome.tabs.Tab | undefined;
+        // Special case: Dropping on Window Background (Ghost) or Window Header
+        // In these cases, id is windowId, not tabId.
+        if (position === 'inside') {
+           // Move to end of window (and ungroup if needed)
+           if (dragTab.groupId && dragTab.groupId > -1) {
+              actions.updateTab(dragTab.id, { nativeGroupId: undefined });
+              await chrome.tabs.ungroup(dragTab.id);
+           }
+           await chrome.tabs.move(dragTab.id, { index: -1, windowId: targetId });
+           return;
+        }
+
+        try {
+          targetTab = await chrome.tabs.get(targetId);
+        } catch {
+          const local = allTabs.find(t => t.id === targetId);
+          if (local) targetTab = { ...local, index: local.index ?? 0, windowId: local.windowId ?? -1 } as any;
+        }
+
+        if (!targetTab) return;
+
+        const targetGroupId = targetTab.groupId;
+        const needsGroupChange = dragTab.groupId !== targetGroupId;
+
+        // Step 1: Change group first if needed (this will move tab to end of group)
+        if (needsGroupChange) {
+          if (targetGroupId > -1) {
+             await chrome.tabs.group({ tabIds: dragTab.id, groupId: targetGroupId });
+          } else {
+             await chrome.tabs.ungroup(dragTab.id);
+          }
+        }
+
+        // Step 2: Calculate target index after group change
+        let newIndex = targetTab.index;
+        if (position === 'bottom') newIndex += 1;
+
+        // Step 3: Get fresh positions after potential group change
+        if (dragTab.windowId === targetTab.windowId) {
+            let freshDragTab: chrome.tabs.Tab | undefined;
+            try {
+               freshDragTab = await chrome.tabs.get(dragTab.id);
+            } catch {}
+
+            if (freshDragTab && freshDragTab.index < newIndex) {
+                newIndex -= 1;
+            }
+        }
+
+        // Step 4: Move to exact position
+        await chrome.tabs.move(dragTab.id, { index: newIndex, windowId: targetTab.windowId });
+      }
+
+      if (dragTab && targetType === 'group' && position === 'inside') {
+        // Move tab into group at the end
+        const group = nativeTabGroups.find(g => g.id === targetId);
+        if (!group) return;
+
+        // First add to group (this will move to end of group automatically)
+        if (dragTab.groupId !== targetId) {
+          await chrome.tabs.group({ tabIds: dragTab.id, groupId: targetId });
+        }
+
+        // Then ensure it's in the right window and at the end of the group
+        const groupTabs = allTabs
+          .filter(t => t.nativeGroupId === targetId)
+          .sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+
+        if (groupTabs.length > 0) {
+          const lastGroupTab = groupTabs[groupTabs.length - 1];
+          const targetIndex = (lastGroupTab.id === dragTab.id) ? lastGroupTab.index ?? -1 : (lastGroupTab.index ?? 0) + 1;
+          if (targetIndex >= 0) {
+            await chrome.tabs.move(dragTab.id, { index: targetIndex, windowId: group.windowId });
+          }
+        }
+
+        actions.updateTab(dragTab.id, { nativeGroupId: targetId });
+      }
+
+      if (dragGroup && targetType === 'group') {
+         const targetGroupTabs = allTabs.filter(t => t.nativeGroupId === targetId).sort((a,b)=>(a.index??0)-(b.index??0));
+         if (targetGroupTabs.length > 0) {
+           let targetIndex = targetGroupTabs[0].index ?? 0;
+           if (position === 'bottom') {
+             const lastTab = targetGroupTabs[targetGroupTabs.length - 1];
+             targetIndex = (lastTab.index ?? 0) + 1;
+           }
+           const dragGroupTabs = allTabs.filter(t => t.nativeGroupId === dragGroup.id);
+           if (dragGroup.windowId === targetGroupTabs[0].windowId && dragGroupTabs.length > 0) {
+               const dragStart = dragGroupTabs[0].index ?? -1;
+               if (dragStart > -1 && dragStart < targetIndex) targetIndex -= dragGroupTabs.length;
+           }
+           await chrome.tabGroups.move(dragGroup.id, { index: targetIndex, windowId: targetGroupTabs[0].windowId });
+         }
+      }
+
+    } catch (err) {
+      console.error('Drop failed', err);
+    } finally {
+      setDropTarget(null);
+      setDragTab(null);
+      setDragGroup(null);
+      setTimeout(() => actions.refresh(), 200);
+    }
+  };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {structure.length === 0 && (
-        <div className="opacity-40 text-xs px-1 italic">{t('no_open_tabs', 'No open tabs')}</div>
-      )}
+    <div className="flex flex-col h-full overflow-hidden" onDragOver={(e) => e.preventDefault()} onDrop={() => setDropTarget(null)}>
+      {structure.length === 0 && <div className="opacity-40 text-xs px-1 italic">{t('no_open_tabs', 'No open tabs')}</div>}
 
       <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-thin">
         {structure.map((win, idx) => {
@@ -114,14 +314,34 @@ export const TabsPanel: React.FC = () => {
             <div key={win.id}>
               {/* Window Header */}
               <div
-                className={`flex items-center gap-3 mb-2 px-1 cursor-pointer select-none group/win ${isActive ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}
+                className={`flex items-center gap-3 mb-2 px-1 cursor-pointer select-none group/win ${isActive ? 'opacity-100' : 'opacity-70 hover:opacity-100'} ${dropTarget?.type === 'tab' && dropTarget.id === win.id && dropTarget.position === 'inside' ? '' : ''}`}
                 onClick={() => toggleWindow(win.id)}
+                onDragOver={(e) => {
+                  const dragTab = getDragTab();
+                  if (dragTab && dragTab.windowId !== win.id) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDropTarget({ type: 'tab', id: win.id, position: 'inside' });
+                  }
+                }}
+                onDrop={async (e) => {
+                   const dragTab = getDragTab();
+                   if (dragTab && dragTab.windowId !== win.id && dropTarget?.type === 'tab' && dropTarget.id === win.id) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      try {
+                        if (dragTab.groupId && dragTab.groupId > -1) await chrome.tabs.ungroup(dragTab.id);
+                        await chrome.tabs.move(dragTab.id, { index: -1, windowId: win.id });
+                      } catch {} finally {
+                        setDropTarget(null);
+                        setTimeout(() => actions.refresh(), 200);
+                      }
+                   }
+                }}
               >
-                {/* Dot Toggle for Window with Dynamic Color */}
                 <div className={`w-2 h-2 rounded-full border flex items-center justify-center transition-all ${winColor.border} ${isCollapsed ? 'bg-transparent' : winColor.bg}`}>
                    {!isCollapsed && <div className="w-0.5 h-0.5 rounded-full bg-[#282a36]"></div>}
                 </div>
-                
                 {editing === win.id ? (
                   <input
                     className="flex-1 min-w-0 bg-[var(--bg)] border border-[var(--accent)] rounded px-1.5 py-0.5 text-[11px] text-[var(--fg)] outline-none"
@@ -142,78 +362,132 @@ export const TabsPanel: React.FC = () => {
                     }}
                   />
                 ) : (
-                  <span className="text-[12px] font-bold text-[var(--fg)] uppercase tracking-tight truncate flex-1" title={win.label}>
-                    {win.label}
-                  </span>
+                  <span className="text-[12px] font-bold text-[var(--fg)] uppercase tracking-tight truncate flex-1" title={win.label}>{win.label}</span>
                 )}
-                
                 {editing !== win.id && (
-                  <button
-                    className="opacity-0 group-hover/win:opacity-100 text-[10px] text-[var(--muted)] hover:text-[var(--fg)] px-1 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditing(win.id);
-                      setEditText(win.label);
-                    }}
-                  >
-                    ✎
-                  </button>
+                  <button className="opacity-0 group-hover/win:opacity-100 text-[10px] text-[var(--muted)] hover:text-[var(--fg)] px-1 transition-opacity" onClick={(e) => { e.stopPropagation(); setEditing(win.id); setEditText(win.label); }}>✎</button>
                 )}
               </div>
 
-              {/* Window Content */}
               {!isCollapsed && (
-                <div className="space-y-3 pl-3">
-                  
-                  {/* Native Groups */}
-                  {win.groups.map(({ group, tabs }) => {
-                    const isGrpCollapsed = collapsedGroups[group.id] ?? group.collapsed;
-                    const colorInfo = getGroupColorInfo(group.color);
-                    
-                    return (
-                      <div key={group.id}>
-                        {/* Group Header - Dot Only */}
-                        <div 
-                          className="flex items-center gap-2 mb-1.5 cursor-pointer select-none group/g hover:opacity-100 opacity-90"
-                          onClick={() => toggleGroup(group.id)}
-                        >
-                          {/* Colored Dot acts as toggle indicator (Hollow when collapsed, Filled when expanded) */}
-                          <div className={`w-1.5 h-1.5 rounded-full border ${isGrpCollapsed ? 'bg-transparent border-' + colorInfo.bg.split('-')[1] : colorInfo.bg + ' border-transparent'}`}></div>
-                          
-                          <span className={`text-[11px] font-bold ${colorInfo.text} uppercase tracking-tighter truncate flex-1`}>
-                            {group.title || t('untitled_group', 'Untitled Group')}
-                          </span>
-                        </div>
-
-                        {!isGrpCollapsed && (
-                          <div className={`space-y-2 pl-3 border-l ${colorInfo.border}`}>
-                            {tabs.map(tab => (
-                              <TabItem 
-                                key={tab.id} 
-                                tab={tab} 
-                              />
-                            ))}
+                <div 
+                  className={`pl-3 pb-2 min-h-[20px] space-y-4 flex flex-col flex-1 transition-colors duration-200 ${dropTarget?.type === 'tab' && dropTarget.id === win.id && dropTarget.position === 'inside' ? 'bg-[var(--accent)]/5 rounded-lg' : ''}`}
+                  onDragOver={(e) => {
+                    const dragTab = getDragTab();
+                    if (dragTab) {
+                       e.preventDefault();
+                       e.stopPropagation();
+                       // Allow ANY drag over the window background to trigger 'move to end'
+                       setDropTarget({ type: 'tab', id: win.id, position: 'inside' });
+                    }
+                  }}
+                  onDrop={async (e) => {
+                     const dragTab = getDragTab();
+                     if (dragTab && dropTarget?.type === 'tab' && dropTarget.id === win.id) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        try {
+                          if (dragTab.groupId && dragTab.groupId > -1) {
+                             actions.updateTab(dragTab.id, { nativeGroupId: undefined });
+                             await chrome.tabs.ungroup(dragTab.id);
+                          }
+                          await chrome.tabs.move(dragTab.id, { index: -1, windowId: win.id });
+                        } catch {} finally {
+                          setDropTarget(null);
+                          setTimeout(() => actions.refresh(), 200);
+                        }
+                     }
+                  }}
+                >
+                  <div className="space-y-4">
+                    {win.groups.map(({ group, tabs }) => {
+                      const isGrpCollapsed = collapsedGroups[group.id] ?? group.collapsed;
+                      const colorInfo = getGroupColorInfo(group.color);
+                      const isDropTarget = dropTarget?.type === 'group' && dropTarget.id === group.id;
+                      return (
+                        <div key={group.id}>
+                           {isDropTarget && dropTarget.position === 'top' && <DropIndicator type="group" id={group.id} position="top" onDrop={handleDrop} setDropTarget={setDropTarget} />}
+                          <div className="relative">
+                            <div
+                              className="flex items-center gap-2 mb-3 cursor-pointer select-none group/g hover:opacity-100 opacity-90"
+                              onClick={() => toggleGroup(group.id)}
+                              draggable
+                              onDragStart={(e) => {
+                                e.stopPropagation();
+                                e.dataTransfer.setData(DRAG_TYPES.GROUP, JSON.stringify(group));
+                                e.dataTransfer.effectAllowed = 'move';
+                                setDragGroup({ id: group.id, windowId: group.windowId, title: group.title, color: group.color });
+                              }}
+                              onDragEnd={() => setDragGroup(null)}
+                            >
+                              <div className={`w-1.5 h-1.5 rounded-full border ${isGrpCollapsed ? 'bg-transparent border-' + colorInfo.bg.split('-')[1] : colorInfo.bg + ' border-transparent'}`}></div>
+                              <span className={`text-[11px] font-bold ${colorInfo.text} uppercase tracking-tighter truncate flex-1`}>{group.title || t('untitled_group', 'Untitled Group')}</span>
+                            </div>
+                            {!isGrpCollapsed && (
+                              <div
+                                className="space-y-2 pl-3 border-l min-h-[40px]"
+                                style={{ borderColor: colorInfo.border.split('-')[1] }}
+                                onDragOver={(e) => {
+                                  const dragTab = getDragTab();
+                                  if (dragTab && tabs.length > 0) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    // When dragging in group whitespace, set target to last tab's bottom
+                                    const lastTab = tabs[tabs.length - 1];
+                                    // Only set if dragging is not already the last tab
+                                    if (dragTab.id !== lastTab.id) {
+                                      setDropTarget({ type: 'tab', id: lastTab.id, position: 'bottom' });
+                                    }
+                                  }
+                                }}
+                                onDrop={handleDrop}
+                              >
+                                {tabs.map((tab) => {
+                                  const isTabDropTarget = dropTarget?.type === 'tab' && dropTarget.id === tab.id;
+                                  const draggingSelf = getDragTab()?.id === tab.id;
+                                  return (
+                                    <React.Fragment key={tab.id}>
+                                      {isTabDropTarget && dropTarget.position === 'top' && !draggingSelf && <DropIndicator type="tab" id={tab.id} position="top" onDrop={handleDrop} setDropTarget={setDropTarget} />}
+                                      <TabItem
+                                        tab={tab}
+                                        onDragOver={(e) => handleDragOver(e, 'tab', tab.id, tab)}
+                                      />
+                                      {isTabDropTarget && dropTarget.position === 'bottom' && !draggingSelf && <DropIndicator type="tab" id={tab.id} position="bottom" onDrop={handleDrop} setDropTarget={setDropTarget} />}
+                                    </React.Fragment>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                          {isDropTarget && dropTarget.position === 'bottom' && <DropIndicator type="group" id={group.id} position="bottom" onDrop={handleDrop} setDropTarget={setDropTarget} />}
+                        </div>
+                      );
+                    })}
+                  </div>
 
-                  {/* Loose Tabs */}
-                  {win.looseTabs.length > 0 && (
-                     <div className="space-y-2 pt-1">
-                        {win.looseTabs.map(tab => (
-                          <TabItem 
-                            key={tab.id} 
-                            tab={tab} 
-                          />
-                        ))}
-                     </div>
+                  <div className="space-y-2 pt-1">
+                    {win.looseTabs.map((tab, idx) => {
+                       const isTabDropTarget = dropTarget?.type === 'tab' && dropTarget.id === tab.id;
+                       const draggingSelf = getDragTab()?.id === tab.id;
+                       return (
+                         <React.Fragment key={tab.id}>
+                           {isTabDropTarget && dropTarget.position === 'top' && !draggingSelf && <DropIndicator type="tab" id={tab.id} position="top" onDrop={handleDrop} setDropTarget={setDropTarget} />}
+                           <TabItem
+                             tab={tab}
+                             onDragOver={(e) => handleDragOver(e, 'tab', tab.id, tab)}
+                           />
+                           {isTabDropTarget && dropTarget.position === 'bottom' && !draggingSelf && <DropIndicator type="tab" id={tab.id} position="bottom" onDrop={handleDrop} setDropTarget={setDropTarget} />}
+                         </React.Fragment>
+                       );
+                    })}
+                  </div>
+
+                  {/* Dynamic Ghost for Window Background Drop */}
+                  {dropTarget?.type === 'tab' && dropTarget.id === win.id && dropTarget.position === 'inside' && (
+                    <DropIndicator type="tab" id={win.id} position="inside" onDrop={handleDrop} setDropTarget={setDropTarget} />
                   )}
-                  
-                  {win.totalCount === 0 && (
-                     <div className="pl-2 text-[10px] opacity-30 italic py-1">{t('empty_window', 'Empty')}</div>
-                  )}
+
+                  {win.totalCount === 0 && <div className="pl-2 text-[10px] opacity-30 italic py-1">{t('empty_window', 'Empty')}</div>}
                 </div>
               )}
             </div>

@@ -1,16 +1,17 @@
 import React from 'react';
-import { setDragTab } from '../dnd/dragContext';
+import { setDragTab, DRAG_TYPES } from '../dnd/dragContext';
 import type { TabItemData } from './types';
 
 export const TabItem: React.FC<
   { tab: TabItemData } & React.HTMLAttributes<HTMLDivElement>
 > = ({ tab, ...rest }) => {
   const [dragging, setDragging] = React.useState(false);
+
   const onDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     setDragging(true);
     try {
       e.dataTransfer.setData(
-        'application/x-linktrove-tab',
+        DRAG_TYPES.TAB,
         JSON.stringify(tab)
       );
       e.dataTransfer.effectAllowed = 'move';
@@ -19,17 +20,22 @@ export const TabItem: React.FC<
         title: tab.title,
         url: tab.url,
         favIconUrl: tab.favIconUrl,
+        groupId: tab.nativeGroupId,
+        windowId: tab.windowId,
+        index: tab.index,
       });
     } catch {
       // ignore
     }
     rest.onDragStart?.(e);
   };
+
   const onDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     setDragging(false);
     setDragTab(null);
     rest.onDragEnd?.(e);
   };
+
   return (
     <div
       className={`flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 cursor-grab active:cursor-grabbing hover:translate-x-[2px] group/item ${dragging ? 'opacity-50 ring-1 ring-blue-500' : ''} ${rest.className || ''}`}
@@ -39,6 +45,10 @@ export const TabItem: React.FC<
         ...rest.style
       }}
       draggable
+      data-tab-id={tab.id}
+      data-group-id={tab.nativeGroupId ?? -1}
+      data-window-id={tab.windowId}
+      data-index={tab.index}
       data-dragging={dragging || undefined}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}

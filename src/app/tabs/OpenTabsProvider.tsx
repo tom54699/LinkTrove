@@ -15,6 +15,7 @@ interface OpenTabsCtx {
     setActiveWindow: (windowId: number | null) => void;
     setWindowLabel: (windowId: number, name: string) => void;
     getWindowLabel: (windowId: number) => string | undefined;
+    refresh: () => void;
   };
 }
 
@@ -60,6 +61,35 @@ export const OpenTabsProvider: React.FC<{
       setWindowLabel: (wid: number, name: string) =>
         setWindowLabels((m) => ({ ...m, [wid]: name })),
       getWindowLabel: (wid: number) => windowLabels[wid],
+      refresh: () => {
+        if (chrome.tabs?.query) {
+          chrome.tabs.query({}, (tabs) => {
+             const mapped = tabs.map(t => ({
+               id: t.id!,
+               title: t.title,
+               url: t.url,
+               favIconUrl: t.favIconUrl,
+               index: t.index,
+               windowId: t.windowId,
+               nativeGroupId: t.groupId > 0 ? t.groupId : undefined,
+             }));
+             setTabsState(sortByIndex(mapped));
+             
+             // Also refresh groups while we are at it
+             if (chrome.tabGroups?.query) {
+                chrome.tabGroups.query({}, (groups) => {
+                  setNativeTabGroups(groups.map(g => ({
+                    id: g.id,
+                    title: g.title,
+                    color: g.color,
+                    windowId: g.windowId,
+                    collapsed: g.collapsed,
+                  })));
+                });
+             }
+          });
+        }
+      }
     }),
     [windowLabels]
   );
@@ -118,34 +148,127 @@ export const OpenTabsProvider: React.FC<{
         setNativeTabGroups(msg.groups);
       } else if (msg?.kind === 'tab-event' && msg.evt) {
         const evt = msg.evt;
-        if (evt.type === 'created' && evt.payload) actionsRef.current.addTab(evt.payload);
-        else if (evt.type === 'removed') actionsRef.current.removeTab(evt.payload.tabId);
-        else if (evt.type === 'updated') {
-          const patch = { ...evt.payload.changeInfo };
-          if ('groupId' in patch) {
-            patch.nativeGroupId = patch.groupId > 0 ? patch.groupId : undefined;
-            delete patch.groupId;
+        
+        setTabsState((prev) => {
+          const sort = (arr: TabItemData[]) =>
+            [...arr].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+
+          if (evt.type === 'created' && evt.payload) {
+            const newTab = evt.payload;
+            const others = prev.filter((t) => t.id !== newTab.id);
+            const winTabs = others.filter((t) => t.windowId === newTab.windowId);
+            const shifted = winTabs.map((t) => {
+              if ((t.index ?? 0) >= (newTab.index ?? 9999))
+                return { ...t, index: (t.index ?? 0) + 1 };
+              return t;
+            });
+            const nonWinTabs = others.filter(
+              (t) => t.windowId !== newTab.windowId
+            );
+            return sort([...nonWinTabs, ...shifted, newTab]);
+          } else if (evt.type === 'removed') {
+            const { tabId } = evt.payload;
+            const target = prev.find((t) => t.id === tabId);
+            if (!target) return prev;
+
+            const others = prev.filter((t) => t.id !== tabId);
+            const winTabs = others.filter((t) => t.windowId === target.windowId);
+            const shifted = winTabs.map((t) => {
+              if ((t.index ?? 0) > (target.index ?? 0))
+                return { ...t, index: (t.index ?? 0) - 1 };
+              return t;
+            });
+            const nonWinTabs = others.filter(
+              (t) => t.windowId !== target.windowId
+            );
+            return sort([...nonWinTabs, ...shifted]);
+          } else if (evt.type === 'updated') {
+            const { tabId, changeInfo } = evt.payload;
+            const patch = { ...changeInfo };
+            if ('groupId' in patch) {
+              patch.nativeGroupId =
+                patch.groupId > 0 ? patch.groupId : undefined;
+              
+              // If this group ID is unknown to us, trigger a refresh
+              if (patch.nativeGroupId && !nativeTabGroups.some(g => g.id === patch.nativeGroupId)) {
+                 if (chrome.tabGroups?.query) {
+                    chrome.tabGroups.query({}, (groups) => {
+                       setNativeTabGroups(groups.map(g => ({
+                         id: g.id,
+                         title: g.title,
+                         color: g.color,
+                         windowId: g.windowId,
+                         collapsed: g.collapsed,
+                       })));
+                    });
+                 }
+              }
+
+              delete patch.groupId;
+            }
+            return sort(
+              prev.map((t) => (t.id === tabId ? { ...t, ...patch } : t))
+            );
+          } else if (evt.type === 'moved') {
+            const { tabId, fromIndex, toIndex, windowId } = evt.payload;
+            return sort(
+              prev.map((t) => {
+                if (t.windowId !== windowId) return t;
+                if (t.id === tabId) return { ...t, index: toIndex };
+                const idx = t.index ?? 0;
+                if (fromIndex < toIndex) {
+                  if (idx > fromIndex && idx <= toIndex)
+                    return { ...t, index: idx - 1 };
+                } else {
+                  if (idx >= toIndex && idx < fromIndex)
+                    return { ...t, index: idx + 1 };
+                }
+                return t;
+              })
+            );
+          } else if (evt.type === 'detached') {
+            const { tabId, oldWindowId, oldPosition } = evt.payload;
+            return sort(
+              prev.map((t) => {
+                if (t.id === tabId) return t;
+                if (t.windowId === oldWindowId && (t.index ?? 0) > oldPosition) {
+                  return { ...t, index: (t.index ?? 0) - 1 };
+                }
+                return t;
+              })
+            );
+          } else if (evt.type === 'attached') {
+            const { tabId, newWindowId, newPosition } = evt.payload;
+            return sort(
+              prev.map((t) => {
+                if (t.id === tabId)
+                  return { ...t, windowId: newWindowId, index: newPosition };
+                if (
+                  t.windowId === newWindowId &&
+                  (t.index ?? 0) >= newPosition
+                ) {
+                  return { ...t, index: (t.index ?? 0) + 1 };
+                }
+                return t;
+              })
+            );
+          } else if (evt.type === 'replaced') {
+             // Handle replaced separately via actions to keep async logic simple
+             // We return prev here and let the side-effect below handle it?
+             // No, the side effect below is outside setTabsState.
+             // We can just return prev and run the logic below.
+             return prev;
           }
-          actionsRef.current.updateTab(evt.payload.tabId, patch);
-        } else if (evt.type === 'moved')
-          actionsRef.current.updateTab(evt.payload.tabId, {
-            index: evt.payload.toIndex,
-            windowId: evt.payload.windowId,
-          });
-        else if (evt.type === 'attached') {
-          actionsRef.current.updateTab(evt.payload.tabId, {
-            index: evt.payload.newPosition,
-            windowId: evt.payload.newWindowId,
-          });
-          // ensure window id exists in group list
+          return prev;
+        });
+        
+        // Handle side effects and 'replaced' logic
+        if (evt.type === 'attached') {
           setWindowIds((prev) =>
             Array.from(new Set([...(prev || []), evt.payload.newWindowId]))
           );
-        }
-        // detached will be followed by attached; ignore interim
-        else if (evt.type === 'replaced') {
+        } else if (evt.type === 'replaced') {
           actionsRef.current.removeTab(evt.payload.removedTabId);
-          // Also add the new tab that replaced the old one
           if (evt.payload.addedTabId) {
             try {
               chrome.tabs.get(evt.payload.addedTabId, (tab) => {
