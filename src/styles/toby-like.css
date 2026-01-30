@@ -23,6 +23,17 @@
   transform-style: preserve-3d;
   transition: transform 0.7s ease;
 }
+.toby-card-flex[data-dragging='true'] .tobylike .card {
+  perspective: none;
+}
+.toby-card-flex[data-dragging='true'] .tobylike .card-inner {
+  transform-style: flat;
+  transform: none !important;
+  transition: none !important;
+}
+.toby-card-flex[data-dragging='true'] .tobylike .card-back {
+  display: none;
+}
 .tobylike .card.is-flipped .card-inner {
   transform: rotateY(180deg);
 }
