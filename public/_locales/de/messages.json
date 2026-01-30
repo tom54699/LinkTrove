@@ -405,12 +405,7 @@
     "message": "LÖSCHEN"
   },
   "batch_selected": {
-    "message": "$COUNT$ ausgewählt",
-    "placeholders": {
-      "count": {
-        "content": "$1"
-      }
-    }
+    "message": "Ausgewählt"
   },
   "move_dialog_title": {
     "message": "$COUNT$ Karte(n) verschieben nach",

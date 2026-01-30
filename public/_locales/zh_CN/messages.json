@@ -405,12 +405,7 @@
     "message": "删除"
   },
   "batch_selected": {
-    "message": "已选择 $COUNT$ 项",
-    "placeholders": {
-      "count": {
-        "content": "$1"
-      }
-    }
+    "message": "已选中"
   },
   "move_dialog_title": {
     "message": "移动 $COUNT$ 张卡片到",

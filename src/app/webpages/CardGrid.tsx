@@ -586,15 +586,51 @@ export const CardGrid: React.FC<CardGridProps> = ({
 
   return (
     <div>
-      {selectedCount > 0 && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-[var(--panel)] border border-slate-700 rounded-lg shadow-2xl px-4 py-3 flex items-center gap-4">
-          <p className="text-sm font-medium opacity-90">{t('batch_selected', [String(selectedCount)])}</p>
-          <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-slate-600 hover:bg-slate-800 transition-colors" onClick={() => setShowMoveDialog(true)}>{t('batch_move')}</button>
-          <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-slate-600 hover:bg-slate-800 transition-colors" onClick={handleOpenTabs}>{t('batch_open_tabs')}</button>
-          <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-red-600 text-red-300 hover:bg-red-950/30 transition-colors" onClick={() => { (document.activeElement as HTMLElement | null)?.blur?.(); setConfirming(true); }}>{t('batch_delete')}</button>
-          <button type="button" className="ml-2 p-1 hover:bg-slate-800 rounded transition-colors" onClick={clearSelection} aria-label="Close">✕</button>
+      <div className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-out ${
+        selectedCount > 0 ? 'translate-y-0 opacity-100' : 'translate-y-[150%] opacity-0 pointer-events-none'
+      }`}>
+        <div className="flex items-center gap-1 p-1.5 pl-4 pr-2 bg-[var(--panel)]/90 backdrop-blur-xl border border-slate-700/50 rounded-full shadow-2xl shadow-black/50 text-slate-200">
+          <div className="flex items-center gap-2 mr-2">
+            <span className="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-[var(--accent)] text-[var(--accent-fg)] text-xs font-bold rounded-full">
+              {selectedCount}
+            </span>
+            <span className="text-sm font-medium opacity-80 hidden sm:inline">
+              {t('batch_selected')}
+            </span>
+          </div>
+
+          <div className="w-px h-5 bg-slate-700/80 mx-1"></div>
+
+          <button type="button" onClick={() => setShowMoveDialog(true)} 
+            className="group flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-full hover:bg-slate-700/60 transition-colors" 
+            title={t('batch_move')}>
+            <svg className="w-4 h-4 opacity-70 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+            <span className="hidden sm:inline">{t('batch_move')}</span>
+          </button>
+
+          <button type="button" onClick={handleOpenTabs} 
+            className="group flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-full hover:bg-slate-700/60 transition-colors" 
+            title={t('batch_open_tabs')}>
+            <svg className="w-4 h-4 opacity-70 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+            <span className="hidden sm:inline">{t('batch_open_tabs')}</span>
+          </button>
+
+          <button type="button" onClick={() => { (document.activeElement as HTMLElement | null)?.blur?.(); setConfirming(true); }} 
+            className="group flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-full text-red-300 hover:text-red-200 hover:bg-red-500/20 transition-colors" 
+            title={t('batch_delete')}>
+            <svg className="w-4 h-4 opacity-70 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            <span className="hidden sm:inline">{t('batch_delete')}</span>
+          </button>
+
+          <div className="w-px h-5 bg-slate-700/80 mx-1"></div>
+
+          <button type="button" onClick={clearSelection} 
+            className="p-2 rounded-full hover:bg-slate-700/60 text-slate-400 hover:text-white transition-colors"
+            aria-label="Close">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
         </div>
-      )}
+      </div>
       <div
         aria-label="Drop Zone"
         ref={zoneRef}

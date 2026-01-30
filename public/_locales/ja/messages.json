@@ -405,12 +405,7 @@
     "message": "削除"
   },
   "batch_selected": {
-    "message": "$COUNT$ 件選択中",
-    "placeholders": {
-      "count": {
-        "content": "$1"
-      }
-    }
+    "message": "選択済み"
   },
   "move_dialog_title": {
     "message": "$COUNT$ 枚のカードを移動",

@@ -30,9 +30,9 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
   const [subcategories, setSubcategories] = React.useState<Subcategory[]>([]);
   const [loading, setLoading] = React.useState(false);
 
-  // Load subcategories when category changes
+  // Load subcategories when category changes OR when dialog opens
   React.useEffect(() => {
-    if (!selectedCategoryId) {
+    if (!selectedCategoryId || !isOpen) {
       setSubcategories([]);
       return;
     }
@@ -56,7 +56,7 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
     };
 
     loadSubcategories();
-  }, [selectedCategoryId]);
+  }, [selectedCategoryId, isOpen]);
 
   // Reset subcategory when category changes
   React.useEffect(() => {

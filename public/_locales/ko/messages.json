@@ -404,14 +404,9 @@
   "batch_delete": {
     "message": "삭제"
   },
-  "batch_selected": {
-    "message": "$COUNT$개 선택됨",
-    "placeholders": {
-      "count": {
-        "content": "$1"
-      }
-    }
-  },
+    "batch_selected": {
+      "message": "선택됨"
+    },
   "move_dialog_title": {
     "message": "$COUNT$개 카드 이동",
     "placeholders": {

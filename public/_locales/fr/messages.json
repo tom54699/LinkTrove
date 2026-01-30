@@ -405,12 +405,7 @@
     "message": "SUPPRIMER"
   },
   "batch_selected": {
-    "message": "$COUNT$ sélectionnés",
-    "placeholders": {
-      "count": {
-        "content": "$1"
-      }
-    }
+    "message": "Sélectionné"
   },
   "move_dialog_title": {
     "message": "Déplacer $COUNT$ carte(s) vers",
