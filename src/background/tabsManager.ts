@@ -29,8 +29,19 @@ export interface TabsManagerOptions {
 export function createTabsManager(opts: TabsManagerOptions) {
   const { onChange } = opts;
 
+  // Format Chrome native tab object to internal format
+  const formatTab = (t: any) => ({
+    id: t.id,
+    title: t.title,
+    url: t.url,
+    favIconUrl: t.favIconUrl,
+    index: t.index,
+    windowId: t.windowId,
+    nativeGroupId: t.groupId > 0 ? t.groupId : undefined,
+  });
+
   const created = (tab: any) =>
-    safe(() => onChange({ type: 'created', payload: tab }));
+    safe(() => onChange({ type: 'created', payload: formatTab(tab) }));
   const removed = (tabId: number) =>
     safe(() => onChange({ type: 'removed', payload: { tabId } }));
   const updated = (tabId: number, changeInfo: any) =>

@@ -280,6 +280,7 @@ export const OpenTabsProvider: React.FC<{
                     favIconUrl: tab.favIconUrl,
                     index: tab.index,
                     windowId: tab.windowId,
+                    nativeGroupId: tab.groupId > 0 ? tab.groupId : undefined,
                   });
                 }
               });
