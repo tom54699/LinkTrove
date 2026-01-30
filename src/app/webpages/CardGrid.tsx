@@ -28,6 +28,11 @@ export interface CardGridProps {
   onUpdateUrl?: (id: string, url: string) => void;
   onUpdateCategory?: (id: string, category: string) => void;
   onUpdateMeta?: (id: string, meta: Record<string, string>) => void;
+  onMoveCardToGroup?: (
+    id: string,
+    categoryId: string,
+    subcategoryId: string
+  ) => Promise<void>;
 }
 
 export const CardGrid: React.FC<CardGridProps> = ({
@@ -43,6 +48,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
   onUpdateUrl,
   onUpdateCategory,
   onUpdateMeta,
+  onMoveCardToGroup,
 }) => {
   const { t } = useI18n();
   const [isOver, setIsOver] = React.useState(false);
@@ -78,16 +84,23 @@ export const CardGrid: React.FC<CardGridProps> = ({
     try {
       // Preserve order: filter from items instead of using Object.entries
       const selectedIds = items.filter(item => selected[item.id]).map(item => item.id);
-      
-      const { createStorageService } = await import('../../background/storageService');
-      const svc = createStorageService();
-      
-      // Sequential execution to prevent race conditions and preserve order
-      for (const cardId of selectedIds) {
-        if (onUpdateCategory) await onUpdateCategory(cardId, categoryId);
-        await (svc as any).updateCardSubcategory?.(cardId, subcategoryId);
+
+      // Prefer provider action to keep UI state in sync
+      if (onMoveCardToGroup) {
+        for (const cardId of selectedIds) {
+          await onMoveCardToGroup(cardId, categoryId, subcategoryId);
+        }
+      } else {
+        const { createStorageService } = await import('../../background/storageService');
+        const svc = createStorageService();
+
+        // Sequential execution to prevent race conditions and preserve order
+        for (const cardId of selectedIds) {
+          if (onUpdateCategory) await onUpdateCategory(cardId, categoryId);
+          await (svc as any).updateCardSubcategory?.(cardId, subcategoryId);
+        }
       }
-      
+
       setShowMoveDialog(false); clearSelection(); showToast(t('toast_moved_cards', [String(selectedIds.length)]), 'success');
     } catch { showToast(t('toast_move_failed'), 'error'); }
   };

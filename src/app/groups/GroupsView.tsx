@@ -523,6 +523,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   onUpdateUrl={(id, url) => actions.updateUrl(id, url)}
                   onUpdateCategory={(id, cat) => actions.updateCategory(id, cat)}
                   onUpdateMeta={(id, meta) => actions.updateMeta(id, meta)}
+                  onMoveCardToGroup={(id, cat, group) => actions.moveCardToGroup(id, cat, group)}
                 />
               </div>
             )}
