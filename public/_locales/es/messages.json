@@ -25,6 +25,24 @@
   "nav_language": {
     "message": "Idioma"
   },
+  "nav_behavior": {
+    "message": "Comportamiento"
+  },
+  "behavior_title": {
+    "message": "Configuración de Comportamiento"
+  },
+  "behavior_description": {
+    "message": "Personaliza cómo interactúa la aplicación con tu navegador"
+  },
+  "behavior_close_tab_after_save": {
+    "message": "Cerrar pestaña después de guardar"
+  },
+  "behavior_close_tab_after_save_desc": {
+    "message": "Cierra automáticamente la pestaña después de guardarla desde Pestañas Abiertas. La última pestaña de una ventana no se cerrará."
+  },
+  "settings_saved": {
+    "message": "Configuración guardada"
+  },
   "data_title": {
     "message": "Copia de seguridad y restauración del proyecto"
   },

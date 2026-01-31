@@ -25,6 +25,24 @@
   "nav_language": {
     "message": "言語"
   },
+  "nav_behavior": {
+    "message": "動作"
+  },
+  "behavior_title": {
+    "message": "動作設定"
+  },
+  "behavior_description": {
+    "message": "アプリケーションの操作動作をカスタマイズ"
+  },
+  "behavior_close_tab_after_save": {
+    "message": "保存後にタブを自動的に閉じる"
+  },
+  "behavior_close_tab_after_save_desc": {
+    "message": "「開いているタブ」からドラッグして保存後、自動的にそのタブを閉じます。ウィンドウの最後のタブは閉じません。"
+  },
+  "settings_saved": {
+    "message": "設定を保存しました"
+  },
   "data_title": {
     "message": "プロジェクトのバックアップと復元"
   },

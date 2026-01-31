@@ -25,6 +25,24 @@
   "nav_language": {
     "message": "語言"
   },
+  "nav_behavior": {
+    "message": "行為"
+  },
+  "behavior_title": {
+    "message": "行為設定"
+  },
+  "behavior_description": {
+    "message": "自訂應用程式的互動行為"
+  },
+  "behavior_close_tab_after_save": {
+    "message": "儲存後自動關閉分頁"
+  },
+  "behavior_close_tab_after_save_desc": {
+    "message": "從「開啟的分頁」拖曳儲存後，自動關閉該分頁。若為視窗中最後一個分頁則不會關閉。"
+  },
+  "settings_saved": {
+    "message": "設定已儲存"
+  },
   "data_title": {
     "message": "專案備份與還原"
   },

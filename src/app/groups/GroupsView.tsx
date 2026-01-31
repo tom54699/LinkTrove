@@ -11,6 +11,7 @@ import { ShareDialog, TokenDialog, ShareResultDialog } from './share/dialogs';
 import { TobyImportDialog, TobyProgressDialog } from './import/dialogs';
 import { useI18n } from '../i18n';
 import { DEFAULT_GROUP_NAME } from '../../utils/defaults';
+import { getBehaviorSettings, closeTabSafely } from '../settings/behaviorSettings';
 
 interface GroupItem {
   id: string;
@@ -486,12 +487,23 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   onDropTab={async (tab: any, beforeId?: string) => {
                     setActiveDropGroupId(null);
                     try {
+                      // 檢查是否需要關閉分頁
+                      const settings = await getBehaviorSettings();
+                      const shouldClose = settings.closeTabAfterSave && tab?.id != null;
+
                       await actions.addFromTab(tab as any, {
                         categoryId: g.categoryId,
                         subcategoryId: g.id,
                         beforeId,
+                        // 如果要關閉分頁，需要等待 meta enrichment 完成
+                        waitForMeta: shouldClose,
                       });
                       showToast(t('toast_created_from_tab'), 'success');
+
+                      // 儲存成功後關閉分頁
+                      if (shouldClose) {
+                        await closeTabSafely(tab.id);
+                      }
                     } catch {
                       showToast(t('toast_create_failed'), 'error');
                     }

@@ -7,10 +7,11 @@ import { useWebpages } from '../webpages/WebpagesProvider';
 import { useCategories } from '../sidebar/categories';
 import { useTemplates } from '../templates/TemplatesProvider';
 import { useI18n, LANGUAGE_OPTIONS, type Language } from '../i18n';
+import { getBehaviorSettings, setBehaviorSettings, type BehaviorSettings } from '../settings/behaviorSettings';
 
 type Section = 'data' | 'templates';
-// 擴充：Cloud Sync 區塊、語言設定
-type SectionEx = Section | 'cloud' | 'language';
+// 擴充：Cloud Sync 區塊、語言設定、行為設定
+type SectionEx = Section | 'cloud' | 'language' | 'behavior';
 
 export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   const [section, setSection] = React.useState<SectionEx>('data');
@@ -23,6 +24,7 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
     { id: 'cloud', label: t('nav_cloud_sync'), icon: '☁' },
     { id: 'templates', label: t('nav_templates'), icon: '▦' },
     { id: 'language', label: t('nav_language'), icon: '🌐' },
+    { id: 'behavior', label: t('nav_behavior'), icon: '⚙' },
   ];
 
   return (
@@ -68,6 +70,8 @@ export const SettingsModal: React.FC<{ open: boolean; onClose: () => void }> = (
               <CloudSyncPanel />
             ) : section === 'language' ? (
               <LanguagePanel />
+            ) : section === 'behavior' ? (
+              <BehaviorPanel />
             ) : (
               <TemplatesManager />
             )}
@@ -507,6 +511,65 @@ const CloudSyncPanel: React.FC = () => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const BehaviorPanel: React.FC = () => {
+  const { t } = useI18n();
+  const { showToast } = useFeedback();
+  const [settings, setSettings] = React.useState<BehaviorSettings>({ closeTabAfterSave: false });
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    getBehaviorSettings().then((s) => {
+      setSettings(s);
+      setLoading(false);
+    });
+  }, []);
+
+  const handleToggle = async (key: keyof BehaviorSettings, value: boolean) => {
+    const updated = await setBehaviorSettings({ [key]: value });
+    setSettings(updated);
+    showToast(t('settings_saved'), 'success');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div>
+        <h2 className="text-[18px] font-bold mb-1 text-[var(--fg)]">{t('behavior_title')}</h2>
+        <p className="text-[13px] text-[var(--muted)] mb-5 leading-relaxed">
+          {t('behavior_description')}
+        </p>
+
+        <div className="space-y-4">
+          <label className="flex gap-3 cursor-pointer items-start p-3 rounded-lg border border-[var(--border)] hover:bg-[var(--surface)] transition-all">
+            <input
+              type="checkbox"
+              checked={settings.closeTabAfterSave}
+              onChange={(e) => handleToggle('closeTabAfterSave', e.target.checked)}
+              style={{ accentColor: 'var(--accent)' }}
+              className="mt-0.5 w-4 h-4"
+            />
+            <div className="flex-1">
+              <div className="text-[14px] font-medium text-[var(--fg)] leading-tight mb-1">
+                {t('behavior_close_tab_after_save')}
+              </div>
+              <div className="text-[12px] text-[var(--muted)] leading-relaxed">
+                {t('behavior_close_tab_after_save_desc')}
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
     </div>
   );
 };

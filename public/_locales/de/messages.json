@@ -25,6 +25,24 @@
   "nav_language": {
     "message": "Sprache"
   },
+  "nav_behavior": {
+    "message": "Verhalten"
+  },
+  "behavior_title": {
+    "message": "Verhaltenseinstellungen"
+  },
+  "behavior_description": {
+    "message": "Passen Sie an, wie die App mit Ihrem Browser interagiert"
+  },
+  "behavior_close_tab_after_save": {
+    "message": "Tab nach dem Speichern schließen"
+  },
+  "behavior_close_tab_after_save_desc": {
+    "message": "Schließt den Tab automatisch nach dem Speichern von Offenen Tabs. Der letzte Tab in einem Fenster wird nicht geschlossen."
+  },
+  "settings_saved": {
+    "message": "Einstellungen gespeichert"
+  },
   "data_title": {
     "message": "Projekt-Backup & Wiederherstellung"
   },

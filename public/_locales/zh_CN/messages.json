@@ -25,6 +25,24 @@
   "nav_language": {
     "message": "语言"
   },
+  "nav_behavior": {
+    "message": "行为"
+  },
+  "behavior_title": {
+    "message": "行为设置"
+  },
+  "behavior_description": {
+    "message": "自定义应用程序的交互行为"
+  },
+  "behavior_close_tab_after_save": {
+    "message": "保存后自动关闭标签页"
+  },
+  "behavior_close_tab_after_save_desc": {
+    "message": "从「打开的标签页」拖拽保存后，自动关闭该标签页。若为窗口中最后一个标签页则不会关闭。"
+  },
+  "settings_saved": {
+    "message": "设置已保存"
+  },
   "data_title": {
     "message": "项目备份与恢复"
   },

@@ -25,6 +25,24 @@
   "nav_language": {
     "message": "Language"
   },
+  "nav_behavior": {
+    "message": "Behavior"
+  },
+  "behavior_title": {
+    "message": "Behavior Settings"
+  },
+  "behavior_description": {
+    "message": "Customize how the app interacts with your browser"
+  },
+  "behavior_close_tab_after_save": {
+    "message": "Close tab after saving"
+  },
+  "behavior_close_tab_after_save_desc": {
+    "message": "Automatically close the tab after saving from Open Tabs. The last tab in a window will not be closed."
+  },
+  "settings_saved": {
+    "message": "Settings saved"
+  },
   "data_title": {
     "message": "Project Backup & Restore"
   },

@@ -25,6 +25,24 @@
   "nav_language": {
     "message": "Langue"
   },
+  "nav_behavior": {
+    "message": "Comportement"
+  },
+  "behavior_title": {
+    "message": "Paramètres de comportement"
+  },
+  "behavior_description": {
+    "message": "Personnalisez la façon dont l'application interagit avec votre navigateur"
+  },
+  "behavior_close_tab_after_save": {
+    "message": "Fermer l'onglet après l'enregistrement"
+  },
+  "behavior_close_tab_after_save_desc": {
+    "message": "Ferme automatiquement l'onglet après l'enregistrement depuis les Onglets Ouverts. Le dernier onglet d'une fenêtre ne sera pas fermé."
+  },
+  "settings_saved": {
+    "message": "Paramètres enregistrés"
+  },
   "data_title": {
     "message": "Sauvegarde et restauration du projet"
   },

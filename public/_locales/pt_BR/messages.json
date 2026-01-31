@@ -25,6 +25,24 @@
   "nav_language": {
     "message": "Idioma"
   },
+  "nav_behavior": {
+    "message": "Comportamento"
+  },
+  "behavior_title": {
+    "message": "Configurações de Comportamento"
+  },
+  "behavior_description": {
+    "message": "Personalize como o aplicativo interage com seu navegador"
+  },
+  "behavior_close_tab_after_save": {
+    "message": "Fechar aba após salvar"
+  },
+  "behavior_close_tab_after_save_desc": {
+    "message": "Fecha automaticamente a aba após salvar das Abas Abertas. A última aba em uma janela não será fechada."
+  },
+  "settings_saved": {
+    "message": "Configurações salvas"
+  },
   "data_title": {
     "message": "Backup e Restauração do Projeto"
   },

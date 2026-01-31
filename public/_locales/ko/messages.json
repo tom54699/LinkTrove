@@ -25,6 +25,24 @@
   "nav_language": {
     "message": "언어"
   },
+  "nav_behavior": {
+    "message": "동작"
+  },
+  "behavior_title": {
+    "message": "동작 설정"
+  },
+  "behavior_description": {
+    "message": "앱의 상호작용 동작을 사용자 정의합니다"
+  },
+  "behavior_close_tab_after_save": {
+    "message": "저장 후 탭 자동 닫기"
+  },
+  "behavior_close_tab_after_save_desc": {
+    "message": "열린 탭에서 드래그하여 저장 후 해당 탭을 자동으로 닫습니다. 창의 마지막 탭은 닫히지 않습니다."
+  },
+  "settings_saved": {
+    "message": "설정이 저장되었습니다"
+  },
   "data_title": {
     "message": "프로젝트 백업 및 복원"
   },

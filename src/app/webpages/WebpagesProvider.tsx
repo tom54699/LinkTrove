@@ -19,6 +19,7 @@ interface CtxValue {
         categoryId?: string;
         subcategoryId?: string;
         beforeId?: string | '__END__';
+        waitForMeta?: boolean;
       }
     ) => Promise<string>;
     deleteMany: (ids: string[]) => Promise<void>;
@@ -102,6 +103,7 @@ export const WebpagesProvider: React.FC<{
         categoryId?: string;
         subcategoryId?: string;
         beforeId?: string | '__END__';
+        waitForMeta?: boolean;
       }
     ) => {
       // 設置操作鎖定，避免 onChanged 監聽器觸發重複 load
@@ -247,9 +249,9 @@ export const WebpagesProvider: React.FC<{
             } catch {}
           })();
 
-          // In test environment, wait for enrichment to complete; in production, run non-blocking
-          if ((service as any).loadFromSync && (service as any).loadTemplates) {
-            // Test environment: wait for completion
+          // Wait for enrichment if explicitly requested (for close-tab-after-save feature)
+          // or in test environment
+          if (options?.waitForMeta || ((service as any).loadFromSync && (service as any).loadTemplates)) {
             await enrichmentPromise;
           } else {
             // Production environment: non-blocking
