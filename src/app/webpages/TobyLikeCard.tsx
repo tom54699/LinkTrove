@@ -208,6 +208,15 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
 
   const formatTimestamp = React.useCallback((value?: string | number): string => {
     if (value === undefined || value === null || value === '') return '-';
+    if (typeof value === 'string') {
+      const v = value.trim();
+      if (!v) return '-';
+      if (v.includes('yyyy') || v.includes('YYYY')) return '-';
+      if (/^[yYmMdD\s\/\\\-年月日]+$/u.test(v)) return '-';
+      if (/^(y{2,4}|Y{2,4})[\/\\-年](m{1,2}|M{1,2}|月)[\/\\-日](d{1,2}|D{1,2})$/u.test(v)) {
+        return '-';
+      }
+    }
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
       return String(value);
@@ -412,6 +421,8 @@ const TemplateFields: React.FC<{
         };
         const options = Array.isArray(f.options) ? f.options : [];
         const isSerialStatus = f.key === 'serialStatus';
+        const isSystemTimestamp = f.key === 'updatedAt' || f.key === 'createdAt';
+        const isSystemDateLabel = /updated|created|更新|建立/i.test(String(f.label || ''));
         const normalizedSerial = isSerialStatus ? normalizeSerialStatus(String(rawVal)) : '';
         const pickSerialOption = () => {
           if (!normalizedSerial) return '';
@@ -429,7 +440,7 @@ const TemplateFields: React.FC<{
           ? serialValue || normalizedSerial || String(rawVal)
           : String(rawVal);
         const set = (v: string) => onChange({ ...meta, [f.key]: v });
-        const isEmpty = !(String(rawVal) || '').trim();
+        const isEmpty = rawVal === undefined || rawVal === null || String(rawVal).trim() === '';
         const baseCls = `w-full bg-[var(--bg)] border rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] ${f.required && isEmpty ? 'border-red-600' : 'border-white/5'}`;
         return (
           <div key={f.key}>
@@ -462,13 +473,21 @@ const TemplateFields: React.FC<{
                   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
                 };
                 const dateVal = toDateInput(String(val || ''));
+                const showDash = (isSystemTimestamp || isSystemDateLabel) && isEmpty;
                 return (
-                  <input
-                    className={baseCls}
-                    type="date"
-                    value={dateVal}
-                    onChange={(e) => set(e.target.value)}
-                  />
+                  <div className="relative">
+                    <input
+                      className={`${baseCls} ${showDash ? 'text-transparent' : ''} peer`}
+                      type="date"
+                      value={dateVal}
+                      onChange={(e) => set(e.target.value)}
+                    />
+                    {showDash && (
+                      <div className="pointer-events-none absolute inset-0 flex items-center px-3 text-[var(--muted)] peer-focus:opacity-0">
+                        -
+                      </div>
+                    )}
+                  </div>
                 );
               })()
             ) : f.type === 'url' ? (

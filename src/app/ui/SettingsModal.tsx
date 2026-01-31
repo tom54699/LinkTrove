@@ -579,6 +579,7 @@ const LanguagePanel: React.FC = () => {
   const { showToast } = useFeedback();
   const [open, setOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement | null>(null);
+  const flagSize = 18;
 
   const handleLanguageChange = async (newLang: Language) => {
     if (newLang === language) {
@@ -632,7 +633,14 @@ const LanguagePanel: React.FC = () => {
             onClick={() => setOpen((prev) => !prev)}
           >
             <span className="flex items-center gap-2">
-              <span className="text-base">{selectedOption.flag}</span>
+              <img
+                src={chrome.runtime.getURL(selectedOption.flag)}
+                alt=""
+                width={flagSize}
+                height={flagSize}
+                className="rounded-sm"
+                loading="lazy"
+              />
               <span>{selectedOption.label}</span>
             </span>
             <svg
@@ -666,7 +674,14 @@ const LanguagePanel: React.FC = () => {
                     }`}
                     onClick={() => handleLanguageChange(option.value)}
                   >
-                    <span className="text-base">{option.flag}</span>
+                    <img
+                      src={chrome.runtime.getURL(option.flag)}
+                      alt=""
+                      width={flagSize}
+                      height={flagSize}
+                      className="rounded-sm"
+                      loading="lazy"
+                    />
                     <span>{option.label}</span>
                   </button>
                 );

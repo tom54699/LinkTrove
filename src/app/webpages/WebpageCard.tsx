@@ -557,6 +557,8 @@ const TemplateFields: React.FC<{
         };
         const options = Array.isArray(f.options) ? f.options : [];
         const isSerialStatus = f.key === 'serialStatus';
+        const isSystemTimestamp = f.key === 'updatedAt' || f.key === 'createdAt';
+        const isSystemDateLabel = /updated|created|更新|建立/i.test(String(f.label || ''));
         const normalizedSerial = isSerialStatus ? normalizeSerialStatus(String(rawVal)) : '';
         const pickSerialOption = () => {
           if (!normalizedSerial) return '';
@@ -574,7 +576,7 @@ const TemplateFields: React.FC<{
           ? serialValue || normalizedSerial || String(rawVal)
           : String(rawVal);
         const set = (v: string) => onChange({ ...meta, [f.key]: v });
-        const isEmpty = !(String(rawVal) || '').trim();
+        const isEmpty = rawVal === undefined || rawVal === null || String(rawVal).trim() === '';
         const baseCls = `w-full rounded bg-slate-900 border p-2 text-sm ${f.required && isEmpty ? 'border-red-600' : 'border-slate-700'}`;
         return (
           <div key={f.key}>
@@ -609,13 +611,21 @@ const TemplateFields: React.FC<{
                   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
                 };
                 const dateVal = toDateInput(String(val || ''));
+                const showDash = (isSystemTimestamp || isSystemDateLabel) && isEmpty;
                 return (
-                  <input
-                    className={baseCls}
-                    type="date"
-                    value={dateVal}
-                    onChange={(e) => set(e.target.value)}
-                  />
+                  <div className="relative">
+                    <input
+                      className={`${baseCls} ${showDash ? 'text-transparent' : ''} peer`}
+                      type="date"
+                      value={dateVal}
+                      onChange={(e) => set(e.target.value)}
+                    />
+                    {showDash && (
+                      <div className="pointer-events-none absolute inset-0 flex items-center px-2 text-slate-400 peer-focus:opacity-0">
+                        -
+                      </div>
+                    )}
+                  </div>
                 );
               })()
             ) : f.type === 'url' ? (

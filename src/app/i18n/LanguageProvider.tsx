@@ -187,13 +187,13 @@ export function useI18n(): LanguageContextValue {
 
 // Export language options for UI
 export const LANGUAGE_OPTIONS: { value: Language; label: string; flag: string }[] = [
-  { value: 'en', label: 'English', flag: '🇬🇧' },
-  { value: 'zh_TW', label: '繁體中文', flag: '🇹🇼' },
-  { value: 'zh_CN', label: '简体中文', flag: '🇨🇳' },
-  { value: 'ja', label: '日本語', flag: '🇯🇵' },
-  { value: 'ko', label: '한국어', flag: '🇰🇷' },
-  { value: 'es', label: 'Español', flag: '🇪🇸' },
-  { value: 'de', label: 'Deutsch', flag: '🇩🇪' },
-  { value: 'fr', label: 'Français', flag: '🇫🇷' },
-  { value: 'pt_BR', label: 'Português', flag: '🇧🇷' },
+  { value: 'en', label: 'English', flag: 'icons/flags/us.svg' },
+  { value: 'zh_TW', label: '繁體中文', flag: 'icons/flags/tw.svg' },
+  { value: 'zh_CN', label: '简体中文', flag: 'icons/flags/cn.svg' },
+  { value: 'ja', label: '日本語', flag: 'icons/flags/jp.svg' },
+  { value: 'ko', label: '한국어', flag: 'icons/flags/kr.svg' },
+  { value: 'es', label: 'Español', flag: 'icons/flags/es.svg' },
+  { value: 'de', label: 'Deutsch', flag: 'icons/flags/de.svg' },
+  { value: 'fr', label: 'Français', flag: 'icons/flags/fr.svg' },
+  { value: 'pt_BR', label: 'Português (Brasil)', flag: 'icons/flags/br.svg' },
 ];
