@@ -74,7 +74,13 @@ export const CardGrid: React.FC<CardGridProps> = ({
     try {
       const selectedIds = Object.entries(selected).filter(([, v]) => v).map(([key]) => key);
       const selectedItems = items.filter((item) => selectedIds.includes(item.id));
-      selectedItems.forEach((item) => { window.open(item.url, '_blank'); });
+      selectedItems.forEach((item) => {
+        if (chrome?.tabs?.create) {
+          chrome.tabs.create({ url: item.url, active: false });
+        } else {
+          window.open(item.url, '_blank');
+        }
+      });
       clearSelection();
       setShowOpenTabsConfirm(false);
     } catch { showToast(t('toast_open_tabs_failed'), 'error'); }
@@ -722,7 +728,17 @@ export const CardGrid: React.FC<CardGridProps> = ({
                     updatedAt={(node.item as any).updatedAt}
                     selected={!!selected[(node.item as any).id]}
                     onToggleSelect={() => toggleSelect((node.item as any).id)}
-                    onOpen={() => { try { window.open((node.item as any).url, '_blank'); } catch {} }}
+                    onOpen={(opts) => {
+                      try {
+                        const url = (node.item as any).url;
+                        const openInBackground = opts?.ctrlKey ?? false;
+                        if (chrome?.tabs?.create) {
+                          chrome.tabs.create({ url, active: !openInBackground });
+                        } else {
+                          window.open(url, '_blank');
+                        }
+                      } catch {}
+                    }}
                     onDelete={() => onDeleteOne?.((node.item as any).id)}
                     onUpdateTitle={(v) => onUpdateTitle?.((node.item as any).id, v)}
                     onUpdateUrl={(v) => onUpdateUrl?.((node.item as any).id, v)}

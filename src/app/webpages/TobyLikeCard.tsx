@@ -16,7 +16,7 @@ export interface TobyLikeCardProps {
   updatedAt?: string | number;
   selected?: boolean;
   onToggleSelect?: () => void;
-  onOpen?: () => void;
+  onOpen?: (opts?: { ctrlKey?: boolean }) => void;
   onDelete?: () => void;
   onUpdateTitle?: (title: string) => void;
   onUpdateUrl?: (url: string) => void;
@@ -223,13 +223,13 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
     }).format(date);
   }, [language]);
 
-  const handleCardClick = React.useCallback(() => {
+  const handleCardClick = React.useCallback((e: React.MouseEvent) => {
     if (ghost) return;
     if (isFlipped) {
       setIsFlipped(false);
       return;
     }
-    onOpen?.();
+    onOpen?.({ ctrlKey: e.ctrlKey || e.metaKey });
   }, [ghost, isFlipped, onOpen]);
 
   const triggerFlip = React.useCallback(() => {
