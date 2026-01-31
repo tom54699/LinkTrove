@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Toby-like visual tab manager: drag from Open Tabs to save as cards.",
+    "message": "Visual tab & bookmark manager: drag open tabs to save as cards and organize into collections.",
     "description": "Extension description"
   },
   "settings_title": {

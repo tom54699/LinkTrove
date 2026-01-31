@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Toby 스타일 비주얼 탭 관리자: 열린 탭에서 드래그하여 카드로 저장.",
+    "message": "??? ?/??? ???: ?? ?? ???? ??? ???? ????? ??.",
     "description": "Extension description"
   },
   "settings_title": {
@@ -404,9 +404,9 @@
   "batch_delete": {
     "message": "삭제"
   },
-    "batch_selected": {
-      "message": "선택됨"
-    },
+  "batch_selected": {
+    "message": "선택됨"
+  },
   "move_dialog_title": {
     "message": "$COUNT$개 카드 이동",
     "placeholders": {

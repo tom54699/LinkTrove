@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Gestionnaire d'onglets visuel style Toby : glissez depuis les onglets ouverts pour sauvegarder en cartes.",
+    "message": "Gestionnaire visuel d?onglets et de favoris : faites glisser les onglets ouverts pour les enregistrer en cartes et les organiser en collections.",
     "description": "Extension description"
   },
   "settings_title": {

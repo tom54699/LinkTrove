@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Visueller Tab-Manager im Toby-Stil: Ziehe von offenen Tabs, um als Karten zu speichern.",
+    "message": "Visueller Tab- und Lesezeichen-Manager: Offene Tabs per Drag-and-drop als Karten speichern und in Sammlungen organisieren.",
     "description": "Extension description"
   },
   "settings_title": {
