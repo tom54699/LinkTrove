@@ -1,15 +1,12 @@
 // Google Drive appDataFolder client (MV3 + chrome.identity)
 // Note: Requires manifest oauth2 client_id and scope https://www.googleapis.com/auth/drive.appdata
 
+import { isEdgeBrowser } from '@/utils/browser';
+
 export interface DriveFileInfo {
   fileId: string;
   modifiedTime?: string;
   md5Checksum?: string;
-}
-
-// Browser detection for Edge compatibility
-function isEdgeBrowser(): boolean {
-  return navigator.userAgent.includes('Edg/');
 }
 
 // Compression helpers using native CompressionStream API

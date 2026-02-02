@@ -7,6 +7,11 @@ import { resolve } from 'node:path';
 export default defineConfig({
   base: '',
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+    },
+  },
   build: {
     target: 'es2019',
     // Background service worker has no DOM; disable Vite's modulepreload helper.

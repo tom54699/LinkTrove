@@ -172,19 +172,16 @@ export const WebpagesProvider: React.FC<{
           // Use synchronous meta enrichment in test environment, non-blocking in production
           const enrichmentPromise = (async () => {
             try {
-              // Check if tab is discarded (sleeping) - skip waiting if so
-              const tabInfo = await new Promise<any>((resolve) => {
-                chrome.tabs.get(tid, (t) => resolve(t));
-              });
+              // Wait for tab to complete loading before meta extraction
+              // Note: extractMetaForTab will handle reload if needed (discarded/sleeping tabs)
+              await waitForTabComplete(tid, 8000);
+              // Brief delay to ensure meta tags are fully loaded
+              await new Promise(resolve => setTimeout(resolve, 500));
+            } catch (e) {
+              console.warn(`[WebpagesProvider] Tab ${tid} preparation failed:`, e);
+            }
 
-              if (!tabInfo?.discarded) {
-                // Only wait for non-discarded tabs
-                await waitForTabComplete(tid, 8000);
-                // Brief delay to ensure meta tags are fully loaded
-                await new Promise(resolve => setTimeout(resolve, 500));
-              }
-            } catch {}
-
+            // extractMetaForTab will handle Edge sleeping tabs / Chrome discarded tabs
             const meta = await extractMetaForTab(tid);
 
             if (!meta) {

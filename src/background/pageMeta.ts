@@ -1,6 +1,8 @@
 // Lightweight page metadata extraction and caching via MV3 scripting API
 // Extracts: title, description, siteName, author
 
+import { isEdgeBrowser } from '../utils/browser';
+
 export type PageMeta = Partial<{
   title: string;
   description: string;
@@ -369,8 +371,15 @@ export async function extractMetaForTab(
         continue;
       }
 
-      // Skip problematic tab states
-      if ((tabInfo as any).discarded) {
+      // Skip problematic tab states: discarded tabs or Edge sleeping tabs
+      // Edge: Sleeping Tabs don't set discarded property, reload proactively
+      // Chrome: Only reload if tab is actually discarded
+      if ((tabInfo as any).discarded || isEdgeBrowser()) {
+        const reason = isEdgeBrowser()
+          ? 'Edge browser (proactive reload for potential sleeping tab)'
+          : 'Chrome discarded tab';
+        console.log(`[pageMeta] Waking up tab ${tabId} - Reason: ${reason}`);
+
         // Use reload() to wake up the tab without switching user focus
         try {
           await new Promise<void>((resolve, reject) => {

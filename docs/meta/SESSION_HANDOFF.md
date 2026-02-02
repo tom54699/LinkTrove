@@ -2,7 +2,7 @@
 
 > **用途：** 解決 AI 工具 Session 斷開後的連續性問題，確保下次對話能無縫接續
 >
-> **最後更新：** 2026-01-30 (拖曳卡片翻轉修復與測試補齊)
+> **最後更新：** 2026-02-02 (Edge 睡眠分頁 Meta 提取修正)
 >
 > **更新者：** Claude Code
 
@@ -12,7 +12,31 @@
 
 ### 最近完成的工作
 
-1. ✅ **Open Tabs 閒置後自我校正 + URL 漂移同步修復**（2026-02-02）
+1. ✅ **Edge 瀏覽器睡眠分頁 Meta 提取修正**（2026-02-02）
+   - **問題**：Edge Sleeping Tabs 無 API 偵測，拖曳儲存睡眠分頁時 meta 提取失敗
+   - **根本原因分析**：
+     - Edge Sleeping Tabs ≠ Chrome Discarded Tabs
+     - Edge 不提供 `tab.discarded` 屬性偵測睡眠狀態
+     - `chrome.scripting.executeScript` 對睡眠分頁會 hang（Microsoft Edge Extensions Issue #134）
+     - 拖曳儲存是主要問題路徑（使用者拖曳閒置分頁到 Collection/Group）
+   - **解決方案**：
+     - 新建 `src/utils/browser.ts` 共用瀏覽器偵測工具模組
+     - 重構 `googleDrive.ts` 使用共用 `isEdgeBrowser()` 函數
+     - 修改 `pageMeta.ts:377`：Edge 上主動 reload 所有分頁再提取 meta
+     - 移除 `WebpagesProvider.tsx` 的重複 reload 邏輯（避免 reload 2 次）
+     - 修正 `vite.config.ts` 路徑別名設定
+   - **技術策略**：
+     - Chrome: `if (tab.discarded)` → reload → extract（偵測後喚醒）
+     - Edge: `if (isEdgeBrowser())` → reload → extract（主動喚醒）
+   - **影響**：
+     - Edge 使用者拖曳儲存能正常取得標題、描述、favicon
+     - Chrome 行為完全不變（向下相容）
+     - Edge 上每次儲存多 1-2 秒 reload（可接受的權衡）
+   - **OpenSpec**：`openspec/changes/fix-edge-sleeping-tabs-meta-extraction/`
+   - **參考**：[Microsoft Edge Extensions Issue #134](https://github.com/microsoft/MicrosoftEdge-Extensions/issues/134)
+   - 建置通過，功能驗證完成
+
+2. ✅ **Open Tabs 閒置後自我校正 + URL 漂移同步修復**（2026-02-02）
    - `OpenTabsProvider` 新增前景校正（`visibilitychange` / `focus`）與可見狀態 heartbeat
    - 強化 port 失活重連：疑似死連線時自動重連並重抓
    - `tabsManager` 的 `updated` 事件改為攜帶完整 tab 快照（保留 `changeInfo`）
