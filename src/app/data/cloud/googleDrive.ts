@@ -7,6 +7,11 @@ export interface DriveFileInfo {
   md5Checksum?: string;
 }
 
+// Browser detection for Edge compatibility
+function isEdgeBrowser(): boolean {
+  return navigator.userAgent.includes('Edg/');
+}
+
 // Compression helpers using native CompressionStream API
 async function compressString(text: string): Promise<Uint8Array> {
   const blob = new Blob([text]);
@@ -24,7 +29,58 @@ async function decompressString(data: Uint8Array): Promise<string> {
   return await decompressedBlob.text();
 }
 
+// Edge-compatible OAuth2 flow using launchWebAuthFlow
+async function getAuthTokenViaWebAuthFlow(): Promise<string> {
+  // Use Web Application client ID for Edge (supports launchWebAuthFlow)
+  const clientId = '731462500420-1v4sjff3l99dcldh6a803t2njt4rp216.apps.googleusercontent.com';
+  const redirectUri = (chrome as any).identity.getRedirectURL();
+  const scope = 'https://www.googleapis.com/auth/drive.appdata';
+
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${encodeURIComponent(clientId)}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&scope=${encodeURIComponent(scope)}` +
+    `&response_type=token`;
+
+  return new Promise((resolve, reject) => {
+    try {
+      (chrome as any).identity.launchWebAuthFlow(
+        { url: authUrl, interactive: true },
+        (responseUrl: string) => {
+          const err = (chrome as any).runtime?.lastError;
+          if (err || !responseUrl) {
+            reject(new Error(err?.message || 'OAuth2 authorization failed'));
+            return;
+          }
+
+          // Extract token from URL hash: #access_token=ya29...&expires_in=3600
+          const match = responseUrl.match(/access_token=([^&]+)/);
+          if (!match) {
+            reject(new Error('No access token in OAuth2 response'));
+            return;
+          }
+
+          resolve(match[1]);
+        }
+      );
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+// Cross-browser compatible auth token retrieval
 async function getAuthToken(interactive = false): Promise<string> {
+  // Edge: use launchWebAuthFlow (getAuthToken not supported)
+  if (isEdgeBrowser()) {
+    if (!interactive) {
+      // Edge doesn't support non-interactive token refresh
+      throw new Error('OAuth2 token not cached - interactive login required');
+    }
+    return getAuthTokenViaWebAuthFlow();
+  }
+
+  // Chrome: use standard getAuthToken API
   return new Promise((resolve, reject) => {
     try {
       (chrome as any).identity.getAuthToken({ interactive }, (token: string) => {

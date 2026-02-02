@@ -332,12 +332,20 @@ const CloudSyncPanel: React.FC = () => {
   }
 
   async function doConnect() {
+    setSyncing(true);
+    setError(undefined);
     try {
       const mod = await import('../data/syncService');
       await mod.connect({ blockingOnSync: true });
       await loadSyncStatus();
       showResult(t('cloud_connected'));
-    } catch (e: any) { setError(String(e?.message || e)); }
+    } catch (e: any) {
+      const errorMsg = String(e?.message || e);
+      setError(errorMsg);
+      showResult(errorMsg, 'error');
+    } finally {
+      setSyncing(false);
+    }
   }
 
   async function doBackup() {
@@ -395,9 +403,23 @@ const CloudSyncPanel: React.FC = () => {
               <span className="text-[12px] opacity-60 ml-auto text-[var(--muted)]">{t('cloud_last_sync')}{last ? new Date(last).toLocaleString('zh-TW', { hour12: false }) : t('cloud_never')}</span>
             </>
           ) : (
-            <button className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[var(--accent)] bg-[var(--accent)] text-white text-[13px] font-bold hover:opacity-90 transition-all cursor-pointer" onClick={doConnect}>{t('cloud_connect')}</button>
+            <button
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[var(--accent)] bg-[var(--accent)] text-white text-[13px] font-bold hover:opacity-90 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={doConnect}
+              disabled={syncing}
+            >
+              {syncing && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+              {t('cloud_connect')}
+            </button>
           )}
         </div>
+
+        {error && !connected && (
+          <div className="mb-5 px-3 py-2 rounded-lg border border-red-700 bg-red-900/30 text-red-300 text-[13px] flex items-start gap-2">
+            <span>⚠️</span>
+            <span className="flex-1">{error}</span>
+          </div>
+        )}
 
         {connected && (
           <>
