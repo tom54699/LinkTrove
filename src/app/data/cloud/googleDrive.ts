@@ -73,10 +73,8 @@ async function getAuthTokenViaWebAuthFlow(): Promise<string> {
 async function getAuthToken(interactive = false): Promise<string> {
   // Edge: use launchWebAuthFlow (getAuthToken not supported)
   if (isEdgeBrowser()) {
-    if (!interactive) {
-      // Edge doesn't support non-interactive token refresh
-      throw new Error('OAuth2 token not cached - interactive login required');
-    }
+    // Edge doesn't support non-interactive token refresh, always use interactive mode
+    // This means users will see an auth popup when token expires (~1 hour)
     return getAuthTokenViaWebAuthFlow();
   }
 
