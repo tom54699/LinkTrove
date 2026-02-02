@@ -65,6 +65,11 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 - **Definition of Done**: 建置通過、TypeScript 編譯通過、相關文檔已更新
 - **Session 結束時**：更新 `docs/meta/SESSION_HANDOFF.md` 記錄進度
 
+## Before Pushing Code
+
+- **推送前必須通過測試**：未通過測試不得推送
+- **測試需先取得使用者同意**：遵守本文件「測試執行」規範，先詢問再執行
+
 ## Coding Style & Naming Conventions
 
 - Indentation: 2 spaces; TypeScript strict mode.

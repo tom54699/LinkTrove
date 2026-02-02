@@ -122,6 +122,11 @@ For detailed architecture, see [component-map.md](docs/architecture/component-ma
 4. **Update Docs** - Update relevant documentation after significant changes
 5. **Update Session Handoff** - Update [SESSION_HANDOFF.md](docs/meta/SESSION_HANDOFF.md) at session end
 
+### Before Pushing Code
+
+1. **Tests Must Pass** - Do not push unless tests have been run and passed
+2. **Ask Permission to Run Tests** - Follow AGENTS.md rule: always get user approval before running `npm test`
+
 ### Code Style
 - TypeScript strict mode enabled
 - ESLint + Prettier configuration in place
