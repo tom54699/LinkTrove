@@ -366,7 +366,15 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   title={t('group_open_all')}
                   onClick={(e) => {
                     e.stopPropagation();
-                    groupItems.forEach(item => window.open(item.url, '_blank'));
+                    groupItems.forEach((item) => {
+                      try {
+                        if (chrome?.tabs?.create) {
+                          chrome.tabs.create({ url: item.url, active: false });
+                        } else {
+                          window.open(item.url, '_blank');
+                        }
+                      } catch {}
+                    });
                   }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

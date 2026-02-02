@@ -12,6 +12,12 @@
 
 ### 最近完成的工作
 
+1. ✅ **Open Tabs 閒置後自我校正 + URL 漂移同步修復**（2026-02-02）
+   - `OpenTabsProvider` 新增前景校正（`visibilitychange` / `focus`）與可見狀態 heartbeat
+   - 強化 port 失活重連：疑似死連線時自動重連並重抓
+   - `tabsManager` 的 `updated` 事件改為攜帶完整 tab 快照（保留 `changeInfo`）
+   - `GroupsView` 的 OPEN TABS 改為優先 `chrome.tabs.create`（保留 fallback）
+
 1. ✅ **拖曳卡片翻轉視覺修復 + 測試補齊**（2026-01-30）
    - 拖曳期間停用 3D 翻轉/背面顯示，避免拖曳時翻面
    - 新增 CardGrid 拖曳狀態測試（data-dragging 與翻轉仍可用）

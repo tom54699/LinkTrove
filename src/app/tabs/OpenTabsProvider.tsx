@@ -141,19 +141,59 @@ export const OpenTabsProvider: React.FC<{
     let mounted = true;
     let currentPort: chrome.runtime.Port | null = null;
     let reconnectTimeout: number | null = null;
+    let heartbeatTimer: number | null = null;
+    let lastActivityAt = Date.now();
+    let lastRefreshAt = 0;
+
+    const STALE_PORT_MS = 90_000;
+    const HEARTBEAT_MS = 25_000;
+    const REFRESH_THROTTLE_MS = 1_000;
+
+    const refreshNow = (force = false) => {
+      const now = Date.now();
+      if (!force && now - lastRefreshAt < REFRESH_THROTTLE_MS) return;
+      lastRefreshAt = now;
+      actionsRef.current.refresh();
+    };
+
+    const clearReconnectTimer = () => {
+      if (reconnectTimeout) {
+        window.clearTimeout(reconnectTimeout);
+        reconnectTimeout = null;
+      }
+    };
+
+    const scheduleReconnect = (delayMs = 500) => {
+      if (!mounted || reconnectTimeout) return;
+      reconnectTimeout = window.setTimeout(() => {
+        reconnectTimeout = null;
+        connect();
+      }, delayMs);
+    };
+
+    const forceReconnect = () => {
+      try {
+        currentPort?.disconnect();
+      } catch {}
+      currentPort = null;
+      scheduleReconnect(120);
+    };
 
     const connect = () => {
       if (!mounted) return;
 
       try {
         currentPort = rt.connect({ name: 'openTabs' });
+        lastActivityAt = Date.now();
       } catch {
         // Connection failed, retry after delay
-        reconnectTimeout = window.setTimeout(connect, 1000);
+        scheduleReconnect(1000);
         return;
       }
 
       const onMsg = (msg: any) => {
+        lastActivityAt = Date.now();
+
         if (msg?.kind === 'init' && Array.isArray(msg.tabs)) {
           setTabsState(sortByIndex(msg.tabs));
           if (Array.isArray(msg.nativeGroups)) setNativeTabGroups(msg.nativeGroups);
@@ -199,32 +239,49 @@ export const OpenTabsProvider: React.FC<{
               );
               return sort([...nonWinTabs, ...shifted]);
             } else if (evt.type === 'updated') {
-              const { tabId, changeInfo } = evt.payload;
-              const patch = { ...changeInfo };
-              if ('groupId' in patch) {
+              const payload = evt.payload || {};
+              const tabId = payload.tabId;
+              const patch = {
+                ...(payload.tab || {}),
+                ...(payload.changeInfo || {}),
+              } as Record<string, any>;
+              const normalizedTabId = tabId ?? patch.id;
+
+              if ('groupId' in patch && !('nativeGroupId' in patch)) {
                 patch.nativeGroupId =
                   patch.groupId > 0 ? patch.groupId : undefined;
-
-                // If this group ID is unknown to us, trigger a refresh
-                if (patch.nativeGroupId && !nativeTabGroups.some(g => g.id === patch.nativeGroupId)) {
-                   if (chrome.tabGroups?.query) {
-                      chrome.tabGroups.query({}, (groups) => {
-                         setNativeTabGroups(groups.map(g => ({
-                           id: g.id,
-                           title: g.title,
-                           color: g.color,
-                           windowId: g.windowId,
-                           collapsed: g.collapsed,
-                         })));
-                      });
-                   }
-                }
-
-                delete patch.groupId;
               }
-              return sort(
-                prev.map((t) => (t.id === tabId ? { ...t, ...patch } : t))
+              delete patch.groupId;
+
+              // If this group ID is unknown to us, trigger a refresh
+              if (
+                patch.nativeGroupId &&
+                !nativeTabGroups.some((g) => g.id === patch.nativeGroupId)
+              ) {
+                if (chrome.tabGroups?.query) {
+                  chrome.tabGroups.query({}, (groups) => {
+                    setNativeTabGroups(
+                      groups.map((g) => ({
+                        id: g.id,
+                        title: g.title,
+                        color: g.color,
+                        windowId: g.windowId,
+                        collapsed: g.collapsed,
+                      }))
+                    );
+                  });
+                }
+              }
+
+              if (typeof normalizedTabId !== 'number') return prev;
+
+              const next = prev.map((t) =>
+                t.id === normalizedTabId ? { ...t, ...patch } : t
               );
+              if (!next.some((t) => t.id === normalizedTabId) && payload.tab) {
+                next.push(payload.tab as TabItemData);
+              }
+              return sort(next);
             } else if (evt.type === 'moved') {
               const { tabId, fromIndex, toIndex, windowId } = evt.payload;
               return sort(
@@ -311,14 +368,14 @@ export const OpenTabsProvider: React.FC<{
         }
       };
 
-      currentPort.onMessage.addListener(onMsg);
+      currentPort.onMessage?.addListener?.(onMsg);
 
       // Auto-reconnect when port disconnects (SW restart)
-      currentPort.onDisconnect.addListener(() => {
+      currentPort.onDisconnect?.addListener?.(() => {
         currentPort = null;
         if (mounted) {
           // Delay reconnect to avoid rapid reconnection loops
-          reconnectTimeout = window.setTimeout(connect, 500);
+          scheduleReconnect(500);
         }
       });
 
@@ -328,9 +385,36 @@ export const OpenTabsProvider: React.FC<{
 
     connect();
 
+    const onForegroundSync = () => {
+      if (document.hidden) return;
+      const stale = Date.now() - lastActivityAt > STALE_PORT_MS;
+      refreshNow(true);
+      if (!currentPort || stale) {
+        forceReconnect();
+      }
+    };
+
+    const onVisibilityChange = () => onForegroundSync();
+    const onFocus = () => onForegroundSync();
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onFocus);
+
+    heartbeatTimer = window.setInterval(() => {
+      if (!mounted || document.hidden) return;
+      const stale = Date.now() - lastActivityAt > STALE_PORT_MS;
+      if (!currentPort || stale) {
+        forceReconnect();
+      } else {
+        refreshNow();
+      }
+    }, HEARTBEAT_MS);
+
     return () => {
       mounted = false;
-      if (reconnectTimeout) window.clearTimeout(reconnectTimeout);
+      clearReconnectTimer();
+      if (heartbeatTimer) window.clearInterval(heartbeatTimer);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onFocus);
       try {
         currentPort?.disconnect();
       } catch {}

@@ -1,7 +1,7 @@
 type TabEvent =
   | { type: 'created'; payload: any }
   | { type: 'removed'; payload: { tabId: number } }
-  | { type: 'updated'; payload: { tabId: number; changeInfo: any } }
+  | { type: 'updated'; payload: { tabId: number; changeInfo: any; tab?: any } }
   | { type: 'activated'; payload: { tabId: number; windowId: number } }
   | { type: 'replaced'; payload: { addedTabId: number; removedTabId: number } }
   | {
@@ -44,8 +44,13 @@ export function createTabsManager(opts: TabsManagerOptions) {
     safe(() => onChange({ type: 'created', payload: formatTab(tab) }));
   const removed = (tabId: number) =>
     safe(() => onChange({ type: 'removed', payload: { tabId } }));
-  const updated = (tabId: number, changeInfo: any) =>
-    safe(() => onChange({ type: 'updated', payload: { tabId, changeInfo } }));
+  const updated = (tabId: number, changeInfo: any, tab?: any) =>
+    safe(() =>
+      onChange({
+        type: 'updated',
+        payload: { tabId, changeInfo, tab: tab ? formatTab(tab) : undefined },
+      })
+    );
   const activated = (activeInfo: { tabId: number; windowId: number }) =>
     safe(() => onChange({ type: 'activated', payload: activeInfo }));
   const replaced = (addedTabId: number, removedTabId: number) =>
@@ -74,8 +79,8 @@ export function createTabsManager(opts: TabsManagerOptions) {
   function _addListeners() {
     chrome.tabs.onCreated.addListener(created);
     chrome.tabs.onRemoved.addListener((tabId: number) => removed(tabId));
-    chrome.tabs.onUpdated.addListener((tabId: number, changeInfo: any) =>
-      updated(tabId, changeInfo)
+    chrome.tabs.onUpdated.addListener((tabId: number, changeInfo: any, tab: any) =>
+      updated(tabId, changeInfo, tab)
     );
     chrome.tabs.onActivated.addListener(activated);
     chrome.tabs.onReplaced.addListener(replaced);
@@ -113,8 +118,8 @@ export function createTabsManager(opts: TabsManagerOptions) {
     // Re-define to capture stable fns and use them in add/remove
     (removeListeners as any)._created = created;
     (removeListeners as any)._removed = (tabId: number) => removed(tabId);
-    (removeListeners as any)._updated = (tabId: number, ci: any) =>
-      updated(tabId, ci);
+    (removeListeners as any)._updated = (tabId: number, ci: any, tab: any) =>
+      updated(tabId, ci, tab);
     (removeListeners as any)._activated = activated;
     (removeListeners as any)._replaced = replaced;
     (removeListeners as any)._moved = (tabId: number, mi: any) =>

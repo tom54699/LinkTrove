@@ -106,7 +106,15 @@ describe('tabsManager listeners', () => {
 
     expect(onChange).toHaveBeenCalledWith({
       type: 'created',
-      payload: { id: 1, title: 'A' },
+      payload: {
+        id: 1,
+        title: 'A',
+        url: undefined,
+        favIconUrl: undefined,
+        index: undefined,
+        windowId: undefined,
+        nativeGroupId: undefined,
+      },
     });
     expect(onChange).toHaveBeenCalledWith({
       type: 'removed',
@@ -114,7 +122,19 @@ describe('tabsManager listeners', () => {
     });
     expect(onChange).toHaveBeenCalledWith({
       type: 'updated',
-      payload: { tabId: 3, changeInfo: { status: 'complete' } },
+      payload: {
+        tabId: 3,
+        changeInfo: { status: 'complete' },
+        tab: {
+          id: 3,
+          title: undefined,
+          url: undefined,
+          favIconUrl: undefined,
+          index: undefined,
+          windowId: undefined,
+          nativeGroupId: undefined,
+        },
+      },
     });
     expect(onChange).toHaveBeenCalledWith({
       type: 'activated',

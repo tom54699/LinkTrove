@@ -31,7 +31,7 @@
 ### 1) 批次開啟分頁
 
 - 取出被選取的卡片 URL
-- 使用 `window.open(url, '_blank')` 逐一開啟
+- 優先使用 `chrome.tabs.create({ url, active: false })` 逐一開啟（無法使用時 fallback 到 `window.open(url, '_blank')`）
 - 超過 10 筆時會先顯示確認提示
 
 ### 2) 批次移動
