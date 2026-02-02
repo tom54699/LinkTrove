@@ -7,6 +7,11 @@ The system SHALL render card-drag ghost preview only after drag source identity 
 - **THEN** the system immediately records the dragged card id in drag state
 - **AND** the dragged card can be filtered from the preview list without waiting for first `dragover`
 
+#### Scenario: Drag start does not disable drag source
+- **WHEN** user starts dragging a saved card
+- **THEN** the drag source remains interactive (no `pointer-events: none`) so the drag is not cancelled
+- **AND** ghost activation is deferred until `dragover` in a drop zone
+
 #### Scenario: Card ghost waits for ready state
 - **GIVEN** a card drag is in progress
 - **WHEN** ghost signals are active but either dragged card id or ghost index is not ready

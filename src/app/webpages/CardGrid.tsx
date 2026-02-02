@@ -700,7 +700,6 @@ export const CardGrid: React.FC<CardGridProps> = ({
                   try { e.dataTransfer.setData('application/x-linktrove-webpage-meta', JSON.stringify({ id: it.id, title: it.title, url: it.url, favicon: it.favicon, description: it.description })); } catch {}
                   e.dataTransfer.effectAllowed = 'move';
                   setDraggingCardId(it.id);
-                  try { broadcastGhostActive(it.id); } catch {}
                   try { setDragWebpage({ id: it.id, title: it.title, url: it.url, favicon: it.favicon, description: it.description }); } catch {}
                   (e.currentTarget as HTMLElement).setAttribute('data-dragging', 'true');
                 } : undefined}
