@@ -665,7 +665,9 @@ export const CardGrid: React.FC<CardGridProps> = ({
         ) : (
           <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 270px))', maxWidth: '1200px' }}>
             {(() => {
-              const ghostActive = isOver || ghostTab != null || ghostType != null || ghostIndex != null;
+              const ghostSignalsActive = isOver || ghostTab != null || ghostType != null || ghostIndex != null;
+              const cardGhostReady = ghostType !== 'card' || (draggingCardId != null && ghostIndex != null);
+              const ghostActive = ghostSignalsActive && cardGhostReady;
               const viewItems = ghostActive && draggingCardId ? items.filter((x) => x.id !== draggingCardId) : items;
               const renderList: Array<{ type: 'card'; item: WebpageCardData } | { type: 'ghost' }> = [];
               let gIdx = -1;
@@ -697,12 +699,15 @@ export const CardGrid: React.FC<CardGridProps> = ({
                   e.dataTransfer.setData('application/x-linktrove-webpage', it.id);
                   try { e.dataTransfer.setData('application/x-linktrove-webpage-meta', JSON.stringify({ id: it.id, title: it.title, url: it.url, favicon: it.favicon, description: it.description })); } catch {}
                   e.dataTransfer.effectAllowed = 'move';
+                  setDraggingCardId(it.id);
+                  try { broadcastGhostActive(it.id); } catch {}
                   try { setDragWebpage({ id: it.id, title: it.title, url: it.url, favicon: it.favicon, description: it.description }); } catch {}
                   (e.currentTarget as HTMLElement).setAttribute('data-dragging', 'true');
                 } : undefined}
                 onDragEnd={node.type === 'card' ? (e) => {
                   (e.currentTarget as HTMLElement).removeAttribute('data-dragging');
                   setDraggingCardId(null); try { setDragWebpage(null); } catch {}
+                  try { broadcastGhostActive(null); } catch {}
                   ghostBeforeRef.current = null;
                   prevGiRef.current = null;
                 } : undefined}
