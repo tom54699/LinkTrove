@@ -9,6 +9,59 @@ export interface DriveFileInfo {
   md5Checksum?: string;
 }
 
+// Edge token cache interface
+interface EdgeTokenCache {
+  token: string;
+  expiresAt: number; // Unix timestamp in milliseconds
+}
+
+// Constants
+const EDGE_TOKEN_BUFFER_MS = 5 * 60 * 1000; // 5 minutes safety buffer
+
+// Get cached Edge token from chrome.storage.local
+async function getEdgeTokenCache(): Promise<EdgeTokenCache | null> {
+  try {
+    const result: any = await new Promise((resolve) => {
+      chrome.storage.local.get(['edgeGoogleToken'], resolve);
+    });
+    const cache = result?.edgeGoogleToken;
+    if (cache && cache.token && cache.expiresAt) {
+      // Check if token is still valid with safety buffer
+      if (Date.now() < cache.expiresAt - EDGE_TOKEN_BUFFER_MS) {
+        return cache;
+      }
+    }
+  } catch (e) {
+    console.warn('[Drive] Failed to get Edge token cache:', e);
+  }
+  return null;
+}
+
+// Save Edge token to chrome.storage.local
+async function saveEdgeTokenCache(token: string, expiresIn: number): Promise<void> {
+  try {
+    const expiresAt = Date.now() + expiresIn * 1000;
+    await new Promise<void>((resolve) => {
+      chrome.storage.local.set({ edgeGoogleToken: { token, expiresAt } }, () => resolve());
+    });
+    console.log(`[Drive] Edge token cached, expires in ${Math.floor(expiresIn / 60)} minutes`);
+  } catch (e) {
+    console.warn('[Drive] Failed to save Edge token cache:', e);
+  }
+}
+
+// Clear Edge token cache
+async function clearEdgeTokenCache(): Promise<void> {
+  try {
+    await new Promise<void>((resolve) => {
+      chrome.storage.local.remove(['edgeGoogleToken'], () => resolve());
+    });
+    console.log('[Drive] Edge token cache cleared');
+  } catch (e) {
+    console.warn('[Drive] Failed to clear Edge token cache:', e);
+  }
+}
+
 // Compression helpers using native CompressionStream API
 async function compressString(text: string): Promise<Uint8Array> {
   const blob = new Blob([text]);
@@ -27,7 +80,18 @@ async function decompressString(data: Uint8Array): Promise<string> {
 }
 
 // Edge-compatible OAuth2 flow using launchWebAuthFlow
-async function getAuthTokenViaWebAuthFlow(): Promise<string> {
+async function getAuthTokenViaWebAuthFlow(interactive: boolean): Promise<string> {
+  // Always try cached token first (even in interactive mode)
+  const cache = await getEdgeTokenCache();
+  if (cache) {
+    return cache.token;
+  }
+
+  // No valid cache - need to authenticate
+  if (!interactive) {
+    throw new Error('EDGE_TOKEN_EXPIRED');
+  }
+
   // Use Web Application client ID for Edge (supports launchWebAuthFlow)
   const clientId = '731462500420-1v4sjff3l99dcldh6a803t2njt4rp216.apps.googleusercontent.com';
   const redirectUri = (chrome as any).identity.getRedirectURL();
@@ -37,7 +101,8 @@ async function getAuthTokenViaWebAuthFlow(): Promise<string> {
     `client_id=${encodeURIComponent(clientId)}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
     `&scope=${encodeURIComponent(scope)}` +
-    `&response_type=token`;
+    `&response_type=token` +
+    `&prompt=consent`; // Force consent screen to get fresh token
 
   return new Promise((resolve, reject) => {
     try {
@@ -50,14 +115,22 @@ async function getAuthTokenViaWebAuthFlow(): Promise<string> {
             return;
           }
 
-          // Extract token from URL hash: #access_token=ya29...&expires_in=3600
-          const match = responseUrl.match(/access_token=([^&]+)/);
-          if (!match) {
+          // Extract token and expires_in from URL hash: #access_token=ya29...&expires_in=3600
+          const tokenMatch = responseUrl.match(/access_token=([^&]+)/);
+          const expiresMatch = responseUrl.match(/expires_in=(\d+)/);
+
+          if (!tokenMatch) {
             reject(new Error('No access token in OAuth2 response'));
             return;
           }
 
-          resolve(match[1]);
+          const token = tokenMatch[1];
+          const expiresIn = expiresMatch ? parseInt(expiresMatch[1], 10) : 3600; // Default 1 hour
+
+          // Cache the token
+          void saveEdgeTokenCache(token, expiresIn);
+
+          resolve(token);
         }
       );
     } catch (e) {
@@ -68,11 +141,9 @@ async function getAuthTokenViaWebAuthFlow(): Promise<string> {
 
 // Cross-browser compatible auth token retrieval
 async function getAuthToken(interactive = false): Promise<string> {
-  // Edge: use launchWebAuthFlow (getAuthToken not supported)
+  // Edge: use launchWebAuthFlow with token caching
   if (isEdgeBrowser()) {
-    // Edge doesn't support non-interactive token refresh, always use interactive mode
-    // This means users will see an auth popup when token expires (~1 hour)
-    return getAuthTokenViaWebAuthFlow();
+    return getAuthTokenViaWebAuthFlow(interactive);
   }
 
   // Chrome: use standard getAuthToken API
@@ -228,6 +299,11 @@ export async function createOrUpdate(content: string, name = 'linktrove.json.gz'
 
 export async function disconnect(): Promise<void> {
   try {
+    // Clear Edge token cache
+    if (isEdgeBrowser()) {
+      await clearEdgeTokenCache();
+    }
+
     // Remove cached token; user may need to re-consent later
     (chrome as any).identity.getAuthToken({ interactive: false }, (token: string) => {
       if (!token) return;

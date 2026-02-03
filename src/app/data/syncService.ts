@@ -3,6 +3,7 @@ import { createStorageService } from '../../background/storageService';
 import * as drive from './cloud/googleDrive';
 import type { DriveFileInfo } from './cloud/googleDrive';
 import { mergeLWW, type ExportPayload } from './mergeService';
+import { isEdgeBrowser } from '@/utils/browser';
 
 type SyncStatus = {
   connected: boolean;
@@ -84,6 +85,21 @@ function ensureStorageListener() {
   }
 }
 
+// Check if Edge token cache is valid (without triggering auth popup)
+async function checkEdgeTokenCache(): Promise<boolean> {
+  try {
+    const result: any = await new Promise((resolve) => {
+      chrome.storage.local.get(['edgeGoogleToken'], resolve);
+    });
+    const cache = result?.edgeGoogleToken;
+    if (cache && cache.token && cache.expiresAt) {
+      const BUFFER_MS = 5 * 60 * 1000; // 5 minutes
+      return Date.now() < cache.expiresAt - BUFFER_MS;
+    }
+  } catch {}
+  return false;
+}
+
 async function bootstrapStatus() {
   try {
     const got: any = await new Promise((resolve) => {
@@ -105,10 +121,21 @@ async function bootstrapStatus() {
       status.syncPhase = undefined;
       if (stored.connected) {
         try {
-          await drive.connect(false);
-          status.connected = true;
-        } catch {
+          // Edge: check token cache without triggering auth popup
+          if (isEdgeBrowser()) {
+            const hasValidToken = await checkEdgeTokenCache();
+            status.connected = hasValidToken;
+            if (!hasValidToken) {
+              console.log('[Sync] Edge token cache expired, user needs to reconnect');
+            }
+          } else {
+            // Chrome: use standard non-interactive auth check
+            await drive.connect(false);
+            status.connected = true;
+          }
+        } catch (e) {
           status.connected = false;
+          console.warn('[Sync] Failed to verify connection:', e);
         }
       }
     }
@@ -183,10 +210,20 @@ async function ensureRemoteFreshness(options?: { blocking?: boolean }) {
     await restoreNow(info, true, { blocking: useBlocking });
   } catch (error) {
     const message = (error as any)?.message || String(error);
+    // Handle Edge token expiration with user-friendly message
+    const friendlyMessage = message === 'EDGE_TOKEN_EXPIRED'
+      ? '授權已過期，請重新連接 Google Drive'
+      : message;
+
     if (started) {
-      setLocalStatus({ syncing: false, syncPhase: undefined, blocking: false, error: message });
+      setLocalStatus({ syncing: false, syncPhase: undefined, blocking: false, error: friendlyMessage });
     } else {
-      setLocalStatus({ error: message });
+      setLocalStatus({ error: friendlyMessage });
+    }
+
+    // If token expired, mark as disconnected
+    if (message === 'EDGE_TOKEN_EXPIRED') {
+      status.connected = false;
     }
   }
 }
@@ -260,7 +297,19 @@ export async function backupNow(options?: { blocking?: boolean }): Promise<void>
     });
     void triggerAutoGC(now);
   } catch (e: any) {
-    setLocalStatus({ syncing: false, syncPhase: undefined, blocking: useBlocking, error: String(e?.message || e) });
+    const message = e?.message || String(e);
+    // Handle Edge token expiration with user-friendly message
+    const friendlyMessage = message === 'EDGE_TOKEN_EXPIRED'
+      ? '授權已過期，請重新連接 Google Drive'
+      : message;
+
+    setLocalStatus({ syncing: false, syncPhase: undefined, blocking: useBlocking, error: friendlyMessage });
+
+    // If token expired, mark as disconnected
+    if (message === 'EDGE_TOKEN_EXPIRED') {
+      status.connected = false;
+    }
+
     throw e;
   }
 }
@@ -366,7 +415,19 @@ export async function restoreNow(
     });
     void triggerAutoGC(now);
   } catch (e: any) {
-    setLocalStatus({ syncing: false, syncPhase: undefined, blocking: blockingActive, error: String(e?.message || e) });
+    const message = e?.message || String(e);
+    // Handle Edge token expiration with user-friendly message
+    const friendlyMessage = message === 'EDGE_TOKEN_EXPIRED'
+      ? '授權已過期，請重新連接 Google Drive'
+      : message;
+
+    setLocalStatus({ syncing: false, syncPhase: undefined, blocking: blockingActive, error: friendlyMessage });
+
+    // If token expired, mark as disconnected
+    if (message === 'EDGE_TOKEN_EXPIRED') {
+      status.connected = false;
+    }
+
     throw e;
   } finally {
     restoring = false;
