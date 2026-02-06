@@ -122,6 +122,9 @@ export const CardGrid: React.FC<CardGridProps> = ({
   const [lastDropTitle, setLastDropTitle] = React.useState<string | null>(null);
 
   const prevGiRef = React.useRef<number | null>(null);
+  const dragStartXRef = React.useRef<number | null>(null);
+  const dragStartYRef = React.useRef<number | null>(null);
+  const grabOffsetXRef = React.useRef<number>(0);
 
   const normalizeBeforeId = React.useCallback(
     (beforeId: string | '__END__' | null) => {
@@ -201,9 +204,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
       }
 
       // Step 2: 判斷滑鼠在哪一行（或行間區域）
-      const GAP_THRESHOLD = 20; // 行間區域的閾值
       let targetRow = -1;
-      let betweenRows = false;
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
@@ -215,14 +216,13 @@ export const CardGrid: React.FC<CardGridProps> = ({
           break;
         }
 
-        // 檢查是否在兩行之間
+        // 檢查是否在兩行之間（移除間隙大小限制）
         if (i < rows.length - 1) {
           const nextRow = rows[i + 1];
           const gapTop = rowBottom;
           const gapBottom = nextRow[0].rect.top;
 
-          if (clientY > gapTop && clientY < gapBottom && (gapBottom - gapTop) <= GAP_THRESHOLD) {
-            betweenRows = true;
+          if (clientY > gapTop && clientY < gapBottom) {
             // 判斷靠近哪一行
             if (clientY - gapTop < gapBottom - clientY) {
               targetRow = i;
@@ -247,30 +247,73 @@ export const CardGrid: React.FC<CardGridProps> = ({
       const row = rows[targetRow];
       let newIndex = 0;
 
-      // 如果在行間區域且靠近下一行開頭，直接返回該行第一張卡片的 index
-      if (betweenRows && clientY > row[0].rect.top - GAP_THRESHOLD) {
-        newIndex = row[0].idx;
+      // 計算卡片中心的 X 座標（補償滑鼠抓取偏移量）
+      const cardCenterX = clientX - grabOffsetXRef.current;
+
+      // 策略：一直使用實時 cardCenterX，但透過容差（TOLERANCE）來處理跨行對齊
+      // 判斷是否跨行：比較目標行的 Y 座標和起始 Y 座標
+      let isCrossingRows = false;
+      if (dragStartYRef.current !== null && row.length > 0) {
+        const targetRowY = row[0].centerY;
+        const yDiff = Math.abs(targetRowY - dragStartYRef.current);
+        // 如果 Y 座標差異超過 25px，視為跨行
+        isCrossingRows = yDiff > 25;
+      }
+
+      // 一直使用實時 X 座標，避免來回拖曳時 refX 跳動
+      const refX = cardCenterX;
+
+      if (row.length === 0) {
+        newIndex = 0;
       } else {
-        // 在行內，找到 X 座標對應的位置
+        // 跨行時容錯範圍大（寬容對齊），同行時無容錯（精確）
+        const TOLERANCE = isCrossingRows ? 50 : 0;
         let inserted = false;
-        for (let i = 0; i < row.length; i++) {
-          const card = row[i];
-          if (clientX < card.centerX) {
-            newIndex = card.idx;
+
+        if (isCrossingRows && TOLERANCE > 0) {
+          // 跨行模式：先找最接近的卡片
+          let closestCard = row[0];
+          let minDist = Math.abs(refX - row[0].centerX);
+
+          for (let i = 1; i < row.length; i++) {
+            const dist = Math.abs(refX - row[i].centerX);
+            if (dist < minDist) {
+              minDist = dist;
+              closestCard = row[i];
+            }
+          }
+
+          // 如果最接近的卡片在容差範圍內，插入到該位置
+          if (minDist <= TOLERANCE) {
+            newIndex = closestCard.idx;
             inserted = true;
-            break;
+          }
+        }
+
+        // 如果跨行模式沒有找到匹配，或是同行模式，使用正常邏輯
+        if (!inserted) {
+          for (let i = 0; i < row.length; i++) {
+            const card = row[i];
+            const diff = refX - card.centerX;
+
+            // refX 在卡片中心點左側：插入到該卡片之前
+            if (diff < 0) {
+              newIndex = card.idx;
+              inserted = true;
+              break;
+            }
           }
         }
 
         if (!inserted) {
-          // 在這一行最後一張卡片之後
-          const lastCard = row[row.length - 1];
-          newIndex = lastCard.idx + 1;
+          // refX 在所有卡片中心點右側：插入到最後
+          newIndex = row[row.length - 1].idx + 1;
         }
       }
 
-      // Step 4: 應用 Hysteresis
-      const buffer = 20;
+      // Step 4: 應用 Hysteresis（使用與 Step 3 相同的 refX）
+      // buffer 控制切換靈敏度：值越小越敏感，但可能抖動；值越大越穩定，但需要拖更遠
+      const buffer = 15;
       const currentIndex = prevGiRef.current;
 
       if (currentIndex !== null && currentIndex >= 0 && currentIndex <= wrappers.length) {
@@ -285,13 +328,13 @@ export const CardGrid: React.FC<CardGridProps> = ({
           const card2 = cardsWithPos.find(c => c.idx === Math.max(newIndex, currentIndex) - 1);
 
           if (card1 && newIndex > currentIndex) {
-            // 向右移動：必須超過中心點一定的 buffer (超過一半多一點)
-            if (clientX < card1.centerX + buffer) {
+            // 向右移動：必須超過中心點一定的 buffer
+            if (refX < card1.centerX + buffer) {
               return currentIndex;
             }
           } else if (card2 && newIndex < currentIndex) {
-            // 向左移動：必須超過中心點一定的 buffer (往左)
-            if (clientX > card2.centerX - buffer) {
+            // 向左移動：必須超過中心點一定的 buffer
+            if (refX > card2.centerX - buffer) {
               return currentIndex;
             }
           }
@@ -702,6 +745,18 @@ export const CardGrid: React.FC<CardGridProps> = ({
                   setDraggingCardId(it.id);
                   try { setDragWebpage({ id: it.id, title: it.title, url: it.url, favicon: it.favicon, description: it.description }); } catch {}
                   (e.currentTarget as HTMLElement).setAttribute('data-dragging', 'true');
+                  // 初始化 prevGiRef 為當前卡片位置，避免拖曳初期 ghost 跳動
+                  const currentIndex = items.findIndex(card => card.id === it.id);
+                  if (currentIndex !== -1) {
+                    prevGiRef.current = currentIndex;
+                  }
+                  // 記錄卡片中心 X/Y 和滑鼠抓取偏移量
+                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                  const cardCenterX = rect.left + rect.width / 2;
+                  const cardCenterY = rect.top + rect.height / 2;
+                  dragStartXRef.current = cardCenterX;
+                  dragStartYRef.current = cardCenterY;
+                  grabOffsetXRef.current = e.clientX - cardCenterX;
                 } : undefined}
                 onDragEnd={node.type === 'card' ? (e) => {
                   (e.currentTarget as HTMLElement).removeAttribute('data-dragging');
@@ -709,6 +764,9 @@ export const CardGrid: React.FC<CardGridProps> = ({
                   try { broadcastGhostActive(null); } catch {}
                   ghostBeforeRef.current = null;
                   prevGiRef.current = null;
+                  dragStartXRef.current = null;
+                  dragStartYRef.current = null;
+                  grabOffsetXRef.current = 0;
                 } : undefined}
               >
                 {node.type === 'ghost' ? (
