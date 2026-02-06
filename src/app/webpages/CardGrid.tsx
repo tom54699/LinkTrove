@@ -253,15 +253,26 @@ export const CardGrid: React.FC<CardGridProps> = ({
       // 策略：一直使用實時 cardCenterX，但透過容差（TOLERANCE）來處理跨行對齊
       // 判斷是否跨行：比較目標行的 Y 座標和起始 Y 座標
       let isCrossingRows = false;
+      let isDraggingDown = false;
       if (dragStartYRef.current !== null && row.length > 0) {
         const targetRowY = row[0].centerY;
-        const yDiff = Math.abs(targetRowY - dragStartYRef.current);
+        const yDiff = targetRowY - dragStartYRef.current;
         // 如果 Y 座標差異超過 25px，視為跨行
-        isCrossingRows = yDiff > 25;
+        isCrossingRows = Math.abs(yDiff) > 25;
+        // 判斷是往上還是往下拖曳
+        isDraggingDown = yDiff > 0;
+        console.log('[DND] 跨行判斷:', {
+          dragStartY: dragStartYRef.current,
+          targetRowY,
+          yDiff,
+          isCrossingRows,
+          isDraggingDown: isDraggingDown ? '往下' : '往上'
+        });
       }
 
       // 一直使用實時 X 座標，避免來回拖曳時 refX 跳動
       const refX = cardCenterX;
+      console.log('[DND] X座標:', { clientX, grabOffset: grabOffsetXRef.current, cardCenterX: refX });
 
       if (row.length === 0) {
         newIndex = 0;
@@ -275,31 +286,64 @@ export const CardGrid: React.FC<CardGridProps> = ({
           let closestCard = row[0];
           let minDist = Math.abs(refX - row[0].centerX);
 
+          console.log('[DND] 跨行模式 - 尋找最接近卡片');
+          console.log('[DND] 目標行:', row.map(c => ({ idx: c.idx, centerX: c.centerX })));
+          console.log('[DND] 卡片0:', { idx: row[0].idx, centerX: row[0].centerX, dist: minDist });
+
           for (let i = 1; i < row.length; i++) {
             const dist = Math.abs(refX - row[i].centerX);
+            console.log(`[DND] 卡片${i}:`, { idx: row[i].idx, centerX: row[i].centerX, dist });
             if (dist < minDist) {
               minDist = dist;
               closestCard = row[i];
+              console.log(`[DND]   → 更新最接近: idx=${closestCard.idx}`);
             }
           }
 
+          console.log('[DND] 最接近卡片:', { idx: closestCard.idx, centerX: closestCard.centerX, minDist, TOLERANCE });
+
           // 如果最接近的卡片在容差範圍內，插入到該位置
           if (minDist <= TOLERANCE) {
-            newIndex = closestCard.idx;
+            // 找到該卡片在目標行中的位置
+            const posInRow = row.findIndex(c => c.idx === closestCard.idx);
+            console.log('[DND] 最接近卡片在行內位置:', posInRow, '(0=第一張, 1=第二張, 2=第三張...)');
+
+            // 根據拖曳方向調整
+            if (isDraggingDown) {
+              // 往下：需要往後一張
+              if (posInRow < row.length - 1) {
+                const nextCard = row[posInRow + 1];
+                newIndex = nextCard.idx;
+                console.log('[DND] ✓ 往下調整: 返回後一張 idx=', newIndex);
+              } else {
+                newIndex = closestCard.idx + 1;
+                console.log('[DND] ✓ 往下調整: 最後一張，返回 idx=', newIndex);
+              }
+            } else {
+              // 往上：直接返回
+              newIndex = closestCard.idx;
+              console.log('[DND] ✓ 往上: 返回 idx=', newIndex);
+            }
+
             inserted = true;
+          } else {
+            console.log('[DND] ✗ 超出容差，繼續正常邏輯');
           }
         }
 
         // 如果跨行模式沒有找到匹配，或是同行模式，使用正常邏輯
         if (!inserted) {
+          console.log('[DND] 使用正常比較邏輯');
           for (let i = 0; i < row.length; i++) {
             const card = row[i];
             const diff = refX - card.centerX;
+            console.log(`[DND] 比較卡片${i}:`, { idx: card.idx, centerX: card.centerX, diff });
 
             // refX 在卡片中心點左側：插入到該卡片之前
             if (diff < 0) {
               newIndex = card.idx;
               inserted = true;
+              console.log(`[DND] ✓ diff < 0，插入到 idx=${newIndex}`);
               break;
             }
           }
@@ -308,39 +352,52 @@ export const CardGrid: React.FC<CardGridProps> = ({
         if (!inserted) {
           // refX 在所有卡片中心點右側：插入到最後
           newIndex = row[row.length - 1].idx + 1;
+          console.log(`[DND] 所有卡片都在左側，插入到最後 idx=${newIndex}`);
         }
+
+        console.log('[DND] === 計算結果 newIndex =', newIndex, '===');
       }
 
       // Step 4: 應用 Hysteresis（使用與 Step 3 相同的 refX）
       // buffer 控制切換靈敏度：值越小越敏感，但可能抖動；值越大越穩定，但需要拖更遠
-      const buffer = 15;
+      const bufferRight = 20;  // 往右：較大 buffer（降低敏感度）
+      const bufferLeft = 10;   // 往左：較小 buffer（增加敏感度）
       const currentIndex = prevGiRef.current;
+
+      console.log('[DND] Hysteresis:', { newIndex, currentIndex, bufferRight, bufferLeft });
 
       if (currentIndex !== null && currentIndex >= 0 && currentIndex <= wrappers.length) {
         if (newIndex === currentIndex) {
+          console.log('[DND] Hysteresis: 相同位置，維持');
           return currentIndex;
         }
 
         // 如果變化不大（相鄰位置），使用較嚴格的 Hysteresis
         if (Math.abs(newIndex - currentIndex) === 1) {
+          console.log('[DND] Hysteresis: 相鄰位置檢查');
           // 找出相關的卡片邊界
           const card1 = cardsWithPos.find(c => c.idx === Math.min(newIndex, currentIndex));
           const card2 = cardsWithPos.find(c => c.idx === Math.max(newIndex, currentIndex) - 1);
 
           if (card1 && newIndex > currentIndex) {
-            // 向右移動：必須超過中心點一定的 buffer
-            if (refX < card1.centerX + buffer) {
+            // 向右移動：使用較大 buffer（降低敏感度）
+            console.log('[DND] Hysteresis: 向右移動', { refX, threshold: card1.centerX + bufferRight });
+            if (refX < card1.centerX + bufferRight) {
+              console.log('[DND] Hysteresis: ✗ 未超過，維持 currentIndex=', currentIndex);
               return currentIndex;
             }
           } else if (card2 && newIndex < currentIndex) {
-            // 向左移動：必須超過中心點一定的 buffer
-            if (refX > card2.centerX - buffer) {
+            // 向左移動：使用較小 buffer（增加敏感度）
+            console.log('[DND] Hysteresis: 向左移動', { refX, threshold: card2.centerX - bufferLeft });
+            if (refX > card2.centerX - bufferLeft) {
+              console.log('[DND] Hysteresis: ✗ 未超過，維持 currentIndex=', currentIndex);
               return currentIndex;
             }
           }
         }
       }
 
+      console.log('[DND] === 最終返回 newIndex =', newIndex, '===\n');
       return newIndex;
     },
     []
