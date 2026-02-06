@@ -631,18 +631,21 @@ export const CardGrid: React.FC<CardGridProps> = ({
         }
         
         beforeId = normalizeBeforeId(beforeId);
+
+        // 立即清理 ghost 狀態，不等待 async 操作完成
+        // 這樣可以避免 ghost 被後續的 meta enrichment 阻塞
+        setGhostTab(null); setGhostType(null); setGhostIndex(null); setDraggingCardId(null);
+        ghostBeforeRef.current = null;
+        prevGiRef.current = null;
+        setIsOver(false);
+        try { broadcastGhostActive(null); } catch {}
+        try { setDragWebpage(null); } catch {}  // 觸發 lt:ghost-clear 廣播
+
+        // 執行 async 操作（背景執行，不阻塞 ghost 清理）
         try {
           await onDropExistingCard?.(fromId, beforeId);
-        } finally {
-          // Cleanup - 確保 ghost 一定會清理，即使 async 拋異常
-          // 重要：跨 group 拖曳時，原卡片 DOM 會被移除，onDragEnd 不會觸發
-          // 所以必須在這裡直接調用 setDragWebpage(null) 來觸發全局清理
-          setGhostTab(null); setGhostType(null); setGhostIndex(null); setDraggingCardId(null);
-          ghostBeforeRef.current = null;
-          prevGiRef.current = null;
-          setIsOver(false);
-          try { broadcastGhostActive(null); } catch {}
-          try { setDragWebpage(null); } catch {}  // 觸發 lt:ghost-clear 廣播
+        } catch {
+          // 錯誤已在 onDropExistingCard 內部處理（顯示 toast）
         }
         return;
       }
@@ -676,25 +679,28 @@ export const CardGrid: React.FC<CardGridProps> = ({
         }
         const rawBeforeId = beforeId;
         beforeId = normalizeBeforeId(beforeId);
-        
-        let ret;
-        if ((items?.length || 0) > 0) ret = (onDropTab as any)?.(tab, beforeId);
-        else ret = (onDropTab as any)?.(tab);
-        try { if (ret && typeof (ret as any).then === 'function') await ret; } catch {}
-        try { setLastDropTitle(String((tab as any).title || (tab as any).url || '')); } catch {}
-        
-        // Cleanup
+
+        // 立即清理 ghost 狀態，不等待 async 操作完成
+        // 這樣可以避免 ghost 被後續的 meta enrichment 阻塞（當啟用「儲存後關閉分頁」時）
         setGhostTab(null); setGhostType(null); setGhostIndex(null); setDraggingCardId(null);
         ghostBeforeRef.current = null;
         prevGiRef.current = null;
         setIsOver(false);
         try { broadcastGhostActive(null); } catch {}
         try { setDragWebpage(null); } catch {}  // 觸發 lt:ghost-clear 廣播
+
+        // 執行 async 操作（背景執行，不阻塞 ghost 清理）
+        let ret;
+        if ((items?.length || 0) > 0) ret = (onDropTab as any)?.(tab, beforeId);
+        else ret = (onDropTab as any)?.(tab);
+        try { if (ret && typeof (ret as any).then === 'function') await ret; } catch {}
+        try { setLastDropTitle(String((tab as any).title || (tab as any).url || '')); } catch {}
         return;
       }
     } catch {
       showToast(t('toast_add_tab_failed'), 'error');
     }
+    // Fallback cleanup（正常情況下不會執行到這裡，因為上面已經 return）
     setGhostTab(null); setGhostType(null); setGhostIndex(null); setDraggingCardId(null);
     ghostBeforeRef.current = null;
     prevGiRef.current = null;
