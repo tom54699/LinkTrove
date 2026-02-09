@@ -139,6 +139,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   const [urlValue, setUrlValue] = React.useState('');
   const [descValue, setDescValue] = React.useState(description || '');
   const [metaValue, setMetaValue] = React.useState<Record<string, string>>({ ...(meta || {}) });
+  const [editedMetaKeys, setEditedMetaKeys] = React.useState<Set<string>>(new Set());
 
   const autoSaveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const flipTimeoutRef = React.useRef<number | null>(null);
@@ -161,15 +162,24 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
     const norm = urlValue.trim() ? validateUrl(urlValue) : undefined;
     if (norm?.error) return;
     if (norm?.value) patch.url = norm.value;
-    patch.meta = metaValue;
+
+    // Merge strategy: only update meta fields that were actually edited
+    const patchMeta: Record<string, string> = {};
+    editedMetaKeys.forEach(key => {
+      patchMeta[key] = metaValue[key];
+    });
+    if (Object.keys(patchMeta).length > 0) {
+      patch.meta = { ...(meta || {}), ...patchMeta };
+    }
+
     if (onSave) onSave(patch);
     else {
       if (onUpdateTitle) onUpdateTitle(patch.title);
       if (patch.url && onUpdateUrl) onUpdateUrl(patch.url);
       if (onUpdateDescription) onUpdateDescription(patch.description);
-      if (onUpdateMeta) onUpdateMeta(patch.meta);
+      if (patch.meta && onUpdateMeta) onUpdateMeta(patch.meta);
     }
-  }, [showModal, titleValue, descValue, urlValue, metaValue, onSave, onUpdateTitle, onUpdateUrl, onUpdateDescription, onUpdateMeta]);
+  }, [showModal, titleValue, descValue, urlValue, metaValue, editedMetaKeys, meta, onSave, onUpdateTitle, onUpdateUrl, onUpdateDescription, onUpdateMeta]);
 
   // 使用 ref 保存最新的 performAutoSave，避免 stale closure
   const performAutoSaveRef = React.useRef(performAutoSave);
@@ -197,6 +207,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
       setDescValue(description || '');
       setUrlValue(url || '');
       setMetaValue({ ...(meta || {}) });
+      setEditedMetaKeys(new Set()); // Reset edited keys when modal opens
     }
   }, [showModal, title, description, url, meta]);
 
@@ -368,14 +379,35 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
               <button className="text-[var(--muted)] hover:text-[var(--text)]" onClick={() => { setShowModal(false); onModalOpenChange?.(false); }}>✕</button>
             </header>
             <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{t('card_title_label')}</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={titleValue} onChange={(e) => { setTitleValue(e.target.value); triggerAutoSave(); }} /></div>
-              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{t('card_url_label')}</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={urlValue} onChange={(e) => { setUrlValue(e.target.value); triggerAutoSave(); }} /></div>
-              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{t('card_note_label')}</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={descValue} onChange={(e) => { setDescValue(e.target.value); triggerAutoSave(); }} /></div>
-              <TemplateFields categoryId={categoryId || ''} meta={metaValue} onChange={(newMeta) => { setMetaValue(newMeta); triggerAutoSave(); }} />
+              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{t('card_title_label')}</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={titleValue} onChange={(e) => setTitleValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); performAutoSaveRef.current(); setShowModal(false); onModalOpenChange?.(false); } }} /></div>
+              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{t('card_url_label')}</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={urlValue} onChange={(e) => setUrlValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); performAutoSaveRef.current(); setShowModal(false); onModalOpenChange?.(false); } }} /></div>
+              <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{t('card_note_label')}</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={descValue} onChange={(e) => setDescValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); performAutoSaveRef.current(); setShowModal(false); onModalOpenChange?.(false); } }} /></div>
+              <TemplateFields categoryId={categoryId || ''} meta={metaValue} onChange={(newMeta) => {
+                // Track which meta fields were edited by the user
+                Object.keys(newMeta).forEach(key => {
+                  if (newMeta[key] !== metaValue[key]) {
+                    setEditedMetaKeys(prev => new Set(prev).add(key));
+                  }
+                });
+                setMetaValue(newMeta);
+              }} />
             </div>
             <footer className="px-6 py-4 bg-white/5 border-t border-white/5 flex justify-end gap-2">
               <button className="px-4 py-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--text)]" onClick={() => { setShowModal(false); onModalOpenChange?.(false); }}>{t('btn_cancel')}</button>
-              <button className="px-6 py-2 text-sm font-bold bg-[var(--accent)] text-white rounded-lg hover:brightness-110" onClick={() => { const patch: any = { title: titleValue.trim(), description: descValue, url: urlValue.trim(), meta: metaValue }; if (onSave) onSave(patch); setShowModal(false); onModalOpenChange?.(false); }}>{t('btn_save_changes')}</button>
+              <button className="px-6 py-2 text-sm font-bold bg-[var(--accent)] text-white rounded-lg hover:brightness-110" onClick={() => {
+                const patch: any = { title: titleValue.trim(), description: descValue, url: urlValue.trim() };
+                // Merge strategy: only update meta fields that were actually edited
+                const patchMeta: Record<string, string> = {};
+                editedMetaKeys.forEach(key => {
+                  patchMeta[key] = metaValue[key];
+                });
+                if (Object.keys(patchMeta).length > 0) {
+                  patch.meta = { ...(meta || {}), ...patchMeta };
+                }
+                if (onSave) onSave(patch);
+                setShowModal(false);
+                onModalOpenChange?.(false);
+              }}>{t('btn_save_changes')}</button>
             </footer>
           </div>
         </div>,

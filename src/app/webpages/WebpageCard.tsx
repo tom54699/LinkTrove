@@ -43,9 +43,7 @@ export const WebpageCard: React.FC<{
   selected,
   onToggleSelect,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
   const [descValue, setDescValue] = useState<string>(data.description ?? '');
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [titleValue, setTitleValue] = useState<string>(data.title);
@@ -55,6 +53,7 @@ export const WebpageCard: React.FC<{
   const [metaValue, setMetaValue] = useState<Record<string, string>>({
     ...(data.meta || {}),
   });
+  const [editedMetaKeys, setEditedMetaKeys] = useState<Set<string>>(new Set());
   const [moveMenuPos, setMoveMenuPos] = useState<{
     x: number;
     y: number;
@@ -64,14 +63,9 @@ export const WebpageCard: React.FC<{
 
 
   const handleClick = () => {
-    if (isEditing) return;
     if (onOpen) onOpen(data.url);
     else window.open?.(data.url, '_blank');
   };
-
-  useEffect(() => {
-    if (isEditing) textareaRef.current?.focus();
-  }, [isEditing]);
 
   // Keep modal fields in sync with latest data when opening
   useEffect(() => {
@@ -80,6 +74,7 @@ export const WebpageCard: React.FC<{
       setUrlValue(data.url);
       setDescValue(data.description ?? '');
       setMetaValue({ ...(data.meta || {}) });
+      setEditedMetaKeys(new Set()); // Reset edited keys when modal opens
     }
   }, [showModal, data.title, data.url, data.description, data.meta]);
 
@@ -96,13 +91,43 @@ export const WebpageCard: React.FC<{
     }
   }
 
+  const handleSave = () => {
+    const normalized = validateUrl(urlValue);
+    if (normalized.error) {
+      setUrlError(normalized.error);
+      return;
+    }
+
+    // Update URL if changed
+    if (normalized.value && normalized.value !== data.url) {
+      onUpdateUrl?.(data.id, normalized.value);
+    }
+
+    // Update title
+    onUpdateTitle?.(data.id, titleValue.trim());
+
+    // Update description
+    onEditDescription?.(data.id, descValue);
+
+    // Update meta with merge strategy: only update fields that were actually edited
+    const patchMeta: Record<string, string> = {};
+    editedMetaKeys.forEach(key => {
+      patchMeta[key] = metaValue[key];
+    });
+    if (Object.keys(patchMeta).length > 0) {
+      const mergedMeta = { ...(data.meta || {}), ...patchMeta };
+      onUpdateMeta?.(data.id, mergedMeta);
+    }
+
+    setShowModal(false);
+  };
+
   return (
     <div
       id={`card-${data.id}`}
       data-testid="webpage-card"
       className="toby-card group relative cursor-pointer rounded-xl border border-slate-700 p-6 bg-[var(--card)] transition-colors shadow-md hover:shadow-lg min-h-[140px]"
       style={{ backgroundColor: 'var(--card)' }}
-      data-editing={isEditing ? 'true' : undefined}
       data-select={selectMode ? 'true' : undefined}
       onClick={handleClick}
       role="button"
@@ -180,32 +205,11 @@ export const WebpageCard: React.FC<{
           {/* Static description removed; use editable description below */}
         </div>
       </div>
-      {isEditing ? (
-        <textarea
-          ref={textareaRef}
-          role="textbox"
-          className="mt-3 w-full min-h-[72px] rounded bg-slate-900 border border-slate-700 p-2 text-sm outline-none focus:border-slate-500"
-          value={descValue}
-          onChange={(e) => setDescValue(e.target.value)}
-          onClick={(e) => e.stopPropagation()}
-          onBlur={() => {
-            setIsEditing(false);
-            if (onEditDescription) onEditDescription(data.id, descValue);
-          }}
-        />
-      ) : (
-        <div
-          className={`toby-description mt-2 text-base ${data.description ? 'opacity-90' : 'opacity-60 italic'}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            // Clicking description enters inline edit mode
-            setDescValue(data.description ?? '');
-            setIsEditing(true);
-          }}
-        >
-          {data.description || 'Add description…'}
-        </div>
-      )}
+      <div
+        className={`toby-description mt-2 text-base ${data.description ? 'opacity-90' : 'opacity-60 italic'}`}
+      >
+        {data.description || 'Add description…'}
+      </div>
 
       {/* Top-right: Delete only */}
       <div
@@ -287,19 +291,6 @@ export const WebpageCard: React.FC<{
             onKeyDown={(e) => {
               if (e.key === 'Escape') {
                 setShowModal(false);
-              } else if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                const normalized = validateUrl(urlValue);
-                if (normalized.error) {
-                  setUrlError(normalized.error);
-                  return;
-                }
-                if (normalized.value && normalized.value !== data.url) {
-                  onUpdateUrl?.(data.id, normalized.value);
-                }
-                onUpdateTitle?.(data.id, titleValue.trim());
-                onEditDescription?.(data.id, descValue);
-                setShowModal(false);
               }
             }}
           >
@@ -318,13 +309,27 @@ export const WebpageCard: React.FC<{
                   className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
                   value={titleValue}
                   onChange={(e) => setTitleValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSave();
+                    }
+                  }}
                 />
               </div>
               {/* Category selection removed; use Move action or drag to sidebar to change category */}
               <TemplateFields
                 categoryId={categoryValue}
                 meta={metaValue}
-                onChange={setMetaValue}
+                onChange={(newMeta) => {
+                  // Track which meta fields were edited by the user
+                  Object.keys(newMeta).forEach(key => {
+                    if (newMeta[key] !== metaValue[key]) {
+                      setEditedMetaKeys(prev => new Set(prev).add(key));
+                    }
+                  });
+                  setMetaValue(newMeta);
+                }}
               />
               <div>
                 <label className="block text-sm mb-1">URL</label>
@@ -340,6 +345,12 @@ export const WebpageCard: React.FC<{
                     if (normalized.error) setUrlError(normalized.error);
                     else if (normalized.value) setUrlValue(normalized.value);
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSave();
+                    }
+                  }}
                   placeholder="https://example.com"
                 />
                 {urlError && (
@@ -352,6 +363,12 @@ export const WebpageCard: React.FC<{
                   className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
                   value={descValue}
                   onChange={(e) => setDescValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSave();
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -371,21 +388,7 @@ export const WebpageCard: React.FC<{
               <button
                 className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
                 disabled={!!urlError}
-                onClick={() => {
-                  const normalized = validateUrl(urlValue);
-                  if (normalized.error) {
-                    setUrlError(normalized.error);
-                    return;
-                  }
-                  if (normalized.value && normalized.value !== data.url) {
-                    onUpdateUrl?.(data.id, normalized.value);
-                  }
-                  // Category change is handled via Move action or dragging to sidebar
-                  onUpdateTitle?.(data.id, titleValue.trim());
-                  onEditDescription?.(data.id, descValue);
-                  onUpdateMeta?.(data.id, metaValue);
-                  setShowModal(false);
-                }}
+                onClick={handleSave}
               >
                 Done
               </button>
