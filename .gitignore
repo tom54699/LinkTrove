@@ -8,3 +8,4 @@ dist/
 *.crx
 .termdock/
 /backup/
+toby.bundle.js
