@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Picker Variations - LinkTrove</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg: #282a36;
+      --panel: #343746;
+      --border: #44475a;
+      --muted: #6272a4;
+      --text: #f8f8f2;
+      --accent: #ff507a;
+      --input-bg: rgba(0, 0, 0, 0.2);
+    }
+    body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 40px; }
+    .card { background: var(--panel); border: 1px solid var(--border); padding: 24px; border-radius: 16px; margin-bottom: 24px; }
+    .label { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; display: block; }
+    .input-mock { background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 14px; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+    .color-preview { width: 24px; height: 24px; border-radius: 4px; background: #ff507a; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <h1 class="text-2xl font-bold mb-8">Color Picker UI Variations</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+    <!-- 1. The Compact Pill -->
+    <div class="card">
+      <label class="label">1. Compact Pill</label>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 bg-[var(--input-bg)] border border-[var(--border)] px-2 py-1.5 rounded-full hover:border-[var(--accent)] transition-all cursor-pointer">
+          <div class="w-4 h-4 rounded-full" style="background: #ff507a;"></div>
+          <span class="text-xs font-mono opacity-70">#ff507a</span>
+        </div>
+        <div class="text-xs text-[var(--muted)]">Minimalist circle in a pill</div>
+      </div>
+    </div>
+
+    <!-- 2. The Integrated End-Cap -->
+    <div class="card">
+      <label class="label">2. Integrated End-Cap</label>
+      <div class="relative max-w-[200px]">
+        <div class="input-mock pr-1">
+          <span class="font-mono text-xs opacity-70">#ff507a</span>
+          <div class="w-8 h-8 rounded-md" style="background: #ff507a; cursor: pointer;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. The Left Border Accent -->
+    <div class="card">
+      <label class="label">3. Left Border Accent</label>
+      <div class="flex items-center gap-2 bg-[var(--input-bg)] border-l-4 border-y border-r border-[var(--border)] rounded-md pl-3 pr-2 py-2" style="border-left-color: #ff507a;">
+        <span class="text-sm font-bold flex-1">Collection Color</span>
+        <div class="w-5 h-5 rounded bg-white/5 flex items-center justify-center cursor-pointer hover:bg-white/10">🎨</div>
+      </div>
+    </div>
+
+    <!-- 4. Modern Glass Chip -->
+    <div class="card">
+      <label class="label">4. Modern Glass Chip</label>
+      <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 p-1.5 rounded-xl">
+        <div class="w-10 h-6 rounded-lg shadow-inner" style="background: #ff507a;"></div>
+        <span class="text-[10px] font-bold pr-2 opacity-60">SELECT COLOR</span>
+      </div>
+    </div>
+
+    <!-- 5. Avatar Style (Initial inside) -->
+    <div class="card">
+      <label class="label">5. Avatar Preview</label>
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-2xl transition-transform hover:scale-105 cursor-pointer" style="background: #ff507a;">
+          LT
+        </div>
+        <div>
+          <div class="text-sm font-bold">#ff507a</div>
+          <div class="text-[10px] text-[var(--muted)]">Preview with initials</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Floating Swatches -->
+    <div class="card">
+      <label class="label">6. Quick Swatches</label>
+      <div class="flex gap-2 mb-3">
+        <div class="w-6 h-6 rounded-full border-2 border-[var(--accent)]" style="background: #ff507a;"></div>
+        <div class="w-6 h-6 rounded-full opacity-40 hover:opacity-100 transition-opacity" style="background: #50fa7b;"></div>
+        <div class="w-6 h-6 rounded-full opacity-40 hover:opacity-100 transition-opacity" style="background: #8be9fd;"></div>
+        <div class="w-6 h-6 rounded-full opacity-40 hover:opacity-100 transition-opacity" style="background: #bd93f9;"></div>
+        <div class="w-6 h-6 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-[10px] cursor-pointer">+</div>
+      </div>
+    </div>
+
+    <!-- 7. The Mono Label -->
+    <div class="card">
+      <label class="label">7. Mono Label Style</label>
+      <div class="flex flex-col gap-1">
+        <div class="flex items-center justify-between">
+          <span class="font-mono text-xs opacity-50">HEX CODE</span>
+          <span class="font-mono text-xs text-[var(--accent)] font-bold">#ff507a</span>
+        </div>
+        <div class="h-2 w-full rounded-full bg-white/5 overflow-hidden">
+          <div class="h-full" style="background: #ff507a; width: 100%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. Floating Action Button style -->
+    <div class="card">
+      <label class="label">8. FAB Style</label>
+      <div class="flex items-center gap-3 bg-[var(--input-bg)] p-2 rounded-xl border border-[var(--border)]">
+        <button class="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg active:scale-95 transition-all" style="background: #ff507a;">
+          <svg width="16" height="16" fill="white" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-1.01 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+        </button>
+        <div class="flex-1">
+          <div class="text-[10px] font-bold opacity-50 uppercase tracking-tighter">Click to change</div>
+          <div class="text-xs font-mono">#ff507a</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. Vertical Bar Strip -->
+    <div class="card">
+      <label class="label">9. Vertical Bar Strip</label>
+      <div class="flex gap-3">
+        <div class="w-1.5 rounded-full" style="background: #ff507a;"></div>
+        <div class="flex-1 space-y-2">
+          <div class="text-sm font-medium">Dracula Pink</div>
+          <div class="text-xs font-mono opacity-50">#ff507a</div>
+        </div>
+        <button class="text-xs border border-white/10 px-2 rounded-md hover:bg-white/5 transition-all">Edit</button>
+      </div>
+    </div>
+
+    <!-- 10. Glowing Underline -->
+    <div class="card">
+      <label class="label">10. Glowing Underline</label>
+      <div class="relative group">
+        <input type="text" readonly value="#ff507a" class="w-full bg-transparent border-none text-sm font-mono focus:outline-none cursor-pointer">
+        <div class="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full bg-[var(--border)] group-hover:bg-[var(--accent)] transition-all"></div>
+        <div class="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full blur-[4px] opacity-0 group-hover:opacity-100 transition-all" style="background: #ff507a;"></div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

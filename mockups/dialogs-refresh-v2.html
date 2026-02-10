@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkTrove Dialogs Refresh V2 - Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg: #282a36;
+      --fg: #f8f8f2;
+      --text: var(--fg);
+      --panel: #343746;
+      --card: #51566e;
+      --surface: #44475a;
+      --border: #44475a;
+      --muted: #6272a4;
+      --accent: #ff507a;
+      --accent-contrast: #ffffff;
+      --accent-hover: rgba(255, 80, 122, 0.1);
+      --input-bg: rgba(0, 0, 0, 0.2);
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    .dialog-overlay {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+    }
+
+    .dialog-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    }
+
+    .input-field {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      transition: all 0.2s;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 2px var(--accent-hover);
+    }
+
+    .label-new {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--accent-contrast);
+      transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .callout-amber {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+  </style>
+</head>
+<body class="p-10 flex flex-wrap gap-10">
+
+  <!-- 1. Move Selected Dialog Mockup -->
+  <div class="w-full max-w-md">
+    <div class="mb-4 text-sm font-bold opacity-50">1. MOVE SELECTED DIALOG (REFRESHED)</div>
+    <div class="dialog-card rounded-2xl p-6 relative overflow-hidden">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold">Move 5 Items</h3>
+        <button class="text-muted hover:text-white">✕</button>
+      </div>
+
+      <div class="space-y-5">
+        <div>
+          <label class="label-new block mb-2">Select Collection</label>
+          <div class="relative">
+            <select class="input-field w-full rounded-xl px-4 py-3 appearance-none text-sm cursor-pointer">
+              <option>Work Resources</option>
+              <option>Personal Projects</option>
+              <option>Reference Materials</option>
+            </select>
+            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">▼</div>
+          </div>
+        </div>
+
+        <div>
+          <label class="label-new block mb-2">Select Group</label>
+          <div class="relative">
+            <select class="input-field w-full rounded-xl px-4 py-3 appearance-none text-sm cursor-pointer">
+              <option>React Frameworks</option>
+              <option>Design Tools</option>
+              <option>Documentation</option>
+            </select>
+            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">▼</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 flex gap-3">
+        <button class="btn-secondary flex-1 py-2.5 rounded-xl font-bold text-sm">Cancel</button>
+        <button class="btn-primary flex-1 py-2.5 rounded-xl font-bold text-sm">Move Items</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. GitHub Token Dialog Mockup -->
+  <div class="w-full max-w-md">
+    <div class="mb-4 text-sm font-bold opacity-50">2. GITHUB TOKEN DIALOG (REFRESHED)</div>
+    <div class="dialog-card rounded-2xl p-6">
+      <h3 class="text-lg font-bold mb-2">GitHub Integration</h3>
+      <p class="text-xs text-muted mb-5 leading-relaxed">To publish groups as Gists, you need a Personal Access Token with <code class="text-accent bg-accent/10 px-1 rounded">gist</code> scope.</p>
+
+      <div class="callout-amber rounded-xl p-3 mb-5 flex gap-3 items-start">
+        <span class="text-lg">🔒</span>
+        <div class="text-[11px] leading-snug text-amber-200/80">
+          Your token is stored locally in your browser's encrypted storage and is never sent to our servers.
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="label-new block mb-2">Personal Access Token</label>
+          <input type="password" class="input-field w-full rounded-xl px-4 py-3 text-sm font-mono" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        </div>
+        <div class="flex items-center justify-between">
+          <a href="#" class="text-[11px] text-accent hover:underline">How to generate a token?</a>
+          <span class="text-[10px] text-muted">Scope: gist</span>
+        </div>
+      </div>
+
+      <div class="mt-8 flex gap-3">
+        <button class="btn-secondary flex-1 py-2.5 rounded-xl font-bold text-sm">Cancel</button>
+        <button class="btn-primary flex-1 py-2.5 rounded-xl font-bold text-sm">Save Token</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Share Result Dialog Mockup -->
+  <div class="w-full max-w-md">
+    <div class="mb-4 text-sm font-bold opacity-50">3. SHARE RESULT (REFRESHED)</div>
+    <div class="dialog-card rounded-2xl overflow-hidden shadow-2xl">
+      <div class="h-1.5 bg-green-500"></div>
+      <div class="p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">✓</div>
+          <h3 class="text-lg font-bold">Share Link Created</h3>
+        </div>
+
+        <p class="text-xs text-muted mb-5">Your group has been successfully published to GitHub Gist. Anyone with the link can view it.</p>
+
+        <div class="space-y-4">
+          <label class="label-new block">Public Link</label>
+          <div class="flex gap-2">
+            <input type="text" readonly class="input-field flex-1 rounded-xl px-4 py-3 text-sm font-mono truncate" value="https://gist.github.com/linktrove/a1b2c3d4e5f6...">
+            <button class="bg-surface border border-border px-4 rounded-xl text-sm font-bold hover:bg-slate-600">Copy</button>
+          </div>
+        </div>
+
+        <div class="mt-8 flex gap-2">
+          <button class="btn-secondary flex-1 py-2.5 rounded-xl font-bold text-sm">Open Gist</button>
+          <button class="btn-primary flex-1 py-2.5 rounded-xl font-bold text-sm">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Conflict Dialog Mockup -->
+  <div class="w-full max-w-md">
+    <div class="mb-4 text-sm font-bold opacity-50">4. CONFLICT DETECTION (REFRESHED)</div>
+    <div class="dialog-card rounded-2xl p-6">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-2.5 h-2.5 rounded-full bg-danger animate-pulse"></div>
+        <h3 class="text-lg font-bold text-white">Merge Conflict Detected</h3>
+      </div>
+
+      <div class="space-y-4 mb-6">
+        <div class="grid grid-cols-3 gap-2 py-3 border-y border-white/5">
+          <div class="label-new">Resource</div>
+          <div class="label-new text-center">Local</div>
+          <div class="label-new text-center">Cloud</div>
+
+          <div class="text-xs text-muted">Webpages</div>
+          <div class="text-xs font-bold text-center text-red-400">124</div>
+          <div class="text-xs font-bold text-center text-green-400">142</div>
+
+          <div class="text-xs text-muted">Groups</div>
+          <div class="text-xs font-bold text-center">12</div>
+          <div class="text-xs font-bold text-center">15</div>
+        </div>
+
+        <p class="text-xs leading-relaxed text-muted bg-slate-900/40 p-3 rounded-xl border border-white/5">
+          Cloud data contains <span class="text-green-400 font-bold">18 more items</span> than your local storage. Enabling auto-sync will merge these differences.
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <button class="btn-primary w-full py-3 rounded-xl font-bold text-sm">Enable Auto-Sync & Merge</button>
+        <button class="bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 w-full py-3 rounded-xl font-bold text-sm hover:bg-emerald-600/30">Backup Local Data First</button>
+        <button class="btn-secondary w-full py-3 rounded-xl font-bold text-sm">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

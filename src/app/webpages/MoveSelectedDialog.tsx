@@ -2,6 +2,7 @@ import React from 'react';
 import { useCategories } from '../sidebar/categories';
 import { createStorageService } from '../../background/storageService';
 import { useI18n } from '../i18n';
+import { CustomSelect } from '../ui/CustomSelect';
 
 export interface MoveSelectedDialogProps {
   isOpen: boolean;
@@ -87,11 +88,11 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
       onClick={onClose}
     >
       <div
-        className="rounded-lg border border-slate-700 bg-[var(--panel)] w-[480px] max-w-[90vw] p-5"
+        className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[480px] max-w-[90vw] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
         role="dialog"
@@ -99,14 +100,14 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
         tabIndex={-1}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 id="move-dialog-title" className="text-lg font-medium">
+        <div className="flex items-center justify-between mb-6">
+          <h2 id="move-dialog-title" className="text-lg font-bold">
             {t('move_dialog_title', [String(selectedCount)])}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 hover:bg-slate-800 rounded transition-colors"
+            className="text-[var(--muted)] hover:text-[var(--text)] transition-colors"
             aria-label="Close"
           >
             <svg
@@ -127,107 +128,56 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
         </div>
 
         {/* Form */}
-        <div className="space-y-4">
+        <div className="space-y-5">
           {/* Collection Selector (Category) */}
           <div>
             <label
               htmlFor="collection-selector"
-              className="block text-sm font-medium mb-2 opacity-90"
+              className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2"
             >
               {t('move_label_collection')}
             </label>
-            <div className="relative">
-              <select
-                id="collection-selector"
-                className="w-full rounded bg-slate-900 border border-slate-700 px-3 py-2 pr-10 text-sm appearance-none focus:outline-none focus:border-slate-500"
-                value={selectedCategoryId}
-                onChange={(e) => setSelectedCategoryId(e.target.value)}
-              >
-                <option value="">{t('move_select_collection')}</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="opacity-60"
-                >
-                  <path d="M6 9l6 6l6 -6"></path>
-                </svg>
-              </div>
-            </div>
+            <CustomSelect
+              value={selectedCategoryId}
+              options={categories.map(cat => ({ value: cat.id, label: cat.name }))}
+              onChange={(val) => setSelectedCategoryId(val)}
+              placeholder={t('move_select_collection')}
+            />
           </div>
 
           {/* Group Selector (Subcategory/Group) */}
           <div>
             <label
               htmlFor="group-selector"
-              className="block text-sm font-medium mb-2 opacity-90"
+              className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2"
             >
               {t('move_label_group')}
             </label>
-            <div className="relative">
-              <select
-                id="group-selector"
-                className="w-full rounded bg-slate-900 border border-slate-700 px-3 py-2 pr-10 text-sm appearance-none focus:outline-none focus:border-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                value={selectedSubcategoryId}
-                onChange={(e) => setSelectedSubcategoryId(e.target.value)}
-                disabled={!selectedCategoryId || loading || subcategories.length === 0}
-              >
-                <option value="">
-                  {loading ? t('loading') : t('move_select_group')}
-                </option>
-                {subcategories
-                  .sort((a, b) => (a.order || 0) - (b.order || 0))
-                  .map((sub) => (
-                    <option key={sub.id} value={sub.id}>
-                      {sub.name}
-                    </option>
-                  ))}
-              </select>
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="opacity-60"
-                >
-                  <path d="M6 9l6 6l6 -6"></path>
-                </svg>
-              </div>
-            </div>
+            <CustomSelect
+              value={selectedSubcategoryId}
+              options={subcategories
+                .sort((a, b) => (a.order || 0) - (b.order || 0))
+                .map(sub => ({ value: sub.id, label: sub.name }))
+              }
+              onChange={(val) => setSelectedSubcategoryId(val)}
+              disabled={!selectedCategoryId || loading || subcategories.length === 0}
+              placeholder={loading ? t('loading') : t('move_select_group')}
+            />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="mt-6 flex items-center justify-end gap-2">
+        <div className="mt-8 flex items-center justify-end gap-3">
           <button
             type="button"
-            className="px-4 py-2 text-sm rounded border border-slate-600 hover:bg-slate-800 transition-colors"
+            className="px-5 py-2 text-sm font-bold rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)] transition-all cursor-pointer"
             onClick={onClose}
           >
             {t('btn_cancel')}
           </button>
           <button
             type="button"
-            className="px-4 py-2 text-sm rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-5 py-2 text-sm font-bold rounded-lg bg-[var(--accent)] text-white hover:brightness-110 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleMove}
             disabled={!selectedCategoryId || !selectedSubcategoryId}
           >

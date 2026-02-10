@@ -1100,8 +1100,19 @@
   "confirm_delete_selected_title": {
     "message": "Confirm Delete Selected"
   },
+  "confirm_delete_selected_desc": {
+    "message": "Are you sure you want to delete the selected items? This action cannot be undone."
+  },
   "confirm_open_tabs": {
     "message": "Open $COUNT$ tabs?",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "confirm_open_tabs_desc": {
+    "message": "You are about to open $COUNT$ tabs at once. Do you want to continue?",
     "placeholders": {
       "count": {
         "content": "$1"

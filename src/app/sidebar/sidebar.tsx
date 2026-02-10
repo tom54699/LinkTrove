@@ -6,6 +6,7 @@ import { useWebpages } from '../webpages/WebpagesProvider';
 import { SearchBox } from '../ui/SearchBox';
 import { useFeedback } from '../ui/feedback';
 import { useI18n } from '../i18n';
+import { CustomSelect } from '../ui/CustomSelect';
 
 export const Sidebar: React.FC = () => {
   const { t } = useI18n();
@@ -150,99 +151,104 @@ export const Sidebar: React.FC = () => {
       </div>
       {editing && (
         <div
-          className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
+          className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3"
           onClick={() => {
             setEditing(null);
             setConfirmDelete(false);
           }}
         >
           <div
-            className="rounded border border-slate-700 bg-[var(--panel)] w-[560px] max-w-[95vw]"
+            className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[520px] max-w-[95vw] shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label={t('category_edit_title')}
           >
-            <div className="px-5 py-4 border-b border-slate-700">
-              <div className="text-lg font-semibold">{t('category_edit_title')}</div>
-              <div className="text-xs opacity-70">
-                {t('category_edit_desc')}
+            <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
+              <div>
+                <div className="text-lg font-bold">{t('category_edit_title')}</div>
+                <div className="text-[11px] text-[var(--muted)] uppercase tracking-widest mt-1 opacity-70 font-bold">
+                  {t('category_edit_desc')}
+                </div>
               </div>
+              <button
+                className="text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                onClick={() => { setEditing(null); setConfirmDelete(false); }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
             </div>
-            <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm mb-1">{t('category_name_label')}</label>
-                <input
-                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">{t('category_color_label')}</label>
-                <div className="flex items-center gap-2">
-                  <span
-                    className="inline-block w-3 h-3 rounded"
-                    style={{ backgroundColor: editColor }}
-                  />
+            
+            <div className="px-6 py-6 space-y-6">
+              <div className="flex flex-col gap-5">
+                <div>
+                  <label className="block text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider mb-2">{t('category_name_label')}</label>
                   <input
-                    type="color"
-                    className="rounded border border-slate-700 bg-slate-900 p-1"
-                    value={editColor}
-                    onChange={(e) => setEditColor(e.target.value)}
+                    className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--border)] px-4 py-2.5 text-sm focus:outline-none focus:border-[var(--accent)] transition-all"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
                   />
-                  <input
-                    className="flex-1 rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                    value={editColor}
-                    onChange={(e) => setEditColor(e.target.value)}
+                </div>
+                
+                <div>
+                  <label className="block text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider mb-2">{t('category_color_label')}</label>
+                  <div className="relative">
+                    <div 
+                      className="inline-flex items-center gap-2 bg-[var(--input-bg)] border border-[var(--border)] px-2.5 py-1.5 rounded-full hover:border-[var(--accent)] transition-all cursor-pointer group"
+                      onClick={(e) => (e.currentTarget.nextSibling as HTMLInputElement).click()}
+                    >
+                      <div className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: editColor }} />
+                      <span className="text-[11px] font-mono text-[var(--muted)] group-hover:text-[var(--text)] transition-colors">{editColor}</span>
+                    </div>
+                    <input
+                      type="color"
+                      className="absolute opacity-0 pointer-events-none"
+                      value={editColor}
+                      onChange={(e) => setEditColor(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider mb-2">{t('category_template_label')}</label>
+                  <CustomSelect
+                    value={editTpl}
+                    options={[
+                      { value: '', label: t('category_template_none') },
+                      ...templates.map((tpl: any) => ({ value: tpl.id, label: tpl.name }))
+                    ]}
+                    onChange={(val) => setEditTpl(val)}
                   />
                 </div>
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm mb-1">{t('category_template_label')}</label>
-                <select
-                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
-                  value={editTpl}
-                  onChange={(e) => setEditTpl(e.target.value)}
-                >
-                  <option value="">{t('category_template_none')}</option>
-                  {templates.map((tpl: any) => (
-                    <option key={tpl.id} value={tpl.id}>
-                      {tpl.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
-            <div className="px-5 py-3 border-t border-slate-700 flex items-center justify-between gap-3">
+
+            <div className="px-6 py-4 bg-[var(--bg)]/30 border-t border-white/5 flex items-center justify-between gap-3">
               <div>
                 {!confirmDelete ? (
                   <button
-                    className="text-xs px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30"
+                    className="text-xs font-bold px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all"
                     onClick={() => setConfirmDelete(true)}
                   >
                     {t('category_delete_btn')}
                   </button>
                 ) : (
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="text-red-300">{t('category_confirm_delete')}</span>
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <span className="text-red-400 font-medium">Confirm?</span>
                     <button
-                      className="px-2 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                      className="px-2 py-1 rounded-md border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] transition-all"
                       onClick={() => setConfirmDelete(false)}
                     >
                       {t('btn_cancel')}
                     </button>
                     <button
-                      className="px-2 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30"
+                      className="px-2 py-1 rounded-md bg-red-600 text-white font-bold hover:brightness-110 transition-all"
                       onClick={async () => {
                         if (!editing) return;
-
-                        // UI Layer Check: minimum count protection
                         const inSameOrg = categories.filter((c: any) => c.organizationId === editing.organizationId && !c.deleted);
                         if (inSameOrg.length <= 1) {
                           showToast(t('category_min_one'), 'error');
                           return;
                         }
-
                         try {
                           await catActions.deleteCategory(editing.id);
                           setEditing(null);
@@ -259,9 +265,9 @@ export const Sidebar: React.FC = () => {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <button
-                  className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                  className="px-5 py-2 text-sm font-bold rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] transition-all cursor-pointer"
                   onClick={() => {
                     setEditing(null);
                     setConfirmDelete(false);
@@ -270,7 +276,7 @@ export const Sidebar: React.FC = () => {
                   {t('btn_cancel')}
                 </button>
                 <button
-                  className="px-3 py-1 rounded border border-emerald-600 text-emerald-300 hover:bg-emerald-950/30"
+                  className="px-5 py-2 text-sm font-bold rounded-lg bg-[var(--accent)] text-white hover:brightness-110 transition-all cursor-pointer shadow-lg shadow-[var(--accent)]/10"
                   onClick={async () => {
                     try {
                       const id = editing.id as string;

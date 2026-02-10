@@ -139,35 +139,38 @@ export const OrganizationNav: React.FC = () => {
         {/* Delete confirmation dialog */}
         {confirmDeleteOrg && (
           <div
-            className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3"
+            className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3"
             onClick={() => setConfirmDeleteOrg(null)}
           >
             <div
-              className="rounded border border-slate-700 bg-[var(--bg)] w-[520px] max-w-[95vw]"
+              className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[480px] max-w-[95vw] p-6 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-label={t('org_confirm_delete_title')}
             >
-              <div className="p-4 border-b border-slate-700">
-                <h3 className="text-lg font-semibold">{t('org_confirm_delete_title')}</h3>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 text-lg">⚠️</div>
+                <h3 className="text-lg font-bold">{t('org_confirm_delete_title')}</h3>
               </div>
-              <div className="p-4">
-                <p className="text-slate-300 mb-2">
+              
+              <div className="space-y-4">
+                <p className="text-[13px] text-[var(--muted)] leading-relaxed">
                   {t('org_confirm_delete_desc', [organizations.find(o => o.id === confirmDeleteOrg)?.name || ''])}
                 </p>
-                <p className="text-red-400 text-sm">
-                  ⚠️ {t('org_delete_warning')}
-                </p>
+                <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[11px] text-red-200/80 leading-snug">
+                  {t('org_delete_warning')}
+                </div>
               </div>
-              <div className="p-4 border-t border-slate-700 flex gap-2 justify-end">
+
+              <div className="mt-8 flex gap-3 justify-end">
                 <button
-                  className="px-4 py-2 rounded border border-slate-600 hover:bg-slate-800"
+                  className="px-5 py-2 text-sm font-bold rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)] transition-all cursor-pointer"
                   onClick={() => setConfirmDeleteOrg(null)}
                 >
                   {t('btn_cancel')}
                 </button>
                 <button
-                  className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white"
+                  className="px-5 py-2 text-sm font-bold rounded-lg bg-red-600 text-white hover:brightness-110 transition-all cursor-pointer shadow-lg shadow-red-600/10"
                   onClick={async () => {
                     const orgId = confirmDeleteOrg;
                     setConfirmDeleteOrg(null);
@@ -197,48 +200,48 @@ export const OrganizationNav: React.FC = () => {
         {/* Manage organizations dialog */}
         {manageDialogOpen && (
           <div
-            className="fixed inset-0 z-[9998] bg-black/60 flex items-center justify-center p-3"
+            className="fixed inset-0 z-[9998] bg-black/70 backdrop-blur-md flex items-center justify-center p-3"
             onClick={() => setManageDialogOpen(false)}
           >
             <div
-              className="rounded border border-slate-700 bg-[var(--bg)] w-[620px] max-w-[95vw]"
+              className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[620px] max-w-[95vw] shadow-2xl flex flex-col"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-label={t('org_manage_title')}
             >
-              <div className="px-5 py-4 border-b border-slate-700 flex items-center justify-between gap-3">
+              <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-lg font-semibold">{t('org_manage_title')}</div>
-                  <div className="text-xs opacity-80 mt-1">{t('org_manage_desc')}</div>
+                  <div className="text-lg font-bold">{t('org_manage_title')}</div>
+                  <div className="text-[11px] text-[var(--muted)] uppercase tracking-widest mt-1 opacity-70 font-bold">{t('org_manage_desc')}</div>
                 </div>
                 <button
-                  className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800 text-sm"
+                  className="text-[var(--muted)] hover:text-[var(--text)] transition-colors"
                   onClick={() => setManageDialogOpen(false)}
                 >
-                  {t('dialog_close')}
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
               </div>
-              <div className="max-h-[60vh] overflow-y-auto">
-                <div className="px-5 py-4 space-y-3">
+              <div className="max-h-[60vh] overflow-y-auto px-6 py-5">
+                <div className="space-y-4">
                   {organizations.map((org) => {
                     const draftName = renameDrafts[org.id] ?? org.name;
                     const draftColor = colorDrafts[org.id] ?? org.color ?? '#64748b';
                     return (
                       <div
                         key={org.id}
-                        className="flex items-center gap-3 border border-slate-800 rounded p-3 bg-slate-900/40"
+                        className="flex items-center gap-4 border border-white/5 rounded-xl p-4 bg-[var(--bg)]/30 hover:bg-[var(--bg)]/50 transition-all"
                       >
                         <div
-                          className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg"
                           style={{ backgroundColor: org.color || '#64748b' }}
                           title={org.name}
                         >
                           {org.name.slice(0, 2).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <label className="block text-xs text-slate-400 mb-1">{t('org_name_label')}</label>
+                          <label className="block text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{t('org_name_label')}</label>
                           <input
-                            className="w-full rounded bg-slate-900 border border-slate-700 px-2 py-1 text-sm"
+                            className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--border)] px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent)] transition-all"
                             value={draftName}
                             onChange={(e) =>
                               setRenameDrafts((prev) => ({ ...prev, [org.id]: e.target.value }))
@@ -262,40 +265,56 @@ export const OrganizationNav: React.FC = () => {
                               }
                             }}
                           />
-                          <div className="mt-2 flex items-center gap-2">
-                            <label className="text-xs text-slate-400">{t('org_color_label')}</label>
-                            <input
-                              type="color"
-                              className="h-7 w-10 rounded border border-slate-700 bg-slate-900"
-                              value={draftColor}
-                              onChange={async (e) => {
-                                const nextColor = e.target.value;
-                                setColorDrafts((prev) => ({ ...prev, [org.id]: nextColor }));
-                                if (nextColor === (org.color || '#64748b')) return;
-                                try {
-                                  await actions.updateColor(org.id, nextColor);
-                                } catch (error) {
-                                  console.error('Update organization error:', error);
-                                  showToast(t('toast_update_failed'), 'error');
-                                }
-                              }}
-                              aria-label={t('org_color_label')}
-                            />
-                            <span className="text-xs text-slate-400">{draftColor}</span>
+                          <div className="mt-3 flex items-center gap-3">
+                            <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider">{t('org_color_label')}</label>
+                            <div className="relative">
+                              <div 
+                                className="flex items-center gap-2 bg-[var(--input-bg)] border border-[var(--border)] px-2.5 py-1.5 rounded-full hover:border-[var(--accent)] transition-all cursor-pointer group"
+                                onClick={(e) => (e.currentTarget.nextSibling as HTMLInputElement).click()}
+                              >
+                                <div className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: draftColor }} />
+                                <span className="text-[11px] font-mono text-[var(--muted)] group-hover:text-[var(--text)] transition-colors">{draftColor}</span>
+                              </div>
+                              <input
+                                type="color"
+                                className="absolute opacity-0 pointer-events-none"
+                                value={draftColor}
+                                onChange={async (e) => {
+                                  const nextColor = e.target.value;
+                                  setColorDrafts((prev) => ({ ...prev, [org.id]: nextColor }));
+                                  if (nextColor === (org.color || '#64748b')) return;
+                                  try {
+                                    await actions.updateColor(org.id, nextColor);
+                                  } catch (error) {
+                                    console.error('Update organization error:', error);
+                                    showToast(t('toast_update_failed'), 'error');
+                                  }
+                                }}
+                              />
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
-                            className="px-3 py-1 rounded border border-rose-700 text-rose-300 hover:bg-rose-950/30 text-sm"
+                            className="p-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all"
                             onClick={() => setConfirmDeleteOrg(org.id)}
+                            title={t('menu_delete')}
                           >
-                            {t('menu_delete')}
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
                           </button>
                         </div>
                       </div>
                     );
                   })}
                 </div>
+              </div>
+              <div className="p-6 border-t border-white/5 flex justify-end">
+                <button
+                  className="px-6 py-2 text-sm font-bold rounded-lg bg-[var(--accent)] text-white hover:brightness-110 transition-all cursor-pointer shadow-lg shadow-[var(--accent)]/10"
+                  onClick={() => setManageDialogOpen(false)}
+                >
+                  {t('dialog_close')}
+                </button>
               </div>
             </div>
           </div>

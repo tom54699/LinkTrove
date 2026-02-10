@@ -714,7 +714,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
       <div className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-out ${
         selectedCount > 0 ? 'translate-y-0 opacity-100' : 'translate-y-[150%] opacity-0 pointer-events-none'
       }`}>
-        <div className="flex items-center gap-1 p-1.5 pl-4 pr-2 bg-[var(--panel)]/90 backdrop-blur-xl border border-slate-700/50 rounded-full shadow-2xl shadow-black/50 text-slate-200">
+        <div className="flex items-center gap-1 p-1.5 pl-4 pr-2 bg-[var(--panel)] border border-white/10 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-slate-200">
           <div className="flex items-center gap-2 mr-2">
             <span className="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-[var(--accent)] text-[var(--accent-fg)] text-xs font-bold rounded-full">
               {selectedCount}
@@ -888,23 +888,35 @@ export const CardGrid: React.FC<CardGridProps> = ({
         )}
       </div>
       {confirming && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirming(false)}>
-          <div className="rounded border border-slate-700 bg-[var(--bg)] p-4" role="dialog" aria-label={t('confirm_delete_selected_title')} onClick={(e) => e.stopPropagation()}>
-            <div className="mb-3 font-medium">{t('confirm_delete_selected_title')}</div>
-            <div className="flex gap-2 justify-end">
-              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => setConfirming(false)}>{t('btn_cancel')}</button>
-              <button className="px-3 py-1 rounded border border-red-600 text-red-300 hover:bg-red-950/30" onClick={() => { const ids = Object.entries(selected).filter(([, v]) => v).map(([key]) => key); setConfirming(false); clearSelection(); onDeleteMany?.(ids); }}>{t('menu_delete')}</button>
+        <div className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-3" onClick={() => setConfirming(false)}>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6 w-[420px] max-w-[90vw] shadow-2xl" role="dialog" aria-label={t('confirm_delete_selected_title')} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 text-lg">⚠️</div>
+              <div className="text-lg font-bold">{t('confirm_delete_selected_title')}</div>
+            </div>
+            <div className="text-[13px] text-[var(--muted)] mb-8 leading-relaxed">
+              {t('confirm_delete_selected_desc') || 'Are you sure you want to delete the selected items? This action cannot be undone.'}
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button className="px-5 py-2 text-sm font-bold rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)] transition-all cursor-pointer" onClick={() => setConfirming(false)}>{t('btn_cancel')}</button>
+              <button className="px-5 py-2 text-sm font-bold rounded-lg bg-red-600 text-white hover:brightness-110 transition-all cursor-pointer shadow-lg shadow-red-600/10" onClick={() => { const ids = Object.entries(selected).filter(([, v]) => v).map(([key]) => key); setConfirming(false); clearSelection(); onDeleteMany?.(ids); }}>{t('menu_delete')}</button>
             </div>
           </div>
         </div>
       )}
       {showOpenTabsConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowOpenTabsConfirm(false)}>
-          <div className="rounded border border-slate-700 bg-[var(--bg)] p-4" role="dialog" aria-label={t('confirm_open_tabs', [String(selectedCount)])} onClick={(e) => e.stopPropagation()}>
-            <div className="mb-3 font-medium">{t('confirm_open_tabs', [String(selectedCount)])}</div>
-            <div className="flex gap-2 justify-end">
-              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => setShowOpenTabsConfirm(false)}>{t('btn_cancel')}</button>
-              <button className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]" onClick={executeOpenTabs}>{t('btn_confirm')}</button>
+        <div className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-3" onClick={() => setShowOpenTabsConfirm(false)}>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6 w-[420px] max-w-[90vw] shadow-2xl" role="dialog" aria-label={t('confirm_open_tabs', [String(selectedCount)])} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-full bg-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)] text-lg">🌐</div>
+              <div className="text-lg font-bold">{t('confirm_open_tabs', [String(selectedCount)])}</div>
+            </div>
+            <div className="text-[13px] text-[var(--muted)] mb-8 leading-relaxed">
+              {t('confirm_open_tabs_desc', [String(selectedCount)]) || `You are about to open ${selectedCount} tabs at once. Continue?`}
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button className="px-5 py-2 text-sm font-bold rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)] transition-all cursor-pointer" onClick={() => setShowOpenTabsConfirm(false)}>{t('btn_cancel')}</button>
+              <button className="px-5 py-2 text-sm font-bold rounded-lg bg-[var(--accent)] text-white hover:brightness-110 transition-all cursor-pointer shadow-lg shadow-[var(--accent)]/10" onClick={executeOpenTabs}>{t('btn_confirm')}</button>
             </div>
           </div>
         </div>

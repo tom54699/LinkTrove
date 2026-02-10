@@ -17,6 +17,7 @@ import { SyncStatusToast } from './ui/SyncStatusToast';
 import { useTemplates } from './templates/TemplatesProvider';
 import { GroupsView } from './groups/GroupsView';
 import { LanguageProvider, useI18n } from './i18n';
+import { CustomSelect } from './ui/CustomSelect';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
@@ -79,6 +80,7 @@ const HomeInner: React.FC = () => {
     setCurrentCategory,
   } = useCategories();
   const { actions: orgActions, setCurrentOrganization, selectedOrgId } = useOrganizations();
+  const { templates } = useTemplates();
   // Simplify to a single view; remove density switching
   const [_collapsed, setCollapsed] = React.useState(false);
   const { showToast, setLoading } = useFeedback();
@@ -87,6 +89,7 @@ const HomeInner: React.FC = () => {
   const [showAddCat, setShowAddCat] = React.useState(false);
   const [newCatName, setNewCatName] = React.useState('');
   const [newCatColor, setNewCatColor] = React.useState('#64748b');
+  const [newCatTpl, setNewCatTpl] = React.useState('');
   // Organization creation modal state
   const [showAddOrg, setShowAddOrg] = React.useState(false);
   const [newOrgName, setNewOrgName] = React.useState('');
@@ -127,7 +130,7 @@ const HomeInner: React.FC = () => {
   React.useEffect(() => {
     const onHtml = () => { try { document.getElementById('html-cat-file')?.click(); } catch {} };
     const onToby = () => { try { document.getElementById('toby-cat-file')?.click(); } catch {} };
-    const onAdd = () => { setNewCatName(''); setNewCatColor('#64748b'); setShowAddCat(true); };
+    const onAdd = () => { setNewCatName(''); setNewCatColor('#64748b'); setNewCatTpl(''); setShowAddCat(true); };
     const onAddOrg = () => { setNewOrgName(''); setNewOrgColor('#64748b'); setShowAddOrg(true); };
     try { window.addEventListener('collections:import-html-new', onHtml as any); } catch {}
     try { window.addEventListener('collections:import-toby-new', onToby as any); } catch {}
@@ -338,49 +341,65 @@ const HomeInner: React.FC = () => {
       />
       {showAddCat && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60"
+          className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3"
           onClick={() => setShowAddCat(false)}
         >
           <div
-            className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[420px] max-w-[90vw]"
+            className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6 w-[480px] max-w-[90vw] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label="Add Collection"
           >
-            <div className="text-lg font-medium mb-3">New Collection</div>
-            <div className="space-y-3">
+            <div className="text-lg font-bold mb-6">New Collection</div>
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm mb-1">Name</label>
+                <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2">Name</label>
                 <input
-                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                  className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--border)] px-4 py-2.5 text-sm focus:outline-none focus:border-[var(--accent)] transition-all"
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
                   placeholder="My Collection"
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Color</label>
-                <input
-                  type="color"
-                  className="rounded border border-slate-700 bg-slate-900 p-1"
-                  value={newCatColor}
-                  onChange={(e) => setNewCatColor(e.target.value)}
-                />
+                <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2">Color</label>
+                <div className="relative">
+                  <div 
+                    className="inline-flex items-center gap-2 bg-[var(--input-bg)] border border-[var(--border)] px-2.5 py-1.5 rounded-full hover:border-[var(--accent)] transition-all cursor-pointer group"
+                    onClick={(e) => (e.currentTarget.nextSibling as HTMLInputElement).click()}
+                  >
+                    <div className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: newCatColor }} />
+                    <span className="text-[11px] font-mono text-[var(--muted)] group-hover:text-[var(--text)] transition-colors">{newCatColor}</span>
+                  </div>
+                  <input
+                    type="color"
+                    className="absolute opacity-0 pointer-events-none"
+                    value={newCatColor}
+                    onChange={(e) => setNewCatColor(e.target.value)}
+                  />
+                </div>
               </div>
               <div>
-                <label className="block text-sm mb-1">Template</label>
-                <TemplatePicker />
+                <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2">Template</label>
+                <CustomSelect
+                  value={newCatTpl}
+                  options={[
+                    { value: '', label: 'None' },
+                    ...templates.map((t: any) => ({ value: t.id, label: t.name }))
+                  ]}
+                  onChange={(val) => setNewCatTpl(val)}
+                />
               </div>
             </div>
-            <div className="mt-4 flex items-center justify-end gap-2">
+            <div className="mt-8 flex items-center justify-end gap-3">
               <button
-                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                className="px-5 py-2 text-sm font-bold rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)] transition-all cursor-pointer"
                 onClick={() => setShowAddCat(false)}
               >
                 Cancel
               </button>
               <button
-                className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                className="px-5 py-2 text-sm font-bold rounded-lg bg-[var(--accent)] text-white hover:brightness-110 transition-all cursor-pointer disabled:opacity-50"
                 disabled={!newCatName.trim()}
                 onClick={async () => {
                   try {
@@ -388,13 +407,7 @@ const HomeInner: React.FC = () => {
                       newCatName.trim(),
                       newCatColor
                     );
-                    const sel =
-                      (
-                        document.getElementById(
-                          'tpl-select'
-                        ) as HTMLSelectElement | null
-                      )?.value || '';
-                    if (sel) await catActions.setDefaultTemplate(cat.id, sel);
+                    if (newCatTpl) await catActions.setDefaultTemplate(cat.id, newCatTpl);
                     setCurrentCategory(cat.id);
                     setShowAddCat(false);
                   } catch (err: any) {
@@ -414,45 +427,54 @@ const HomeInner: React.FC = () => {
       )}
       {showAddOrg && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60"
+          className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3"
           onClick={() => setShowAddOrg(false)}
         >
           <div
-            className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[420px] max-w-[90vw]"
+            className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6 w-[480px] max-w-[90vw] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label="Add Organization"
           >
-            <div className="text-lg font-medium mb-3">New Organization</div>
-            <div className="space-y-3">
+            <div className="text-lg font-bold mb-6">New Organization</div>
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm mb-1">Name</label>
+                <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2">Name</label>
                 <input
-                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                  className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--border)] px-4 py-2.5 text-sm focus:outline-none focus:border-[var(--accent)] transition-all"
                   value={newOrgName}
                   onChange={(e) => setNewOrgName(e.target.value)}
                   placeholder="My Organization"
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Color</label>
-                <input
-                  type="color"
-                  className="rounded border border-slate-700 bg-slate-900 p-1"
-                  value={newOrgColor}
-                  onChange={(e) => setNewOrgColor(e.target.value)}
-                />
+                <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2">Color</label>
+                <div className="relative">
+                  <div 
+                    className="inline-flex items-center gap-2 bg-[var(--input-bg)] border border-[var(--border)] px-2.5 py-1.5 rounded-full hover:border-[var(--accent)] transition-all cursor-pointer group"
+                    onClick={(e) => (e.currentTarget.nextSibling as HTMLInputElement).click()}
+                  >
+                    <div className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: newOrgColor }} />
+                    <span className="text-[11px] font-mono text-[var(--muted)] group-hover:text-[var(--text)] transition-colors">{newOrgColor}</span>
+                  </div>
+                  <input
+                    type="color"
+                    className="absolute opacity-0 pointer-events-none"
+                    value={newOrgColor}
+                    onChange={(e) => setNewOrgColor(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
-            <div className="mt-4 flex items-center justify-end gap-2">
+            <div className="mt-8 flex items-center justify-end gap-3">
               <button
-                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                className="px-5 py-2 text-sm font-bold rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)] transition-all cursor-pointer"
                 onClick={() => setShowAddOrg(false)}
               >
                 Cancel
               </button>
               <button
-                className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                className="px-5 py-2 text-sm font-bold rounded-lg bg-[var(--accent)] text-white hover:brightness-110 transition-all cursor-pointer disabled:opacity-50"
                 disabled={!newOrgName.trim()}
                 onClick={async () => {
                   try {
@@ -477,68 +499,70 @@ const HomeInner: React.FC = () => {
       )}
       {htmlImportOpen && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60"
+          className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3"
           onClick={() => setHtmlImportOpen(false)}
         >
           <div
-            className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[420px] max-w-[90vw]"
+            className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6 w-[480px] max-w-[90vw] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label="Import HTML to new Collection"
           >
-            <div className="text-lg font-medium mb-3">匯入 HTML（新集合）</div>
-            <div className="space-y-3">
-              <div className="text-sm opacity-80">檔案：{htmlImportFile?.name}</div>
-              {htmlPreview && (
-                <div className="text-xs opacity-80">預覽：群組 {htmlPreview.groups}、連結 {htmlPreview.links}</div>
-              )}
+            <div className="text-lg font-bold mb-6">匯入 HTML（新集合）</div>
+            <div className="space-y-5">
+              <div className="text-[13px] text-[var(--muted)] leading-relaxed bg-[var(--bg)]/30 p-3 rounded-lg border border-white/5">
+                <div>檔案：{htmlImportFile?.name}</div>
+                {htmlPreview && (
+                  <div className="mt-1 font-medium text-[var(--text)]">預覽：群組 {htmlPreview.groups}、連結 {htmlPreview.links}</div>
+                )}
+              </div>
               <div>
-                <label className="block text-sm mb-1">集合名稱（可留空自動命名）</label>
+                <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2">集合名稱（可留空自動命名）</label>
                 <input
-                  className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                  className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--border)] px-4 py-2.5 text-sm focus:outline-none focus:border-[var(--accent)] transition-all"
                   value={htmlImportName}
                   onChange={(e) => setHtmlImportName(e.target.value)}
                   placeholder="Imported"
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">匯入模式</label>
-                <div className="flex items-center gap-4 text-sm">
-                  <label className="inline-flex items-center gap-1">
-                    <input type="radio" name="html-mode" checked={htmlImportMode==='multi'} onChange={() => setHtmlImportMode('multi')} />
-                    <span>依資料夾建立多群組</span>
+                <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2">匯入模式</label>
+                <div className="flex items-center gap-6 text-sm bg-[var(--bg)]/30 p-3 rounded-lg border border-white/5">
+                  <label className="inline-flex items-center gap-2 cursor-pointer group">
+                    <input type="radio" className="accent-[var(--accent)]" name="html-mode" checked={htmlImportMode==='multi'} onChange={() => setHtmlImportMode('multi')} />
+                    <span className="group-hover:text-[var(--text)] transition-colors">依資料夾建立多群組</span>
                   </label>
-                  <label className="inline-flex items-center gap-1">
-                    <input type="radio" name="html-mode" checked={htmlImportMode==='flat'} onChange={() => setHtmlImportMode('flat')} />
-                    <span>扁平匯入到單一群組</span>
+                  <label className="inline-flex items-center gap-2 cursor-pointer group">
+                    <input type="radio" className="accent-[var(--accent)]" name="html-mode" checked={htmlImportMode==='flat'} onChange={() => setHtmlImportMode('flat')} />
+                    <span className="group-hover:text-[var(--text)] transition-colors">扁平匯入到單一群組</span>
                   </label>
                 </div>
               </div>
               {htmlImportMode === 'flat' && (
                 <div>
-                  <label className="block text-sm mb-1">群組名稱</label>
+                  <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2">群組名稱</label>
                   <input
-                    className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm"
+                    className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--border)] px-4 py-2.5 text-sm focus:outline-none focus:border-[var(--accent)] transition-all"
                     value={htmlImportFlatName}
                     onChange={(e) => setHtmlImportFlatName(e.target.value)}
                     placeholder="Imported"
                   />
                 </div>
               )}
-              <label className="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={htmlImportDedup} onChange={(e)=>setHtmlImportDedup(e.currentTarget.checked)} />
-                <span>略過集合內已存在的相同 URL</span>
+              <label className="inline-flex items-center gap-2 text-sm cursor-pointer group">
+                <input type="checkbox" className="accent-[var(--accent)]" checked={htmlImportDedup} onChange={(e)=>setHtmlImportDedup(e.currentTarget.checked)} />
+                <span className="group-hover:text-[var(--text)] transition-colors">略過集合內已存在的相同 URL</span>
               </label>
             </div>
-            <div className="mt-4 flex items-center justify-end gap-2">
+            <div className="mt-8 flex items-center justify-end gap-3">
               <button
-                className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800"
+                className="px-5 py-2 text-sm font-bold rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)] transition-all cursor-pointer"
                 onClick={() => setHtmlImportOpen(false)}
               >
                 取消
               </button>
                 <button
-                  className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                  className="px-5 py-2 text-sm font-bold rounded-lg bg-[var(--accent)] text-white hover:brightness-110 transition-all cursor-pointer disabled:opacity-50"
                 onClick={async () => {
                   if (!htmlImportFile) { setHtmlImportOpen(false); return; }
                   setHtmlImportOpen(false);
@@ -583,39 +607,61 @@ const HomeInner: React.FC = () => {
         </div>
       )}
       {tobyOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60" onClick={() => setTobyOpen(false)}>
-          <div className="rounded border border-slate-700 bg-[var(--panel)] p-5 w-[420px] max-w-[90vw]" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Import Toby to new Organization">
-            <div className="text-lg font-medium mb-3">匯入 Toby（新 Organization）</div>
-            <div className="space-y-3">
-              <div className="text-sm opacity-80">檔案：{tobyFile?.name}</div>
-              {tobyPreview && (<div className="text-xs opacity-80">預覽：lists {tobyPreview.lists}、連結 {tobyPreview.links}</div>)}
+        <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3" onClick={() => setTobyOpen(false)}>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6 w-[480px] max-w-[90vw] shadow-2xl" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Import Toby to new Organization">
+            <div className="text-lg font-bold mb-4">匯入 Toby（新 Organization）</div>
+            <div className="space-y-4">
+              <div className="text-[13px] text-[var(--muted)] leading-relaxed bg-[var(--bg)]/30 p-3 rounded-lg border border-white/5">
+                <div>檔案：{tobyFile?.name}</div>
+                {tobyPreview && <div className="mt-1 font-medium text-[var(--text)]">預覽：lists {tobyPreview.lists}、連結 {tobyPreview.links}</div>}
+              </div>
+
               <div>
-                <label className="block text-sm mb-1">
+                <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2">
                   {tobyHasOrgs ? 'Organization 名稱（可留空自動命名）' : '集合名稱（可留空自動命名）'}
                 </label>
-                <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={tobyName} onChange={(e)=>setTobyName(e.target.value)} placeholder="Imported" />
+                <input
+                  className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--border)] px-4 py-2.5 text-sm focus:outline-none focus:border-[var(--accent)] transition-all"
+                  value={tobyName}
+                  onChange={(e)=>setTobyName(e.target.value)}
+                  placeholder="Imported"
+                />
               </div>
+
               {!tobyHasOrgs && (
                 <>
                   <div>
-                    <label className="block text-sm mb-1">匯入模式</label>
-                    <div className="flex items-center gap-4 text-sm">
-                      <label className="inline-flex items-center gap-1"><input type="radio" name="toby-mode" checked={tobyMode==='multi'} onChange={()=>setTobyMode('multi')} /><span>lists → 多群組</span></label>
-                      <label className="inline-flex items-center gap-1"><input type="radio" name="toby-mode" checked={tobyMode==='flat'} onChange={()=>setTobyMode('flat')} /><span>扁平至單一群組</span></label>
+                    <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2">匯入模式</label>
+                    <div className="flex items-center gap-6 text-sm bg-[var(--bg)]/30 p-3 rounded-lg border border-white/5">
+                      <label className="inline-flex items-center gap-2 cursor-pointer group">
+                        <input type="radio" className="accent-[var(--accent)]" name="toby-mode" checked={tobyMode==='multi'} onChange={()=>setTobyMode('multi')} />
+                        <span className="group-hover:text-[var(--text)] transition-colors">lists → 多群組</span>
+                      </label>
+                      <label className="inline-flex items-center gap-2 cursor-pointer group">
+                        <input type="radio" className="accent-[var(--accent)]" name="toby-mode" checked={tobyMode==='flat'} onChange={()=>setTobyMode('flat')} />
+                        <span className="group-hover:text-[var(--text)] transition-colors">扁平至單一群組</span>
+                      </label>
                     </div>
                   </div>
                   {tobyMode==='flat' && (
                     <div>
-                      <label className="block text-sm mb-1">群組名稱</label>
-                      <input className="w-full rounded bg-slate-900 border border-slate-700 p-2 text-sm" value={tobyFlatName} onChange={(e)=>setTobyFlatName(e.target.value)} placeholder="Imported" />
+                      <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-2">群組名稱</label>
+                      <input
+                        className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--border)] px-4 py-2.5 text-sm focus:outline-none focus:border-[var(--accent)] transition-all"
+                        value={tobyFlatName}
+                        onChange={(e)=>setTobyFlatName(e.target.value)}
+                        placeholder="Imported"
+                      />
                     </div>
                   )}
                 </>
               )}
             </div>
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>setTobyOpen(false)}>取消</button>
-              <button className="px-3 py-1 rounded border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-hover)]" onClick={async ()=>{
+            <div className="mt-8 flex items-center justify-end gap-3">
+              <button className="px-5 py-2 text-sm font-bold rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)] transition-all cursor-pointer" onClick={()=>setTobyOpen(false)}>取消</button>
+              <button
+                className="px-5 py-2 text-sm font-bold rounded-lg bg-[var(--accent)] text-white hover:brightness-110 transition-all cursor-pointer disabled:opacity-50"
+                onClick={async ()=>{
                 if (!tobyFile) { setTobyOpen(false); return; }
                 setTobyOpen(false); setLoading(true);
                 try {
@@ -654,25 +700,35 @@ const HomeInner: React.FC = () => {
         </div>
       )}
       {tobyProgress && (
-        <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3">
-          <div className="rounded border border-slate-700 bg-[var(--panel)] w-[420px] max-w-[90vw] p-5">
-            <div className="text-lg font-semibold">匯入中…</div>
-            <div className="mt-3 text-sm">{tobyProgress.processed}/{tobyProgress.total}</div>
-            <div className="mt-2 h-2 w-full bg-slate-800 rounded"><div className="h-2 bg-[var(--accent)] rounded" style={{ width: `${tobyProgress.total ? Math.min(100, Math.floor((tobyProgress.processed/tobyProgress.total)*100)) : 0}%` }} /></div>
-            <div className="mt-3 flex items-center justify-end gap-2"><button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={()=>{ try{ tobyAbortRef.current?.abort(); } catch{} }}>取消</button></div>
+        <div className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[420px] max-w-[90vw] p-6 shadow-2xl">
+            <div className="text-lg font-bold mb-4">匯入中…</div>
+            <div className="flex justify-between items-end mb-2">
+              <div className="text-sm text-[var(--muted)]">{tobyProgress.processed} / {tobyProgress.total}</div>
+              <div className="text-xs font-bold text-[var(--accent)]">{tobyProgress.total ? Math.min(100, Math.floor((tobyProgress.processed/tobyProgress.total)*100)) : 0}%</div>
+            </div>
+            <div className="h-2 w-full bg-[var(--bg)] rounded-full overflow-hidden border border-white/5">
+              <div className="h-full bg-[var(--accent)] rounded-full transition-all duration-300 shadow-[0_0_8px_var(--accent)]" style={{ width: `${tobyProgress.total ? Math.min(100, Math.floor((tobyProgress.processed/tobyProgress.total)*100)) : 0}%` }} />
+            </div>
+            <div className="mt-8 flex items-center justify-end">
+              <button className="px-5 py-2 text-sm font-bold rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)] transition-all cursor-pointer" onClick={()=>{ try{ tobyAbortRef.current?.abort(); } catch{} }}>取消</button>
+            </div>
           </div>
         </div>
       )}
       {htmlProgress && (
-        <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3">
-          <div className="rounded border border-slate-700 bg-[var(--panel)] w-[420px] max-w-[90vw] p-5">
-            <div className="text-lg font-semibold">匯入中…</div>
-            <div className="mt-3 text-sm">{htmlProgress.processed}/{htmlProgress.total}</div>
-            <div className="mt-2 h-2 w-full bg-slate-800 rounded">
-              <div className="h-2 bg-[var(--accent)] rounded" style={{ width: `${htmlProgress.total ? Math.min(100, Math.floor((htmlProgress.processed/htmlProgress.total)*100)) : 0}%` }} />
+        <div className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[420px] max-w-[90vw] p-6 shadow-2xl">
+            <div className="text-lg font-bold mb-4">匯入中…</div>
+            <div className="flex justify-between items-end mb-2">
+              <div className="text-sm text-[var(--muted)]">{htmlProgress.processed} / {htmlProgress.total}</div>
+              <div className="text-xs font-bold text-[var(--accent)]">{htmlProgress.total ? Math.min(100, Math.floor((htmlProgress.processed/htmlProgress.total)*100)) : 0}%</div>
             </div>
-            <div className="mt-3 flex items-center justify-end gap-2">
-              <button className="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800" onClick={() => { try { htmlAbortRef.current?.abort(); } catch {} }}>取消</button>
+            <div className="h-2 w-full bg-[var(--bg)] rounded-full overflow-hidden border border-white/5">
+              <div className="h-full bg-[var(--accent)] rounded-full transition-all duration-300 shadow-[0_0_8px_var(--accent)]" style={{ width: `${htmlProgress.total ? Math.min(100, Math.floor((htmlProgress.processed/htmlProgress.total)*100)) : 0}%` }} />
+            </div>
+            <div className="mt-8 flex items-center justify-end">
+              <button className="px-5 py-2 text-sm font-bold rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)] transition-all cursor-pointer" onClick={() => { try { htmlAbortRef.current?.abort(); } catch {} }}>取消</button>
             </div>
           </div>
         </div>

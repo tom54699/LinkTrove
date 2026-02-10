@@ -1100,8 +1100,19 @@
   "confirm_delete_selected_title": {
     "message": "確認刪除選取項目"
   },
+  "confirm_delete_selected_desc": {
+    "message": "確定要刪除選取的項目嗎？此操作無法復原。"
+  },
   "confirm_open_tabs": {
     "message": "確定要開啟 $COUNT$ 個標籤頁嗎？",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "confirm_open_tabs_desc": {
+    "message": "系統將會一次開啟 $COUNT$ 個新分頁，確定要繼續嗎？",
     "placeholders": {
       "count": {
         "content": "$1"
