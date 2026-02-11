@@ -448,6 +448,9 @@
   "btn_move": {
     "message": "Move"
   },
+  "btn_moving": {
+    "message": "Moving..."
+  },
   "loading": {
     "message": "Loading..."
   },

@@ -8,7 +8,7 @@ export interface MoveSelectedDialogProps {
   isOpen: boolean;
   selectedCount: number;
   onClose: () => void;
-  onMove: (categoryId: string, subcategoryId: string) => void;
+  onMove: (categoryId: string, subcategoryId: string) => Promise<void>;
 }
 
 interface Subcategory {
@@ -30,6 +30,7 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
   const [selectedSubcategoryId, setSelectedSubcategoryId] = React.useState<string>('');
   const [subcategories, setSubcategories] = React.useState<Subcategory[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [moving, setMoving] = React.useState(false);
 
   // Load subcategories when category changes OR when dialog opens
   React.useEffect(() => {
@@ -71,9 +72,14 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
     }
   }, [isOpen, categories, selectedCategoryId]);
 
-  const handleMove = () => {
+  const handleMove = async () => {
     if (!selectedCategoryId || !selectedSubcategoryId) return;
-    onMove(selectedCategoryId, selectedSubcategoryId);
+    setMoving(true);
+    try {
+      await onMove(selectedCategoryId, selectedSubcategoryId);
+    } finally {
+      setMoving(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -177,11 +183,17 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
           </button>
           <button
             type="button"
-            className="px-5 py-2 text-sm font-bold rounded-lg bg-[var(--accent)] text-white hover:brightness-110 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-5 py-2 text-sm font-bold rounded-lg bg-[var(--accent)] text-white hover:brightness-110 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             onClick={handleMove}
-            disabled={!selectedCategoryId || !selectedSubcategoryId}
+            disabled={!selectedCategoryId || !selectedSubcategoryId || moving}
           >
-            {t('btn_move')}
+            {moving && (
+              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            )}
+            {moving ? t('btn_moving') : t('btn_move')}
           </button>
         </div>
       </div>

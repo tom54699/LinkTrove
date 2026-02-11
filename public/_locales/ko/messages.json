@@ -448,6 +448,9 @@
   "btn_move": {
     "message": "이동"
   },
+  "btn_moving": {
+    "message": "이동 중..."
+  },
   "loading": {
     "message": "로딩 중..."
   },

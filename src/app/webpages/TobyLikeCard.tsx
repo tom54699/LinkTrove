@@ -140,6 +140,7 @@ export const TobyLikeCard = React.memo<TobyLikeCardProps>(function TobyLikeCard(
   const [urlValue, setUrlValue] = React.useState('');
   const [descValue, setDescValue] = React.useState(description || '');
   const [metaValue, setMetaValue] = React.useState<Record<string, string>>({ ...(meta || {}) });
+  const saveBtnRef = React.useRef<HTMLButtonElement>(null);
   const [editedMetaKeys, setEditedMetaKeys] = React.useState<Set<string>>(new Set());
 
   const autoSaveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -383,7 +384,7 @@ export const TobyLikeCard = React.memo<TobyLikeCardProps>(function TobyLikeCard(
               <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{t('card_title_label')}</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={titleValue} onChange={(e) => setTitleValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); performAutoSaveRef.current(); setShowModal(false); onModalOpenChange?.(false); } }} /></div>
               <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{t('card_url_label')}</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={urlValue} onChange={(e) => setUrlValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); performAutoSaveRef.current(); setShowModal(false); onModalOpenChange?.(false); } }} /></div>
               <div><label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-wider mb-1.5">{t('card_note_label')}</label><input className="w-full bg-[var(--bg)] border border-white/5 rounded-lg px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]" value={descValue} onChange={(e) => setDescValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); performAutoSaveRef.current(); setShowModal(false); onModalOpenChange?.(false); } }} /></div>
-              <TemplateFields categoryId={categoryId || ''} meta={metaValue} onChange={(newMeta) => {
+              <TemplateFields categoryId={categoryId || ''} meta={metaValue} saveBtnRef={saveBtnRef} onChange={(newMeta) => {
                 // Track which meta fields were edited by the user
                 Object.keys(newMeta).forEach(key => {
                   if (newMeta[key] !== metaValue[key]) {
@@ -395,7 +396,7 @@ export const TobyLikeCard = React.memo<TobyLikeCardProps>(function TobyLikeCard(
             </div>
             <footer className="px-6 py-4 bg-white/5 border-t border-white/5 flex justify-end gap-2">
               <button className="px-4 py-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--text)]" onClick={() => { setShowModal(false); onModalOpenChange?.(false); }}>{t('btn_cancel')}</button>
-              <button className="px-6 py-2 text-sm font-bold bg-[var(--accent)] text-white rounded-lg hover:brightness-110" onClick={() => {
+              <button ref={saveBtnRef} data-save-btn className="px-6 py-2 text-sm font-bold bg-[var(--accent)] text-white rounded-lg hover:brightness-110" onClick={() => {
                 const patch: any = { title: titleValue.trim(), description: descValue, url: urlValue.trim() };
                 // Merge strategy: only update meta fields that were actually edited
                 const patchMeta: Record<string, string> = {};
@@ -423,7 +424,8 @@ const TemplateFields: React.FC<{
   categoryId: string;
   meta: Record<string, string>;
   onChange: (m: Record<string, string>) => void;
-}> = ({ categoryId, meta, onChange }) => {
+  saveBtnRef: React.RefObject<HTMLButtonElement>;
+}> = ({ categoryId, meta, onChange, saveBtnRef }) => {
   const { categories } = useCategories();
   const { templates } = useTemplates();
   const cat = categories.find((c: any) => c.id === categoryId);
@@ -432,6 +434,15 @@ const TemplateFields: React.FC<{
   const hasRequiredError = tpl.fields.some(
     (f: any) => f.required && !(meta[f.key] ?? '').trim()
   );
+
+  // Helper function for Enter key handling
+  const handleEnterKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      saveBtnRef.current?.click();
+    }
+  };
+
   return (
     <div className="space-y-3 pt-2 border-t border-white/5">
       {tpl.fields.map((f: any) => {
@@ -496,6 +507,7 @@ const TemplateFields: React.FC<{
                 value={val}
                 placeholder={f.defaultValue || ''}
                 onChange={(e) => set(e.target.value)}
+                onKeyDown={handleEnterKey}
               />
             ) : f.type === 'date' ? (
               (() => {
@@ -530,6 +542,7 @@ const TemplateFields: React.FC<{
                 value={val}
                 placeholder={f.defaultValue || ''}
                 onChange={(e) => set(e.target.value)}
+                onKeyDown={handleEnterKey}
               />
             ) : f.type === 'rating' ? (
               <div className="flex items-center gap-1">
@@ -558,6 +571,7 @@ const TemplateFields: React.FC<{
                 value={val}
                 placeholder={f.defaultValue || ''}
                 onChange={(e) => set(e.target.value)}
+                onKeyDown={handleEnterKey}
               />
             )}
           </div>

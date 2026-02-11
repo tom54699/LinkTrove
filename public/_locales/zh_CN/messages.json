@@ -448,6 +448,9 @@
   "btn_move": {
     "message": "移动"
   },
+  "btn_moving": {
+    "message": "移动中..."
+  },
   "loading": {
     "message": "加载中..."
   },

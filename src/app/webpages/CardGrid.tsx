@@ -40,6 +40,11 @@ export interface CardGridProps {
     categoryId: string,
     subcategoryId: string
   ) => Promise<void>;
+  onMoveManyCards?: (
+    ids: string[],
+    categoryId: string,
+    subcategoryId: string
+  ) => Promise<void>;
 }
 
 export const CardGrid: React.FC<CardGridProps> = ({
@@ -56,6 +61,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
   onUpdateCategory,
   onUpdateMeta,
   onMoveCardToGroup,
+  onMoveManyCards,
 }) => {
   const { t } = useI18n();
   const [isOver, setIsOver] = React.useState(false);
@@ -162,21 +168,19 @@ export const CardGrid: React.FC<CardGridProps> = ({
 
   const handleBatchMove = async (categoryId: string, subcategoryId: string) => {
     try {
-      // 使用 memo 化的 selectedIdsOrdered（已保持 items 原始順序）
-      // Prefer provider action to keep UI state in sync
-      if (onMoveCardToGroup) {
+      // 優先使用批次 provider action（確保狀態同步 + 10x 性能）
+      if (onMoveManyCards) {
+        await onMoveManyCards(selectedIdsOrdered, categoryId, subcategoryId);
+      } else if (onMoveCardToGroup) {
+        // Fallback: 順序呼叫單張 move（慢但確保狀態同步）
         for (const cardId of selectedIdsOrdered) {
           await onMoveCardToGroup(cardId, categoryId, subcategoryId);
         }
       } else {
-        const { createStorageService } = await import('../../background/storageService');
-        const svc = createStorageService();
-
-        // Sequential execution to prevent race conditions and preserve order
-        for (const cardId of selectedIdsOrdered) {
-          if (onUpdateCategory) await onUpdateCategory(cardId, categoryId);
-          await (svc as any).updateCardSubcategory?.(cardId, subcategoryId);
-        }
+        // Fallback: 直接使用 service（無 provider 時）
+        const { createWebpageService } = await import('../../background/webpageService');
+        const svc = createWebpageService();
+        await svc.moveManyCards(selectedIdsOrdered, categoryId, subcategoryId);
       }
 
       setShowMoveDialog(false); clearSelection(); showToast(t('toast_moved_cards', [String(selectedIdsOrdered.length)]), 'success');

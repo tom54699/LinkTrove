@@ -47,6 +47,11 @@ interface CtxValue {
       targetGroupId: string,
       beforeId?: string
     ) => Promise<void>;
+    moveMany: (
+      cardIds: string[],
+      targetCategoryId: string,
+      targetGroupId: string
+    ) => Promise<void>;
   };
 }
 
@@ -271,14 +276,40 @@ export const WebpagesProvider: React.FC<{
 
   const deleteMany = React.useCallback(
     async (ids: string[]) => {
-      for (const id of ids) await service.deleteWebpage(id);
-      await load();
+      // 設置操作鎖定，避免 onChanged 監聽器觸發重複 load
+      operationLockRef.current = Date.now();
+
+      // Optimistic update: 立即從 UI 移除
+      setItems((prev) => {
+        const next = prev.filter((p) => !ids.includes(p.id));
+        logOrderSnapshot('deleteMany', next);
+        return next;
+      });
+
+      // 使用批次刪除函數（1 次 load + 1 次 save）
+      try {
+        await service.deleteManyWebpages(ids);
+        // 全部成功，延長鎖定時間防止 onChanged 觸發
+        operationLockRef.current = Date.now();
+      } catch (error) {
+        console.error('Failed to delete cards:', error);
+        // 失敗時重新載入以顯示實際狀態
+        setTimeout(() => {
+          operationLockRef.current = Date.now();
+          load().catch(() => {});
+        }, 1000);
+        // Rethrow 讓上層知道失敗（顯示錯誤 toast）
+        throw error;
+      }
     },
     [service, load]
   );
 
   const deleteOne = React.useCallback(
     async (id: string) => {
+      // 設置操作鎖定，避免 onChanged 監聽器觸發重複 load
+      operationLockRef.current = Date.now();
+
       await service.deleteWebpage(id);
       setItems((prev) => {
         const next = prev.filter((p) => p.id != id);
@@ -419,6 +450,40 @@ export const WebpagesProvider: React.FC<{
     [service]
   );
 
+  const moveMany = React.useCallback(
+    async (
+      cardIds: string[],
+      targetCategoryId: string,
+      targetGroupId: string
+    ) => {
+      operationLockRef.current = Date.now(); // 設置操作鎖定
+
+      // 使用批次移動函數（1 次 load + 1 次 save）
+      try {
+        const saved = await service.moveManyCards(
+          cardIds,
+          targetCategoryId,
+          targetGroupId
+        );
+        const mapped = saved.map(toCard);
+        setItems(mapped);
+        logOrderSnapshot('moveMany', mapped);
+        // 延長鎖定時間防止 onChanged 觸發
+        operationLockRef.current = Date.now();
+      } catch (error) {
+        console.error('Failed to batch move cards:', error);
+        // 失敗時重新載入以顯示實際狀態
+        setTimeout(() => {
+          operationLockRef.current = Date.now();
+          load().catch(() => {});
+        }, 1000);
+        // Rethrow 讓上層知道失敗（顯示錯誤 toast）
+        throw error;
+      }
+    },
+    [service, load]
+  );
+
   React.useEffect(() => {
     load().catch(() => {
       /* ignore */
@@ -471,6 +536,7 @@ export const WebpagesProvider: React.FC<{
         reorder,
         moveToEnd,
         moveCardToGroup,
+        moveMany,
       },
     }),
     [
@@ -489,6 +555,7 @@ export const WebpagesProvider: React.FC<{
       reorder,
       moveToEnd,
       moveCardToGroup,
+      moveMany,
     ]
   );
 

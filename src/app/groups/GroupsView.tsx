@@ -500,11 +500,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
             )}
 
             {/* CardGrid - 只在展開時渲染，收合時完全不載入 */}
-            {isCollapsed ? (
-              <div className="px-4 py-3 text-[var(--muted)] text-sm opacity-60">
-                {groupItems.length} 張卡片（已收合）
-              </div>
-            ) : (
+            {!isCollapsed && (
               <div className="min-h-[40px] px-2 pb-2">
                 <CardGrid
                   groupId={g.id}
@@ -561,6 +557,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
                   onUpdateCategory={(id, cat) => actions.updateCategory(id, cat)}
                   onUpdateMeta={(id, meta) => actions.updateMeta(id, meta)}
                   onMoveCardToGroup={(id, cat, group) => actions.moveCardToGroup(id, cat, group)}
+                  onMoveManyCards={(ids, cat, group) => actions.moveMany(ids, cat, group)}
                 />
               </div>
             )}

@@ -24,6 +24,7 @@ export interface WebpageService {
     updates: Partial<WebpageData>
   ) => Promise<WebpageData>;
   deleteWebpage: (id: string) => Promise<void>;
+  deleteManyWebpages: (ids: string[]) => Promise<void>;
   loadWebpages: () => Promise<WebpageData[]>;
   reorderWebpages: (fromId: string, toId: string) => Promise<WebpageData[]>;
   moveWebpageToEnd: (id: string) => Promise<WebpageData[]>;
@@ -32,6 +33,11 @@ export interface WebpageService {
     targetCategoryId: string,
     targetGroupId: string,
     beforeId?: string
+  ) => Promise<WebpageData[]>;
+  moveManyCards: (
+    cardIds: string[],
+    targetCategoryId: string,
+    targetGroupId: string
   ) => Promise<WebpageData[]>;
 }
 
@@ -314,6 +320,54 @@ export function createWebpageService(deps?: {
     } catch {}
   }
 
+  /**
+   * Batch delete multiple webpages (optimized version)
+   * Reduces N load/save operations to 1 load/save operation
+   */
+  async function deleteManyWebpages(ids: string[]) {
+    if (ids.length === 0) return;
+
+    const list = await storage.loadFromLocal();
+    const now = nowMs();
+
+    // Mark all specified cards as deleted
+    const next = list.map((w) =>
+      ids.includes(w.id)
+        ? { ...w, deleted: true, deletedAt: now, updatedAt: now }
+        : w
+    );
+
+    await saveWebpages(next);
+
+    // Remove from group orders (batch by group)
+    try {
+      const groupsToUpdate = new Map<string, string[]>();
+
+      // Group deleted cards by their subcategoryId
+      for (const id of ids) {
+        const card = list.find((w) => w.id === id) as any;
+        const gid = card?.subcategoryId as string | undefined;
+        if (gid) {
+          if (!groupsToUpdate.has(gid)) {
+            groupsToUpdate.set(gid, []);
+          }
+          groupsToUpdate.get(gid)!.push(id);
+        }
+      }
+
+      // Update each group's order once
+      for (const [gid, deletedIds] of groupsToUpdate) {
+        const order = await getGroupOrder(gid);
+        const pruned = order.filter((x) => !deletedIds.includes(x));
+        if (pruned.length !== order.length) {
+          await setGroupOrder(gid, pruned);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to update group orders after batch delete:', err);
+    }
+  }
+
   async function reorderWebpages(fromId: string, toId: string) {
     // Only require toId to exist; fromId might be moving across groups
     const list = await storage.loadFromLocal();
@@ -470,13 +524,108 @@ export function createWebpageService(deps?: {
     }
   }
 
+  /**
+   * Batch move multiple cards to a target group (optimized version)
+   * Reduces N load/save/order operations to 1 load/save + minimal order operations
+   *
+   * BEHAVIOR: Moved cards are ALWAYS appended to the END of the target group.
+   * This is the intended behavior for batch move operations (e.g., "Move to Collection X").
+   * If you need to preserve insertion position or insert at a specific index,
+   * use the single-card moveCardToGroup() instead.
+   */
+  async function moveManyCards(
+    cardIds: string[],
+    targetCategoryId: string,
+    targetGroupId: string
+  ) {
+    if (cardIds.length === 0) return await loadWebpages();
+
+    const list = await storage.loadFromLocal();
+
+    // Collect original group IDs for each card
+    const originalGroups = new Map<string, string>();
+    for (const cardId of cardIds) {
+      const card = list.find((w) => w.id === cardId) as any;
+      if (card?.subcategoryId) {
+        originalGroups.set(cardId, card.subcategoryId);
+      }
+    }
+
+    try {
+      // Step 1: Batch update all cards' category and subcategoryId
+      const updated = list.map((w: any) =>
+        cardIds.includes(w.id)
+          ? { ...w, category: targetCategoryId, subcategoryId: targetGroupId }
+          : w
+      );
+      await saveWebpages(updated);
+
+      // Step 2: Remove from source group orders (batch by group)
+      const sourceGroupsToUpdate = new Set<string>();
+      for (const [cardId, originalGroupId] of originalGroups) {
+        if (originalGroupId && originalGroupId !== targetGroupId) {
+          sourceGroupsToUpdate.add(originalGroupId);
+        }
+      }
+
+      for (const groupId of sourceGroupsToUpdate) {
+        const order = await getGroupOrder(groupId);
+        const movedCardsInThisGroup = Array.from(originalGroups.entries())
+          .filter(([_, gid]) => gid === groupId)
+          .map(([cardId, _]) => cardId);
+        const pruned = order.filter((x) => !movedCardsInThisGroup.includes(x));
+        if (pruned.length !== order.length) {
+          await setGroupOrder(groupId, pruned);
+        }
+      }
+
+      // Step 3: Add to target group order (append at end to preserve input order)
+      const targetOrder = await getGroupOrder(targetGroupId);
+      const currentIdsInTarget = updated
+        .filter((w: any) => w.subcategoryId === targetGroupId && !cardIds.includes(w.id))
+        .map((w: any) => w.id);
+
+      // Build new order: existing cards + moved cards (in input order)
+      const seen = new Set<string>();
+      const base: string[] = [];
+
+      // Add existing cards in target group (excluding moved cards)
+      for (const id of targetOrder) {
+        if (currentIdsInTarget.includes(id) && !seen.has(id)) {
+          seen.add(id);
+          base.push(id);
+        }
+      }
+      for (const id of currentIdsInTarget) {
+        if (!seen.has(id)) {
+          seen.add(id);
+          base.push(id);
+        }
+      }
+
+      // Append moved cards in input order
+      for (const cardId of cardIds) {
+        base.push(cardId);
+      }
+
+      await setGroupOrder(targetGroupId, base);
+      return await loadWebpages();
+    } catch (error) {
+      console.error('Failed to batch move cards:', error);
+      // On error, reload to show actual state
+      return await loadWebpages();
+    }
+  }
+
   return {
     addWebpageFromTab,
     updateWebpage,
     deleteWebpage,
+    deleteManyWebpages,
     loadWebpages,
     reorderWebpages,
     moveWebpageToEnd,
     moveCardToGroup,
+    moveManyCards,
   };
 }
