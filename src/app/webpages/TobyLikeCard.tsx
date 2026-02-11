@@ -109,7 +109,8 @@ const SelectField: React.FC<{
   );
 };
 
-export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
+// Memo化 TobyLikeCard 避免不必要的 re-render
+export const TobyLikeCard = React.memo<TobyLikeCardProps>(function TobyLikeCard({
   title,
   description,
   faviconUrl,
@@ -129,7 +130,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
   onModalOpenChange,
   onSave,
   ghost,
-}) => {
+}) {
   const { t, language } = useI18n();
   const [confirming, setConfirming] = React.useState(false);
   const [showModal, setShowModal] = React.useState(false);
@@ -416,7 +417,7 @@ export const TobyLikeCard: React.FC<TobyLikeCardProps> = ({
 
     </div>
   );
-};
+});
 
 const TemplateFields: React.FC<{
   categoryId: string;

@@ -72,6 +72,18 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
     return createStorageService();
   }, []);
 
+  // Memoize items grouping to avoid O(n×g) repeated filtering
+  const groupedItems = React.useMemo(() => {
+    const map = new Map<string, any[]>();
+    for (const item of items) {
+      if (item.category !== categoryId) continue;
+      const groupId = item.subcategoryId;
+      if (!map.has(groupId)) map.set(groupId, []);
+      map.get(groupId)!.push(item);
+    }
+    return map;
+  }, [items, categoryId]);
+
   // Keep track of latest groups to avoid stale closure in event listener
   const groupsRef = React.useRef(groups);
   React.useEffect(() => {
@@ -311,7 +323,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
   return (
     <div className="space-y-6 mt-3 pb-20">
       {groups.map((g) => {
-        const groupItems = items.filter((it: any) => it.category === categoryId && it.subcategoryId === g.id);
+        const groupItems = groupedItems.get(g.id) || [];
         const isCollapsed = !!collapsed[g.id];
         const isActive = activeDropGroupId === g.id;
 
@@ -487,7 +499,12 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
               />
             )}
 
-            {!isCollapsed && (
+            {/* CardGrid - 只在展開時渲染，收合時完全不載入 */}
+            {isCollapsed ? (
+              <div className="px-4 py-3 text-[var(--muted)] text-sm opacity-60">
+                {groupItems.length} 張卡片（已收合）
+              </div>
+            ) : (
               <div className="min-h-[40px] px-2 pb-2">
                 <CardGrid
                   groupId={g.id}
@@ -615,7 +632,7 @@ export const GroupsView: React.FC<{ categoryId: string }> = ({ categoryId }) => 
       <ShareDialog
         isOpen={shareDialogOpen}
         groupName={shareGroup?.name || ''}
-        itemCount={items.filter((it: any) => it.category === categoryId && it.subcategoryId === shareGroup?.id).length}
+        itemCount={shareGroup ? (groupedItems.get(shareGroup.id)?.length || 0) : 0}
         shareTitle={shareTitle}
         shareDescription={shareDescription}
         onClose={() => setShareDialogOpen(false)}

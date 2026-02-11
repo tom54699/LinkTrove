@@ -7,6 +7,12 @@ import { useFeedback } from '../ui/feedback';
 import { MoveSelectedDialog } from './MoveSelectedDialog';
 import { useI18n } from '../i18n';
 
+// Debug flag for DnD logging (set to true to enable detailed drag-drop logs)
+const DEBUG_DND = import.meta.env.DEV && false;
+
+// RAF 節流閾值：超過此數量的卡片時啟用 RAF 節流（提升大量卡片時的拖曳性能）
+const DND_RAF_THRESHOLD = 300;
+
 export interface CardGridProps {
   groupId?: string;
   items?: WebpageCardData[];
@@ -55,7 +61,21 @@ export const CardGrid: React.FC<CardGridProps> = ({
   const { showToast } = useFeedback();
   const [selected, setSelected] = React.useState<Record<string, boolean>>({});
 
-  const selectedCount = Object.values(selected).filter(Boolean).length;
+  // Memo 化 selected 相關計算，避免每次 render 都重新計算
+  const selectedCount = React.useMemo(
+    () => Object.values(selected).filter(Boolean).length,
+    [selected]
+  );
+  const selectedIds = React.useMemo(
+    () => Object.entries(selected).filter(([, v]) => v).map(([key]) => key),
+    [selected]
+  );
+  // 保持 items 原始順序的 selectedIds（用於批次操作）
+  const selectedIdsOrdered = React.useMemo(
+    () => items.filter(item => selected[item.id]).map(item => item.id),
+    [items, selected]
+  );
+
   const toggleSelect = (id: string) =>
     setSelected((s) => ({ ...s, [id]: !s[id] }));
   const clearSelection = () => setSelected({});
@@ -65,14 +85,12 @@ export const CardGrid: React.FC<CardGridProps> = ({
   const [showOpenTabsConfirm, setShowOpenTabsConfirm] = React.useState(false);
 
   const handleOpenTabs = () => {
-    const selectedIds = Object.entries(selected).filter(([, v]) => v).map(([key]) => key);
     if (selectedIds.length > 10) { setShowOpenTabsConfirm(true); return; }
     executeOpenTabs();
   };
 
   const executeOpenTabs = () => {
     try {
-      const selectedIds = Object.entries(selected).filter(([, v]) => v).map(([key]) => key);
       const selectedItems = items.filter((item) => selectedIds.includes(item.id));
       selectedItems.forEach((item) => {
         if (chrome?.tabs?.create) {
@@ -88,12 +106,10 @@ export const CardGrid: React.FC<CardGridProps> = ({
 
   const handleBatchMove = async (categoryId: string, subcategoryId: string) => {
     try {
-      // Preserve order: filter from items instead of using Object.entries
-      const selectedIds = items.filter(item => selected[item.id]).map(item => item.id);
-
+      // 使用 memo 化的 selectedIdsOrdered（已保持 items 原始順序）
       // Prefer provider action to keep UI state in sync
       if (onMoveCardToGroup) {
-        for (const cardId of selectedIds) {
+        for (const cardId of selectedIdsOrdered) {
           await onMoveCardToGroup(cardId, categoryId, subcategoryId);
         }
       } else {
@@ -101,13 +117,13 @@ export const CardGrid: React.FC<CardGridProps> = ({
         const svc = createStorageService();
 
         // Sequential execution to prevent race conditions and preserve order
-        for (const cardId of selectedIds) {
+        for (const cardId of selectedIdsOrdered) {
           if (onUpdateCategory) await onUpdateCategory(cardId, categoryId);
           await (svc as any).updateCardSubcategory?.(cardId, subcategoryId);
         }
       }
 
-      setShowMoveDialog(false); clearSelection(); showToast(t('toast_moved_cards', [String(selectedIds.length)]), 'success');
+      setShowMoveDialog(false); clearSelection(); showToast(t('toast_moved_cards', [String(selectedIdsOrdered.length)]), 'success');
     } catch { showToast(t('toast_move_failed'), 'error'); }
   };
 
@@ -125,6 +141,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
   const dragStartXRef = React.useRef<number | null>(null);
   const dragStartYRef = React.useRef<number | null>(null);
   const grabOffsetXRef = React.useRef<number>(0);
+  const rafIdRef = React.useRef<number | null>(null); // RAF 節流用的 requestAnimationFrame ID
 
   const normalizeBeforeId = React.useCallback(
     (beforeId: string | '__END__' | null) => {
@@ -261,7 +278,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
         isCrossingRows = Math.abs(yDiff) > 25;
         // 判斷是往上還是往下拖曳
         isDraggingDown = yDiff > 0;
-        console.log('[DND] 跨行判斷:', {
+        if (DEBUG_DND) console.log('[DND] 跨行判斷:', {
           dragStartY: dragStartYRef.current,
           targetRowY,
           yDiff,
@@ -272,7 +289,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
 
       // 一直使用實時 X 座標，避免來回拖曳時 refX 跳動
       const refX = cardCenterX;
-      console.log('[DND] X座標:', { clientX, grabOffset: grabOffsetXRef.current, cardCenterX: refX });
+      if (DEBUG_DND) console.log('[DND] X座標:', { clientX, grabOffset: grabOffsetXRef.current, cardCenterX: refX });
 
       if (row.length === 0) {
         newIndex = 0;
@@ -286,27 +303,29 @@ export const CardGrid: React.FC<CardGridProps> = ({
           let closestCard = row[0];
           let minDist = Math.abs(refX - row[0].centerX);
 
-          console.log('[DND] 跨行模式 - 尋找最接近卡片');
-          console.log('[DND] 目標行:', row.map(c => ({ idx: c.idx, centerX: c.centerX })));
-          console.log('[DND] 卡片0:', { idx: row[0].idx, centerX: row[0].centerX, dist: minDist });
+          if (DEBUG_DND) {
+            console.log('[DND] 跨行模式 - 尋找最接近卡片');
+            console.log('[DND] 目標行:', row.map(c => ({ idx: c.idx, centerX: c.centerX })));
+            console.log('[DND] 卡片0:', { idx: row[0].idx, centerX: row[0].centerX, dist: minDist });
+          }
 
           for (let i = 1; i < row.length; i++) {
             const dist = Math.abs(refX - row[i].centerX);
-            console.log(`[DND] 卡片${i}:`, { idx: row[i].idx, centerX: row[i].centerX, dist });
+            if (DEBUG_DND) console.log(`[DND] 卡片${i}:`, { idx: row[i].idx, centerX: row[i].centerX, dist });
             if (dist < minDist) {
               minDist = dist;
               closestCard = row[i];
-              console.log(`[DND]   → 更新最接近: idx=${closestCard.idx}`);
+              if (DEBUG_DND) console.log(`[DND]   → 更新最接近: idx=${closestCard.idx}`);
             }
           }
 
-          console.log('[DND] 最接近卡片:', { idx: closestCard.idx, centerX: closestCard.centerX, minDist, TOLERANCE });
+          if (DEBUG_DND) console.log('[DND] 最接近卡片:', { idx: closestCard.idx, centerX: closestCard.centerX, minDist, TOLERANCE });
 
           // 如果最接近的卡片在容差範圍內，插入到該位置
           if (minDist <= TOLERANCE) {
             // 找到該卡片在目標行中的位置
             const posInRow = row.findIndex(c => c.idx === closestCard.idx);
-            console.log('[DND] 最接近卡片在行內位置:', posInRow, '(0=第一張, 1=第二張, 2=第三張...)');
+            if (DEBUG_DND) console.log('[DND] 最接近卡片在行內位置:', posInRow, '(0=第一張, 1=第二張, 2=第三張...)');
 
             // 根據拖曳方向調整
             if (isDraggingDown) {
@@ -314,36 +333,36 @@ export const CardGrid: React.FC<CardGridProps> = ({
               if (posInRow < row.length - 1) {
                 const nextCard = row[posInRow + 1];
                 newIndex = nextCard.idx;
-                console.log('[DND] ✓ 往下調整: 返回後一張 idx=', newIndex);
+                if (DEBUG_DND) console.log('[DND] ✓ 往下調整: 返回後一張 idx=', newIndex);
               } else {
                 newIndex = closestCard.idx + 1;
-                console.log('[DND] ✓ 往下調整: 最後一張，返回 idx=', newIndex);
+                if (DEBUG_DND) console.log('[DND] ✓ 往下調整: 最後一張，返回 idx=', newIndex);
               }
             } else {
               // 往上：直接返回
               newIndex = closestCard.idx;
-              console.log('[DND] ✓ 往上: 返回 idx=', newIndex);
+              if (DEBUG_DND) console.log('[DND] ✓ 往上: 返回 idx=', newIndex);
             }
 
             inserted = true;
           } else {
-            console.log('[DND] ✗ 超出容差，繼續正常邏輯');
+            if (DEBUG_DND) console.log('[DND] ✗ 超出容差，繼續正常邏輯');
           }
         }
 
         // 如果跨行模式沒有找到匹配，或是同行模式，使用正常邏輯
         if (!inserted) {
-          console.log('[DND] 使用正常比較邏輯');
+          if (DEBUG_DND) console.log('[DND] 使用正常比較邏輯');
           for (let i = 0; i < row.length; i++) {
             const card = row[i];
             const diff = refX - card.centerX;
-            console.log(`[DND] 比較卡片${i}:`, { idx: card.idx, centerX: card.centerX, diff });
+            if (DEBUG_DND) console.log(`[DND] 比較卡片${i}:`, { idx: card.idx, centerX: card.centerX, diff });
 
             // refX 在卡片中心點左側：插入到該卡片之前
             if (diff < 0) {
               newIndex = card.idx;
               inserted = true;
-              console.log(`[DND] ✓ diff < 0，插入到 idx=${newIndex}`);
+              if (DEBUG_DND) console.log(`[DND] ✓ diff < 0，插入到 idx=${newIndex}`);
               break;
             }
           }
@@ -352,10 +371,10 @@ export const CardGrid: React.FC<CardGridProps> = ({
         if (!inserted) {
           // refX 在所有卡片中心點右側：插入到最後
           newIndex = row[row.length - 1].idx + 1;
-          console.log(`[DND] 所有卡片都在左側，插入到最後 idx=${newIndex}`);
+          if (DEBUG_DND) console.log(`[DND] 所有卡片都在左側，插入到最後 idx=${newIndex}`);
         }
 
-        console.log('[DND] === 計算結果 newIndex =', newIndex, '===');
+        if (DEBUG_DND) console.log('[DND] === 計算結果 newIndex =', newIndex, '===');
       }
 
       // Step 4: 應用 Hysteresis（使用與 Step 3 相同的 refX）
@@ -364,40 +383,40 @@ export const CardGrid: React.FC<CardGridProps> = ({
       const bufferLeft = 10;   // 往左：較小 buffer（增加敏感度）
       const currentIndex = prevGiRef.current;
 
-      console.log('[DND] Hysteresis:', { newIndex, currentIndex, bufferRight, bufferLeft });
+      if (DEBUG_DND) console.log('[DND] Hysteresis:', { newIndex, currentIndex, bufferRight, bufferLeft });
 
       if (currentIndex !== null && currentIndex >= 0 && currentIndex <= wrappers.length) {
         if (newIndex === currentIndex) {
-          console.log('[DND] Hysteresis: 相同位置，維持');
+          if (DEBUG_DND) console.log('[DND] Hysteresis: 相同位置，維持');
           return currentIndex;
         }
 
         // 如果變化不大（相鄰位置），使用較嚴格的 Hysteresis
         if (Math.abs(newIndex - currentIndex) === 1) {
-          console.log('[DND] Hysteresis: 相鄰位置檢查');
+          if (DEBUG_DND) console.log('[DND] Hysteresis: 相鄰位置檢查');
           // 找出相關的卡片邊界
           const card1 = cardsWithPos.find(c => c.idx === Math.min(newIndex, currentIndex));
           const card2 = cardsWithPos.find(c => c.idx === Math.max(newIndex, currentIndex) - 1);
 
           if (card1 && newIndex > currentIndex) {
             // 向右移動：使用較大 buffer（降低敏感度）
-            console.log('[DND] Hysteresis: 向右移動', { refX, threshold: card1.centerX + bufferRight });
+            if (DEBUG_DND) console.log('[DND] Hysteresis: 向右移動', { refX, threshold: card1.centerX + bufferRight });
             if (refX < card1.centerX + bufferRight) {
-              console.log('[DND] Hysteresis: ✗ 未超過，維持 currentIndex=', currentIndex);
+              if (DEBUG_DND) console.log('[DND] Hysteresis: ✗ 未超過，維持 currentIndex=', currentIndex);
               return currentIndex;
             }
           } else if (card2 && newIndex < currentIndex) {
             // 向左移動：使用較小 buffer（增加敏感度）
-            console.log('[DND] Hysteresis: 向左移動', { refX, threshold: card2.centerX - bufferLeft });
+            if (DEBUG_DND) console.log('[DND] Hysteresis: 向左移動', { refX, threshold: card2.centerX - bufferLeft });
             if (refX > card2.centerX - bufferLeft) {
-              console.log('[DND] Hysteresis: ✗ 未超過，維持 currentIndex=', currentIndex);
+              if (DEBUG_DND) console.log('[DND] Hysteresis: ✗ 未超過，維持 currentIndex=', currentIndex);
               return currentIndex;
             }
           }
         }
       }
 
-      console.log('[DND] === 最終返回 newIndex =', newIndex, '===\n');
+      if (DEBUG_DND) console.log('[DND] === 最終返回 newIndex =', newIndex, '===\n');
       return newIndex;
     },
     []
@@ -429,6 +448,11 @@ export const CardGrid: React.FC<CardGridProps> = ({
       setDraggingCardId(null);
       ghostBeforeRef.current = null;
       prevGiRef.current = null;
+      // 清理所有 pending 操作
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
       if (dragLeaveTimeoutRef.current) {
         clearTimeout(dragLeaveTimeoutRef.current);
         dragLeaveTimeoutRef.current = null;
@@ -451,29 +475,50 @@ export const CardGrid: React.FC<CardGridProps> = ({
       dragLeaveTimeoutRef.current = null;
     }
 
-    let tab: TabItemData | null = (getDragTab() as any) || null;
+    // 提取 event 數據（防止 React 事件池化問題）
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+    const target = e.target;
+
+    // 提取 dataTransfer 數據（使用 try/catch 防止不支持的環境中斷拖曳）
+    let tabData = '';
+    let webpageData = '';
+    let webpageMetaData = '';
+    let dataTransferTypes: string[] = [];
+    try {
+      tabData = e.dataTransfer.getData('application/x-linktrove-tab');
+      webpageData = e.dataTransfer.getData('application/x-linktrove-webpage');
+      webpageMetaData = e.dataTransfer.getData('application/x-linktrove-webpage-meta');
+      dataTransferTypes = Array.from(e.dataTransfer?.types || []);
+    } catch {
+      // dataTransfer 不可用時使用空值（某些環境可能不支持或有安全限制）
+    }
+
+    // 核心計算邏輯
+    const executeCore = () => {
+      let tab: TabItemData | null = (getDragTab() as any) || null;
     if (!tab) {
-      const raw = e.dataTransfer.getData('application/x-linktrove-tab');
+      const raw = tabData;
       if (raw) { try { tab = JSON.parse(raw); } catch {} }
     }
     if (tab) {
       setGhostTab(tab);
       setGhostType('tab');
-      const gi = computeGhostIndex(e.clientX, e.clientY, e.target);
-      setGhostIndex(gi);
+      const gi = computeGhostIndex(clientX, clientY, target);
+      if (gi !== ghostIndex) setGhostIndex(gi);
       try { const list = hiddenCardId ? items.filter((x)=>x.id!==hiddenCardId) : items; ghostBeforeRef.current = gi==null? null : gi>=list.length ? '__END__' : list[gi].id; } catch {}
       if (gi !== prevGiRef.current) { prevGiRef.current = gi; }
       return;
     }
     try {
-      const fromId = e.dataTransfer.getData('application/x-linktrove-webpage');
+      const fromId = webpageData;
       if (fromId) {
         setGhostType('card');
         let meta: any = null;
         try { meta = getDragWebpage(); } catch {}
         if (!meta) {
           try {
-            const raw = e.dataTransfer.getData('application/x-linktrove-webpage-meta');
+            const raw = webpageMetaData;
             if (raw) meta = JSON.parse(raw);
           } catch {}
         }
@@ -494,9 +539,9 @@ export const CardGrid: React.FC<CardGridProps> = ({
           setGhostTab(null);
         }
 
-        const gi = computeGhostIndex(e.clientX, e.clientY, e.target);
+        const gi = computeGhostIndex(clientX, clientY, target);
 
-        setGhostIndex(gi);
+        if (gi !== ghostIndex) setGhostIndex(gi);
 
         try {
           const list = hiddenCardId ? items.filter((x)=>x.id!==hiddenCardId) : items;
@@ -508,7 +553,7 @@ export const CardGrid: React.FC<CardGridProps> = ({
       }
     } catch {}
     try {
-      const types = Array.from((e.dataTransfer?.types as any) || []);
+      const types = dataTransferTypes;
       if (types.includes('application/x-linktrove-webpage')) {
         setGhostType('card');
         const meta = (() => { try { return getDragWebpage(); } catch { return null; } })();
@@ -518,8 +563,8 @@ export const CardGrid: React.FC<CardGridProps> = ({
           try { broadcastGhostActive(id || null); } catch {}
           setGhostTab({ id: -1, title: meta.title, url: meta.url, favIconUrl: meta.favicon, description: meta.description } as any);
         } else setGhostTab(null);
-        const gi = computeGhostIndex(e.clientX, e.clientY, e.target);
-        setGhostIndex(gi);
+        const gi = computeGhostIndex(clientX, clientY, target);
+        if (gi !== ghostIndex) setGhostIndex(gi);
         if (gi !== prevGiRef.current) { prevGiRef.current = gi; } // 🔧 修正：更新 prevGiRef
         try { const list = hiddenCardId ? items.filter((x)=>x.id!==hiddenCardId) : items; ghostBeforeRef.current = gi==null? null : gi>=list.length ? '__END__' : list[gi].id; } catch {}
         return;
@@ -527,12 +572,26 @@ export const CardGrid: React.FC<CardGridProps> = ({
       if (types.includes('application/x-linktrove-tab')) {
         setGhostType('tab');
         setGhostTab(null);
-        const gi = computeGhostIndex(e.clientX, e.clientY, e.target);
-        setGhostIndex(gi);
+        const gi = computeGhostIndex(clientX, clientY, target);
+        if (gi !== ghostIndex) setGhostIndex(gi);
         if (gi !== prevGiRef.current) { prevGiRef.current = gi; } // 🔧 修正：更新 prevGiRef
         return;
       }
     } catch {}
+    };
+
+    // 動態 RAF 節流：大量卡片時使用 RAF 減少計算頻率，提升性能
+    if (items.length >= DND_RAF_THRESHOLD) {
+      // 如果已有 pending RAF，跳過此次計算（節流）
+      if (rafIdRef.current !== null) return;
+      rafIdRef.current = requestAnimationFrame(() => {
+        rafIdRef.current = null;
+        executeCore();
+      });
+    } else {
+      // 小量卡片時直接執行，保持即時反應
+      executeCore();
+    }
   };
 
   const dragLeaveTimeoutRef = React.useRef<number | null>(null);
@@ -568,6 +627,11 @@ export const CardGrid: React.FC<CardGridProps> = ({
           return;
         }
       } catch {}
+      // 清理 RAF
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
       setIsOver(false);
       setGhostTab(null);
       setGhostType(null);
@@ -583,7 +647,11 @@ export const CardGrid: React.FC<CardGridProps> = ({
     e.preventDefault();
     e.stopPropagation();
 
-    // 取消任何待處理的 DragLeave 延遲
+    // 取消任何待處理的 RAF 和 DragLeave 延遲
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
     if (dragLeaveTimeoutRef.current) {
       clearTimeout(dragLeaveTimeoutRef.current);
       dragLeaveTimeoutRef.current = null;
