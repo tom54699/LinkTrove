@@ -1,6 +1,7 @@
 import React from 'react';
 import type { WebpageCardData } from './WebpageCard';
 import { TobyLikeCard } from './TobyLikeCard';
+import { CardRow } from './CardRow';
 import type { TabItemData } from '../tabs/types';
 import { getDragTab, getDragWebpage, setDragWebpage, broadcastGhostActive } from '../dnd/dragContext';
 import { useFeedback } from '../ui/feedback';
@@ -79,6 +80,61 @@ export const CardGrid: React.FC<CardGridProps> = ({
   const toggleSelect = (id: string) =>
     setSelected((s) => ({ ...s, [id]: !s[id] }));
   const clearSelection = () => setSelected({});
+
+  // Phase 3: 穩定的 handler 函數（使用 useCallback）
+  // 這些 handlers 傳給 CardRow，讓 React.memo 能正確判斷 props 是否變化
+  const handleToggleSelect = React.useCallback((id: string) => {
+    toggleSelect(id);
+  }, []);
+
+  const handleOpen = React.useCallback((id: string, opts?: { ctrlKey?: boolean }) => {
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+
+    try {
+      const openInBackground = opts?.ctrlKey ?? false;
+      if (chrome?.tabs?.create) {
+        chrome.tabs.create({ url: item.url, active: !openInBackground });
+      } else {
+        window.open(item.url, '_blank');
+      }
+    } catch {}
+  }, [items]);
+
+  const handleDelete = React.useCallback((id: string) => {
+    onDeleteOne?.(id);
+  }, [onDeleteOne]);
+
+  const handleUpdateTitle = React.useCallback((id: string, value: string) => {
+    onUpdateTitle?.(id, value);
+  }, [onUpdateTitle]);
+
+  const handleUpdateUrl = React.useCallback((id: string, value: string) => {
+    onUpdateUrl?.(id, value);
+  }, [onUpdateUrl]);
+
+  const handleUpdateDescription = React.useCallback((id: string, value: string) => {
+    onEditDescription?.(id, value);
+  }, [onEditDescription]);
+
+  const handleUpdateMeta = React.useCallback((id: string, meta: Record<string, string>) => {
+    onUpdateMeta?.(id, meta);
+  }, [onUpdateMeta]);
+
+  const handleSave = React.useCallback((id: string, patch: any) => {
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+
+    if (onSave) {
+      onSave(id, patch);
+    } else {
+      // fallback logic
+      if (patch.title) onUpdateTitle?.(id, patch.title);
+      if (patch.url) onUpdateUrl?.(id, patch.url);
+      if (patch.description !== undefined) onEditDescription?.(id, patch.description);
+      if (patch.meta) onUpdateMeta?.(id, patch.meta);
+    }
+  }, [items, onSave, onUpdateTitle, onUpdateUrl, onEditDescription, onUpdateMeta]);
 
   const [confirming, setConfirming] = React.useState(false);
   const [showMoveDialog, setShowMoveDialog] = React.useState(false);
@@ -909,45 +965,19 @@ export const CardGrid: React.FC<CardGridProps> = ({
                     ghost
                   />
                 ) : (
-                  <TobyLikeCard
-                    title={(node.item as any).title}
-                    description={(node.item as any).description}
-                    faviconText={((node.item as any).url || '').replace(/^https?:\/\//, '').replace(/^www\./, '').slice(0, 2).toUpperCase() || 'WW'}
-                    faviconUrl={(node.item as any).favicon}
-                    url={(node.item as any).url}
-                    categoryId={(node.item as any).category}
-                    meta={(node.item as any).meta || {}}
-                    createdAt={(node.item as any).createdAt}
-                    updatedAt={(node.item as any).updatedAt}
+                  <CardRow
+                    item={node.item as WebpageCardData}
                     selected={!!selected[(node.item as any).id]}
-                    onToggleSelect={() => toggleSelect((node.item as any).id)}
-                    onOpen={(opts) => {
-                      try {
-                        const url = (node.item as any).url;
-                        const openInBackground = opts?.ctrlKey ?? false;
-                        if (chrome?.tabs?.create) {
-                          chrome.tabs.create({ url, active: !openInBackground });
-                        } else {
-                          window.open(url, '_blank');
-                        }
-                      } catch {}
-                    }}
-                    onDelete={() => onDeleteOne?.((node.item as any).id)}
-                    onUpdateTitle={(v) => onUpdateTitle?.((node.item as any).id, v)}
-                    onUpdateUrl={(v) => onUpdateUrl?.((node.item as any).id, v)}
-                    onUpdateDescription={(v) => onEditDescription?.((node.item as any).id, v)}
-                    onUpdateMeta={(m) => onUpdateMeta?.((node.item as any).id, m)}
-                    onModalOpenChange={(open) => setDragDisabled(open)}
-                    onSave={(patch) => {
-                      const it = node.item as any;
-                      if (onSave) onSave(it.id, patch);
-                      else {
-                        if (patch.title) onUpdateTitle?.(it.id, patch.title);
-                        if (patch.url) onUpdateUrl?.(it.id, patch.url);
-                        if (patch.description !== undefined) onEditDescription?.(it.id, patch.description);
-                        if (patch.meta) onUpdateMeta?.(it.id, patch.meta);
-                      }
-                    }}
+                    ghost={false}
+                    onToggleSelect={handleToggleSelect}
+                    onOpen={handleOpen}
+                    onDelete={handleDelete}
+                    onUpdateTitle={handleUpdateTitle}
+                    onUpdateUrl={handleUpdateUrl}
+                    onUpdateDescription={handleUpdateDescription}
+                    onUpdateMeta={handleUpdateMeta}
+                    onModalOpenChange={setDragDisabled}
+                    onSave={handleSave}
                   />
                 )}
               </div>
