@@ -80,13 +80,17 @@ async function clearAllStores() {
     const db = await openDB();
     const tx = db.transaction(['webpages', 'categories', 'subcategories', 'templates', 'organizations'], 'readwrite');
     await Promise.all([
-      tx.objectStore('webpages').clear(),
-      tx.objectStore('categories').clear(),
-      tx.objectStore('subcategories').clear(),
-      tx.objectStore('templates').clear(),
-      tx.objectStore('organizations').clear(),
+      requestToPromise(tx.objectStore('webpages').clear()),
+      requestToPromise(tx.objectStore('categories').clear()),
+      requestToPromise(tx.objectStore('subcategories').clear()),
+      requestToPromise(tx.objectStore('templates').clear()),
+      requestToPromise(tx.objectStore('organizations').clear()),
     ]);
-    await tx.done;
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
     db.close();
   } catch {
     // DB might not exist yet, ignore
@@ -99,9 +103,13 @@ async function addWebpages(items: WebpageData[]) {
   const tx = db.transaction('webpages', 'readwrite');
   const store = tx.objectStore('webpages');
   for (const item of items) {
-    store.add(item);
+    await requestToPromise(store.put(item));
   }
-  await tx.done;
+  await new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
   db.close();
 }
 

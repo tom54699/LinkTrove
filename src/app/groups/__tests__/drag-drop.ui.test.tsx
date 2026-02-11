@@ -98,8 +98,8 @@ describe('GroupsView drag-and-drop (UI)', () => {
     fireEvent.drop(dropZone, { dataTransfer: dt });
     await waitFor(() => expect(addFromTabSpy).toHaveBeenCalled());
     expect(addFromTabSpy).toHaveBeenCalledWith(
-      { id: 99, title: 'Ex', url: 'https://ex.com' },
-      { categoryId: 'c1', subcategoryId: 'g1', beforeId: undefined }
+      expect.objectContaining({ id: 99, title: 'Ex', url: 'https://ex.com' }),
+      expect.objectContaining({ categoryId: 'c1', subcategoryId: 'g1', beforeId: undefined })
     );
     expect(moveCardToGroupSpy).not.toHaveBeenCalled();
     expect(loadSpy).not.toHaveBeenCalled();

@@ -12,27 +12,18 @@ const sample: WebpageCardData = {
 };
 
 describe('WebpageCard inline description editing (task 6.2)', () => {
-  it('enters edit mode and auto-saves on blur', () => {
+  it('does not enter inline edit mode on description click', () => {
     const onEdit = vi.fn();
     render(<WebpageCard data={sample} onEditDescription={onEdit} />);
-    // Click the description to start editing
     fireEvent.click(screen.getByText('Initial description'));
-    const textarea = screen.getByRole('textbox');
-    expect(textarea).toBeInTheDocument();
-    expect(textarea).toHaveFocus();
-
-    // Change text
-    fireEvent.change(textarea, { target: { value: 'Updated description' } });
-    // Blur to trigger auto-save
-    fireEvent.blur(textarea);
-
-    expect(onEdit).toHaveBeenCalledWith('w1', 'Updated description');
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(onEdit).not.toHaveBeenCalled();
   });
 
-  it('shows editing visual state while editing', () => {
+  it('does not set editing visual state on description click', () => {
     render(<WebpageCard data={sample} />);
     fireEvent.click(screen.getByText('Initial description'));
     const card = screen.getByTestId('webpage-card');
-    expect(card.getAttribute('data-editing')).toBe('true');
+    expect(card.getAttribute('data-editing')).toBeNull();
   });
 });

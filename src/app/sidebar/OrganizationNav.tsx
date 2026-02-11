@@ -266,7 +266,12 @@ export const OrganizationNav: React.FC = () => {
                             }}
                           />
                           <div className="mt-3 flex items-center gap-3">
-                            <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider">{t('org_color_label')}</label>
+                            <label
+                              htmlFor={`org-color-${org.id}`}
+                              className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider"
+                            >
+                              {t('org_color_label')}
+                            </label>
                             <div className="relative">
                               <div 
                                 className="flex items-center gap-2 bg-[var(--input-bg)] border border-[var(--border)] px-2.5 py-1.5 rounded-full hover:border-[var(--accent)] transition-all cursor-pointer group"
@@ -277,6 +282,8 @@ export const OrganizationNav: React.FC = () => {
                               </div>
                               <input
                                 type="color"
+                                id={`org-color-${org.id}`}
+                                aria-label={t('org_color_label')}
                                 className="absolute opacity-0 pointer-events-none"
                                 value={draftColor}
                                 onChange={async (e) => {

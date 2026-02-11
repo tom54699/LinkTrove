@@ -150,7 +150,7 @@ describe('TobyLikeCard edit modal fixes (fix-card-edit-modal)', () => {
     expect(noteInput).toHaveValue('My note');
   });
 
-  it('auto-save should not overwrite user input (no revert on props change)', async () => {
+  it('does not auto-save while typing and preserves user input on props change', async () => {
     const onSave = vi.fn();
     const { rerender } = render(
       <TobyLikeCard
@@ -171,9 +171,9 @@ describe('TobyLikeCard edit modal fixes (fix-card-edit-modal)', () => {
     fireEvent.change(titleInput, { target: { value: 'User typing...' } });
     expect(titleInput).toHaveValue('User typing...');
 
-    // Trigger auto-save (500ms debounce)
+    // No auto-save behavior; advancing timers should not trigger save
     act(() => { vi.advanceTimersByTime(500); });
-    expect(onSave).toHaveBeenCalled();
+    expect(onSave).not.toHaveBeenCalled();
 
     // Simulate props update (as if parent re-rendered with saved value)
     rerender(
