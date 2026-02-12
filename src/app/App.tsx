@@ -18,6 +18,7 @@ import { useTemplates } from './templates/TemplatesProvider';
 import { GroupsView } from './groups/GroupsView';
 import { LanguageProvider, useI18n } from './i18n';
 import { CustomSelect } from './ui/CustomSelect';
+import { useEditableDialogCloseGuard } from './ui/useEditableDialogCloseGuard';
 
 export const AppLayout: React.FC = () => {
   const { theme, setTheme } = useApp();
@@ -114,6 +115,10 @@ const HomeInner: React.FC = () => {
   const [tobyHasOrgs, setTobyHasOrgs] = React.useState(false);
   const [tobyProgress, setTobyProgress] = React.useState<{ total: number; processed: number } | null>(null);
   const tobyAbortRef = React.useRef<AbortController | null>(null);
+  const addCollectionDialogGuard = useEditableDialogCloseGuard(() => setShowAddCat(false));
+  const addOrganizationDialogGuard = useEditableDialogCloseGuard(() => setShowAddOrg(false));
+  const htmlImportDialogGuard = useEditableDialogCloseGuard(() => setHtmlImportOpen(false));
+  const tobyImportDialogGuard = useEditableDialogCloseGuard(() => setTobyOpen(false));
 
   // Get subcategories (groups) count for current category
   const [groupsCount, setGroupsCount] = React.useState(0);
@@ -342,11 +347,11 @@ const HomeInner: React.FC = () => {
       {showAddCat && (
         <div
           className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3"
-          onClick={() => setShowAddCat(false)}
+          {...addCollectionDialogGuard.overlayProps}
         >
           <div
             className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6 w-[480px] max-w-[90vw] shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+            {...addCollectionDialogGuard.dialogProps}
             role="dialog"
             aria-label="Add Collection"
           >
@@ -428,11 +433,11 @@ const HomeInner: React.FC = () => {
       {showAddOrg && (
         <div
           className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3"
-          onClick={() => setShowAddOrg(false)}
+          {...addOrganizationDialogGuard.overlayProps}
         >
           <div
             className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6 w-[480px] max-w-[90vw] shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+            {...addOrganizationDialogGuard.dialogProps}
             role="dialog"
             aria-label="Add Organization"
           >
@@ -500,11 +505,11 @@ const HomeInner: React.FC = () => {
       {htmlImportOpen && (
         <div
           className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3"
-          onClick={() => setHtmlImportOpen(false)}
+          {...htmlImportDialogGuard.overlayProps}
         >
           <div
             className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6 w-[480px] max-w-[90vw] shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+            {...htmlImportDialogGuard.dialogProps}
             role="dialog"
             aria-label="Import HTML to new Collection"
           >
@@ -607,8 +612,8 @@ const HomeInner: React.FC = () => {
         </div>
       )}
       {tobyOpen && (
-        <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3" onClick={() => setTobyOpen(false)}>
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6 w-[480px] max-w-[90vw] shadow-2xl" onClick={(e)=>e.stopPropagation()} role="dialog" aria-label="Import Toby to new Organization">
+        <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3" {...tobyImportDialogGuard.overlayProps}>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6 w-[480px] max-w-[90vw] shadow-2xl" {...tobyImportDialogGuard.dialogProps} role="dialog" aria-label="Import Toby to new Organization">
             <div className="text-lg font-bold mb-4">匯入 Toby（新 Organization）</div>
             <div className="space-y-4">
               <div className="text-[13px] text-[var(--muted)] leading-relaxed bg-[var(--bg)]/30 p-3 rounded-lg border border-white/5">

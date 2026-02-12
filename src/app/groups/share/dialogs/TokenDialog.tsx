@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { useI18n } from '../../../i18n';
+import { useEditableDialogCloseGuard } from '../../../ui/useEditableDialogCloseGuard';
 
 interface TokenDialogProps {
   isOpen: boolean;
@@ -22,17 +23,18 @@ export const TokenDialog: React.FC<TokenDialogProps> = ({
   onSave,
 }) => {
   const { t } = useI18n();
+  const dialogGuard = useEditableDialogCloseGuard(onClose);
 
   if (!isOpen) return null;
 
   return (
     <div
       className="fixed inset-0 z-[10000] bg-black/70 backdrop-blur-md flex items-center justify-center p-3"
-      onClick={onClose}
+      {...dialogGuard.overlayProps}
     >
       <div
         className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-full max-w-md p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
+        {...dialogGuard.dialogProps}
       >
         <h3 className="text-lg font-bold mb-4">{t('token_setup_title')}</h3>
 

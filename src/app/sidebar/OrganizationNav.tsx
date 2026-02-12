@@ -3,6 +3,7 @@ import { useOrganizations } from './organizations';
 import { ContextMenu } from '../ui/ContextMenu';
 import { useFeedback } from '../ui/feedback';
 import { useI18n } from '../i18n';
+import { useEditableDialogCloseGuard } from '../ui/useEditableDialogCloseGuard';
 
 export const OrganizationNav: React.FC = () => {
   const { t } = useI18n();
@@ -16,6 +17,7 @@ export const OrganizationNav: React.FC = () => {
   const [manageDialogOpen, setManageDialogOpen] = React.useState(false);
   const [renameDrafts, setRenameDrafts] = React.useState<Record<string, string>>({});
   const [colorDrafts, setColorDrafts] = React.useState<Record<string, string>>({});
+  const manageDialogGuard = useEditableDialogCloseGuard(() => setManageDialogOpen(false));
 
   React.useEffect(() => {
     if (!manageDialogOpen) return;
@@ -201,11 +203,11 @@ export const OrganizationNav: React.FC = () => {
         {manageDialogOpen && (
           <div
             className="fixed inset-0 z-[9998] bg-black/70 backdrop-blur-md flex items-center justify-center p-3"
-            onClick={() => setManageDialogOpen(false)}
+            {...manageDialogGuard.overlayProps}
           >
             <div
               className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[620px] max-w-[95vw] shadow-2xl flex flex-col"
-              onClick={(e) => e.stopPropagation()}
+              {...manageDialogGuard.dialogProps}
               role="dialog"
               aria-label={t('org_manage_title')}
             >

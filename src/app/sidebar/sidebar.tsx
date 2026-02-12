@@ -7,6 +7,7 @@ import { SearchBox } from '../ui/SearchBox';
 import { useFeedback } from '../ui/feedback';
 import { useI18n } from '../i18n';
 import { CustomSelect } from '../ui/CustomSelect';
+import { useEditableDialogCloseGuard } from '../ui/useEditableDialogCloseGuard';
 
 export const Sidebar: React.FC = () => {
   const { t } = useI18n();
@@ -24,6 +25,10 @@ export const Sidebar: React.FC = () => {
   const [editColor, setEditColor] = React.useState('#64748b');
   const [editTpl, setEditTpl] = React.useState<string>('');
   const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const editDialogGuard = useEditableDialogCloseGuard(() => {
+    setEditing(null);
+    setConfirmDelete(false);
+  });
 
   function openEditor(cat: any) {
     setEditing(cat);
@@ -152,14 +157,11 @@ export const Sidebar: React.FC = () => {
       {editing && (
         <div
           className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3"
-          onClick={() => {
-            setEditing(null);
-            setConfirmDelete(false);
-          }}
+          {...editDialogGuard.overlayProps}
         >
           <div
             className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[520px] max-w-[95vw] shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+            {...editDialogGuard.dialogProps}
             role="dialog"
             aria-label={t('category_edit_title')}
           >

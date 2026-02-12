@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { useI18n } from '../../../i18n';
+import { useEditableDialogCloseGuard } from '../../../ui/useEditableDialogCloseGuard';
 
 interface ShareDialogProps {
   isOpen: boolean;
@@ -32,17 +33,18 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
   onDownloadHtml,
 }) => {
   const { t } = useI18n();
+  const dialogGuard = useEditableDialogCloseGuard(onClose);
 
   if (!isOpen) return null;
 
   return (
     <div
       className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3"
-      onClick={onClose}
+      {...dialogGuard.overlayProps}
     >
       <div
         className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[520px] max-w-[95vw] p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
+        {...dialogGuard.dialogProps}
         role="dialog"
         aria-label={t('share_settings')}
       >

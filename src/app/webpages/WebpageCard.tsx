@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ContextMenu } from '../ui/ContextMenu';
 import { useCategories } from '../sidebar/categories';
 import { useTemplates } from '../templates/TemplatesProvider';
+import { useEditableDialogCloseGuard } from '../ui/useEditableDialogCloseGuard';
 
 export interface WebpageCardData {
   id: string;
@@ -60,6 +61,7 @@ export const WebpageCard: React.FC<{
   } | null>(null);
   // Needed for Move menu; hooks must run unconditionally
   const { categories } = useCategories();
+  const editDialogGuard = useEditableDialogCloseGuard(() => setShowModal(false));
 
 
   const handleClick = () => {
@@ -281,11 +283,11 @@ export const WebpageCard: React.FC<{
       {showModal && (
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setShowModal(false)}
+          {...editDialogGuard.overlayProps}
         >
           <div
             className="rounded border border-slate-700 bg-[var(--panel)] w-[520px] max-w-[90vw] max-h-[90vh] overflow-y-auto hide-scrollbar p-5"
-            onClick={(e) => e.stopPropagation()}
+            {...editDialogGuard.dialogProps}
             role="dialog"
             aria-label="Edit Card"
             onKeyDown={(e) => {

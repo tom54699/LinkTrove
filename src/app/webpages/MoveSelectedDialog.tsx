@@ -3,6 +3,7 @@ import { useCategories } from '../sidebar/categories';
 import { createStorageService } from '../../background/storageService';
 import { useI18n } from '../i18n';
 import { CustomSelect } from '../ui/CustomSelect';
+import { useEditableDialogCloseGuard } from '../ui/useEditableDialogCloseGuard';
 
 export interface MoveSelectedDialogProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
   const [subcategories, setSubcategories] = React.useState<Subcategory[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [moving, setMoving] = React.useState(false);
+  const dialogGuard = useEditableDialogCloseGuard(onClose);
 
   // Load subcategories when category changes OR when dialog opens
   React.useEffect(() => {
@@ -95,11 +97,11 @@ export const MoveSelectedDialog: React.FC<MoveSelectedDialogProps> = ({
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
-      onClick={onClose}
+      {...dialogGuard.overlayProps}
     >
       <div
         className="rounded-xl border border-[var(--border)] bg-[var(--panel)] w-[480px] max-w-[90vw] p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
+        {...dialogGuard.dialogProps}
         onKeyDown={handleKeyDown}
         role="dialog"
         aria-labelledby="move-dialog-title"
