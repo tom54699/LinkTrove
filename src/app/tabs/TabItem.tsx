@@ -38,7 +38,7 @@ export const TabItem: React.FC<
 
   return (
     <div
-      className={`flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 cursor-grab active:cursor-grabbing hover:translate-x-[2px] group/item ${dragging ? 'opacity-50 ring-1 ring-blue-500' : ''} ${rest.className || ''}`}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-150 cursor-grab active:cursor-grabbing hover:translate-x-[2px] group/item ${dragging ? 'opacity-20' : ''} ${rest.className || ''}`}
       style={{
         backgroundColor: '#44475a',
         border: '1px solid rgba(255,255,255,0.05)',

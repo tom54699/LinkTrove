@@ -65,11 +65,33 @@ export const TabsPanel: React.FC = () => {
   const [editing, setEditing] = React.useState<number | null>(null);
   const [editText, setEditText] = React.useState('');
 
+  // Reactive isDragging state (set in handleDragOver, cleared on dragend)
+  const [isDragging, setIsDragging] = React.useState(false);
+
+  // Track dragging group for visual feedback
+  const [draggingGroupId, setDraggingGroupId] = React.useState<number | null>(null);
+
   const [dropTarget, setDropTarget] = React.useState<{
     type: 'tab' | 'group';
     id: number; // tabId or groupId
     position: 'top' | 'bottom' | 'inside';
   } | null>(null);
+
+  // Global dragend cleanup: clear dropTarget, isDragging, and draggingGroupId when drag ends
+  // Note: Only listen to dragend, NOT drop (drop needs dropTarget for handleDrop logic)
+  React.useEffect(() => {
+    const cleanup = () => {
+      setDropTarget(null);
+      setIsDragging(false);
+      setDraggingGroupId(null);
+    };
+
+    window.addEventListener('dragend', cleanup, true);
+
+    return () => {
+      window.removeEventListener('dragend', cleanup, true);
+    };
+  }, []);
 
   const structure = React.useMemo(() => {
     const wins = new Map<number, { 
@@ -156,6 +178,9 @@ export const TabsPanel: React.FC = () => {
     const dragTab = getDragTab();
     const dragGroup = getDragGroup();
     if (!dragTab && !dragGroup) return;
+
+    // Set isDragging on first detection (reactive state for render gating)
+    if (!isDragging) setIsDragging(true);
 
     if (dragGroup && type === 'tab') return;
 
@@ -321,6 +346,7 @@ export const TabsPanel: React.FC = () => {
                   if (dragTab && dragTab.windowId !== win.id) {
                     e.preventDefault();
                     e.stopPropagation();
+                    if (!isDragging) setIsDragging(true);
                     setDropTarget({ type: 'tab', id: win.id, position: 'inside' });
                   }
                 }}
@@ -377,6 +403,7 @@ export const TabsPanel: React.FC = () => {
                     if (dragTab) {
                        e.preventDefault();
                        e.stopPropagation();
+                       if (!isDragging) setIsDragging(true);
                        // Allow ANY drag over the window background to trigger 'move to end'
                        setDropTarget({ type: 'tab', id: win.id, position: 'inside' });
                     }
@@ -406,10 +433,10 @@ export const TabsPanel: React.FC = () => {
                       const isDropTarget = dropTarget?.type === 'group' && dropTarget.id === group.id;
                       return (
                         <div key={group.id}>
-                           {isDropTarget && dropTarget.position === 'top' && <DropIndicator type="group" id={group.id} position="top" onDrop={handleDrop} setDropTarget={setDropTarget} />}
+                           {isDragging && isDropTarget && dropTarget.position === 'top' && <DropIndicator type="group" id={group.id} position="top" onDrop={handleDrop} setDropTarget={setDropTarget} />}
                           <div className="relative">
                             <div
-                              className="flex items-center gap-2 mb-3 cursor-pointer select-none group/g hover:opacity-100 opacity-90"
+                              className={`flex items-center gap-2 mb-3 cursor-pointer select-none group/g hover:opacity-100 ${draggingGroupId === group.id ? 'opacity-20' : 'opacity-90'}`}
                               onClick={() => toggleGroup(group.id)}
                               draggable
                               onDragStart={(e) => {
@@ -417,8 +444,12 @@ export const TabsPanel: React.FC = () => {
                                 e.dataTransfer.setData(DRAG_TYPES.GROUP, JSON.stringify(group));
                                 e.dataTransfer.effectAllowed = 'move';
                                 setDragGroup({ id: group.id, windowId: group.windowId, title: group.title, color: group.color });
+                                setDraggingGroupId(group.id);
                               }}
-                              onDragEnd={() => setDragGroup(null)}
+                              onDragEnd={() => {
+                                setDragGroup(null);
+                                setDraggingGroupId(null);
+                              }}
                             >
                               <div className={`w-1.5 h-1.5 rounded-full border ${isGrpCollapsed ? 'bg-transparent border-' + colorInfo.bg.split('-')[1] : colorInfo.bg + ' border-transparent'}`}></div>
                               <span className={`text-[11px] font-bold ${colorInfo.text} uppercase tracking-tighter truncate flex-1`}>{group.title || t('untitled_group', 'Untitled Group')}</span>
@@ -432,6 +463,7 @@ export const TabsPanel: React.FC = () => {
                                   if (dragTab && tabs.length > 0) {
                                     e.preventDefault();
                                     e.stopPropagation();
+                                    if (!isDragging) setIsDragging(true);
                                     // When dragging in group whitespace, set target to last tab's bottom
                                     const lastTab = tabs[tabs.length - 1];
                                     // Only set if dragging is not already the last tab
@@ -447,19 +479,19 @@ export const TabsPanel: React.FC = () => {
                                   const draggingSelf = getDragTab()?.id === tab.id;
                                   return (
                                     <React.Fragment key={tab.id}>
-                                      {isTabDropTarget && dropTarget.position === 'top' && !draggingSelf && <DropIndicator type="tab" id={tab.id} position="top" onDrop={handleDrop} setDropTarget={setDropTarget} />}
+                                      {isDragging && isTabDropTarget && dropTarget.position === 'top' && !draggingSelf && <DropIndicator type="tab" id={tab.id} position="top" onDrop={handleDrop} setDropTarget={setDropTarget} />}
                                       <TabItem
                                         tab={tab}
                                         onDragOver={(e) => handleDragOver(e, 'tab', tab.id, tab)}
                                       />
-                                      {isTabDropTarget && dropTarget.position === 'bottom' && !draggingSelf && <DropIndicator type="tab" id={tab.id} position="bottom" onDrop={handleDrop} setDropTarget={setDropTarget} />}
+                                      {isDragging && isTabDropTarget && dropTarget.position === 'bottom' && !draggingSelf && <DropIndicator type="tab" id={tab.id} position="bottom" onDrop={handleDrop} setDropTarget={setDropTarget} />}
                                     </React.Fragment>
                                   );
                                 })}
                               </div>
                             )}
                           </div>
-                          {isDropTarget && dropTarget.position === 'bottom' && <DropIndicator type="group" id={group.id} position="bottom" onDrop={handleDrop} setDropTarget={setDropTarget} />}
+                          {isDragging && isDropTarget && dropTarget.position === 'bottom' && <DropIndicator type="group" id={group.id} position="bottom" onDrop={handleDrop} setDropTarget={setDropTarget} />}
                         </div>
                       );
                     })}
@@ -471,19 +503,19 @@ export const TabsPanel: React.FC = () => {
                        const draggingSelf = getDragTab()?.id === tab.id;
                        return (
                          <React.Fragment key={tab.id}>
-                           {isTabDropTarget && dropTarget.position === 'top' && !draggingSelf && <DropIndicator type="tab" id={tab.id} position="top" onDrop={handleDrop} setDropTarget={setDropTarget} />}
+                           {isDragging && isTabDropTarget && dropTarget.position === 'top' && !draggingSelf && <DropIndicator type="tab" id={tab.id} position="top" onDrop={handleDrop} setDropTarget={setDropTarget} />}
                            <TabItem
                              tab={tab}
                              onDragOver={(e) => handleDragOver(e, 'tab', tab.id, tab)}
                            />
-                           {isTabDropTarget && dropTarget.position === 'bottom' && !draggingSelf && <DropIndicator type="tab" id={tab.id} position="bottom" onDrop={handleDrop} setDropTarget={setDropTarget} />}
+                           {isDragging && isTabDropTarget && dropTarget.position === 'bottom' && !draggingSelf && <DropIndicator type="tab" id={tab.id} position="bottom" onDrop={handleDrop} setDropTarget={setDropTarget} />}
                          </React.Fragment>
                        );
                     })}
                   </div>
 
                   {/* Dynamic Ghost for Window Background Drop */}
-                  {dropTarget?.type === 'tab' && dropTarget.id === win.id && dropTarget.position === 'inside' && (
+                  {isDragging && dropTarget?.type === 'tab' && dropTarget.id === win.id && dropTarget.position === 'inside' && (
                     <DropIndicator type="tab" id={win.id} position="inside" onDrop={handleDrop} setDropTarget={setDropTarget} />
                   )}
 
